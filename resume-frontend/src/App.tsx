@@ -9,7 +9,7 @@ function App() {
   const [score, setScore] = useState<number | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-
+  const [copied, setCopied] = useState(false);
 
   const uploadResume = async () => {
 
@@ -43,6 +43,24 @@ function App() {
     }
 
   };
+  const copySuggestionsToClipboard = () => {
+  if (suggestions.length === 0) return;
+
+  // Formats the suggestions array cleanly with bullet points
+  const plainTextSuggestions = suggestions
+    .map((s) => `• ${s}`)
+    .join("\n");
+
+  navigator.clipboard.writeText(plainTextSuggestions)
+    .then(() => {
+      setCopied(true);
+      // Acceptance Criteria: Brief "Copied!" confirmation shown after click
+      setTimeout(() => setCopied(false), 2000); 
+    })
+    .catch((err) => {
+      console.error("Failed to copy text: ", err);
+    });
+};
 
   return (
 
@@ -116,19 +134,37 @@ function App() {
 
             </div>
 
-            {/* SUGGESTIONS */}
+          {/* SUGGESTIONS */}
+<div className="suggestion-box" style={{ position: "relative" }}>
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+    <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
+    
+    {suggestions.length > 0 && (
+      <button
+        onClick={copySuggestionsToClipboard}
+        style={{
+          backgroundColor: copied ? "#22c55e" : "#3b82f6",
+          color: "white",
+          border: "none",
+          padding: "6px 12px",
+          borderRadius: "6px",
+          fontSize: "12px",
+          fontWeight: "6px",
+          cursor: "pointer",
+          transition: "background-color 0.2s ease"
+        }}
+      >
+        {copied ? "✅ Copied!" : "📋 Copy Suggestions"}
+      </button>
+    )}
+  </div>
 
-            <div className="suggestion-box">
-
-              <h4>💡 Suggestions</h4>
-
-              {suggestions.map((s, i) => (
-                <div key={i} className="suggestion-item">
-                  📌 {s}
-                </div>
-              ))}
-
-            </div>
+  {suggestions.map((s, i) => (
+    <div key={i} className="suggestion-item">
+      📌 {s}
+    </div>
+  ))}
+</div> 
 
           </>
 
