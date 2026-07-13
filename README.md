@@ -1,149 +1,259 @@
-# 🚀 AI Resume Analyzer
+<div align="center">
 
-An **AI-powered web application** that analyzes resumes and provides an **ATS (Applicant Tracking System) score**, detects **technical skills**, and gives **actionable suggestions** to improve the resume.
+# AI Resume Analyzer
 
-This project helps students and job seekers understand how well their resume performs for automated recruitment systems and how they can improve it.
+### *An enterprise-grade automated platform to parse resumes, evaluate ATS scores, extract technical skills, and generate contextual recommendations.*
 
----
+[![GitHub license](https://img.shields.io/github/license/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=34d399)](https://github.com/Muskankr/AI-Resume-Analyzer/blob/main/LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=f43f5e)](https://github.com/Muskankr/AI-Resume-Analyzer/issues)
+[![GitHub stars](https://img.shields.io/github/stars/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=fbbf24)](https://github.com/Muskankr/AI-Resume-Analyzer/stargazers)
+[![GitHub contributors](https://img.shields.io/github/contributors/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=818cf8)](https://github.com/Muskankr/AI-Resume-Analyzer/graphs/contributors)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge&color=38bdf8)](https://github.com/Muskankr/AI-Resume-Analyzer/pulls)
+[![ECSoC'26](https://img.shields.io/badge/Program-ECSoC'26-orange?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer)
 
-## ✨ Features
-
-* 📄 **Resume Upload** – Upload a resume in PDF format
-* 📊 **ATS Resume Score** – Get a score out of 100 based on resume quality
-* 🧠 **Skill Extraction** – Detects technical skills present in the resume
-* 💡 **Improvement Suggestions** – Provides suggestions to improve the resume
-* 🎨 **Modern UI** – Clean and responsive React interface
-* ⚡ **Fast Analysis** – Instant resume feedback
-
----
-
-## 🖼️ Project Preview
-
-<img src="screenshots/ui.png" width="800"/>
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend
-
-* **React**
-* **TypeScript**
-* **Axios**
-* **CSS**
-
-### Backend
-
-* **Django**
-* **Python**
-* **Django REST Framework**
+<p align="center">
+  <a href="#key-features">Key Features</a> •
+  <a href="#project-preview">Project Preview</a> •
+  <a href="#architecture--data-flow">Architecture</a> •
+  <a href="#tech-stack">Tech Stack</a> •
+  <a href="#installation--setup">Installation & Setup</a> •
+  <a href="#api-reference">API Reference</a> •
+  <a href="#roadmap">Roadmap</a> •
+  <a href="#contributing">Contributing</a> •
+  <a href="#contributors">Contributors</a>
+</p>
+</div>
 
 ---
 
-## ⚙️ How It Works
+## Key Features
 
-1. User uploads a resume (PDF).
-2. The file is sent to the **Django backend API**.
-3. The backend analyzes the resume and extracts:
-
-   * Skills
-   * ATS score
-   * Suggestions
-4. The **React frontend displays the results** in a clean UI.
+- **Flexible Multi-Format Parsing** — Instant text extraction from files (PDF format) using Python `pdfplumber`.
+- **ATS Optimizer & Scoring Engine** — High-performance scoring algorithm that parses resumes against technical standard keywords.
+- **Contextual Skill Extraction** — Detects core programming languages, frameworks, developer tools, database engines, and libraries.
+- **Dynamic Feedback Generation** — Yields smart suggestions recommending targeted certifications, technologies, and formatting changes.
+- **Premium Glassmorphic UI** — Fully responsive, beautiful interface with active state indicators, hover metrics, and smooth transitions built using Bootstrap 5.
 
 ---
 
-## 📂 Project Structure
+## Project Preview
 
+<div align="center">
+  <img src="client/public/ui.png" alt="Application Interface Preview" width="850" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);"/>
+</div>
+
+---
+
+## Architecture & Data Flow
+
+```text
+ ┌──────────────┐         POST /api/upload/         ┌─────────────────┐
+ │              │ ────────────────────────────────> │                 │
+ │ React Client │                                   │ Django Backend  │
+ │  (Bootstrap) │ <──────────────────────────────── │   (REST API)    │
+ └──────────────┘           Analysis JSON           └─────────────────┘
+                                                             │
+                                                             ▼
+                                                    ┌─────────────────┐
+                                                    │  PDFPlumber Parser│
+                                                    └─────────────────┘
+                                                             │
+                                                             ▼
+                                                    ┌─────────────────┐
+                                                    │ Keyword Matches │
+                                                    │   & ATS Engine  │
+                                                    └─────────────────┘
 ```
-ai-resume-analyzer
+
+---
+
+## Tech Stack
+
+### Client (Frontend)
+* **Framework**: React 19 (Vite boilerplate)
+* **Language**: TypeScript
+* **Styling**: Bootstrap 5 + Vanilla CSS Variables (Glassmorphism theme)
+* **API Handler**: Axios
+
+### Server (Backend)
+* **Framework**: Django REST Framework (DRF)
+* **Language**: Python 3.10+
+* **CORS Management**: django-cors-headers
+* **Text Extractor**: PDFPlumber
+
+---
+
+## Project Structure
+
+```text
+ai-resume-analyzer/
+├── client/                 # React frontend application
+│   ├── public/             # Static public assets (ui.png, favicon, etc.)
+│   ├── src/
+│   │   ├── assets/         # Images, logos, and Vite assets
+│   │   ├── App.css         # Component layout configurations
+│   │   ├── App.tsx         # Application entry view & core client logic
+│   │   ├── index.css       # Core stylesheets and variables
+│   │   └── main.tsx        # DOM Renderer
+│   ├── package.json        # Node modules and dependency matrix
+│   └── tsconfig.json       # TypeScript compiler settings
 │
-├── frontend
-│   ├── src
-│   │   ├── App.tsx
-│   │   ├── index.css
-│   │   └── main.tsx
-│   └── package.json
-│
-├── backend
-│   ├── resume_analyzer
-│   ├── api
-│   └── manage.py
-│
-├── screenshots
-│   └── ui.png
+├── server/                 # Django REST API backend
+│   ├── resume_analyzer/    # Main settings, routing, and configurations
+│   ├── analyzer/           # App endpoints, models, viewsets, and migrations
+│   │   ├── migrations/     # Database migration schema
+│   │   ├── models.py       # Resume database models
+│   │   ├── serializers.py  # Django REST serialization maps
+│   │   ├── urls.py         # Endpoint routes
+│   │   └── views.py        # Resume parsing & scoring logic
+│   ├── resumes/            # Storage path for processed resumes
+│   ├── requirements.txt    # Python dependencies list
+│   └── manage.py           # Django command utility
 │
 └── README.md
 ```
 
 ---
 
-## 🚀 Installation & Setup
+## Installation & Setup
 
-### 1️⃣ Clone the repository
+### Prerequisites
 
-```
-git clone https://github.com/Muskankr/ai-resume-analyzer.git
-cd ai-resume-analyzer
+Ensure you have the following packages installed on your local development machine:
+- **Node.js** (v18 or higher)
+- **Python** (v3.10 or higher)
+- **Git**
+
+---
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/Muskankr/AI-Resume-Analyzer.git
 ```
 
 ---
 
-### 2️⃣ Backend Setup (Django)
+### Server Setup (Django)
 
-```
-cd backend
+We recommend installing dependencies inside a secure Python virtual environment:
+
+```bash
+# Navigate to server directory
+cd server
+
+# Initialize a virtual environment
+python -m venv venv
+
+# Activate the virtual environment
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
+
+# Execute database migrations
+python manage.py migrate
+
+# Spin up Django development server
 python manage.py runserver
 ```
-
-Backend runs at:
-
-```
-http://127.0.0.1:8000
-```
+The API server starts on: `http://127.0.0.1:8000/`
 
 ---
 
-### 3️⃣ Frontend Setup (React)
+### Client Setup (React)
 
-```
-cd frontend
+```bash
+# Open a new terminal instance and navigate to client directory
+cd client
+
+# Install packages
 npm install
+
+# Run the local Vite web server
 npm run dev
 ```
+The client application will run at: `http://localhost:5173/`
 
-Frontend runs at:
+---
 
-```
-http://localhost:5173
+## API Reference
+
+### Parse Resume File
+
+Validates and parses an uploaded resume, matches standard technical keywords, calculates scores, and returns suggestions.
+
+- **Endpoint:** `/api/upload/`
+- **Method:** `POST`
+- **Payload Format:** `multipart/form-data`
+
+#### Parameters
+| Name | Type | Required | Description |
+| :--- | :--- | :---: | :--- |
+| `file` | `binary (PDF)` | **Yes** | The document to analyze |
+
+#### Sample Success JSON Response (`200 OK`)
+```json
+{
+  "score": 80,
+  "skills_found": [
+    "python",
+    "django",
+    "react",
+    "git"
+  ],
+  "suggestions": [
+    "Mention Django experience",
+    "Add frontend skills like React"
+  ]
+}
 ```
 
 ---
 
-## 📊 Example Output
+## Roadmap
 
-After uploading a resume, the system provides:
-
-* **ATS Resume Score** (0–100)
-* **Detected Skills**
-* **Suggestions to improve the resume**
-
-Example:
-
-```
-ATS Resume Score: 82%
-
-Skills Found:
-Python | Django | React | SQL | Git
-
-Suggestions:
-• Add more quantified achievements
-• Mention internship experience
-• Include more technical projects
-```
+- [ ] **DOCX Document Parsing** — Integrate `python-docx` to support Word resume parser pipelines.
+- [ ] **Dark Mode Toggle** — Implement user-theme selections with CSS theme tokens persisted in `localStorage`.
+- [ ] **Target Job Role Comparison** — Match resume skill outputs directly against selectable target job roles.
+- [ ] **Persistent User Dashboard** — Save and render a timeline history of past scores using client-side indexing.
+- [ ] **Upload Interactive States** — Dash borders and overlay drop indicators to make file uploads feel extremely natural.
 
 ---
 
+## Contributing
 
-If you like this project, consider giving it a **star ⭐ on GitHub**!
+We welcome contributions of all levels under the **ECSoC'26** program!
+
+1. **Fork** the repository on GitHub.
+2. Clone your fork and create a checkout branch:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+3. Commit your changes with standard semantic commit messages (e.g. `feat: ...`, `fix: ...`).
+4. Push changes to your fork and create a **Pull Request (PR)** targeting the upstream `main` branch.
+
+Please review active issues before creating duplicates, and always link open issues to your Pull Request!
+
+---
+
+## Contributors
+
+### Maintainer
+- **Muskan Kumari** ([@Muskankr](https://github.com/Muskankr)) — Project Creator & Lead Maintainer
+
+### Active Contributors Grid
+A huge thanks to all the developers who have contributed code, fixed bugs, and improved documentation!
+
+<a href="https://github.com/Muskankr/AI-Resume-Analyzer/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Muskankr/AI-Resume-Analyzer" alt="Contributors Avatars Grid" style="border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); padding: 5px; background: rgba(255, 255, 255, 0.03);"/>
+</a>
+
+---
+
+<div align="center">
+  Show your support by leaving a ⭐ on this repository!
+</div>
