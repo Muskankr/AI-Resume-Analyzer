@@ -9,17 +9,48 @@ function App() {
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
+
   // --- ISSUE #5 SKILL GAP STATE VARIABLES ---
   const [selectedRole, setSelectedRole] = useState<string>("Frontend Developer");
   const [matchedSkills, setMatchedSkills] = useState<string[]>([]);
   const [missingSkills, setMissingSkills] = useState<string[]>([]);
   const [analysisPerformedFor, setAnalysisPerformedFor] = useState<string | null>(null);
 
+  
+  // New states for clean inline and banner error handling
+  const [inlineError, setInlineError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInlineError(null); // Clear previous errors
+    setApiError(null);
+
+    if (e.target.files && e.target.files[0]) {
+      const selectedFile = e.target.files[0];
+
+      // Acceptance Criteria: Non-PDF files show a clear inline error before upload
+      if (selectedFile.type !== "application/pdf") {
+        setInlineError("⚠️ Only PDF files are supported. Please select a valid PDF.");
+        setFile(null); // Clear invalid file from state
+        return;
+      }
+
+      setFile(selectedFile);
+    }
+  };
+
+
   const uploadResume = async () => {
     if (!file) {
-      alert("Please upload resume");
+      setInlineError("⚠️ Please upload a resume first.");
       return;
     }
+
+
+
+    // Reset API errors before initiating a new call
+    setApiError(null);
+
 
     try {
       setLoading(true);   
@@ -43,10 +74,24 @@ function App() {
       setMissingSkills(res.data.missing_skills || []);
       setAnalysisPerformedFor(res.data.target_role || selectedRole);
 
+
       setLoading(false);   
     } catch (error) {
+
+    } catch (error: any) {
+
       console.error(error);
-      alert("Upload failed");
+      
+      // Acceptance Criteria: Failed API calls show a banner with a readable message
+      if (!window.navigator.onLine) {
+        setApiError("🔌 Network Error: Please check your internet connection.");
+      } else if (error.response) {
+        setApiError(`❌ Server Error (${error.response.status}): Failed to analyze resume.`);
+      } else {
+        setApiError("⚠️ Could not reach the server. Make sure your backend service is running.");
+      }
+    } finally {
+      // Acceptance Criteria: Errors don't crash the app or leave it stuck loading
       setLoading(false);   
     }
   };
@@ -56,20 +101,37 @@ function App() {
       <div className="main-card text-center">
         <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
         
+
+
+        {/* API Error Banner Notification */}
+        {apiError && (
+          <div className="error-banner mb-3" style={{
+            backgroundColor: "#fee2e2",
+            color: "#dc2626",
+            padding: "12px",
+            borderRadius: "8px",
+            border: "1px solid #fca5a5",
+            fontSize: "14px",
+            fontWeight: "500",
+            textAlign: "left"
+          }}>
+            {apiError}
+          </div>
+        )}
+
+
         <div className="upload-box mb-3">
           <input
             type="file"
             id="fileUpload"
+            accept=".pdf" // Restricts native picker view to PDFs
             hidden
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              if (e.target.files) {
-                setFile(e.target.files[0]);
-              }
-            }}
+            onChange={handleFileChange}
           />
           <label htmlFor="fileUpload" className="upload-label">
             📄 {file ? file.name : "Drag & Drop Resume or Click to Upload"}
           </label>
+
         </div>
 
         {/* Issue #5: Dropdown UI to pick a role before analysis */}
@@ -97,12 +159,32 @@ function App() {
         </div>
 
         <button className="analyze-btn" onClick={uploadResume}>
+
+        </div>
+
+        {/* Inline Error Message for File Type Validation */}
+        {inlineError && (
+          <p className="error-text mb-3" style={{ color: "#dc2626", fontSize: "14px", fontWeight: "500" }}>
+            {inlineError}
+          </p>
+        )}
+
+        <button
+          className="analyze-btn"
+          onClick={uploadResume}
+          disabled={loading} // Prevent multiple clicks while uploading
+        >
+
           {loading ? "⏳ Analyzing..." : "🚀 Analyze Resume"}
         </button>
 
         {score !== null && (
           <>
+
             {/* SCORE METER - Restored perfectly to your original version */}
+
+            {/* SCORE METER */}
+
             <div className="score-section">
               <div
                 className="score-circle mb-3"
@@ -126,6 +208,7 @@ function App() {
                 </span>
               ))}
             </div>
+
 
             {/* Issue #5: Display Comparison Panels */}
             {analysisPerformedFor && (
@@ -161,6 +244,8 @@ function App() {
                 </div>
               </div>
             )}
+
+
 
             {/* SUGGESTIONS */}
             <div className="suggestion-box">
