@@ -59,6 +59,9 @@ This project helps students and job seekers understand how well their resume per
 ai-resume-analyzer
 │
 ├── frontend
+│   ├── public
+│   │   ├── favicin.png
+│   │   ├── icons.svg
 │   ├── src
 │   │   ├── App.tsx
 │   │   ├── index.css
