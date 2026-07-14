@@ -9,6 +9,8 @@ function App() {
   const [score, setScore] = useState<number | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  
+  // Issue #3: Clipboard copy state tracking
   const [copied, setCopied] = useState(false);
 
   const uploadResume = async () => {
@@ -51,24 +53,20 @@ function App() {
         console.error("Failed to copy text: ", err);
       });
   };
+
+  // Issue #3: Format list items to plain text clipboard list
   const copySuggestionsToClipboard = () => {
-  if (suggestions.length === 0) return;
-
-  // Formats the suggestions array cleanly with bullet points
-  const plainTextSuggestions = suggestions
-    .map((s) => `• ${s}`)
-    .join("\n");
-
-  navigator.clipboard.writeText(plainTextSuggestions)
-    .then(() => {
-      setCopied(true);
-      // Acceptance Criteria: Brief "Copied!" confirmation shown after click
-      setTimeout(() => setCopied(false), 2000); 
-    })
-    .catch((err) => {
-      console.error("Failed to copy text: ", err);
-    });
-};
+    if (suggestions.length === 0) return;
+    const plainTextSuggestions = suggestions.map((s) => `• ${s}`).join("\n");
+    navigator.clipboard.writeText(plainTextSuggestions)
+      .then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      })
+      .catch((err) => {
+        console.error("Failed to copy text: ", err);
+      });
+  };
 
   return (
     <div className="container mt-5">
@@ -98,72 +96,60 @@ function App() {
         {score !== null && (
           <>
             {/* SCORE METER */}
-
             <div className="score-section">
-
               <div
                 className="score-circle mb-3"
                 style={{ "--score": `${score * 3.6}deg` } as React.CSSProperties}
               >
                 {score}%
               </div>
-
               <h3>ATS Resume Score</h3>
-
               <h5 className="analysis-done">
                 ✅ Resume Analysis Complete
               </h5>
-
             </div>
 
             {/* SKILLS */}
-
             <div className="mt-4">
-
               <h4>Skills Found</h4>
-
               {skills.length === 0 && <p>No skills detected</p>}
-
               {skills.map((skill: string, i: number) => (
                 <span key={i} className="skill-badge">
                   {skill}
                 </span>
               ))}
-
             </div>
 
-          {/* SUGGESTIONS */}
-<div className="suggestion-box" style={{ position: "relative" }}>
-  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-    <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
-    
-    {suggestions.length > 0 && (
-      <button
-        onClick={copySuggestionsToClipboard}
-        style={{
-          backgroundColor: copied ? "#22c55e" : "#3b82f6",
-          color: "white",
-          border: "none",
-          padding: "6px 12px",
-          borderRadius: "6px",
-          fontSize: "12px",
-          fontWeight: "6px",
-          cursor: "pointer",
-          transition: "background-color 0.2s ease"
-        }}
-      >
-        {copied ? "✅ Copied!" : "📋 Copy Suggestions"}
-      </button>
-    )}
-  </div>
+            {/* SUGGESTIONS WITH COPY BUTTON */}
+            <div className="suggestion-box">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
+                {suggestions.length > 0 && (
+                  <button
+                    onClick={copySuggestionsToClipboard}
+                    style={{
+                      backgroundColor: copied ? "#22c55e" : "#3b82f6",
+                      color: "white",
+                      border: "none",
+                      padding: "6px 12px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      transition: "background-color 0.2s ease"
+                    }}
+                  >
+                    {copied ? "✅ Copied!" : "📋 Copy Suggestions"}
+                  </button>
+                )}
+              </div>
 
-  {suggestions.map((s, i) => (
-    <div key={i} className="suggestion-item">
-      📌 {s}
-    </div>
-  ))}
-</div> 
-
+              {suggestions.map((s, i) => (
+                <div key={i} className="suggestion-item">
+                  📌 {s}
+                </div>
+              ))}
+            </div>
           </>
         )}
 
