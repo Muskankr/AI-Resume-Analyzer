@@ -1,9 +1,25 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import "./index.css";
-import { AtsScore } from "./AtsScore"; 
+import { AtsScore } from "./AtsScore";
+
+type Theme = "light" | "dark";
+
+function getInitialTheme(): Theme {
+  try {
+    const saved = localStorage.getItem("theme");
+    if (saved === "light" || saved === "dark") return saved;
+    if (typeof window !== "undefined" && window.matchMedia) {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+    }
+  } catch {
+    // localStorage / matchMedia can throw in restricted privacy modes
+  }
+  return "light";
+}
 
 function App() {
+  const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [score, setScore] = useState<number | null>(null);
@@ -16,6 +32,19 @@ function App() {
   const [missingSkills, setMissingSkills] = useState<string[]>([]);
   const [showAllSkills, setShowAllSkills] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.setAttribute("data-theme", theme);
+    try {
+      localStorage.setItem("theme", theme);
+    } catch {
+      // persistence is best-effort; ignore if storage is unavailable
+    }
+  }, [theme]);
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
 
   const uploadResume = async () => {
     if (!file) {
@@ -61,8 +90,18 @@ function App() {
   return (
     <div className="container mt-5">
       <div className="main-card text-center">
+        <button
+          type="button"
+          className="theme-toggle-btn"
+          onClick={toggleTheme}
+          aria-label="Toggle theme"
+          aria-pressed={theme === "dark"}
+        >
+          {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
+        </button>
+
         <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
-        
+
         {/* Role Selector Dropdown */}
         <div className="mb-4">
           <label htmlFor="roleSelect" style={{ marginRight: "10px", fontWeight: "600", color: "#fff" }}>
