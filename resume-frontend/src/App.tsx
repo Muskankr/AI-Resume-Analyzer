@@ -16,6 +16,8 @@ function App() {
   const [matchedSkills, setMatchedSkills] = useState<string[]>([]);
   const [missingSkills, setMissingSkills] = useState<string[]>([]);
   const [showAllSkills, setShowAllSkills] = useState(false);
+  
+  // FIX: Removed the duplicate 'copied' state declaration from here
   const [copied, setCopied] = useState(false);
 
   const uploadResume = async () => {
@@ -172,7 +174,8 @@ function App() {
                       borderRadius: "6px",
                       fontSize: "12px",
                       fontWeight: "600",
-                      cursor: "pointer"
+                      cursor: "pointer",
+                      transition: "background-color 0.2s ease"
                     }}
                   >
                     {copied ? "✅ Copied!" : "📋 Copy Suggestions"}
