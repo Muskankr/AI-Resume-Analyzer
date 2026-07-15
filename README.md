@@ -28,7 +28,7 @@
 
 ## Key Features
 
-- **Flexible Multi-Format Parsing** — Instant text extraction from files (PDF format) using Python `pdfplumber`.
+- **Flexible Multi-Format Parsing** — Instant text extraction from PDF resumes (`pdfplumber`) and Word `.docx` resumes (`python-docx`), all fed through the same     downstream analysis pipeline.
 - **ATS Optimizer & Scoring Engine** — High-performance scoring algorithm that parses resumes against technical standard keywords.
 - **Contextual Skill Extraction** — Detects core programming languages, frameworks, developer tools, database engines, and libraries.
 - **Dynamic Feedback Generation** — Yields smart suggestions recommending targeted certifications, technologies, and formatting changes.
@@ -55,7 +55,7 @@
                                                              │
                                                              ▼
                                                     ┌─────────────────┐
-                                                    │  PDFPlumber Parser│
+                                                    │ PDF / DOCX Parser│
                                                     └─────────────────┘
                                                              │
                                                              ▼
@@ -79,7 +79,7 @@
 * **Framework**: Django REST Framework (DRF)
 * **Language**: Python 3.10+
 * **CORS Management**: django-cors-headers
-* **Text Extractor**: PDFPlumber
+* **Text Extractors**: PDFPlumber (PDF) + python-docx (DOCX)
 
 ---
 
@@ -264,7 +264,7 @@ When the limit is exceeded, the API returns:
 
 ## Roadmap
 
-- [ ] **DOCX Document Parsing** — Integrate `python-docx` to support Word resume parser pipelines.
+- [x] **DOCX Document Parsing** — Integrate `python-docx` to support Word resume parser pipelines. #29
 - [ ] **Dark Mode Toggle** — Implement user-theme selections with CSS theme tokens persisted in `localStorage`.
 - [ ] **Target Job Role Comparison** — Match resume skill outputs directly against selectable target job roles.
 - [ ] **Persistent User Dashboard** — Save and render a timeline history of past scores using client-side indexing.
