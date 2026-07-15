@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import "./index.css";
 import { AtsScore } from "./AtsScore";
+import { useAnalysisHistory, type AnalysisEntry } from "./hooks/useAnalysisHistory";
+import { HistorySidebar } from "./HistorySidebar";
 
 type Theme = "light" | "dark";
 
@@ -32,6 +34,11 @@ function App() {
   const [missingSkills, setMissingSkills] = useState<string[]>([]);
   const [showAllSkills, setShowAllSkills] = useState(false);
   const [copied, setCopied] = useState(false);
+
+  // History
+  const { entries, addEntry, deleteEntry, clearHistory } = useAnalysisHistory();
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [activeFileName, setActiveFileName] = useState("");
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
@@ -69,9 +76,22 @@ function App() {
       setSuggestions(res.data.suggestions);
       setMatchedSkills(res.data.matched_skills || []);
       setMissingSkills(res.data.missing_skills || []);
+      setActiveFileName(file.name);
+
+      // Save to history
+      addEntry({
+        score: res.data.score,
+        skills: res.data.skills_found,
+        suggestions: res.data.suggestions,
+        matchedSkills: res.data.matched_skills || [],
+        missingSkills: res.data.missing_skills || [],
+        targetRole,
+        fileName: file.name,
+      });
+
       setLoading(false);   
     } catch (error) {
-      console.error(error);
+      console.error("Upload failed:", error instanceof Error ? error.message : "Unknown error");
       alert("Upload failed");
       setLoading(false);   
     }
@@ -88,8 +108,30 @@ function App() {
       .catch((err) => console.error("Failed to copy text: ", err));
   };
 
+  const selectHistoryEntry = (entry: AnalysisEntry) => {
+    setScore(entry.score);
+    setSkills(entry.skills);
+    setSuggestions(entry.suggestions);
+    setMatchedSkills(entry.matchedSkills);
+    setMissingSkills(entry.missingSkills);
+    setTargetRole(entry.targetRole);
+    setActiveFileName(entry.fileName);
+    setShowAllSkills(false);
+    setCopied(false);
+    setHistoryOpen(false);
+  };
+
   return (
-    <div className="container mt-5">
+    <>
+      <HistorySidebar
+        entries={entries}
+        onSelect={selectHistoryEntry}
+        onDelete={deleteEntry}
+        onClear={clearHistory}
+        isOpen={historyOpen}
+        onToggle={() => setHistoryOpen((v) => !v)}
+      />
+      <div className="container mt-5">
       <div className="main-card text-center">
         <button
           type="button"
@@ -145,6 +187,9 @@ function App() {
             <h5 className="analysis-done">
               ✅ Resume Analysis Complete
             </h5>
+            {activeFileName && (
+              <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px" }}>📄 {activeFileName}</p>
+            )}
 
             {/* SKILLS CONTAINER */}
             <div className="mt-4">
@@ -226,6 +271,7 @@ function App() {
         )}
       </div>
     </div>
+    </>
   );
 }
 
