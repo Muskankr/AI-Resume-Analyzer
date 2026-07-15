@@ -9,6 +9,21 @@ import { AuthModal } from "./AuthModal";
 import { Footer } from "./Footer";
 
 type Theme = "light" | "dark";
+type AppMode = "single" | "jd";
+
+// ---------------------------------------------------------------------------
+// Type mirroring the backend's /api/jd-match/ response shape
+// (server/analyzer/views.py). Kept in sync so the JD-match view can safely
+// index into the API response.
+// ---------------------------------------------------------------------------
+interface JdMatchResponse {
+  match_percent: number;
+  matched_keywords: string[];
+  missing_keywords: string[];
+  resume_skills_detected: string[];
+  jd_keyword_count: number;
+  file_name: string;
+}
 
 // ---------------------------------------------------------------------------
 // Feature detection for the Drag-and-Drop API. Older browsers (and some
@@ -39,6 +54,7 @@ function getInitialTheme(): Theme {
 
 function App() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const [mode, setMode] = useState<AppMode>("single");
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [score, setScore] = useState<number | null>(null);
@@ -51,10 +67,14 @@ function App() {
   const [missingSkills, setMissingSkills] = useState<string[]>([]);
   const [showAllSkills, setShowAllSkills] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [analysisSource, setAnalysisSource] = useState<"sample" | "upload" | null>(null);
+  const [analysisSource, setAnalysisSource] = useState<"sample" | "upload" | "jd" | null>(null);
 
   // Drag-and-drop highlight state (issue #20 acceptance #1)
   const [isDragActive, setIsDragActive] = useState(false);
+
+  // --- JD-match mode state (issue #18) -----------------------------------
+  const [jdText, setJdText] = useState("");
+  const [jdMatch, setJdMatch] = useState<JdMatchResponse | null>(null);
 
   // Auth
   const { user, signup, login, logout } = useAuth();
@@ -253,6 +273,55 @@ function App() {
     }
   };
 
+  // --- JD-match analysis flow (issue #18) ---------------------------------
+  const runJdMatch = async () => {
+    if (!file) {
+      alert("Please upload a resume first.");
+      return;
+    }
+    if (!jdText.trim()) {
+      alert("Please paste the job description text.");
+      return;
+    }
+    try {
+      setLoading(true);
+      setAnalysisSource("jd");
+      setJdMatch(null);
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("jd", jdText);
+
+      const headers = user ? { Authorization: `Bearer ${user.token}` } : {};
+      const res = await axios.post<JdMatchResponse>(`${backendUrl}/api/jd-match/`, formData, { headers });
+      setJdMatch(res.data);
+      setActiveFileName(res.data.file_name);
+
+      // Refresh DB history for authenticated users (the backend persists the
+      // JD match as a regular ResumeAnalysis row with target_role="JD Match").
+      if (user) {
+        fetchDbHistory(user.token);
+      } else {
+        // Anonymous history entry so the user can revisit the result.
+        addEntry({
+          score: res.data.match_percent,
+          skills: res.data.resume_skills_detected,
+          suggestions: res.data.missing_keywords.slice(0, 10).map((k) => `Add JD keyword: ${k}`),
+          matchedSkills: res.data.matched_keywords,
+          missingSkills: res.data.missing_keywords,
+          targetRole: "JD Match",
+          fileName: res.data.file_name,
+        });
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("JD match failed:", error);
+      alert("JD match failed");
+      setLoading(false);
+    }
+  };
+
   const copySuggestionsToClipboard = () => {
     if (suggestions.length === 0) return;
     const plainTextSuggestions = suggestions.map((s: string) => `• ${s}`).join("\n");
@@ -285,6 +354,17 @@ function App() {
     : file
       ? `📄 ${file.name}`
       : "Drag & Drop Resume or Click to Upload";
+
+  // Helper to render the match-percent circle's color based on score.
+  // Reused by AtsScore but we also want to color the headline label.
+  const matchTone =
+    jdMatch === null
+      ? "neutral"
+      : jdMatch.match_percent >= 70
+        ? "good"
+        : jdMatch.match_percent >= 40
+          ? "mid"
+          : "low";
 
   return (
     <>
@@ -330,22 +410,48 @@ function App() {
 
         <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
 
-        {/* Role Selector Dropdown */}
-        <div className="mb-4">
-          <label htmlFor="roleSelect" style={{ marginRight: "10px", fontWeight: "600", color: "#fff" }}>
-            Target Career Track:
-          </label>
-          <select
-            id="roleSelect"
-            value={targetRole}
-            onChange={(e) => setTargetRole(e.target.value)}
-            style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #ccc" }}
+        {/* Mode toggle — Single vs JD Match (issue #18) */}
+        <div className="mode-toggle mb-4" role="tablist" aria-label="Analyzer mode">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "single"}
+            className={`mode-toggle__btn${mode === "single" ? " is-active" : ""}`}
+            onClick={() => setMode("single")}
           >
-            <option value="Frontend Developer">Frontend Developer</option>
-            <option value="Backend Developer">Backend Developer</option>
-            <option value="Data Analyst">Data Analyst</option>
-          </select>
+            📄 Single Resume
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={mode === "jd"}
+            className={`mode-toggle__btn${mode === "jd" ? " is-active" : ""}`}
+            onClick={() => setMode("jd")}
+          >
+            🎯 Match Against Job Description
+          </button>
         </div>
+
+        {/* Role Selector Dropdown (single-mode only — JD mode derives its
+            "required keywords" from the JD itself, so a generic role is
+            not relevant). */}
+        {mode === "single" && (
+          <div className="mb-4">
+            <label htmlFor="roleSelect" style={{ marginRight: "10px", fontWeight: "600", color: "#fff" }}>
+              Target Career Track:
+            </label>
+            <select
+              id="roleSelect"
+              value={targetRole}
+              onChange={(e) => setTargetRole(e.target.value)}
+              style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #ccc" }}
+            >
+              <option value="Frontend Developer">Frontend Developer</option>
+              <option value="Backend Developer">Backend Developer</option>
+              <option value="Data Analyst">Data Analyst</option>
+            </select>
+          </div>
+        )}
 
         {/* ----------------------------------------------------------------- */}
         {/* Upload zone — supports BOTH click-to-upload (label→input) and     */}
@@ -383,105 +489,222 @@ function App() {
           </label>
         </div>
 
-        <div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
-          <button
-            className="analyze-btn"
-            onClick={uploadResume}
-            disabled={loading}
-          >
-            {loading && analysisSource === "upload" ? "⏳ Analyzing..." : "🚀 Analyze Resume"}
-          </button>
-          <button
-            className="secondary-btn"
-            onClick={handleSampleResume}
-            disabled={loading}
-            type="button"
-          >
-            {loading && analysisSource === "sample" ? "⏳ Loading Sample..." : "Try Sample Resume"}
-          </button>
-        </div>
-        <button type="button" className="app-btn analyze-btn" onClick={uploadResume} disabled={loading}>
-          {loading ? "⏳ Analyzing..." : "🚀 Analyze Resume"}
-        </button>
-
-        {score !== null && (
+        {mode === "single" && (
           <>
-            {analysisSource === "sample" && (
-              <div className="sample-notice-banner mb-4">
-                <span>ℹ️ Viewing Sample Resume Analysis</span>
-                <span style={{ fontWeight: "normal", fontSize: "13px" }}>
-                  — This analysis is based on a bundled sample resume.
-                </span>
-              </div>
-            )}
-
-            <AtsScore score={score} />
-
-            <h5 className="analysis-done">
-              ✅ Resume Analysis Complete
-            </h5>
-            {activeFileName && (
-              <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px" }}>📄 {activeFileName}</p>
-            )}
-
-            {/* SKILLS CONTAINER */}
-            <div className="mt-4">
-              <h4>Skills Found ({skills.length})</h4>
-              {skills.length === 0 && <p>No skills detected</p>}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
-                {(showAllSkills ? skills : skills.slice(0, 15)).map((skill: string, i: number) => (
-                  <span key={i} className="skill-badge">{skill}</span>
-                ))}
-              </div>
-              {skills.length > 15 && (
-                <button
-                  type="button"
-                  className="app-btn app-btn--secondary"
-                  style={{ marginTop: "16px" }}
-                  onClick={() => setShowAllSkills(!showAllSkills)}
-                >
-                  {showAllSkills ? "Show Less ▲" : `Show More (${skills.length - 15} more) ▼`}
-                </button>
-              )}
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
+              <button
+                className="analyze-btn"
+                onClick={uploadResume}
+                disabled={loading}
+              >
+                {loading && analysisSource === "upload" ? "⏳ Analyzing..." : "🚀 Analyze Resume"}
+              </button>
+              <button
+                className="secondary-btn"
+                onClick={handleSampleResume}
+                disabled={loading}
+                type="button"
+              >
+                {loading && analysisSource === "sample" ? "⏳ Loading Sample..." : "Try Sample Resume"}
+              </button>
             </div>
+            <button type="button" className="app-btn analyze-btn" onClick={uploadResume} disabled={loading}>
+              {loading ? "⏳ Analyzing..." : "🚀 Analyze Resume"}
+            </button>
 
-            {/* SKILL GAP MATRIX */}
-            <div className="mt-4 p-3" style={{ background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
-              <h4>🎯 Skill Gap Matrix ({targetRole})</h4>
-              <div style={{ display: "flex", justifyContent: "space-around", marginTop: "12px" }}>
-                <div>
-                  <h6 style={{ color: "#22c55e" }}>Matched Skills</h6>
-                  {matchedSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : matchedSkills.map((s: string, i: number) => (
-                    <span key={i} className="badge bg-success m-1" style={{ display: "inline-block", padding: "4px 8px", background: "#22c55e", borderRadius: "4px", margin: "2px", color: "#fff" }}>{s}</span>
-                  ))}
-                </div>
-                <div>
-                  <h6 style={{ color: "#ef4444" }}>Missing Skills</h6>
-                  {missingSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : missingSkills.map((s: string, i: number) => (
-                    <span key={i} className="badge bg-danger m-1" style={{ display: "inline-block", padding: "4px 8px", background: "#ef4444", borderRadius: "4px", margin: "2px", color: "#fff" }}>{s}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* SUGGESTIONS BOX WITH THE UTILITY BUTTON */}
-            <div className="suggestion-box mt-4">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
-                {suggestions.length > 0 && (
-                  <button
-                    type="button"
-                    className={`app-btn app-btn--accent${copied ? " is-success" : ""}`}
-                    onClick={copySuggestionsToClipboard}
-                  >
-                    {copied ? "✅ Copied!" : "📋 Copy Suggestions"}
-                  </button>
+            {score !== null && (
+              <>
+                {analysisSource === "sample" && (
+                  <div className="sample-notice-banner mb-4">
+                    <span>ℹ️ Viewing Sample Resume Analysis</span>
+                    <span style={{ fontWeight: "normal", fontSize: "13px" }}>
+                      — This analysis is based on a bundled sample resume.
+                    </span>
+                  </div>
                 )}
+
+                <AtsScore score={score} />
+
+                <h5 className="analysis-done">
+                  ✅ Resume Analysis Complete
+                </h5>
+                {activeFileName && (
+                  <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px" }}>📄 {activeFileName}</p>
+                )}
+
+                {/* SKILLS CONTAINER */}
+                <div className="mt-4">
+                  <h4>Skills Found ({skills.length})</h4>
+                  {skills.length === 0 && <p>No skills detected</p>}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
+                    {(showAllSkills ? skills : skills.slice(0, 15)).map((skill: string, i: number) => (
+                      <span key={i} className="skill-badge">{skill}</span>
+                    ))}
+                  </div>
+                  {skills.length > 15 && (
+                    <button
+                      type="button"
+                      className="app-btn app-btn--secondary"
+                      style={{ marginTop: "16px" }}
+                      onClick={() => setShowAllSkills(!showAllSkills)}
+                    >
+                      {showAllSkills ? "Show Less ▲" : `Show More (${skills.length - 15} more) ▼`}
+                    </button>
+                  )}
+                </div>
+
+                {/* SKILL GAP MATRIX */}
+                <div className="mt-4 p-3" style={{ background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
+                  <h4>🎯 Skill Gap Matrix ({targetRole})</h4>
+                  <div style={{ display: "flex", justifyContent: "space-around", marginTop: "12px" }}>
+                    <div>
+                      <h6 style={{ color: "#22c55e" }}>Matched Skills</h6>
+                      {matchedSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : matchedSkills.map((s: string, i: number) => (
+                        <span key={i} className="badge bg-success m-1" style={{ display: "inline-block", padding: "4px 8px", background: "#22c55e", borderRadius: "4px", margin: "2px", color: "#fff" }}>{s}</span>
+                      ))}
+                    </div>
+                    <div>
+                      <h6 style={{ color: "#ef4444" }}>Missing Skills</h6>
+                      {missingSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : missingSkills.map((s: string, i: number) => (
+                        <span key={i} className="badge bg-danger m-1" style={{ display: "inline-block", padding: "4px 8px", background: "#ef4444", borderRadius: "4px", margin: "2px", color: "#fff" }}>{s}</span>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* SUGGESTIONS BOX WITH THE UTILITY BUTTON */}
+                <div className="suggestion-box mt-4">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                    <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
+                    {suggestions.length > 0 && (
+                      <button
+                        type="button"
+                        className={`app-btn app-btn--accent${copied ? " is-success" : ""}`}
+                        onClick={copySuggestionsToClipboard}
+                      >
+                        {copied ? "✅ Copied!" : "📋 Copy Suggestions"}
+                      </button>
+                    )}
+                  </div>
+                  {suggestions.map((s: string, i: number) => (
+                    <div key={i} className="suggestion-item">📌 {s}</div>
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        {mode === "jd" && (
+          <>
+            {/* JD paste form (issue #18 acceptance #3 — frontend form) */}
+            <div className="jd-form mb-3">
+              <label htmlFor="jdText" className="jd-form__label">
+                📋 Paste Job Description:
+              </label>
+              <textarea
+                id="jdText"
+                className="jd-form__textarea"
+                value={jdText}
+                onChange={(e) => setJdText(e.target.value)}
+                placeholder="Paste the full job description here. The analyzer will extract required keywords and check which ones your resume covers."
+                rows={10}
+                disabled={loading}
+                aria-label="Job description text input"
+              />
+              <div className="jd-form__meta">
+                {jdText.trim().length > 0
+                  ? `${jdText.trim().length} characters pasted`
+                  : "No JD pasted yet"}
               </div>
-              {suggestions.map((s: string, i: number) => (
-                <div key={i} className="suggestion-item">📌 {s}</div>
-              ))}
             </div>
+
+            <div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
+              <button
+                className="analyze-btn"
+                onClick={runJdMatch}
+                disabled={loading || !file || !jdText.trim()}
+              >
+                {loading && analysisSource === "jd" ? "⏳ Matching..." : "🎯 Match Against JD"}
+              </button>
+              <button
+                className="secondary-btn"
+                type="button"
+                onClick={() => {
+                  setJdMatch(null);
+                  setJdText("");
+                }}
+                disabled={loading}
+              >
+                Clear
+              </button>
+            </div>
+
+            {jdMatch && (
+              <>
+                {/* Match-percent headline + score circle (issue #18 acceptance #2) */}
+                <div className={`jd-match-summary jd-match-summary--${matchTone} mb-4`}>
+                  <h4 style={{ margin: 0 }}>
+                    {matchTone === "good" && "🎉 Strong Match"}
+                    {matchTone === "mid" && "🟡 Partial Match"}
+                    {matchTone === "low" && "🔴 Weak Match"}
+                  </h4>
+                  <p className="jd-match-summary__percent">{jdMatch.match_percent}%</p>
+                  <p className="jd-match-summary__sub">
+                    {jdMatch.matched_keywords.length} of {jdMatch.jd_keyword_count} JD keywords found in your resume
+                  </p>
+                </div>
+
+                <AtsScore score={jdMatch.match_percent} />
+                <h5 className="analysis-done">✅ JD Match Complete</h5>
+                {activeFileName && (
+                  <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px" }}>📄 {activeFileName}</p>
+                )}
+
+                {/* Matched vs Missing keywords (issue #18 acceptance #2) */}
+                <div className="jd-keywords mt-4">
+                  <div className="jd-keywords__row">
+                    <div className="jd-keywords__col jd-keywords__col--matched">
+                      <h6>✅ In Your Resume ({jdMatch.matched_keywords.length})</h6>
+                      {jdMatch.matched_keywords.length === 0 ? (
+                        <p style={{ fontSize: "12px" }}>None</p>
+                      ) : (
+                        <div className="jd-keywords__list">
+                          {jdMatch.matched_keywords.map((k, i) => (
+                            <span key={i} className="skill-badge skill-badge--matched">{k}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="jd-keywords__col jd-keywords__col--missing">
+                      <h6>❌ Missing From Your Resume ({jdMatch.missing_keywords.length})</h6>
+                      {jdMatch.missing_keywords.length === 0 ? (
+                        <p style={{ fontSize: "12px" }}>None — great match!</p>
+                      ) : (
+                        <div className="jd-keywords__list">
+                          {jdMatch.missing_keywords.map((k, i) => (
+                            <span key={i} className="skill-badge skill-badge--missing">{k}</span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Resume skills detected (reuses the curated skill list so the
+                    user can compare their general skill coverage against the
+                    JD-specific match). */}
+                <div className="mt-4">
+                  <h4>Skills Detected in Your Resume ({jdMatch.resume_skills_detected.length})</h4>
+                  {jdMatch.resume_skills_detected.length === 0 && <p>No skills detected</p>}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
+                    {jdMatch.resume_skills_detected.map((skill: string, i: number) => (
+                      <span key={i} className="skill-badge">{skill}</span>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </>
         )}
       </div>
