@@ -10,6 +10,22 @@ import { Footer } from "./Footer";
 
 type Theme = "light" | "dark";
 
+// Keep this in sync with the backend's SUPPORTED_RESUME_EXTENSIONS list
+// (server/analyzer/views.py). Used for both the file picker filter and
+// pre-upload validation so the user gets immediate feedback instead of
+// waiting for a 400 from the API.
+const SUPPORTED_RESUME_EXTENSIONS = [".pdf", ".docx"];
+const ACCEPTED_FILE_TYPES = ".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
+function getResumeExtension(name: string): string {
+  const dot = name.lastIndexOf(".");
+  return dot === -1 ? "" : name.slice(dot).toLowerCase();
+}
+
+function isSupportedResume(file: File): boolean {
+  return SUPPORTED_RESUME_EXTENSIONS.includes(getResumeExtension(file.name));
+}
+
 function getInitialTheme(): Theme {
   try {
     const saved = localStorage.getItem("theme");
@@ -107,6 +123,24 @@ function App() {
       setSuggestions(res.data.suggestions);
       setMatchedSkills(res.data.matched_skills || []);
       setMissingSkills(res.data.missing_skills || []);
+      setActiveFileName(fileToAnalyze.name);
+
+      // Persist to history for anonymous users (authenticated users get this
+      // server-side via /api/history/, so we just refresh from the DB instead).
+      if (!user) {
+        addEntry({
+          score: res.data.score,
+          skills: res.data.skills_found,
+          suggestions: res.data.suggestions,
+          matchedSkills: res.data.matched_skills || [],
+          missingSkills: res.data.missing_skills || [],
+          targetRole,
+          fileName: fileToAnalyze.name,
+        });
+      } else {
+        fetchDbHistory(user.token);
+      }
+
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -118,6 +152,13 @@ function App() {
   const uploadResume = async () => {
     if (!file) {
       alert("Please upload resume");
+      return;
+    }
+    if (!isSupportedResume(file)) {
+      alert(
+        `Unsupported file type. Please upload a PDF or DOCX resume (${SUPPORTED_RESUME_EXTENSIONS.join(", ")}).`
+      );
+      setFile(null);
       return;
     }
     await runAnalysis(file, "upload");
@@ -135,32 +176,9 @@ function App() {
       const sampleFile = new File([blob], "sample-resume.pdf", { type: "application/pdf" });
       await runAnalysis(sampleFile, "sample");
     } catch (error) {
-      console.error(error);
+      console.error("Could not load sample resume:", error instanceof Error ? error.message : "Unknown error");
       alert("Could not load sample resume");
       setLoading(false);
-      setActiveFileName(file.name);
-
-      // Save to localStorage only for anonymous users (authenticated saves to DB)
-      if (!user) {
-        addEntry({
-          score: res.data.score,
-          skills: res.data.skills_found,
-          suggestions: res.data.suggestions,
-          matchedSkills: res.data.matched_skills || [],
-          missingSkills: res.data.missing_skills || [],
-          targetRole,
-          fileName: file.name,
-        });
-      } else {
-        // Refresh DB history to include the new entry
-        fetchDbHistory(user.token);
-      }
-
-      setLoading(false);   
-    } catch (error) {
-      console.error("Upload failed:", error instanceof Error ? error.message : "Unknown error");
-      alert("Upload failed");
-      setLoading(false);   
     }
   };
 
@@ -253,13 +271,27 @@ function App() {
           <input
             type="file"
             id="fileUpload"
+            accept={ACCEPTED_FILE_TYPES}
             hidden
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              if (e.target.files) setFile(e.target.files[0]);
+              if (e.target.files && e.target.files.length > 0) {
+                const selected = e.target.files[0];
+                if (!isSupportedResume(selected)) {
+                  alert(
+                    `Unsupported file type. Please upload a PDF or DOCX resume (${SUPPORTED_RESUME_EXTENSIONS.join(", ")}).`
+                  );
+                  // Reset the input so the same invalid file can be re-selected
+                  // later without the browser ignoring the change event.
+                  e.target.value = "";
+                  setFile(null);
+                  return;
+                }
+                setFile(selected);
+              }
             }}
           />
           <label htmlFor="fileUpload" className="upload-label">
-            📄 {file ? file.name : "Drag & Drop Resume or Click to Upload"}
+            📄 {file ? file.name : "Drag & Drop Resume (PDF / DOCX) or Click to Upload"}
           </label>
         </div>
 
