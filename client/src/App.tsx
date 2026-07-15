@@ -93,7 +93,7 @@ function App() {
       <div className="main-card text-center">
         <button
           type="button"
-          className="theme-toggle-btn"
+          className="app-btn theme-toggle-btn"
           onClick={toggleTheme}
           aria-label="Toggle theme"
           aria-pressed={theme === "dark"}
@@ -134,7 +134,7 @@ function App() {
           </label>
         </div>
 
-        <button className="analyze-btn" onClick={uploadResume}>
+        <button type="button" className="app-btn analyze-btn" onClick={uploadResume}>
           {loading ? "⏳ Analyzing..." : "🚀 Analyze Resume"}
         </button>
 
@@ -157,19 +157,10 @@ function App() {
               </div>
               {skills.length > 15 && (
                 <button
+                  type="button"
+                  className="app-btn app-btn--secondary"
+                  style={{ marginTop: "16px" }}
                   onClick={() => setShowAllSkills(!showAllSkills)}
-                  style={{
-                    marginTop: "16px",
-                    background: "rgba(255, 255, 255, 0.15)",
-                    color: "#ffffff",
-                    border: "1px solid rgba(255, 255, 255, 0.3)",
-                    padding: "6px 16px",
-                    borderRadius: "20px",
-                    cursor: "pointer",
-                    fontWeight: "600",
-                    fontSize: "13px",
-                    transition: "all 0.2s ease"
-                  }}
                 >
                   {showAllSkills ? "Show Less ▲" : `Show More (${skills.length - 15} more) ▼`}
                 </button>
@@ -201,18 +192,9 @@ function App() {
                 <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
                 {suggestions.length > 0 && (
                   <button
+                    type="button"
+                    className={`app-btn app-btn--accent${copied ? " is-success" : ""}`}
                     onClick={copySuggestionsToClipboard}
-                    style={{
-                      backgroundColor: copied ? "#22c55e" : "#3b82f6",
-                      color: "white",
-                      border: "none",
-                      padding: "6px 12px",
-                      borderRadius: "6px",
-                      fontSize: "12px",
-                      fontWeight: "600",
-                      cursor: "pointer",
-                      transition: "background-color 0.2s ease"
-                    }}
                   >
                     {copied ? "✅ Copied!" : "📋 Copy Suggestions"}
                   </button>
