@@ -40,20 +40,7 @@ def upload_resume(request):
         if skill.lower() in text:
             detected_skills.append(skill)
 
-    score = len(detected_skills) * 10
-    if score > 100:
-        score = 100
-
-    suggestions = []
-    if "python" not in detected_skills:
-        suggestions.append("Add Python projects")
-    if "django" not in detected_skills:
-        suggestions.append("Mention Django experience")
-    if "react" not in detected_skills:
-        suggestions.append("Add frontend skills like React")
-
-
-    # --- NEW SKILL GAP ANALYSIS LOGIC ---
+    # Calculate matched/missing skills
     matched_skills = []
     missing_skills = []
 
@@ -64,6 +51,30 @@ def upload_resume(request):
                 matched_skills.append(skill)
             else:
                 missing_skills.append(skill)
+        
+        # Calculate dynamic role-based score
+        if required_skills:
+            score = int((len(matched_skills) / len(required_skills)) * 100)
+        else:
+            score = 100
+            
+        # Generate dynamic role-based suggestions
+        suggestions = []
+        for skill in missing_skills:
+            suggestions.append(f"Add experience or projects with {skill.upper() if skill in ['html', 'css', 'sql', 'git'] else skill.capitalize()}")
+    else:
+        # Fallback to general score and static suggestions if no role matched
+        score = len(detected_skills) * 10
+        if score > 100:
+            score = 100
+
+        suggestions = []
+        if "python" not in detected_skills:
+            suggestions.append("Add Python projects")
+        if "django" not in detected_skills:
+            suggestions.append("Mention Django experience")
+        if "react" not in detected_skills:
+            suggestions.append("Add frontend skills like React")
 
     return Response({
         "score": score,

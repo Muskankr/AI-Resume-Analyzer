@@ -15,6 +15,9 @@
   --suggestion-bg: rgba(255,255,255,0.2);
   --theme-toggle-bg: rgba(255,255,255,0.2);
   --theme-toggle-text: #ffffff;
+  --banner-bg: rgba(59, 130, 246, 0.1);
+  --banner-border: rgba(59, 130, 246, 0.3);
+  --banner-text: #1e40af;
 }
 
 [data-theme="dark"]{
@@ -34,6 +37,9 @@
   --suggestion-bg: rgba(255,255,255,0.08);
   --theme-toggle-bg: rgba(255,255,255,0.08);
   --theme-toggle-text: #e2e8f0;
+  --banner-bg: rgba(59, 130, 246, 0.2);
+  --banner-border: rgba(59, 130, 246, 0.4);
+  --banner-text: #93c5fd;
 }
 
 body{
@@ -101,10 +107,48 @@ padding:10px 25px;
 border-radius:8px;
 font-weight:600;
 transition:0.3s;
+cursor: pointer;
 }
 
-.analyze-btn:hover{
+.analyze-btn:hover:not(:disabled){
 transform:scale(1.05);
+}
+
+.secondary-btn{
+background: rgba(255,255,255,0.15);
+color: var(--card-text);
+border: 1px solid rgba(255,255,255,0.3);
+padding:10px 25px;
+border-radius:8px;
+font-weight:600;
+transition:0.3s;
+cursor: pointer;
+}
+
+.secondary-btn:hover:not(:disabled){
+background: rgba(255,255,255,0.25);
+transform:scale(1.05);
+}
+
+.analyze-btn:disabled, .secondary-btn:disabled{
+opacity: 0.6;
+cursor: not-allowed;
+transform: none;
+}
+
+.sample-notice-banner{
+background: var(--banner-bg);
+border: 1px solid var(--banner-border);
+color: var(--banner-text);
+padding: 12px;
+border-radius: 8px;
+font-weight: 600;
+font-size: 14px;
+display: flex;
+align-items: center;
+justify-content: center;
+gap: 8px;
+transition: all 0.3s ease;
 }
 
 .analysis-done{
