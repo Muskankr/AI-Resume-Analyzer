@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import axios from "axios";
 import "./index.css";
 import { AtsScore } from "./AtsScore";
@@ -9,6 +9,20 @@ import { AuthModal } from "./AuthModal";
 import { Footer } from "./Footer";
 
 type Theme = "light" | "dark";
+
+// ---------------------------------------------------------------------------
+// Feature detection for the Drag-and-Drop API. Older browsers (and some
+// locked-down webviews) don't support DataTransfer.items or even the
+// 'drop' event on arbitrary elements. When the feature is missing we fall
+// back to the existing click-to-upload flow — the hidden <input type="file">
+// stays in the DOM and the label remains clickable, so the upload zone is
+// never broken (issue #20 acceptance criterion #3).
+// ---------------------------------------------------------------------------
+const supportsDragAndDrop = (() => {
+  if (typeof window === "undefined") return false;
+  const div = document.createElement("div");
+  return "draggable" in div && "ondragenter" in div && typeof DataTransfer !== "undefined";
+})();
 
 function getInitialTheme(): Theme {
   try {
@@ -30,7 +44,7 @@ function App() {
   const [score, setScore] = useState<number | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  
+
   // Component States
   const [targetRole, setTargetRole] = useState("Frontend Developer");
   const [matchedSkills, setMatchedSkills] = useState<string[]>([]);
@@ -38,6 +52,9 @@ function App() {
   const [showAllSkills, setShowAllSkills] = useState(false);
   const [copied, setCopied] = useState(false);
   const [analysisSource, setAnalysisSource] = useState<"sample" | "upload" | null>(null);
+
+  // Drag-and-drop highlight state (issue #20 acceptance #1)
+  const [isDragActive, setIsDragActive] = useState(false);
 
   // Auth
   const { user, signup, login, logout } = useAuth();
@@ -107,6 +124,24 @@ function App() {
       setSuggestions(res.data.suggestions);
       setMatchedSkills(res.data.matched_skills || []);
       setMissingSkills(res.data.missing_skills || []);
+      setActiveFileName(fileToAnalyze.name);
+
+      // Persist to history for anonymous users (authenticated users get this
+      // server-side via /api/history/, so we just refresh from the DB instead).
+      if (!user) {
+        addEntry({
+          score: res.data.score,
+          skills: res.data.skills_found,
+          suggestions: res.data.suggestions,
+          matchedSkills: res.data.matched_skills || [],
+          missingSkills: res.data.missing_skills || [],
+          targetRole,
+          fileName: fileToAnalyze.name,
+        });
+      } else {
+        fetchDbHistory(user.token);
+      }
+
       setLoading(false);
     } catch (error) {
       console.error(error);
@@ -115,12 +150,89 @@ function App() {
     }
   };
 
+  // ---------------------------------------------------------------------------
+  // Shared validation entry-point — used by BOTH the file-picker <input>
+  // and the drag-and-drop handler. Issue #20 acceptance criterion #2
+  // ("Dropped file goes through the same validation as the file picker")
+  // is satisfied by routing both flows through this single function.
+  // ---------------------------------------------------------------------------
+  const validateAndSetFile = (candidate: File | null | undefined): boolean => {
+    if (!candidate) return false;
+    // The backend (server/analyzer/views.py) accepts PDFs via pdfplumber.
+    // Mirror that constraint client-side so the user gets immediate feedback
+    // instead of a 400 from the API. We check both the MIME type and the
+    // extension since some browsers assign a generic MIME to dropped files.
+    const name = candidate.name || "";
+    const ext = name.slice(((name.lastIndexOf(".") as number) + 1) || Infinity).toLowerCase();
+    const isPdf =
+      candidate.type === "application/pdf" ||
+      ext === "pdf";
+
+    if (!isPdf) {
+      alert("Unsupported file type. Please upload a PDF resume.");
+      return false;
+    }
+    setFile(candidate);
+    return true;
+  };
+
   const uploadResume = async () => {
     if (!file) {
       alert("Please upload resume");
       return;
     }
     await runAnalysis(file, "upload");
+  };
+
+  // --- Drag-and-drop handlers (issue #20) ---------------------------------
+  // We must preventDefault on dragenter/dragover/dragleave/drop — otherwise
+  // the browser opens the file in a new tab instead of letting us handle it.
+  // The drag counter pattern (dragDepthRef) avoids the flicker that happens
+  // when the pointer crosses child elements inside the drop zone.
+  const dragDepthRef = useCallbackRef(0);
+
+  const handleDragEnter = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!supportsDragAndDrop) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepthRef.current += 1;
+    if (e.dataTransfer?.items && e.dataTransfer.items.length > 0) {
+      setIsDragActive(true);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!supportsDragAndDrop) return;
+    e.preventDefault();
+    e.stopPropagation();
+    // Explicitly signal a "copy" drop effect so the cursor reflects intent.
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "copy";
+    }
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!supportsDragAndDrop) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepthRef.current -= 1;
+    if (dragDepthRef.current <= 0) {
+      dragDepthRef.current = 0;
+      setIsDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    if (!supportsDragAndDrop) return;
+    e.preventDefault();
+    e.stopPropagation();
+    dragDepthRef.current = 0;
+    setIsDragActive(false);
+
+    const droppedFile = e.dataTransfer?.files?.[0];
+    // validateAndSetFile runs the SAME checks as the file picker, satisfying
+    // issue #20 acceptance criterion #2.
+    validateAndSetFile(droppedFile);
   };
 
   const handleSampleResume = async () => {
@@ -135,32 +247,9 @@ function App() {
       const sampleFile = new File([blob], "sample-resume.pdf", { type: "application/pdf" });
       await runAnalysis(sampleFile, "sample");
     } catch (error) {
-      console.error(error);
+      console.error("Could not load sample resume:", error instanceof Error ? error.message : "Unknown error");
       alert("Could not load sample resume");
       setLoading(false);
-      setActiveFileName(file.name);
-
-      // Save to localStorage only for anonymous users (authenticated saves to DB)
-      if (!user) {
-        addEntry({
-          score: res.data.score,
-          skills: res.data.skills_found,
-          suggestions: res.data.suggestions,
-          matchedSkills: res.data.matched_skills || [],
-          missingSkills: res.data.missing_skills || [],
-          targetRole,
-          fileName: file.name,
-        });
-      } else {
-        // Refresh DB history to include the new entry
-        fetchDbHistory(user.token);
-      }
-
-      setLoading(false);   
-    } catch (error) {
-      console.error("Upload failed:", error instanceof Error ? error.message : "Unknown error");
-      alert("Upload failed");
-      setLoading(false);   
     }
   };
 
@@ -187,6 +276,15 @@ function App() {
     setCopied(false);
     setHistoryOpen(false);
   };
+
+  // Build the className for the upload zone, including the drag-active
+  // modifier when a file is being dragged over it.
+  const uploadBoxClass = `upload-box mb-3${isDragActive ? " upload-box--drag-active" : ""}`;
+  const uploadLabel = isDragActive
+    ? "⬇️ Drop your resume here"
+    : file
+      ? `📄 ${file.name}`
+      : "Drag & Drop Resume or Click to Upload";
 
   return (
     <>
@@ -249,30 +347,52 @@ function App() {
           </select>
         </div>
 
-        <div className="upload-box mb-3">
+        {/* ----------------------------------------------------------------- */}
+        {/* Upload zone — supports BOTH click-to-upload (label→input) and     */}
+        {/* drag-and-drop (div handlers). The hidden <input type="file">     */}
+        {/* stays clickable via the <label htmlFor>, so browsers without     */}
+        {/* Drag-and-Drop support still upload normally (issue #20 acc #3).   */}
+        {/* ----------------------------------------------------------------- */}
+        <div
+          className={uploadBoxClass}
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
+          role="button"
+          tabIndex={0}
+          aria-label="Resume upload zone. Drag and drop a PDF or click to browse."
+          aria-dropeffect={isDragActive ? "copy" : "none"}
+        >
           <input
             type="file"
             id="fileUpload"
+            accept="application/pdf,.pdf"
             hidden
             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              if (e.target.files) setFile(e.target.files[0]);
+              // Route through the same validator as the drop handler so
+              // issue #20 acceptance criterion #2 holds in both directions.
+              validateAndSetFile(e.target.files?.[0]);
+              // Clear the input value so selecting the same file again
+              // after a rejection still fires a change event.
+              if (e.target) e.target.value = "";
             }}
           />
           <label htmlFor="fileUpload" className="upload-label">
-            📄 {file ? file.name : "Drag & Drop Resume or Click to Upload"}
+            {uploadLabel}
           </label>
         </div>
 
         <div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
-          <button 
-            className="analyze-btn" 
+          <button
+            className="analyze-btn"
             onClick={uploadResume}
             disabled={loading}
           >
             {loading && analysisSource === "upload" ? "⏳ Analyzing..." : "🚀 Analyze Resume"}
           </button>
-          <button 
-            className="secondary-btn" 
+          <button
+            className="secondary-btn"
             onClick={handleSampleResume}
             disabled={loading}
             type="button"
@@ -370,6 +490,15 @@ function App() {
     </div>
     </>
   );
+}
+
+// ---------------------------------------------------------------------------
+// Tiny helper: a mutable ref whose value persists across renders without
+// triggering re-renders. Used for the drag-enter/leave counter so we don't
+// flicker the highlight when the pointer crosses child elements.
+// ---------------------------------------------------------------------------
+function useCallbackRef<T>(initial: T): { current: T } {
+  return useRef<T>(initial);
 }
 
 export default App;

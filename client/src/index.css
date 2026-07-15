@@ -169,6 +169,25 @@ padding:25px;
 border-radius:10px;
 cursor:pointer;
 background: var(--upload-bg);
+/* Smooth transitions for the drag-active highlight (issue #20) */
+transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+/* Drag-over highlight state (issue #20 acceptance #1).
+   Applies to the upload zone when a file is being dragged over it.
+   Uses theme tokens so it works in both light and dark themes, with
+   an extra accent glow from --score-accent. */
+.upload-box--drag-active{
+border-color: var(--score-accent);
+border-style: solid;
+background: rgba(0, 255, 174, 0.12);
+box-shadow: 0 0 0 4px rgba(0, 255, 174, 0.18), 0 8px 24px rgba(0, 0, 0, 0.15);
+transform: scale(1.01);
+}
+
+[data-theme="dark"] .upload-box--drag-active{
+background: rgba(34, 211, 238, 0.14);
+box-shadow: 0 0 0 4px rgba(34, 211, 238, 0.18), 0 8px 24px rgba(0, 0, 0, 0.4);
 }
 
 .upload-label{
