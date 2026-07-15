@@ -609,3 +609,188 @@ margin:15px auto;
   margin: 0;
   opacity: 0.85;
 }
+/* ── Mode toggle (Single / JD Match) ────── */
+
+.mode-toggle {
+  display: inline-flex;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 999px;
+  padding: 4px;
+  gap: 4px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.mode-toggle__btn {
+  background: transparent;
+  color: var(--card-text);
+  border: none;
+  padding: 8px 18px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0.65;
+  transition: background 0.2s ease, opacity 0.2s ease, transform 0.15s ease;
+  font-family: inherit;
+}
+
+.mode-toggle__btn:hover {
+  opacity: 0.9;
+}
+
+.mode-toggle__btn.is-active {
+  background: var(--score-accent);
+  color: #000;
+  opacity: 1;
+}
+
+/* ── JD match: paste form ──────────────── */
+
+.jd-form {
+  text-align: left;
+}
+
+.jd-form__label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: var(--card-text);
+}
+
+.jd-form__textarea {
+  width: 100%;
+  min-height: 180px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.08);
+  color: var(--card-text);
+  font-size: 13px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.jd-form__textarea:focus {
+  outline: none;
+  border-color: var(--score-accent);
+  background: rgba(255,255,255,0.12);
+}
+
+.jd-form__textarea::placeholder {
+  color: var(--card-text);
+  opacity: 0.55;
+}
+
+.jd-form__textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.jd-form__meta {
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.6;
+  text-align: right;
+}
+
+/* ── JD match: summary banner ──────────── */
+
+.jd-match-summary {
+  padding: 18px 20px;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  text-align: center;
+}
+
+.jd-match-summary--good {
+  background: rgba(34,197,94,0.12);
+  border-color: rgba(34,197,94,0.4);
+}
+
+.jd-match-summary--mid {
+  background: rgba(234,179,8,0.12);
+  border-color: rgba(234,179,8,0.4);
+}
+
+.jd-match-summary--low {
+  background: rgba(239,68,68,0.12);
+  border-color: rgba(239,68,68,0.4);
+}
+
+.jd-match-summary__percent {
+  margin: 6px 0 4px;
+  font-size: 36px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.jd-match-summary__sub {
+  margin: 0;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+/* ── JD match: matched vs missing keywords ── */
+
+.jd-keywords {
+  padding: 4px 0;
+}
+
+.jd-keywords__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 700px) {
+  .jd-keywords__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.jd-keywords__col {
+  padding: 14px;
+  border-radius: 10px;
+  text-align: left;
+}
+
+.jd-keywords__col--matched {
+  background: rgba(34,197,94,0.08);
+  border: 1px solid rgba(34,197,94,0.25);
+}
+
+.jd-keywords__col--missing {
+  background: rgba(239,68,68,0.08);
+  border: 1px solid rgba(239,68,68,0.25);
+}
+
+.jd-keywords__col h6 {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.jd-keywords__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+/* ── JD match: keyword badge variants ──── */
+
+.skill-badge--matched {
+  background: #22c55e !important;
+  color: #fff !important;
+}
+
+.skill-badge--missing {
+  background: #ef4444 !important;
+  color: #fff !important;
+}
