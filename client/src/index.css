@@ -21,6 +21,8 @@
   --btn-accent-hover-bg: #2563eb;
   --btn-success-bg: #22c55e;
   --btn-accent-text: #ffffff;
+  --footer-text: rgba(255,255,255,0.85);
+  --footer-link: #ffffff;
 }
 
 [data-theme="dark"]{
@@ -46,6 +48,8 @@
   --btn-accent-hover-bg: #60a5fa;
   --btn-success-bg: #22c55e;
   --btn-accent-text: #ffffff;
+  --footer-text: rgba(226,232,240,0.85);
+  --footer-link: #e2e8f0;
 }
 
 body{
@@ -503,4 +507,36 @@ margin:15px auto;
   font-size: 13px;
   padding: 0;
   text-decoration: underline;
+}
+
+.app-footer{
+  text-align: center;
+  padding: 24px 16px;
+  color: var(--footer-text);
+  font-size: 14px;
+}
+
+.app-footer__links{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
+.app-footer__links a{
+  color: var(--footer-link);
+  text-decoration: none;
+  font-weight: 600;
+  transition: opacity 0.2s ease;
+}
+
+.app-footer__links a:hover{
+  text-decoration: underline;
+  opacity: 0.85;
+}
+
+.app-footer__copy{
+  margin: 0;
+  opacity: 0.85;
 }

@@ -6,6 +6,7 @@ import { useAnalysisHistory, type AnalysisEntry } from "./hooks/useAnalysisHisto
 import { HistorySidebar } from "./HistorySidebar";
 import { useAuth } from "./hooks/useAuth";
 import { AuthModal } from "./AuthModal";
+import { Footer } from "./Footer";
 
 type Theme = "light" | "dark";
 
@@ -310,6 +311,8 @@ function App() {
           </>
         )}
       </div>
+
+      <Footer />
     </div>
     </>
   );
