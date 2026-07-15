@@ -518,6 +518,7 @@ margin:15px auto;
 
 .app-footer__links{
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
   justify-content: center;
   margin-bottom: 8px;

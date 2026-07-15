@@ -9,11 +9,11 @@ export const Footer = () => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          ⭐ GitHub
+          <span aria-hidden="true">⭐</span> GitHub
         </a>
       </nav>
       <p className="app-footer__copy">
-        © 2026 AI Resume Analyzer
+        © {new Date().getFullYear()} AI Resume Analyzer
       </p>
     </footer>
   );
