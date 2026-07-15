@@ -238,6 +238,30 @@ Validates and parses an uploaded resume, matches standard technical keywords, ca
 
 ---
 
+## Rate Limiting
+
+The resume upload endpoint (`POST /api/upload/`) is throttled per client IP using DRF's `SimpleRateThrottle`.
+
+| Setting | Default | Description |
+| :--- | :--- | :--- |
+| `RESUME_UPLOAD_RATE` | `10/hour` | Max requests per IP. Format: `<n>/hour`, `<n>/day`, `<n>/min` |
+
+To change the limit, set `RESUME_UPLOAD_RATE` in your `server/.env`:
+
+```env
+RESUME_UPLOAD_RATE=20/hour
+```
+
+When the limit is exceeded, the API returns:
+
+```json
+// HTTP 429 Too Many Requests
+// Retry-After: <seconds>
+{ "detail": "Request was throttled. Expected available in <N> seconds." }
+```
+
+---
+
 ## Roadmap
 
 - [ ] **DOCX Document Parsing** — Integrate `python-docx` to support Word resume parser pipelines.
