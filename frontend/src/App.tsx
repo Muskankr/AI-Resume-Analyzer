@@ -38,6 +38,7 @@ function App() {
   const [showAllSkills, setShowAllSkills] = useState(false);
   const [copied, setCopied] = useState(false);
   const [analysisSource, setAnalysisSource] = useState<"sample" | "upload" | null>(null);
+  const [uploadError, setUploadError] = useState("");
 
   // Auth
   const { user, signup, login, logout } = useAuth();
@@ -140,9 +141,14 @@ function App() {
 
   const uploadResume = async () => {
     if (!file) {
-      alert("Please upload resume");
+      setUploadError("Please choose a resume file to analyze.");
       return;
     }
+    if (!/\.pdf$/i.test(file.name)) {
+      setUploadError("Only PDF resumes are supported — please upload a .pdf file.");
+      return;
+    }
+    setUploadError("");
     await runAnalysis(file, "upload");
   };
 
@@ -186,6 +192,7 @@ function App() {
     setCopied(false);
     setAnalysisSource(null);
     setActiveFileName("");
+    setUploadError("");
   };
 
   const copySuggestionsToClipboard = () => {
@@ -281,13 +288,22 @@ function App() {
               id="fileUpload"
               hidden
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                if (e.target.files) setFile(e.target.files[0]);
+                if (e.target.files) {
+                  setFile(e.target.files[0]);
+                  setUploadError("");
+                }
               }}
             />
             <label htmlFor="fileUpload" className="upload-label">
               📄 {file ? file.name : "Drag & Drop Resume or Click to Upload"}
             </label>
           </div>
+
+          {uploadError && (
+            <p className="upload-error" role="alert" aria-live="assertive">
+              ⚠️ {uploadError}
+            </p>
+          )}
 
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
             <button

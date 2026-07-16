@@ -176,6 +176,22 @@ cursor:pointer;
 font-weight:500;
 }
 
+.upload-error{
+  color: #fecaca;
+  background: rgba(220,38,38,0.25);
+  border: 1px solid rgba(248,113,113,0.5);
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  margin: 0 auto 16px;
+  max-width: 480px;
+}
+
+[data-theme="dark"] .upload-error{
+  color: #fecaca;
+}
+
 .analyze-btn{
 background: var(--btn-bg);
 color: var(--btn-text);
