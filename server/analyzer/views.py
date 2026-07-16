@@ -6,6 +6,7 @@ from rest_framework.throttling import SimpleRateThrottle
 from rest_framework import status
 import pdfplumber
 from django.conf import settings
+from .skill_matcher import extract_skills
 
 from .models import ResumeAnalysis
 from .serializers import SignupSerializer, ResumeAnalysisSerializer
@@ -20,14 +21,6 @@ class UploadRateThrottle(SimpleRateThrottle):
     def get_cache_key(self, request, view):
         ident = self.get_ident(request)  # client IP
         return self.cache_format % {"scope": self.scope, "ident": ident}
-
-skills_list = [
-    "python", "django", "react", "javascript", "sql",
-    "html", "css", "git", "github", "flask",
-    "machine learning", "data analysis",
-    "excel", "microsoft office", "ms office",
-    "c", "c++", "java"
-]
 
 ROLE_SKILL_MATRICES = {
     "Frontend Developer": ["html", "css", "javascript", "react", "git", "github"],
@@ -64,7 +57,7 @@ def upload_resume(request):
 
     text = text.lower()
 
-    detected_skills = [s for s in skills_list if s.lower() in text]
+    detected_skills = extract_skills(text)
 
     matched_skills = []
     missing_skills = []
