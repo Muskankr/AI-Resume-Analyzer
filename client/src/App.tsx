@@ -61,7 +61,7 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   // History
-  const { entries, addEntry, deleteEntry, clearHistory, setEntries } = useAnalysisHistory();
+  const { entries, deleteEntry, clearHistory, setEntries } = useAnalysisHistory();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [activeFileName, setActiveFileName] = useState("");
 
@@ -116,38 +116,51 @@ function App() {
       formData.append("file", fileToAnalyze);
       formData.append("role", targetRole);
 
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000";
       const headers = user ? { Authorization: `Bearer ${user.token}` } : {};
       const res = await axios.post(`${backendUrl}/api/upload/`, formData, { headers });
 
       setScore(res.data.score);
-      setSkills(res.data.skills_found);
-      setSuggestions(res.data.suggestions);
+      setSkills(res.data.skills_found || []);
+      setSuggestions(res.data.suggestions || []);
       setMatchedSkills(res.data.matched_skills || []);
       setMissingSkills(res.data.missing_skills || []);
       setActiveFileName(fileToAnalyze.name);
 
-      // Persist to history for anonymous users (authenticated users get this
-      // server-side via /api/history/, so we just refresh from the DB instead).
-      if (!user) {
-        addEntry({
-          score: res.data.score,
-          skills: res.data.skills_found,
-          suggestions: res.data.suggestions,
-          matchedSkills: res.data.matched_skills || [],
-          missingSkills: res.data.missing_skills || [],
-          targetRole,
-          fileName: fileToAnalyze.name,
-        });
-      } else {
-        fetchDbHistory(user.token);
+      setLoading(false);
+
+      if (user) {
+        await fetchDbHistory(user.token);
+      }
+    } catch (error: unknown) {
+      console.error(error);
+
+      let errorMsg = "Unknown error";
+
+      if (axios.isAxiosError(error)) {
+        errorMsg =
+          error.response?.data?.error ??
+          error.message;
+      } else if (error instanceof Error) {
+        errorMsg = error.message;
       }
 
-      setLoading(false);
-    } catch (error) {
-      console.error(error);
-      alert(source === "sample" ? "Sample analysis failed" : "Upload failed");
+      alert(
+        source === "sample"
+          ? `Sample analysis failed: ${errorMsg}`
+          : `Upload failed: ${errorMsg}`
+      );
+
       setLoading(false);
     }
+  };
+
+  const uploadResume = async () => {
+    if (!file) {
+      alert("Please upload resume");
+      return;
+    }
+    await runAnalysis(file, "upload");
   };
 
   // ---------------------------------------------------------------------------
@@ -158,7 +171,7 @@ function App() {
   // ---------------------------------------------------------------------------
   const validateAndSetFile = (candidate: File | null | undefined): boolean => {
     if (!candidate) return false;
-    // The backend (server/analyzer/views.py) accepts PDFs via pdfplumber.
+    // The backend (backend/analyzer/services.py) accepts PDFs via pdfplumber.
     // Mirror that constraint client-side so the user gets immediate feedback
     // instead of a 400 from the API. We check both the MIME type and the
     // extension since some browsers assign a generic MIME to dropped files.
@@ -174,14 +187,6 @@ function App() {
     }
     setFile(candidate);
     return true;
-  };
-
-  const uploadResume = async () => {
-    if (!file) {
-      alert("Please upload resume");
-      return;
-    }
-    await runAnalysis(file, "upload");
   };
 
   // --- Drag-and-drop handlers (issue #20) ---------------------------------
@@ -239,18 +244,42 @@ function App() {
     try {
       setLoading(true);
       setAnalysisSource("sample");
+
       const response = await fetch("/sample-resume.pdf");
+
       if (!response.ok) {
         throw new Error("Failed to load sample resume PDF");
       }
+
       const blob = await response.blob();
-      const sampleFile = new File([blob], "sample-resume.pdf", { type: "application/pdf" });
+
+      const sampleFile = new File(
+        [blob],
+        "sample-resume.pdf",
+        { type: "application/pdf" }
+      );
+
       await runAnalysis(sampleFile, "sample");
-    } catch (error) {
-      console.error("Could not load sample resume:", error instanceof Error ? error.message : "Unknown error");
+
+      setActiveFileName(sampleFile.name);
+    } catch (error: unknown) {
+      console.error(error);
       alert("Could not load sample resume");
       setLoading(false);
     }
+  };
+
+  const resetAnalysis = () => {
+    setFile(null);
+    setScore(null);
+    setSkills([]);
+    setSuggestions([]);
+    setMatchedSkills([]);
+    setMissingSkills([]);
+    setShowAllSkills(false);
+    setCopied(false);
+    setAnalysisSource(null);
+    setActiveFileName("");
   };
 
   const copySuggestionsToClipboard = () => {
@@ -296,198 +325,222 @@ function App() {
         isOpen={historyOpen}
         onToggle={() => setHistoryOpen((v) => !v)}
       />
+
       <div className="container mt-5">
-      <div className="main-card text-center">
-        <button
-          type="button"
-          className="app-btn theme-toggle-btn"
-          onClick={toggleTheme}
-          aria-label="Toggle theme"
-          aria-pressed={theme === "dark"}
-        >
-          {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
-        </button>
-
-        {/* Auth bar */}
-        <div className="auth-bar">
-          {user ? (
-            <>
-              <span className="auth-username">👤 {user.username}</span>
-              <button className="auth-bar-btn" onClick={logout}>Logout</button>
-            </>
-          ) : (
-            <button className="auth-bar-btn" onClick={() => setShowAuthModal(true)}>🔐 Login / Sign Up</button>
-          )}
-        </div>
-
-        {showAuthModal && (
-          <AuthModal
-            onSignup={signup}
-            onLogin={login}
-            onClose={() => setShowAuthModal(false)}
-          />
-        )}
-
-        <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
-
-        {/* Role Selector Dropdown */}
-        <div className="mb-4">
-          <label htmlFor="roleSelect" style={{ marginRight: "10px", fontWeight: "600", color: "#fff" }}>
-            Target Career Track:
-          </label>
-          <select
-            id="roleSelect"
-            value={targetRole}
-            onChange={(e) => setTargetRole(e.target.value)}
-            style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #ccc" }}
-          >
-            <option value="Frontend Developer">Frontend Developer</option>
-            <option value="Backend Developer">Backend Developer</option>
-            <option value="Data Analyst">Data Analyst</option>
-          </select>
-        </div>
-
-        {/* ----------------------------------------------------------------- */}
-        {/* Upload zone — supports BOTH click-to-upload (label→input) and     */}
-        {/* drag-and-drop (div handlers). The hidden <input type="file">     */}
-        {/* stays clickable via the <label htmlFor>, so browsers without     */}
-        {/* Drag-and-Drop support still upload normally (issue #20 acc #3).   */}
-        {/* ----------------------------------------------------------------- */}
-        <div
-          className={uploadBoxClass}
-          onDragEnter={handleDragEnter}
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
-          onDrop={handleDrop}
-          role="button"
-          tabIndex={0}
-          aria-label="Resume upload zone. Drag and drop a PDF or click to browse."
-          aria-dropeffect={isDragActive ? "copy" : "none"}
-        >
-          <input
-            type="file"
-            id="fileUpload"
-            accept="application/pdf,.pdf"
-            hidden
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-              // Route through the same validator as the drop handler so
-              // issue #20 acceptance criterion #2 holds in both directions.
-              validateAndSetFile(e.target.files?.[0]);
-              // Clear the input value so selecting the same file again
-              // after a rejection still fires a change event.
-              if (e.target) e.target.value = "";
-            }}
-          />
-          <label htmlFor="fileUpload" className="upload-label">
-            {uploadLabel}
-          </label>
-        </div>
-
-        <div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
+        <div className="main-card text-center">
+          {/* Theme toggle */}
           <button
-            className="analyze-btn"
-            onClick={uploadResume}
-            disabled={loading}
-          >
-            {loading && analysisSource === "upload" ? "⏳ Analyzing..." : "🚀 Analyze Resume"}
-          </button>
-          <button
-            className="secondary-btn"
-            onClick={handleSampleResume}
-            disabled={loading}
             type="button"
+            className="app-btn theme-toggle-btn"
+            onClick={toggleTheme}
+            aria-label="Toggle theme"
+            aria-pressed={theme === "dark"}
           >
-            {loading && analysisSource === "sample" ? "⏳ Loading Sample..." : "Try Sample Resume"}
+            {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
           </button>
-        </div>
-        <button type="button" className="app-btn analyze-btn" onClick={uploadResume} disabled={loading}>
-          {loading ? "⏳ Analyzing..." : "🚀 Analyze Resume"}
-        </button>
 
-        {score !== null && (
-          <>
-            {analysisSource === "sample" && (
-              <div className="sample-notice-banner mb-4">
-                <span>ℹ️ Viewing Sample Resume Analysis</span>
-                <span style={{ fontWeight: "normal", fontSize: "13px" }}>
-                  — This analysis is based on a bundled sample resume.
-                </span>
-              </div>
+          {/* Auth bar */}
+          <div className="auth-bar">
+            {user ? (
+              <>
+                <span className="auth-username">👤 {user.username}</span>
+                <button className="auth-bar-btn" onClick={logout}>Logout</button>
+              </>
+            ) : (
+              <button className="auth-bar-btn" onClick={() => setShowAuthModal(true)}>🔐 Login / Sign Up</button>
             )}
+          </div>
 
-            <AtsScore score={score} />
+          {showAuthModal && (
+            <AuthModal
+              onSignup={signup}
+              onLogin={login}
+              onClose={() => setShowAuthModal(false)}
+            />
+          )}
 
-            <h5 className="analysis-done">
-              ✅ Resume Analysis Complete
-            </h5>
-            {activeFileName && (
-              <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px" }}>📄 {activeFileName}</p>
-            )}
+          <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
 
-            {/* SKILLS CONTAINER */}
-            <div className="mt-4">
-              <h4>Skills Found ({skills.length})</h4>
-              {skills.length === 0 && <p>No skills detected</p>}
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
-                {(showAllSkills ? skills : skills.slice(0, 15)).map((skill: string, i: number) => (
-                  <span key={i} className="skill-badge">{skill}</span>
-                ))}
-              </div>
-              {skills.length > 15 && (
-                <button
-                  type="button"
-                  className="app-btn app-btn--secondary"
-                  style={{ marginTop: "16px" }}
-                  onClick={() => setShowAllSkills(!showAllSkills)}
-                >
-                  {showAllSkills ? "Show Less ▲" : `Show More (${skills.length - 15} more) ▼`}
-                </button>
+          {/* Role Selector Dropdown */}
+          <div className="mb-4">
+            <label htmlFor="roleSelect" style={{ marginRight: "10px", fontWeight: "600", color: "#fff" }}>
+              Target Career Track:
+            </label>
+            <select
+              id="roleSelect"
+              value={targetRole}
+              onChange={(e) => setTargetRole(e.target.value)}
+              style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #ccc" }}
+            >
+              <option value="Frontend Developer">Frontend Developer</option>
+              <option value="Backend Developer">Backend Developer</option>
+              <option value="Data Analyst">Data Analyst</option>
+            </select>
+          </div>
+
+          {/* ----------------------------------------------------------------- */}
+          {/* Upload zone — supports BOTH click-to-upload (label→input) and     */}
+          {/* drag-and-drop (div handlers). The hidden <input type="file">     */}
+          {/* stays clickable via the <label htmlFor>, so browsers without     */}
+          {/* Drag-and-Drop support still upload normally (issue #20 acc #3).   */}
+          {/* ----------------------------------------------------------------- */}
+          <div
+            className={uploadBoxClass}
+            onDragEnter={handleDragEnter}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            role="button"
+            tabIndex={0}
+            aria-label="Resume upload zone. Drag and drop a PDF or click to browse."
+            aria-dropeffect={isDragActive ? "copy" : "none"}
+          >
+            <input
+              type="file"
+              id="fileUpload"
+              accept="application/pdf,.pdf"
+              hidden
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                // Route through the same validator as the drop handler so
+                // issue #20 acceptance criterion #2 holds in both directions.
+                validateAndSetFile(e.target.files?.[0]);
+                // Clear the input value so selecting the same file again
+                // after a rejection still fires a change event.
+                if (e.target) e.target.value = "";
+              }}
+            />
+            <label htmlFor="fileUpload" className="upload-label">
+              {uploadLabel}
+            </label>
+          </div>
+
+          <div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
+            <button
+              className="analyze-btn"
+              onClick={uploadResume}
+              disabled={loading}
+            >
+              {loading && analysisSource === "upload" ? "⏳ Extracting and analyzing resume text..." : "🚀 Analyze Resume"}
+            </button>
+            <button
+              className="secondary-btn"
+              onClick={handleSampleResume}
+              disabled={loading}
+              type="button"
+            >
+              {loading && analysisSource === "sample" ? "⏳ Loading Sample..." : "Try Sample Resume"}
+            </button>
+          </div>
+
+          {/* Loading spinner — shown while the resume is being analyzed */}
+          {loading && (
+            <div
+              className="loader"
+              role="status"
+              aria-live="polite"
+              aria-label="Analyzing resume, please wait"
+            >
+              <span className="sr-only">Analyzing resume, please wait…</span>
+            </div>
+          )}
+
+          {/* Results */}
+          {score !== null && (
+            <>
+              {analysisSource === "sample" && (
+                <div className="sample-notice-banner mb-4">
+                  <span>ℹ️ Viewing Sample Resume Analysis</span>
+                  <span style={{ fontWeight: "normal", fontSize: "13px" }}>
+                    — This analysis is based on a bundled sample resume.
+                  </span>
+                </div>
               )}
-            </div>
 
-            {/* SKILL GAP MATRIX */}
-            <div className="mt-4 p-3" style={{ background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
-              <h4>🎯 Skill Gap Matrix ({targetRole})</h4>
-              <div style={{ display: "flex", justifyContent: "space-around", marginTop: "12px" }}>
-                <div>
-                  <h6 style={{ color: "#22c55e" }}>Matched Skills</h6>
-                  {matchedSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : matchedSkills.map((s: string, i: number) => (
-                    <span key={i} className="badge bg-success m-1" style={{ display: "inline-block", padding: "4px 8px", background: "#22c55e", borderRadius: "4px", margin: "2px", color: "#fff" }}>{s}</span>
+              <AtsScore score={score} />
+
+              <h5 className="analysis-done">✅ Resume Analysis Complete</h5>
+              {activeFileName && (
+                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px" }}>📄 {activeFileName}</p>
+              )}
+
+              {/* Skills container */}
+              <div className="mt-4">
+                <h4>Skills Found ({skills.length})</h4>
+                {skills.length === 0 && <p>No skills detected</p>}
+                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
+                  {(showAllSkills ? skills : skills.slice(0, 15)).map((skill: string, i: number) => (
+                    <span key={i} className="skill-badge">{skill}</span>
                   ))}
                 </div>
-                <div>
-                  <h6 style={{ color: "#ef4444" }}>Missing Skills</h6>
-                  {missingSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : missingSkills.map((s: string, i: number) => (
-                    <span key={i} className="badge bg-danger m-1" style={{ display: "inline-block", padding: "4px 8px", background: "#ef4444", borderRadius: "4px", margin: "2px", color: "#fff" }}>{s}</span>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* SUGGESTIONS BOX WITH THE UTILITY BUTTON */}
-            <div className="suggestion-box mt-4">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
-                {suggestions.length > 0 && (
+                {skills.length > 15 && (
                   <button
                     type="button"
-                    className={`app-btn app-btn--accent${copied ? " is-success" : ""}`}
-                    onClick={copySuggestionsToClipboard}
+                    className="app-btn app-btn--secondary"
+                    style={{ marginTop: "16px" }}
+                    onClick={() => setShowAllSkills(!showAllSkills)}
                   >
-                    {copied ? "✅ Copied!" : "📋 Copy Suggestions"}
+                    {showAllSkills ? "Show Less ▲" : `Show More (${skills.length - 15} more) ▼`}
                   </button>
                 )}
               </div>
-              {suggestions.map((s: string, i: number) => (
-                <div key={i} className="suggestion-item">📌 {s}</div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
 
-      <Footer />
-    </div>
+              {/* Skill gap matrix */}
+              <div className="mt-4 p-3" style={{ background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
+                <h4>🎯 Skill Gap Matrix ({targetRole})</h4>
+                <div style={{ display: "flex", justifyContent: "space-around", marginTop: "12px" }}>
+                  <div>
+                    <h6 style={{ color: "#22c55e" }}>Matched Skills</h6>
+                    {matchedSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : matchedSkills.map((s, i) => (
+                      <span key={i} className="badge bg-success m-1">{s}</span>
+                    ))}
+                  </div>
+                  <div>
+                    <h6 style={{ color: "#ef4444" }}>Missing Skills</h6>
+                    {missingSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : missingSkills.map((s, i) => (
+                      <span key={i} className="badge bg-danger m-1">{s}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+
+              {/* SUGGESTIONS BOX WITH THE UTILITY BUTTON */}
+              <div className="suggestion-box mt-4">
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                  <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
+                  {suggestions.length > 0 && (
+                    <button
+                      type="button"
+                      className={`app-btn app-btn--accent${copied ? " is-success" : ""}`}
+                      onClick={copySuggestionsToClipboard}
+                    >
+                      {copied ? "✅ Copied!" : "📋 Copy Suggestions"}
+                    </button>
+                  )}
+                </div>
+
+                {suggestions.map((s: string, i: number) => (
+                  <div key={i} className="suggestion-item">📌 {s}</div>
+                ))}
+
+                {/* Reset Button */}
+                <div style={{ marginTop: "24px", textAlign: "center" }}>
+                  <button
+                    type="button"
+                    className="app-btn app-btn--secondary"
+                    onClick={resetAnalysis}
+                  >
+                    🔄 Start New Analysis
+                  </button>
+                </div>
+              </div>
+            </>
+          )}   {/* closes the conditional block */}
+        </div> {/* closes .main-card */}
+      </div> {/* closes .container */}
+
+      <Footer />  {/* footer should be outside main container */}
+
     </>
   );
 }
