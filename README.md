@@ -108,7 +108,7 @@
 
 ```text
 ai-resume-analyzer/
-├── client/                 # React frontend application
+├── frontend/                 # React frontend application
 │   ├── public/             # Static public assets (ui.png, favicon, etc.)
 │   ├── src/
 │   │   ├── assets/         # Images, logos, and Vite assets
@@ -119,7 +119,7 @@ ai-resume-analyzer/
 │   ├── package.json        # Node modules and dependency matrix
 │   └── tsconfig.json       # TypeScript compiler settings
 │
-├── server/                 # Django REST API backend
+├── backend/                 # Django REST API backend
 │   ├── resume_analyzer/    # Main settings, routing, and configurations
 │   ├── analyzer/           # App endpoints, models, viewsets, and migrations
 │   │   ├── migrations/     # Database migration schema
