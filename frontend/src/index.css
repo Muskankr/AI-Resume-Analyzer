@@ -590,3 +590,58 @@ margin:15px auto;
   margin: 0;
   opacity: 0.85;
 }
+
+/* ── Print-friendly results page ─────────── */
+
+@media print {
+  /* Hide interactive controls and decorative chrome */
+  .history-toggle-btn,
+  .history-sidebar,
+  .theme-toggle-btn,
+  .auth-bar,
+  .upload-box,
+  .back-to-top,
+  .analyze-btn,
+  .secondary-btn,
+  .app-btn--secondary,
+  .app-btn--accent,
+  .sample-notice-banner,
+  .app-footer__links {
+    display: none !important;
+  }
+
+  body {
+    background: #fff !important;
+    min-height: auto;
+  }
+
+  .main-card {
+    background: #fff !important;
+    backdrop-filter: none !important;
+    box-shadow: none !important;
+    color: #111 !important;
+    padding: 0 !important;
+  }
+
+  .score-circle {
+    background: #fff !important;
+    color: #111 !important;
+    border: 4px solid #111;
+  }
+
+  .skill-badge,
+  .badge {
+    background: #f1f1f1 !important;
+    color: #111 !important;
+    border: 1px solid #ccc;
+  }
+
+  .suggestion-item {
+    background: #f7f7f7 !important;
+    color: #111 !important;
+  }
+
+  a {
+    color: #111 !important;
+  }
+}
