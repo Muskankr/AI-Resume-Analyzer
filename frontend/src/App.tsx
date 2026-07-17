@@ -63,6 +63,8 @@ function App() {
   const [score, setScore] = useState<number | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [fileError, setFileError] = useState<string | null>(null);
+  const [roleError, setRoleError] = useState<string | null>(null);
 
   // Component States
   const [targetRole, setTargetRole] = useState("Frontend Developer");
@@ -178,7 +180,7 @@ function App() {
 
       if (user) {
         await fetchDbHistory(user.token);
-        }
+      }
       else {
         addEntry({
           score: res.data.score,
@@ -189,7 +191,7 @@ function App() {
           targetRole: targetRole,
           fileName: fileToAnalyze.name,
         });
-    }
+      }
     } catch (error: unknown) {
       console.error(error);
 
@@ -214,11 +216,28 @@ function App() {
   };
 
   const uploadResume = async () => {
-    if (!file) {
-      alert("Please upload resume");
-      return;
+    let hasError = false;
+
+    // 1. Validate Target Career Track
+    if (!targetRole || targetRole.trim() === "") {
+      setRoleError("Target career track is required.");
+      hasError = true;
+    } else {
+      setRoleError(null);
     }
-    await runAnalysis(file, "upload");
+
+    // 2. Validate File Upload
+    if (!file) {
+      setFileError("Please upload a resume file before analyzing.");
+      hasError = true;
+    } else {
+      setFileError(null);
+    }
+
+    // 3. Block submission if any error exists
+    if (hasError) return;
+
+    await runAnalysis(file!, "upload");
   };
 
   const handleSampleResume = async () => {
@@ -288,9 +307,9 @@ function App() {
     setHistoryOpen(false);
   };
   const handleLogout = () => {
-  logout();           
-  clearHistory();
-};
+    logout();
+    clearHistory();
+  };
   return (
     <>
       <HistorySidebar
@@ -345,28 +364,41 @@ function App() {
             <select
               id="roleSelect"
               value={targetRole}
-              onChange={(e) => setTargetRole(e.target.value)}
+              onChange={(e) => {
+                setTargetRole(e.target.value);
+                if (e.target.value.trim() !== "") {
+                  setRoleError(null); // Clear the error immediately when a valid option is chosen
+                }
+              }}
               style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #ccc" }}
             >
               <option value="Frontend Developer">Frontend Developer</option>
               <option value="Backend Developer">Backend Developer</option>
               <option value="Data Analyst">Data Analyst</option>
             </select>
+            {/* Display the inline validation message directly below the dropdown container */}
+            {roleError && <div style={{ color: "#ef4444", fontSize: "13px", marginTop: "4px", fontWeight: "500", textAlign: "center" }}>⚠️ {roleError}</div>}
           </div>
 
+          {/* File Upload Component Container */}
           <div className="upload-box mb-3">
             <input
               type="file"
               id="fileUpload"
               hidden
               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                if (e.target.files) setFile(e.target.files[0]);
+                if (e.target.files && e.target.files[0]) {
+                  setFile(e.target.files[0]);
+                  setFileError(null); // Clear the error immediately when a file is picked
+                }
               }}
             />
             <label htmlFor="fileUpload" className="upload-label">
               📄 {file ? file.name : "Drag & Drop Resume or Click to Upload"}
             </label>
           </div>
+          {/* Display the inline validation message directly below the upload box */}
+          {fileError && <div style={{ color: "#ef4444", fontSize: "13px", marginTop: "-8px", marginBottom: "16px", fontWeight: "500", textAlign: "center" }}>⚠️ {fileError}</div>}
 
           <div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
             <button
@@ -387,112 +419,112 @@ function App() {
           </div>
 
           {/* Loading skeleton — shown while the resume is being analyzed */}
-          {loading && <AnalysisSkeleton />}
+            {loading && <AnalysisSkeleton />}
 
-          {/* Results */}
-          {score !== null && (
-            <>
-              {analysisSource === "sample" && (
-                <div className="sample-notice-banner mb-4">
-                  <span>ℹ️ Viewing Sample Resume Analysis</span>
-                  <span style={{ fontWeight: "normal", fontSize: "13px" }}>
-                    — This analysis is based on a bundled sample resume.
-                  </span>
-                </div>
-              )}
-
-              <AtsScore score={score} />
-
-              <ResumePreview text={resumeText} skills={skills} />
-
-              <h5 className="analysis-done">✅ Resume Analysis Complete</h5>
-              {activeFileName && (
-                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px" }}>📄 {activeFileName}</p>
-              )}
-
-              {/* Skills container */}
-              <div className="mt-4">
-                <h4>Skills Found ({skills.length})</h4>
-                {skills.length === 0 && <p>No skills detected</p>}
-                <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
-                  {(showAllSkills ? skills : skills.slice(0, 15)).map((skill: string, i: number) => (
-                    <span key={i} className="skill-badge">{skill}</span>
-                  ))}
-                </div>
-                {skills.length > 15 && (
-                  <button
-                    type="button"
-                    className="app-btn app-btn--secondary"
-                    style={{ marginTop: "16px" }}
-                    onClick={() => setShowAllSkills(!showAllSkills)}
-                  >
-                    {showAllSkills ? "Show Less ▲" : `Show More (${skills.length - 15} more) ▼`}
-                  </button>
+            {/* Results */}
+            {score !== null && (
+              <>
+                {analysisSource === "sample" && (
+                  <div className="sample-notice-banner mb-4">
+                    <span>ℹ️ Viewing Sample Resume Analysis</span>
+                    <span style={{ fontWeight: "normal", fontSize: "13px" }}>
+                      — This analysis is based on a bundled sample resume.
+                    </span>
+                  </div>
                 )}
-              </div>
 
-              {/* Skill gap matrix */}
-              <div className="mt-4 p-3" style={{ background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  🎯 Skill Gap Matrix ({targetRole})
-                  <InfoTooltip content="Shows which required skills are already in your resume and which important skills are missing." />
-                </h4>
-                <div style={{ display: "flex", justifyContent: "space-around", marginTop: "12px" }}>
-                  <div>
-                    <h6 style={{ color: "#22c55e" }}>Matched Skills</h6>
-                    {matchedSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : matchedSkills.map((s, i) => (
-                      <span key={i} className="badge bg-success m-1">{s}</span>
+                <AtsScore score={score} />
+
+                <ResumePreview text={resumeText} skills={skills} />
+
+                <h5 className="analysis-done">✅ Resume Analysis Complete</h5>
+                {activeFileName && (
+                  <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px" }}>📄 {activeFileName}</p>
+                )}
+
+                {/* Skills container */}
+                <div className="mt-4">
+                  <h4>Skills Found ({skills.length})</h4>
+                  {skills.length === 0 && <p>No skills detected</p>}
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
+                    {(showAllSkills ? skills : skills.slice(0, 15)).map((skill: string, i: number) => (
+                      <span key={i} className="skill-badge">{skill}</span>
                     ))}
                   </div>
-                  <div>
-                    <h6 style={{ color: "#ef4444" }}>Missing Skills</h6>
-                    {missingSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : missingSkills.map((s, i) => (
-                      <span key={i} className="badge bg-danger m-1">{s}</span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-
-              {/* SUGGESTIONS BOX WITH THE UTILITY BUTTON */}
-              <div className="suggestion-box mt-4">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                  <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
-                  {suggestions.length > 0 && (
+                  {skills.length > 15 && (
                     <button
                       type="button"
-                      className={`app-btn app-btn--accent${copied ? " is-success" : ""}`}
-                      onClick={copySuggestionsToClipboard}
+                      className="app-btn app-btn--secondary"
+                      style={{ marginTop: "16px" }}
+                      onClick={() => setShowAllSkills(!showAllSkills)}
                     >
-                      {copied ? "✅ Copied!" : "📋 Copy Suggestions"}
+                      {showAllSkills ? "Show Less ▲" : `Show More (${skills.length - 15} more) ▼`}
                     </button>
                   )}
                 </div>
 
-                {suggestions.map((s: string, i: number) => (
-                  <div key={i} className="suggestion-item">📌 {s}</div>
-                ))}
-
-                {/* Reset Button */}
-                <div style={{ marginTop: "24px", textAlign: "center" }}>
-                  <button
-                    type="button"
-                    className="app-btn app-btn--secondary"
-                    onClick={resetAnalysis}
-                  >
-                    🔄 Start New Analysis
-                  </button>
+                {/* Skill gap matrix */}
+                <div className="mt-4 p-3" style={{ background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
+                  <h4 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    🎯 Skill Gap Matrix ({targetRole})
+                    <InfoTooltip content="Shows which required skills are already in your resume and which important skills are missing." />
+                  </h4>
+                  <div style={{ display: "flex", justifyContent: "space-around", marginTop: "12px" }}>
+                    <div>
+                      <h6 style={{ color: "#22c55e" }}>Matched Skills</h6>
+                      {matchedSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : matchedSkills.map((s, i) => (
+                        <span key={i} className="badge bg-success m-1">{s}</span>
+                      ))}
+                    </div>
+                    <div>
+                      <h6 style={{ color: "#ef4444" }}>Missing Skills</h6>
+                      {missingSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : missingSkills.map((s, i) => (
+                        <span key={i} className="badge bg-danger m-1">{s}</span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </>
-          )}   {/* closes the conditional block */}
-        </div> {/* closes .main-card */}
-      </div> {/* closes .container */}
 
-      <Footer />  {/* footer should be outside main container */}
 
-    </>
-  ); {/* closes the return fragment */ }
-} {/* closes App function */ }
+                {/* SUGGESTIONS BOX WITH THE UTILITY BUTTON */}
+                <div className="suggestion-box mt-4">
+                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                    <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
+                    {suggestions.length > 0 && (
+                      <button
+                        type="button"
+                        className={`app-btn app-btn--accent${copied ? " is-success" : ""}`}
+                        onClick={copySuggestionsToClipboard}
+                      >
+                        {copied ? "✅ Copied!" : "📋 Copy Suggestions"}
+                      </button>
+                    )}
+                  </div>
 
-export default App;
+                  {suggestions.map((s: string, i: number) => (
+                    <div key={i} className="suggestion-item">📌 {s}</div>
+                  ))}
+
+                  {/* Reset Button */}
+                  <div style={{ marginTop: "24px", textAlign: "center" }}>
+                    <button
+                      type="button"
+                      className="app-btn app-btn--secondary"
+                      onClick={resetAnalysis}
+                    >
+                      🔄 Start New Analysis
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}   {/* closes the conditional block */}
+          </div> {/* closes .main-card */}
+        </div> {/* closes .container */}
+
+        <Footer />  {/* footer should be outside main container */}
+
+      </>
+      ); {/* closes the return fragment */}
+} {/* closes App function */}
+
+      export default App;
