@@ -1,4 +1,22 @@
 :root{
+  /* ── Design Tokens: Spacing Scale ───────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+
+  /* ── Design Tokens: Typography Scale ────── */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 18px;
+  --text-lg: 20px;
+  --text-xl: 40px;
+
   color-scheme: light;
   --body-bg: linear-gradient(135deg,#667eea,#764ba2);
   --card-bg: rgba(255,255,255,0.15);
@@ -109,8 +127,8 @@ body{
   background: var(--btn-secondary-bg);
   color: var(--btn-secondary-text);
   border-color: var(--btn-secondary-border);
-  padding: 6px 16px;
-  font-size: 13px;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
 }
 
 .app-btn--secondary:hover{
@@ -121,8 +139,8 @@ body{
 .app-btn--accent{
   background: var(--btn-accent-bg);
   color: var(--btn-accent-text);
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
   border-radius: 6px;
 }
 
@@ -156,7 +174,7 @@ body{
   display:flex;
   align-items:center;
   justify-content:center;
-  font-size:40px;
+  font-size: var(--text-xl);
   font-weight:bold;
   background:conic-gradient(var(--score-accent) var(--score),var(--score-track) 0);
   margin:auto;
@@ -217,17 +235,16 @@ transform: none;
 background: var(--banner-bg);
 border: 1px solid var(--banner-border);
 color: var(--banner-text);
-padding: 12px;
+padding: var(--space-3);
 border-radius: 8px;
 font-weight: 600;
-font-size: 14px;
+font-size: var(--text-base);
 display: flex;
 align-items: center;
 justify-content: center;
-gap: 8px;
+gap: var(--space-2);
 transition: all 0.3s ease;
 }
-
 .analysis-done{
 color: var(--analysis-done);
 font-weight:600;
