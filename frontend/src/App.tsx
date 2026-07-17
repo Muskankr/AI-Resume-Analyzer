@@ -63,6 +63,7 @@ function App() {
   const [score, setScore] = useState<number | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showBackToTop, setShowBackToTop] = useState(false);
 
   // Component States
   const [targetRole, setTargetRole] = useState("Frontend Developer");
@@ -149,9 +150,29 @@ function App() {
       // persistence is best-effort; ignore if storage is unavailable
     }
   }, [theme]);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 400) {
+        setShowBackToTop(true);
+      } else {
+        setShowBackToTop(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
+  
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const runAnalysis = async (fileToAnalyze: File, source: "sample" | "upload") => {
@@ -178,7 +199,7 @@ function App() {
 
       if (user) {
         await fetchDbHistory(user.token);
-        }
+      }
       else {
         addEntry({
           score: res.data.score,
@@ -189,7 +210,7 @@ function App() {
           targetRole: targetRole,
           fileName: fileToAnalyze.name,
         });
-    }
+      }
     } catch (error: unknown) {
       console.error(error);
 
@@ -288,9 +309,9 @@ function App() {
     setHistoryOpen(false);
   };
   const handleLogout = () => {
-  logout();           
-  clearHistory();
-};
+    logout();          
+    clearHistory();
+  };
   return (
     <>
       <HistorySidebar
@@ -479,6 +500,7 @@ function App() {
                     </button>
                   )}
                 </div>
+                
 
                 {suggestions.map((s: string, i: number) => (
                   <div key={i} className="suggestion-item" style={{ wordBreak: "break-word", textAlign: "left" }}>📌 {s}</div>
@@ -503,8 +525,37 @@ function App() {
 
       <Footer />  {/* footer should be outside main container */}
 
+      {/* RENDER FLOATING BACK TO TOP BUTTON */}
+      {showBackToTop && (
+        <button
+          onClick={scrollToTop}
+          style={{
+            position: "fixed",
+            bottom: "30px",
+            right: "30px",
+            backgroundColor: "#6366f1",
+            color: "#fff",
+            border: "none",
+            borderRadius: "50%",
+            width: "50px",
+            height: "50px",
+            fontSize: "20px",
+            cursor: "pointer",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+            zIndex: 1000,
+            transition: "all 0.3s ease",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+          title="Back to Top"
+          aria-label="Back to Top"
+        >
+          ▲
+        </button>
+      )}
     </>
-  ); {/* closes the return fragment */ }
-} {/* closes App function */ }
+  ); /* closes the return fragment */
+} /* closes App function */
 
 export default App;
