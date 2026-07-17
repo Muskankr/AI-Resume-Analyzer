@@ -9,6 +9,11 @@ import { AuthModal } from "./AuthModal";
 import { Footer } from "./Footer";
 import AnalysisSkeleton from "./components/AnalysisSkeleton/AnalysisSkeleton";
 import { InfoTooltip } from "./components/InfoTooltip";
+import {
+  Moon, Sun, User, Lock, FileText, Rocket, Loader2,
+  CheckCircle, ChevronDown, ChevronUp, Clipboard, ClipboardCheck,
+  RefreshCw, Lightbulb, Pin, Target, Info
+} from "lucide-react";
 
 type Theme = "light" | "dark";
 
@@ -29,10 +34,8 @@ function highlightSkills(text: string, skills: string[]): React.ReactNode[] {
   if (!text) return [];
   if (skills.length === 0) return [text];
 
-  // Sort longest first so multi-word skills (e.g. "machine learning") match before shorter ones
   const sorted = [...skills].sort((a, b) => b.length - a.length);
   const escaped = sorted.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-  // \b works for alphanumeric boundaries; for symbols like c++ we use lookahead/lookbehind
   const pattern = new RegExp(`(?<![\\w])(${escaped.join('|')})(?![\\w])`, 'gi');
   const parts = text.split(pattern);
   const skillSet = new Set(skills.map(s => s.toLowerCase()));
@@ -48,7 +51,7 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
   if (!text) return null;
   return (
     <div className="resume-preview mt-4">
-      <h4>📄 Resume Text Preview</h4>
+      <h4><FileText size={16} /> Resume Text Preview</h4>
       <pre className="resume-preview__body">
         {highlightSkills(text, skills)}
       </pre>
@@ -64,7 +67,6 @@ function App() {
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  // Component States
   const [targetRole, setTargetRole] = useState("Frontend Developer");
   const [matchedSkills, setMatchedSkills] = useState<string[]>([]);
   const [missingSkills, setMissingSkills] = useState<string[]>([]);
@@ -73,16 +75,15 @@ function App() {
   const [analysisSource, setAnalysisSource] = useState<"sample" | "upload" | null>(null);
   const [resumeText, setResumeText] = useState<string>("");
 
-  // Auth
   const { user, signup, login, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // History
   const { entries, addEntry, deleteEntry, clearHistory, setEntries } = useAnalysisHistory();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [activeFileName, setActiveFileName] = useState("");
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000";
+
   const handleDeleteEntry = async (id: string) => {
     if (user) {
       try {
@@ -108,6 +109,7 @@ function App() {
     }
     clearHistory();
   };
+
   const fetchDbHistory = useCallback(async (token: string) => {
     try {
       const res = await axios.get(`${backendUrl}/api/history/`, {
@@ -178,8 +180,7 @@ function App() {
 
       if (user) {
         await fetchDbHistory(user.token);
-        }
-      else {
+      } else {
         addEntry({
           score: res.data.score,
           skills: res.data.skills_found || [],
@@ -189,16 +190,14 @@ function App() {
           targetRole: targetRole,
           fileName: fileToAnalyze.name,
         });
-    }
+      }
     } catch (error: unknown) {
       console.error(error);
 
       let errorMsg = "Unknown error";
 
       if (axios.isAxiosError(error)) {
-        errorMsg =
-          error.response?.data?.error ??
-          error.message;
+        errorMsg = error.response?.data?.error ?? error.message;
       } else if (error instanceof Error) {
         errorMsg = error.message;
       }
@@ -287,10 +286,12 @@ function App() {
     setCopied(false);
     setHistoryOpen(false);
   };
+
   const handleLogout = () => {
-  logout();           
-  clearHistory();
-};
+    logout();
+    clearHistory();
+  };
+
   return (
     <>
       <HistorySidebar
@@ -302,7 +303,7 @@ function App() {
         onToggle={() => setHistoryOpen((v) => !v)}
       />
 
-      <div className="container mt-5 px-3"> {/* Added padding safety track */}
+      <div className="container mt-5 px-3">
         <div className="main-card text-center mx-auto" style={{ width: "100%", maxWidth: "600px" }}>
           {/* Theme toggle */}
           <button
@@ -312,18 +313,18 @@ function App() {
             aria-label="Toggle theme"
             aria-pressed={theme === "dark"}
           >
-            {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
+            {theme === "light" ? <><Moon size={15} /> Dark Mode</> : <><Sun size={15} /> Light Mode</>}
           </button>
 
           {/* Auth bar */}
           <div className="auth-bar">
             {user ? (
               <>
-                <span className="auth-username">👤 {user.username}</span>
+                <span className="auth-username"><User size={14} /> {user.username}</span>
                 <button className="auth-bar-btn" onClick={handleLogout}>Logout</button>
               </>
             ) : (
-              <button className="auth-bar-btn" onClick={() => setShowAuthModal(true)}>🔐 Login / Sign Up</button>
+              <button className="auth-bar-btn" onClick={() => setShowAuthModal(true)}><Lock size={14} /> Login / Sign Up</button>
             )}
           </div>
 
@@ -335,7 +336,9 @@ function App() {
             />
           )}
 
-          <h1 className="mb-4" style={{ fontSize: "calc(1.5rem + 1.5vw)", wordBreak: "break-word" }}>🚀 AI Resume Analyzer</h1>
+          <h1 className="mb-4" style={{ fontSize: "calc(1.5rem + 1.5vw)", wordBreak: "break-word" }}>
+            <Rocket size={28} /> AI Resume Analyzer
+          </h1>
 
           {/* Role Selector Dropdown */}
           <div className="mb-4 d-flex flex-column align-items-center flex-sm-row justify-content-center" style={{ gap: "8px" }}>
@@ -364,11 +367,10 @@ function App() {
               }}
             />
             <label htmlFor="fileUpload" className="upload-label" style={{ display: "block", wordBreak: "break-all", padding: "15px" }}>
-              📄 {file ? file.name : "Drag & Drop Resume or Click to Upload"}
+              <FileText size={16} /> {file ? file.name : "Drag & Drop Resume or Click to Upload"}
             </label>
           </div>
 
-          {/* FIXED: Added responsive flex-wrap and set width boundaries for smaller screens */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
             <button
               className="analyze-btn"
@@ -376,7 +378,9 @@ function App() {
               disabled={loading}
               style={{ minHeight: "44px", flex: "1 1 200px", maxWidth: "100%" }}
             >
-              {loading && analysisSource === "upload" ? "⏳ Extracting..." : "🚀 Analyze Resume"}
+              {loading && analysisSource === "upload"
+                ? <><Loader2 size={15} className="spin" /> Extracting...</>
+                : <><Rocket size={15} /> Analyze Resume</>}
             </button>
             <button
               className="secondary-btn"
@@ -385,19 +389,19 @@ function App() {
               type="button"
               style={{ minHeight: "44px", flex: "1 1 200px", maxWidth: "100%" }}
             >
-              {loading && analysisSource === "sample" ? "⏳ Loading..." : "Try Sample Resume"}
+              {loading && analysisSource === "sample"
+                ? <><Loader2 size={15} className="spin" /> Loading...</>
+                : "Try Sample Resume"}
             </button>
           </div>
 
-          {/* Loading skeleton — shown while the resume is being analyzed */}
           {loading && <AnalysisSkeleton />}
 
-          {/* Results */}
           {score !== null && (
             <>
               {analysisSource === "sample" && (
                 <div className="sample-notice-banner mb-4" style={{ padding: "10px", wordBreak: "break-word" }}>
-                  <span>ℹ️ Viewing Sample Resume Analysis</span>
+                  <span><Info size={15} /> Viewing Sample Resume Analysis</span>
                   <span style={{ fontWeight: "normal", fontSize: "13px", display: "block" }}>
                     — This analysis is based on a bundled sample resume.
                   </span>
@@ -408,9 +412,11 @@ function App() {
 
               <ResumePreview text={resumeText} skills={skills} />
 
-              <h5 className="analysis-done mt-3">✅ Resume Analysis Complete</h5>
+              <h5 className="analysis-done mt-3"><CheckCircle size={18} /> Resume Analysis Complete</h5>
               {activeFileName && (
-                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px", wordBreak: "break-all" }}>📄 {activeFileName}</p>
+                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px", wordBreak: "break-all" }}>
+                  <FileText size={13} /> {activeFileName}
+                </p>
               )}
 
               {/* Skills container */}
@@ -429,21 +435,23 @@ function App() {
                     style={{ marginTop: "16px", minHeight: "44px" }}
                     onClick={() => setShowAllSkills(!showAllSkills)}
                   >
-                    {showAllSkills ? "Show Less ▲" : `Show More (${skills.length - 15} more) ▼`}
+                    {showAllSkills
+                      ? <><ChevronUp size={15} /> Show Less</>
+                      : <><ChevronDown size={15} /> Show More ({skills.length - 15} more)</>}
                   </button>
                 )}
               </div>
 
-              {/* FIXED: Changed matrix container style to use flex-wrap / grid adaptation for mobile widths */}
+              {/* Skill Gap Matrix */}
               <div className="mt-4 p-3" style={{ background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', textAlign: 'center' }}>
-                  <span>🎯 Skill Gap Matrix ({targetRole})</span>
+                <h4 style={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", textAlign: "center", gap: "6px" }}>
+                  <Target size={18} /> Skill Gap Matrix ({targetRole})
                   <InfoTooltip content="Shows which required skills are already in your resume and which important skills are missing." />
                 </h4>
                 <div className="skill-gap-layout" style={{ display: "flex", flexWrap: "wrap", gap: "20px", justifyContent: "space-around", marginTop: "12px" }}>
                   <div style={{ flex: "1 1 140px", minWidth: "140px" }}>
                     <h6 style={{ color: "#22c55e" }}>Matched Skills</h6>
-                    {matchedSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : 
+                    {matchedSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> :
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", justifyContent: "center" }}>
                         {matchedSkills.map((s, i) => (
                           <span key={i} className="badge bg-success m-1" style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{s}</span>
@@ -453,7 +461,7 @@ function App() {
                   </div>
                   <div style={{ flex: "1 1 140px", minWidth: "140px" }}>
                     <h6 style={{ color: "#ef4444" }}>Missing Skills</h6>
-                    {missingSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : 
+                    {missingSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> :
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", justifyContent: "center" }}>
                         {missingSkills.map((s, i) => (
                           <span key={i} className="badge bg-danger m-1" style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{s}</span>
@@ -464,10 +472,10 @@ function App() {
                 </div>
               </div>
 
-              {/* SUGGESTIONS BOX WITH THE UTILITY BUTTON */}
+              {/* Suggestions */}
               <div className="suggestion-box mt-4" style={{ padding: "15px" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "between", alignItems: "center", marginBottom: "12px" }}>
-                  <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
+                  <h4 style={{ margin: 0 }}><Lightbulb size={18} /> Suggestions</h4>
                   {suggestions.length > 0 && (
                     <button
                       type="button"
@@ -475,13 +483,17 @@ function App() {
                       onClick={copySuggestionsToClipboard}
                       style={{ minHeight: "44px" }}
                     >
-                      {copied ? "✅ Copied!" : "📋 Copy Suggestions"}
+                      {copied
+                        ? <><ClipboardCheck size={15} /> Copied!</>
+                        : <><Clipboard size={15} /> Copy Suggestions</>}
                     </button>
                   )}
                 </div>
 
                 {suggestions.map((s: string, i: number) => (
-                  <div key={i} className="suggestion-item" style={{ wordBreak: "break-word", textAlign: "left" }}>📌 {s}</div>
+                  <div key={i} className="suggestion-item" style={{ wordBreak: "break-word", textAlign: "left", display: "flex", alignItems: "flex-start", gap: "6px" }}>
+                    <Pin size={14} style={{ flexShrink: 0, marginTop: "3px" }} />{s}
+                  </div>
                 ))}
 
                 {/* Reset Button */}
@@ -492,19 +504,18 @@ function App() {
                     onClick={resetAnalysis}
                     style={{ minHeight: "44px", width: "100%", maxWidth: "250px" }}
                   >
-                    🔄 Start New Analysis
+                    <RefreshCw size={15} /> Start New Analysis
                   </button>
                 </div>
               </div>
             </>
-          )}   {/* closes the conditional block */}
-        </div> {/* closes .main-card */}
-      </div> {/* closes .container */}
+          )}
+        </div>
+      </div>
 
-      <Footer />  {/* footer should be outside main container */}
-
+      <Footer />
     </>
-  ); {/* closes the return fragment */ }
-} {/* closes App function */ }
+  );
+}
 
 export default App;

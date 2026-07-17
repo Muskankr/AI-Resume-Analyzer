@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Lock, FileSignature, Loader2 } from "lucide-react";
 
 interface AuthModalProps {
   onSignup: (username: string, password: string) => Promise<void>;
@@ -32,7 +33,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
   return (
     <div className="auth-overlay" onClick={onClose}>
       <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
-        <h3>{mode === "login" ? "🔐 Login" : "📝 Sign Up"}</h3>
+        <h3>{mode === "login" ? <><Lock size={16} /> Login</> : <><FileSignature size={16} /> Sign Up</>}</h3>
         <form onSubmit={submit}>
           <input
             className="auth-input"
@@ -52,7 +53,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
           />
           {error && <p className="auth-error">{error}</p>}
           <button className="auth-submit-btn" type="submit" disabled={loading}>
-            {loading ? "⏳ Please wait..." : mode === "login" ? "Login" : "Create Account"}
+            {loading ? <><Loader2 size={15} className="spin" /> Please wait...</> : mode === "login" ? "Login" : "Create Account"}
           </button>
         </form>
         <p className="auth-switch">

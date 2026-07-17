@@ -283,6 +283,13 @@ border:0;
 100%{transform:rotate(360deg);}
 }
 
+/* lucide-react Loader2 spinner */
+.spin {
+  animation: spin 1s linear infinite;
+  display: inline-block;
+  vertical-align: middle;
+}
+
 /* ── History Sidebar ────────────────────── */
 
 .history-toggle-btn {

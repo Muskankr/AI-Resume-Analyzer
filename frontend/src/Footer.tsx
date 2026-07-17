@@ -1,3 +1,5 @@
+import { Star } from "lucide-react";
+
 const REPO_URL = "https://github.com/Muskankr/AI-Resume-Analyzer";
 
 export const Footer = () => {
@@ -9,7 +11,7 @@ export const Footer = () => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <span aria-hidden="true">⭐</span> GitHub
+          <span aria-hidden="true"><Star size={14} /></span> GitHub
         </a>
       </nav>
       <p className="app-footer__copy">
