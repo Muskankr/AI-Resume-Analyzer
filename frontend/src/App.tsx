@@ -356,24 +356,6 @@ function App() {
             />
           )}
 
-          <div className="hero-content">
-            <span className="hero-badge">
-              🚀 AI Powered Resume Analysis
-            </span>
-
-            <h1 className="hero-title">
-              Land More Interviews with an AI Resume Analyzer
-            </h1>
-
-            <p className="hero-subtitle">
-              Upload your resume, receive instant ATS insights, identify missing skills,
-              and optimize your resume for your target career.
-            </p>
-          </div>
-
-          {/* Role Selector Dropdown */}
-          <div className="hero-role-selector">
-            <label htmlFor="roleSelect" style={{ marginRight: "10px", fontWeight: "600", color: "#fff" }}>
           <h1 className="mb-4" style={{ fontSize: "calc(1.5rem + 1.5vw)", wordBreak: "break-word" }}>🚀 AI Resume Analyzer</h1>
 
           {/* Role Selector Dropdown */}
@@ -407,7 +389,6 @@ function App() {
             </label>
           </div>
 
-          <div className="hero-actions">
           {/* FIXED: Added responsive flex-wrap and set width boundaries for smaller screens */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
             <button
