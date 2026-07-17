@@ -2,66 +2,25 @@ import os
 import pdfplumber
 from django.contrib.auth import get_user_model
 from .models import ResumeAnalysis
+from .skill_matcher import extract_skills
 
 User = get_user_model()
 
-
-SKILLS = [
-    "python",
-    "django",
-    "react",
-    "javascript",
-    "typescript",
-    "html",
-    "css",
-    "tailwind",
-    "sql",
-    "mysql",
-    "postgresql",
-    "mongodb",
-    "git",
-    "github",
-    "flask",
-    "docker",
-    "aws",
-    "machine learning",
-    "data analysis",
-    "excel",
-    "c",
-    "c++",
-    "java",
-]
-
-
 ROLE_SKILLS = {
     "Frontend Developer": [
-        "html",
-        "css",
-        "javascript",
-        "react",
-        "typescript",
-        "tailwind",
-        "git",
-        "github",
+        "html", "css", "javascript", "typescript", "react",
+        "next.js", "tailwind", "git", "github", "webpack",
     ],
 
     "Backend Developer": [
-        "python",
-        "django",
-        "flask",
-        "sql",
-        "mysql",
-        "git",
-        "github",
-        "docker",
+        "python", "django", "flask", "fastapi", "node.js", "express.js",
+        "sql", "mysql", "postgresql", "mongodb", "docker", "git", "github",
     ],
 
     "Data Analyst": [
-        "python",
-        "sql",
-        "excel",
-        "machine learning",
-        "data analysis",
+        "python", "sql", "excel", "machine learning", "deep learning",
+        "data analysis", "pandas", "numpy", "matplotlib", "tensorflow",
+        "scikit-learn", "jupyter",
     ],
 }
 
@@ -81,9 +40,8 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None)
         if os.path.exists(file_path):
             os.remove(file_path)
 
-    text = text.lower()
-
-    detected = [skill for skill in SKILLS if skill.lower() in text]
+    raw_text = text
+    detected = extract_skills(text)
 
     matched = []
     missing = []
@@ -111,15 +69,17 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None)
         try:
             user = User.objects.get(id=user_id)
 
-            ResumeAnalysis.objects.create(
+            analysis_record, created = ResumeAnalysis.objects.update_or_create(
                 user=user,
-                file_name=file_name,
-                score=score,
-                skills_found=detected,
-                suggestions=suggestions,
-                matched_skills=matched,
-                missing_skills=missing,
+                file_name=file_name,          
                 target_role=target_role,
+                defaults={
+                    'score': score,
+                    'skills_found': detected,
+                    'suggestions': suggestions,
+                    'matched_skills': matched,
+                    'missing_skills': missing,
+                }
             )
 
         except User.DoesNotExist:
@@ -132,4 +92,5 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None)
         "matched_skills": matched,
         "missing_skills": missing,
         "target_role": target_role,
+        "resume_text": raw_text,
     }

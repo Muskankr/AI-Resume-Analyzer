@@ -42,26 +42,34 @@ export function useAnalysisHistory() {
     saveHistory(entries);
   }, [entries]);
 
-  const addEntry = useCallback(
-    (entry: Omit<AnalysisEntry, "id" | "timestamp">) => {
-      const newEntry: AnalysisEntry = {
-        ...entry,
-        id: crypto.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-        timestamp: Date.now(),
-      };
-      setEntries((prev) => [newEntry, ...prev]);
-      return newEntry;
-    },
-    []
-  );
+  const addEntry = useCallback((entry: Omit<AnalysisEntry, "id" | "timestamp">) => {
+    setEntries((prev) => {
+      const filteredEntries = prev.filter((e) => e.fileName !== entry.fileName);
 
-  const deleteEntry = useCallback((id: string) => {
-    setEntries((prev) => prev.filter((e) => e.id !== id));
+      const updated: AnalysisEntry[] = [
+        { 
+          ...entry, 
+          id: Date.now().toString(), 
+          timestamp: Date.now() 
+        }, 
+        ...filteredEntries
+      ];
+      return updated;
+    });
   }, []);
 
-  const clearHistory = useCallback(() => {
-    setEntries([]);
-  }, []);
+  const deleteEntry = (id: string) => {
+  setEntries((prev) => prev.filter((e) => e.id !== id));
+};
 
-  return { entries, addEntry, deleteEntry, clearHistory, setEntries };
+  const clearHistory = () => {
+  setEntries([]);
+};
+return {
+    entries,
+    addEntry,
+    deleteEntry,
+    clearHistory,
+    setEntries
+  };
 }

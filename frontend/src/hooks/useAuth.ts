@@ -35,6 +35,5 @@ export function useAuth() {
   }, []);
 
   const logout = useCallback(() => persist(null), []);
-
   return { user, signup, login, logout };
 }

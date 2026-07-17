@@ -1,4 +1,5 @@
 import React from 'react';
+import { InfoTooltip } from './components/InfoTooltip';
 
 interface AtsScoreProps {
   score: number;
@@ -13,7 +14,10 @@ export const AtsScore: React.FC<AtsScoreProps> = ({ score }) => {
       >
         <span className="score-text">{score}%</span>
       </div>
-      <h3>ATS Resume Score</h3>
+      <h3 style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+        ATS Resume Score
+        <InfoTooltip content="Shows how well your resume matches the job description and how likely it is to pass an Applicant Tracking System." />
+      </h3>
     </div>
   );
 };

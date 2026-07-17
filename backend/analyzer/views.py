@@ -118,3 +118,18 @@ def analysis_history(request):
     )
 
     return Response(serializer.data)
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_single_history(request, pk):
+    try:
+        entry = ResumeAnalysis.objects.get(pk=pk, user=request.user)
+        entry.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    except ResumeAnalysis.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def clear_user_history(request):
+    ResumeAnalysis.objects.filter(user=request.user).delete()
+    return Response({"message": "All history cleared"}, status=status.HTTP_204_NO_CONTENT)

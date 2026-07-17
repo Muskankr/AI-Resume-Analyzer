@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: "🔒 Security Vulnerability"
+    url: https://github.com/Muskankr/AI-Resume-Analyzer/security/advisories/new
+    about: Please report security issues privately through Security Advisories instead of a public issue.
