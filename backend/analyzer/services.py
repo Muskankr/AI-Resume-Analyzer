@@ -1,45 +1,10 @@
-import re
 import os
 import pdfplumber
 from django.contrib.auth import get_user_model
 from .models import ResumeAnalysis
+from .skill_matcher import extract_skills
 
 User = get_user_model()
-
-
-SKILLS = [
-    # Languages — only include ones unlikely to false-match as common words
-    "python", "java", "c++", "javascript", "typescript",
-    "kotlin", "swift", "ruby", "php", "rust",
-
-    # C and single-letter langs need explicit listing but matched carefully
-    "c",
-
-    # Web Frontend
-    "html", "css", "react", "react.js", "angular", "vue", "vue.js",
-    "next.js", "tailwind", "bootstrap", "sass", "webpack",
-
-    # Web Backend
-    "node.js", "express", "express.js", "django", "flask", "fastapi",
-    "spring boot", "laravel",
-
-    # Databases
-    "sql", "mysql", "postgresql", "mongodb", "firebase", "redis",
-    "sqlite", "cassandra", "dynamodb",
-
-    # ML / AI
-    "machine learning", "deep learning", "data analysis",
-    "tensorflow", "keras", "pytorch", "scikit-learn", "opencv",
-    "mediapipe", "lstm", "cnn", "llm", "nlp", "pandas", "numpy",
-    "matplotlib", "seaborn", "huggingface",
-
-    # Cloud & DevOps
-    "aws", "azure", "gcp", "docker", "kubernetes", "terraform", "linux",
-
-    # Tools
-    "git", "github", "postman", "jupyter", "vs code", "excel",
-]
-
 
 ROLE_SKILLS = {
     "Frontend Developer": [
@@ -76,13 +41,7 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None)
             os.remove(file_path)
 
     raw_text = text
-    text = text.lower()
-
-    def skill_in_text(skill, text):
-        escaped = re.escape(skill)
-        return bool(re.search(rf'(?<![\w]){escaped}(?![\w])', text, re.IGNORECASE))
-
-    detected = [skill for skill in SKILLS if skill_in_text(skill, text)]
+    detected = extract_skills(text)
 
     matched = []
     missing = []
@@ -110,15 +69,17 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None)
         try:
             user = User.objects.get(id=user_id)
 
-            ResumeAnalysis.objects.create(
+            analysis_record, created = ResumeAnalysis.objects.update_or_create(
                 user=user,
-                file_name=file_name,
-                score=score,
-                skills_found=detected,
-                suggestions=suggestions,
-                matched_skills=matched,
-                missing_skills=missing,
+                file_name=file_name,          
                 target_role=target_role,
+                defaults={
+                    'score': score,
+                    'skills_found': detected,
+                    'suggestions': suggestions,
+                    'matched_skills': matched,
+                    'missing_skills': missing,
+                }
             )
 
         except User.DoesNotExist:

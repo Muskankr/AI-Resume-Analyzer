@@ -4,6 +4,40 @@
   --card-bg: rgba(255, 255, 255, 0.15);
   --card-text: #ffffff;
   --score-track: rgba(255, 255, 255, 0.2);
+:root{
+
+  /* ── Design Tokens: Color Palette ───────── */
+  --color-primary: #3b82f6;   /* blue — main interactive/accent color */
+  --color-secondary: #764ba2; /* purple — brand gradient color */
+  --color-accent: #22c55e;    /* green — success / positive states */
+  --color-neutral: #64748b;   /* slate gray — neutral text/borders */
+  --color-danger: #ef4444;    /* red — errors, destructive actions */
+
+  /* ── Design Tokens: Spacing Scale ───────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+
+  /* ── Design Tokens: Typography Scale ────── */
+  --text-xs: 12px;
+  --text-sm: 13px;
+  --text-base: 14px;
+  --text-md: 18px;
+  --text-lg: 20px;
+  --text-xl: 40px;
+
+
+  color-scheme: light;
+  /* Layered, subtle background: soft neutral base + gentle accent radial + micro-texture */
+  --body-bg: radial-gradient(circle at 10% 10%, rgba(102,126,234,0.06), transparent 25%), linear-gradient(180deg,#f8fafc 0%, #eef2f7 100%), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="3" height="3"><circle cx="1.5" cy="1.5" r="0.5" fill="%23ffffff" opacity="0.03"/></svg>');
+  --card-bg: #ffffff;
+  --card-text: #0f172a;
+  --score-track: rgba(255,255,255,0.2);
   --score-accent: #00ffae;
   --upload-border: #cccccc;
   --upload-bg: rgba(255, 255, 255, 0.1);
@@ -23,8 +57,11 @@
   --btn-secondary-border: rgba(255, 255, 255, 0.3);
   --btn-secondary-hover-bg: rgba(255, 255, 255, 0.25);
   --btn-accent-bg: #3b82f6;
+  --btn-secondary-border: rgba(255,255,255,0.3);
+  --btn-secondary-hover-bg: rgba(255,255,255,0.25);
+  --btn-accent-bg: var(--color-primary);
   --btn-accent-hover-bg: #2563eb;
-  --btn-success-bg: #22c55e;
+  --btn-success-bg: var(--color-accent);
   --btn-accent-text: #ffffff;
   --footer-text: rgba(255, 255, 255, 0.85);
   --footer-link: #ffffff;
@@ -34,6 +71,9 @@
   color-scheme: dark;
   --body-bg: linear-gradient(135deg, #1e1b4b, #0f172a);
   --card-bg: rgba(15, 23, 42, 0.6);
+  /* Dark variant: deeper neutral base, soft cool radial accent, and subtle noise */
+  --body-bg: radial-gradient(circle at 90% 80%, rgba(34,211,238,0.04), transparent 25%), linear-gradient(180deg,#071026 0%, #0b1220 100%), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="3" height="3"><circle cx="1.5" cy="1.5" r="0.5" fill="%23000000" opacity="0.03"/></svg>');
+  --card-bg: rgba(2,6,23,0.6);
   --card-text: #e2e8f0;
   --score-track: rgba(255, 255, 255, 0.08);
   --score-accent: #22d3ee;
@@ -55,8 +95,11 @@
   --btn-secondary-border: rgba(255, 255, 255, 0.15);
   --btn-secondary-hover-bg: rgba(255, 255, 255, 0.16);
   --btn-accent-bg: #3b82f6;
+  --btn-secondary-border: rgba(255,255,255,0.15);
+  --btn-secondary-hover-bg: rgba(255,255,255,0.16);
+  --btn-accent-bg: var(--color-primary);
   --btn-accent-hover-bg: #60a5fa;
-  --btn-success-bg: #22c55e;
+  --btn-success-bg: var(--color-accent);
   --btn-accent-text: #ffffff;
   --footer-text: rgba(226, 232, 240, 0.85);
   --footer-link: #e2e8f0;
@@ -109,8 +152,8 @@ body {
   background: var(--btn-secondary-bg);
   color: var(--btn-secondary-text);
   border-color: var(--btn-secondary-border);
-  padding: 6px 16px;
-  font-size: 13px;
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-sm);
 }
 
 .app-btn--secondary:hover {
@@ -121,8 +164,8 @@ body {
 .app-btn--accent {
   background: var(--btn-accent-bg);
   color: var(--btn-accent-text);
-  padding: 6px 12px;
-  font-size: 12px;
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-xs);
   border-radius: 6px;
 }
 
@@ -160,6 +203,17 @@ body {
   font-weight: bold;
   background: conic-gradient(var(--score-accent) var(--score), var(--score-track) 0);
   margin: auto;
+.score-circle{
+  width:160px;
+  height:160px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size: var(--text-xl);
+  font-weight:bold;
+  background:conic-gradient(var(--score-accent) var(--score),var(--score-track) 0);
+  margin:auto;
 }
 
 
@@ -232,6 +286,23 @@ body {
 .analysis-done {
   color: var(--analysis-done);
   font-weight: 600;
+.sample-notice-banner{
+background: var(--banner-bg);
+border: 1px solid var(--banner-border);
+color: var(--banner-text);
+padding: var(--space-3);
+border-radius: 8px;
+font-weight: 600;
+font-size: var(--text-base);
+display: flex;
+align-items: center;
+justify-content: center;
+gap: var(--space-2);
+transition: all 0.3s ease;
+}
+.analysis-done{
+color: var(--analysis-done);
+font-weight:600;
 }
 
 
@@ -317,7 +388,7 @@ body {
   position: absolute;
   top: -4px;
   right: -4px;
-  background: #ef4444;
+  background: var(--color-danger);
   color: #fff;
   font-size: 11px;
   font-weight: 700;
@@ -335,7 +406,8 @@ body {
   top: 0;
   right: 0;
   z-index: 1000;
-  width: 320px;
+  width: 85vw; 
+  max-width: 300px;
   height: 100vh;
   background: var(--card-bg);
   backdrop-filter: blur(16px);
@@ -363,20 +435,26 @@ body {
   font-size: 18px;
 }
 
+/* Clear All button — stronger contrast */
 .history-clear-btn {
   background: rgba(239, 68, 68, 0.2);
   color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.4);
   padding: 4px 10px;
+  background: var(--color-primary);   /* solid blue accent */
+  color: #fff;
+  border: none;
+  padding: 6px 12px;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 600;
   transition: background 0.2s ease;
 }
 
 .history-clear-btn:hover {
   background: rgba(239, 68, 68, 0.35);
+  background: #2563eb; /* darker blue hover */
 }
 
 .history-empty {
@@ -420,29 +498,32 @@ body {
   color: var(--score-accent);
 }
 
+/* Delete button — strong red */
 .history-item-delete {
-  background: none;
+  background: var(--color-danger);
+  color: #fff;
   border: none;
   cursor: pointer;
   font-size: 14px;
-  opacity: 0.5;
-  padding: 0 2px;
-  transition: opacity 0.2s ease;
+  padding: 4px 6px;
+  border-radius: 4px;
+  opacity: 1; /* remove faint opacity */
+  transition: background 0.2s ease;
 }
 
 .history-item-delete:hover {
-  opacity: 1;
+  background: #d32f2f;
 }
 
 .history-item-role {
   font-size: 13px;
   font-weight: 600;
-  opacity: 0.9;
+  color: var(--color-neutral); /* stronger text */
 }
 
 .history-item-file {
   font-size: 12px;
-  opacity: 0.6;
+  color: var(--color-neutral); /* stronger text */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -450,13 +531,13 @@ body {
 
 .history-item-time {
   font-size: 11px;
-  opacity: 0.5;
+  color: var(--color-neutral); /* stronger text */
   margin-top: 2px;
 }
 
 .history-item-skills {
   font-size: 12px;
-  opacity: 0.7;
+  opacity: 0.85; /* slightly stronger */
   margin-top: 6px;
   white-space: nowrap;
   overflow: hidden;
@@ -501,51 +582,84 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.5);
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
   z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 16px;
 }
 
 .auth-modal {
-  background: var(--card-bg);
+  background: rgba(255,255,255,0.95);
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255,255,255,0.3);
   border-radius: 16px;
   padding: 32px 28px;
   width: 320px;
+  max-width: 90vw;
+  color: #1e293b;
+  box-shadow: 0 20px 45px rgba(0,0,0,0.45);
+}
+
+[data-theme="dark"] .auth-modal {
+  background: rgba(15,23,42,0.95);
+  border-color: rgba(255,255,255,0.1);
   color: var(--card-text);
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
 }
 
 .auth-modal h3 {
-  margin: 0 0 20px;
+  margin: 0 0 24px;
   text-align: center;
+  font-size: 20px;
+  letter-spacing: -0.01em;
 }
 
 .auth-input {
   display: block;
   width: 100%;
-  padding: 9px 12px;
-  margin-bottom: 12px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.25);
   background: rgba(255, 255, 255, 0.1);
   color: var(--card-text);
+  border: 1px solid rgba(0,0,0,0.15);
+  background: rgba(0,0,0,0.03);
+  color: inherit;
   font-size: 14px;
   box-sizing: border-box;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--score-accent);
+  background: rgba(0,0,0,0.05);
+}
+
+[data-theme="dark"] .auth-input {
+  border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.08);
 }
 
 .auth-input::placeholder {
   opacity: 0.6;
 }
+[data-theme="dark"] .auth-input:focus {
+  background: rgba(255,255,255,0.12);
+}
+
+.auth-input::placeholder { opacity: 0.55; }
 
 .auth-error {
-  color: #f87171;
+  color: var(--color-danger);
   font-size: 13px;
   margin-bottom: 10px;
 }
-
 .auth-submit-btn {
   width: 100%;
   padding: 10px;
@@ -710,5 +824,90 @@ body {
 
   .hero-actions button {
     width: 100%;
+  }
+}
+/* ── Tooltip ────────────────────────────── */
+.custom-tooltip-wrapper {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  vertical-align: middle;
+  margin-left: 8px;
+}
+
+.custom-tooltip-trigger {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: help;
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+  opacity: 0.7;
+  transition: opacity 0.2s ease;
+}
+
+.custom-tooltip-trigger:hover,
+.custom-tooltip-trigger:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--score-accent);
+  outline-offset: 2px;
+  border-radius: 50%;
+}
+
+.custom-tooltip-content {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background: #1e293b;
+  color: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  width: max-content;
+  max-width: min(260px, 90vw);
+  text-align: center;
+  white-space: normal;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+  z-index: 50;
+  pointer-events: none;
+  border: 1px solid rgba(255,255,255,0.1);
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+.custom-tooltip-content::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: rgba(255,255,255,0.1) transparent transparent transparent;
+}
+
+.custom-tooltip-content::before {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-1px);
+  border-width: 6px;
+  border-style: solid;
+  border-color: #1e293b transparent transparent transparent;
+  z-index: 1;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-10px);
   }
 }

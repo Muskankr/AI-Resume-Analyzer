@@ -1,0 +1,740 @@
+{
+  "languages": [
+    {
+      "name": "python",
+      "aliases": [
+        "py"
+      ]
+    },
+    {
+      "name": "javascript",
+      "aliases": [
+        "js",
+        "java script",
+        "ecmascript"
+      ]
+    },
+    {
+      "name": "typescript",
+      "aliases": [
+        "ts",
+        "type script"
+      ]
+    },
+    {
+      "name": "java",
+      "aliases": []
+    },
+    {
+      "name": "c",
+      "aliases": []
+    },
+    {
+      "name": "c++",
+      "aliases": [
+        "cpp",
+        "c plus plus"
+      ]
+    },
+    {
+      "name": "c#",
+      "aliases": [
+        "csharp",
+        "c sharp"
+      ]
+    },
+    {
+      "name": "go",
+      "aliases": [
+        "golang"
+      ]
+    },
+    {
+      "name": "rust",
+      "aliases": []
+    },
+    {
+      "name": "kotlin",
+      "aliases": []
+    },
+    {
+      "name": "swift",
+      "aliases": []
+    },
+    {
+      "name": "php",
+      "aliases": []
+    },
+    {
+      "name": "ruby",
+      "aliases": []
+    },
+    {
+      "name": "r",
+      "aliases": []
+    },
+    {
+      "name": "scala",
+      "aliases": []
+    },
+    {
+      "name": "dart",
+      "aliases": []
+    },
+    {
+      "name": "shell",
+      "aliases": [
+        "bash",
+        "shell scripting"
+      ]
+    },
+    {
+      "name": "powershell",
+      "aliases": []
+    },
+    {
+      "name": "matlab",
+      "aliases": []
+    },
+    {
+      "name": "objective-c",
+      "aliases": []
+    }
+  ],
+  "frameworks": [
+    {
+      "name": "html",
+      "aliases": [
+        "html5"
+      ]
+    },
+    {
+      "name": "css",
+      "aliases": [
+        "css3",
+        "cascading style sheets"
+      ]
+    },
+    {
+      "name": "django",
+      "aliases": []
+    },
+    {
+      "name": "flask",
+      "aliases": []
+    },
+    {
+      "name": "fastapi",
+      "aliases": [
+        "fast api"
+      ]
+    },
+    {
+      "name": "react",
+      "aliases": [
+        "react.js",
+        "reactjs"
+      ]
+    },
+    {
+      "name": "angular",
+      "aliases": [
+        "angularjs",
+        "angular.js"
+      ]
+    },
+    {
+      "name": "vue.js",
+      "aliases": [
+        "vue",
+        "vuejs",
+        "vue js"
+      ]
+    },
+    {
+      "name": "next.js",
+      "aliases": [
+        "nextjs",
+        "next js"
+      ]
+    },
+    {
+      "name": "node.js",
+      "aliases": [
+        "nodejs",
+        "node js"
+      ]
+    },
+    {
+      "name": "express.js",
+      "aliases": [
+        "express",
+        "expressjs",
+        "express js"
+      ]
+    },
+    {
+      "name": "spring boot",
+      "aliases": [
+        "springboot"
+      ]
+    },
+    {
+      "name": "spring",
+      "aliases": []
+    },
+    {
+      "name": "laravel",
+      "aliases": []
+    },
+    {
+      "name": "ruby on rails",
+      "aliases": [
+        "rails"
+      ]
+    },
+    {
+      "name": "asp.net",
+      "aliases": [
+        "asp net",
+        "asp.net core"
+      ]
+    },
+    {
+      "name": "bootstrap",
+      "aliases": []
+    },
+    {
+      "name": "tailwind css",
+      "aliases": [
+        "tailwind",
+        "tailwindcss"
+      ]
+    },
+    {
+      "name": "svelte",
+      "aliases": []
+    },
+    {
+      "name": "nuxt.js",
+      "aliases": [
+        "nuxt",
+        "nuxtjs",
+        "nuxt js"
+      ]
+    },
+    {
+      "name": "react native",
+      "aliases": [
+        "react-native"
+      ]
+    },
+    {
+      "name": "flutter",
+      "aliases": []
+    }
+  ],
+  "libraries": [
+    {
+      "name": "numpy",
+      "aliases": []
+    },
+    {
+      "name": "pandas",
+      "aliases": []
+    },
+    {
+      "name": "scikit-learn",
+      "aliases": [
+        "sklearn",
+        "scikit learn"
+      ]
+    },
+    {
+      "name": "tensorflow",
+      "aliases": []
+    },
+    {
+      "name": "pytorch",
+      "aliases": [
+        "torch"
+      ]
+    },
+    {
+      "name": "keras",
+      "aliases": []
+    },
+    {
+      "name": "opencv",
+      "aliases": [
+        "open cv",
+        "cv2"
+      ]
+    },
+    {
+      "name": "matplotlib",
+      "aliases": []
+    },
+    {
+      "name": "seaborn",
+      "aliases": []
+    },
+    {
+      "name": "plotly",
+      "aliases": []
+    },
+    {
+      "name": "scipy",
+      "aliases": []
+    },
+    {
+      "name": "pdfplumber",
+      "aliases": [
+        "pdf plumber"
+      ]
+    },
+    {
+      "name": "axios",
+      "aliases": []
+    },
+    {
+      "name": "redux",
+      "aliases": []
+    },
+    {
+      "name": "jquery",
+      "aliases": []
+    },
+    {
+      "name": "langchain",
+      "aliases": [
+        "lang chain"
+      ]
+    },
+    {
+      "name": "hugging face",
+      "aliases": [
+        "huggingface"
+      ]
+    },
+    {
+      "name": "transformers",
+      "aliases": [
+        "huggingface transformers"
+      ]
+    },
+    {
+      "name": "beautiful soup",
+      "aliases": [
+        "beautifulsoup",
+        "bs4"
+      ]
+    },
+    {
+      "name": "pytest",
+      "aliases": []
+    }
+  ],
+  "databases": [
+    {
+      "name": "sql",
+      "aliases": []
+    },
+    {
+      "name": "mysql",
+      "aliases": [
+        "my sql"
+      ]
+    },
+    {
+      "name": "postgresql",
+      "aliases": [
+        "postgres",
+        "postgre sql"
+      ]
+    },
+    {
+      "name": "sqlite",
+      "aliases": [
+        "sqlite3"
+      ]
+    },
+    {
+      "name": "mongodb",
+      "aliases": [
+        "mongo db",
+        "mongo"
+      ]
+    },
+    {
+      "name": "redis",
+      "aliases": []
+    },
+    {
+      "name": "oracle database",
+      "aliases": [
+        "oracle db"
+      ]
+    },
+    {
+      "name": "microsoft sql server",
+      "aliases": [
+        "sql server",
+        "mssql"
+      ]
+    },
+    {
+      "name": "mariadb",
+      "aliases": [
+        "maria db"
+      ]
+    },
+    {
+      "name": "cassandra",
+      "aliases": [
+        "apache cassandra"
+      ]
+    },
+    {
+      "name": "dynamodb",
+      "aliases": [
+        "dynamo db",
+        "amazon dynamodb"
+      ]
+    },
+    {
+      "name": "firebase",
+      "aliases": [
+        "firebase firestore"
+      ]
+    },
+    {
+      "name": "elasticsearch",
+      "aliases": [
+        "elastic search"
+      ]
+    },
+    {
+      "name": "neo4j",
+      "aliases": [
+        "neo 4j"
+      ]
+    },
+    {
+      "name": "snowflake",
+      "aliases": []
+    }
+  ],
+  "tools": [
+    {
+      "name": "git",
+      "aliases": []
+    },
+    {
+      "name": "github",
+      "aliases": [
+        "git hub"
+      ]
+    },
+    {
+      "name": "gitlab",
+      "aliases": [
+        "git lab"
+      ]
+    },
+    {
+      "name": "docker",
+      "aliases": []
+    },
+    {
+      "name": "kubernetes",
+      "aliases": [
+        "k8s"
+      ]
+    },
+    {
+      "name": "postman",
+      "aliases": []
+    },
+    {
+      "name": "visual studio code",
+      "aliases": [
+        "vs code",
+        "vscode"
+      ]
+    },
+    {
+      "name": "intellij idea",
+      "aliases": [
+        "intellij"
+      ]
+    },
+    {
+      "name": "jira",
+      "aliases": []
+    },
+    {
+      "name": "jenkins",
+      "aliases": []
+    },
+    {
+      "name": "nginx",
+      "aliases": []
+    },
+    {
+      "name": "apache",
+      "aliases": [
+        "apache http server"
+      ]
+    },
+    {
+      "name": "linux",
+      "aliases": []
+    },
+    {
+      "name": "figma",
+      "aliases": []
+    },
+    {
+      "name": "microsoft office",
+      "aliases": [
+        "ms office"
+      ]
+    },
+    {
+      "name": "excel",
+      "aliases": [
+        "microsoft excel"
+      ]
+    },
+    {
+      "name": "maven",
+      "aliases": [
+        "apache maven"
+      ]
+    },
+    {
+      "name": "gradle",
+      "aliases": []
+    },
+    {
+      "name": "npm",
+      "aliases": [
+        "node package manager"
+      ]
+    },
+    {
+      "name": "yarn",
+      "aliases": []
+    }
+  ],
+  "cloud_devops": [
+    {
+      "name": "amazon web services",
+      "aliases": [
+        "aws"
+      ]
+    },
+    {
+      "name": "microsoft azure",
+      "aliases": [
+        "azure"
+      ]
+    },
+    {
+      "name": "google cloud platform",
+      "aliases": [
+        "gcp",
+        "google cloud"
+      ]
+    },
+    {
+      "name": "github actions",
+      "aliases": []
+    },
+    {
+      "name": "gitlab ci",
+      "aliases": [
+        "gitlab ci/cd"
+      ]
+    },
+    {
+      "name": "circleci",
+      "aliases": [
+        "circle ci"
+      ]
+    },
+    {
+      "name": "terraform",
+      "aliases": []
+    },
+    {
+      "name": "ansible",
+      "aliases": []
+    },
+    {
+      "name": "helm",
+      "aliases": [
+        "helm charts"
+      ]
+    },
+    {
+      "name": "prometheus",
+      "aliases": []
+    },
+    {
+      "name": "grafana",
+      "aliases": []
+    },
+    {
+      "name": "cloudflare",
+      "aliases": []
+    },
+    {
+      "name": "vercel",
+      "aliases": []
+    },
+    {
+      "name": "netlify",
+      "aliases": []
+    },
+    {
+      "name": "heroku",
+      "aliases": []
+    }
+  ],
+  "data_ai": [
+    {
+      "name": "machine learning",
+      "aliases": [
+        "ml"
+      ]
+    },
+    {
+      "name": "deep learning",
+      "aliases": [
+        "dl"
+      ]
+    },
+    {
+      "name": "data analysis",
+      "aliases": [
+        "data analytics"
+      ]
+    },
+    {
+      "name": "data science",
+      "aliases": []
+    },
+    {
+      "name": "natural language processing",
+      "aliases": [
+        "nlp"
+      ]
+    },
+    {
+      "name": "computer vision",
+      "aliases": [
+        "cv"
+      ]
+    },
+    {
+      "name": "generative ai",
+      "aliases": [
+        "genai",
+        "gen ai"
+      ]
+    },
+    {
+      "name": "large language models",
+      "aliases": [
+        "llm",
+        "llms"
+      ]
+    },
+    {
+      "name": "retrieval augmented generation",
+      "aliases": [
+        "rag"
+      ]
+    },
+    {
+      "name": "artificial intelligence",
+      "aliases": [
+        "ai"
+      ]
+    },
+    {
+      "name": "data visualization",
+      "aliases": []
+    },
+    {
+      "name": "feature engineering",
+      "aliases": []
+    },
+    {
+      "name": "model deployment",
+      "aliases": []
+    },
+    {
+      "name": "mlops",
+      "aliases": [
+        "ml ops"
+      ]
+    },
+    {
+      "name": "prompt engineering",
+      "aliases": []
+    }
+  ],
+  "testing": [
+    {
+      "name": "unit testing",
+      "aliases": [
+        "unit tests"
+      ]
+    },
+    {
+      "name": "integration testing",
+      "aliases": [
+        "integration tests"
+      ]
+    },
+    {
+      "name": "selenium",
+      "aliases": []
+    },
+    {
+      "name": "cypress",
+      "aliases": []
+    },
+    {
+      "name": "playwright",
+      "aliases": []
+    },
+    {
+      "name": "jest",
+      "aliases": []
+    },
+    {
+      "name": "vitest",
+      "aliases": []
+    },
+    {
+      "name": "junit",
+      "aliases": []
+    },
+    {
+      "name": "postman testing",
+      "aliases": [
+        "api testing with postman"
+      ]
+    },
+    {
+      "name": "test driven development",
+      "aliases": [
+        "tdd"
+      ]
+    }
+  ]
+}

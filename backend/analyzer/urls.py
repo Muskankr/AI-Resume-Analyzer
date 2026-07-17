@@ -8,6 +8,8 @@ from .views import (
     upload_resume,
     signup,
     analysis_history,
+    delete_single_history,
+    clear_user_history
 )
 
 urlpatterns = [
@@ -18,4 +20,6 @@ urlpatterns = [
     path("auth/refresh/", TokenRefreshView.as_view()),
 
     path("history/", analysis_history),
+    path("history/clear/", clear_user_history),
+    path("history/<int:pk>/", delete_single_history),
 ]
