@@ -9,9 +9,9 @@ import { AuthModal } from "./AuthModal";
 import { Footer } from "./Footer";
 import AnalysisSkeleton from "./components/AnalysisSkeleton/AnalysisSkeleton";
 import { InfoTooltip } from "./components/InfoTooltip";
+import { Button } from "./components/Button";
 
 type Theme = "light" | "dark";
-
 function getInitialTheme(): Theme {
   try {
     const saved = localStorage.getItem("theme");
@@ -178,7 +178,7 @@ function App() {
 
       if (user) {
         await fetchDbHistory(user.token);
-        }
+      }
       else {
         addEntry({
           score: res.data.score,
@@ -189,7 +189,7 @@ function App() {
           targetRole: targetRole,
           fileName: fileToAnalyze.name,
         });
-    }
+      }
     } catch (error: unknown) {
       console.error(error);
 
@@ -288,9 +288,9 @@ function App() {
     setHistoryOpen(false);
   };
   const handleLogout = () => {
-  logout();           
-  clearHistory();
-};
+    logout();
+    clearHistory();
+  };
   return (
     <>
       <HistorySidebar
@@ -304,27 +304,28 @@ function App() {
 
       <div className="container mt-5">
         <div className="main-card text-center">
-          {/* Theme toggle */}
-          <button
-            type="button"
-            className="app-btn theme-toggle-btn"
-            onClick={toggleTheme}
-            aria-label="Toggle theme"
-            aria-pressed={theme === "dark"}
-          >
-            {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
-          </button>
+          {/* Top Control Bar: Side-by-Side Theme & Auth Buttons */}
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              aria-pressed={theme === "dark"}
+            >
+              {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
+            </Button>
 
-          {/* Auth bar */}
-          <div className="auth-bar">
-            {user ? (
-              <>
-                <span className="auth-username">👤 {user.username}</span>
-                <button className="auth-bar-btn" onClick={handleLogout}>Logout</button>
-              </>
-            ) : (
-              <button className="auth-bar-btn" onClick={() => setShowAuthModal(true)}>🔐 Login / Sign Up</button>
-            )}
+            <div className="auth-bar" style={{ margin: 0 }}>
+              {user ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <span className="auth-username" style={{ color: "#fff", fontSize: "var(--font-size-sm)" }}>👤 {user.username}</span>
+                  <Button variant="ghost" onClick={handleLogout}>Logout</Button>
+                </div>
+              ) : (
+                <Button variant="ghost" onClick={() => setShowAuthModal(true)}>🔐 Login / Sign Up</Button>
+              )}
+            </div>
           </div>
 
           {showAuthModal && (
@@ -337,7 +338,7 @@ function App() {
 
           <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
 
-          {/* Role Selector Dropdown */}
+          {/* Role Selector Dropdown Container */}
           <div className="mb-4">
             <label htmlFor="roleSelect" style={{ marginRight: "10px", fontWeight: "600", color: "#fff" }}>
               Target Career Track:
@@ -346,7 +347,7 @@ function App() {
               id="roleSelect"
               value={targetRole}
               onChange={(e) => setTargetRole(e.target.value)}
-              style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #ccc" }}
+              style={{ padding: "6px 12px", borderRadius: "var(--radius-sm)", border: "1px solid #ccc" }}
             >
               <option value="Frontend Developer">Frontend Developer</option>
               <option value="Backend Developer">Backend Developer</option>
@@ -354,7 +355,7 @@ function App() {
             </select>
           </div>
 
-          <div className="upload-box mb-3">
+          <div className="upload-box mb-4">
             <input
               type="file"
               id="fileUpload"
@@ -368,23 +369,26 @@ function App() {
             </label>
           </div>
 
-          <div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
-            <button
-              className="analyze-btn"
+          {/* Action Blocks: Primary Action stacked above Secondary Link */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }} className="mb-4">
+            <Button
+              variant="primary"
               onClick={uploadResume}
               disabled={loading}
             >
               {loading && analysisSource === "upload" ? "⏳ Extracting and analyzing resume text..." : "🚀 Analyze Resume"}
-            </button>
-            <button
-              className="secondary-btn"
+            </Button>
+            
+            <Button
+              variant="secondary"
               onClick={handleSampleResume}
               disabled={loading}
               type="button"
             >
-              {loading && analysisSource === "sample" ? "⏳ Loading Sample..." : "Try Sample Resume"}
-            </button>
+              {loading && analysisSource === "sample" ? "⏳ Loading Sample..." : "Or try with a sample resume"}
+            </Button>
           </div>
+
 
           {/* Loading skeleton — shown while the resume is being analyzed */}
           {loading && <AnalysisSkeleton />}

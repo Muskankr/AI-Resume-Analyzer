@@ -726,3 +726,17 @@ border:0;
     transform: translateX(-50%) translateY(-10px);
   }
 }
+/* Interactive states for our reusable Button component */
+.app-btn-custom:not(:disabled):hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.app-btn-custom:not(:disabled):active {
+  transform: translateY(0);
+}
+
+.app-btn-custom--secondary:hover {
+  color: #fff !important;
+  text-decoration: none !important;
+}
