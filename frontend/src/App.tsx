@@ -354,6 +354,7 @@ function App() {
     <>
       <HistorySidebar
         entries={entries}
+        activeFileName={activeFileName}
         onSelect={selectHistoryEntry}
         onDelete={handleDeleteEntry}
         onClear={handleClearAll}
@@ -426,6 +427,7 @@ function App() {
               📄 {file ? file.name : "Drag & Drop Resume or Click to Upload"}
             </label>
           </div>
+
 
           {/* FIXED: Added responsive flex-wrap and set width boundaries for smaller screens */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
