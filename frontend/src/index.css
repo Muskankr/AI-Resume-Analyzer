@@ -28,6 +28,18 @@
   --btn-accent-text: #ffffff;
   --footer-text: rgba(255,255,255,0.85);
   --footer-link: #ffffff;
+
+  /* Standardized Border Radius Tokens */
+  --radius-sm: 6px;    /* Dropdowns, small chips, badges */
+  --radius-md: 8px;    /* Action buttons, standard alerts */
+  --radius-lg: 12px;   /* Main application cards, upload boxes, modals */
+  --radius-round: 50%; /* Circular elements like floating action buttons */
+
+  /* Standardized Elevation / Shadow Tokens */
+  --shadow-flat: none;
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-floating: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="dark"]{
