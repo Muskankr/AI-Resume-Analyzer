@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 export const updateLocalHistory = (newEntry: any) => {
     const STORAGE_KEY = 'anonymous_resume_history';
     const existingHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
