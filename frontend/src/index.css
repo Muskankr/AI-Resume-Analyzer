@@ -784,4 +784,84 @@ border:0;
     opacity: 1;
     transform: translateX(-50%) translateY(-10px);
   }
+
 }
+
+/* Password Strength Indicator */
+.password-strength-container {
+  margin-top: -6px;
+  margin-bottom: 14px;
+  text-align: left;
+  animation: fadeInStrength 0.2s ease-out;
+}
+
+.password-strength-label {
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: space-between;
+  color: var(--color-neutral);
+}
+
+.password-strength-label span.strength-val {
+  text-transform: uppercase;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  transition: color 0.2s ease;
+}
+
+.password-strength-label span.strength-val.weak {
+  color: var(--color-danger);
+}
+
+.password-strength-label span.strength-val.medium {
+  color: #f59e0b; /* Amber */
+}
+
+.password-strength-label span.strength-val.strong {
+  color: var(--color-accent);
+}
+
+.password-strength-bar-container {
+  display: flex;
+  gap: 4px;
+  height: 4px;
+  width: 100%;
+}
+
+.password-strength-segment {
+  flex: 1;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 2px;
+  transition: background-color 0.2s ease;
+}
+
+[data-theme="dark"] .password-strength-segment {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.password-strength-segment.weak-filled {
+  background: var(--color-danger);
+}
+
+.password-strength-segment.medium-filled {
+  background: #f59e0b;
+}
+
+.password-strength-segment.strong-filled {
+  background: var(--color-accent);
+}
+
+@keyframes fadeInStrength {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
