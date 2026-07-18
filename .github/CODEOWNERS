@@ -1,0 +1,3 @@
+# Default owner for everything in the repo
+# Any PR that changes any file will automatically request a review from below
+* @Muskankr
