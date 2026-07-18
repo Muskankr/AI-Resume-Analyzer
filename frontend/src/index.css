@@ -1226,3 +1226,59 @@ border:0;
   background-color: #334155 !important;
   color: #ffffff !important;
 }
+/* Custom Styled Select Dropdown Container */
+.custom-select-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 320px;
+}
+
+.custom-select-element {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  padding: 10px 40px 10px 16px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9999px; /* Matches the sleek capsule styling of your controls */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  box-shadow: var(--shadow-card);
+}
+
+/* Custom dropdown arrow icon */
+.custom-select-container::after {
+  content: "▼";
+  font-size: 10px;
+  color: #a5b4fc;
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+/* Interactive & Accessibility Focus States */
+.custom-select-element:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.custom-select-element:focus-visible {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+/* Styled option dropdown items */
+.custom-select-element option {
+  background-color: #1e1e2f;
+  color: #ffffff;
+  padding: 12px;
+}
