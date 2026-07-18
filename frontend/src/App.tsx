@@ -381,24 +381,63 @@ function App() {
             />
           )}
 
+
+
+          {/* Role Selector Dropdown */}
+          <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
+
+          {/* STEP 1: Role Selector Container */}
+          <div className="mb-5 p-3" style={{ background: "rgba(255, 255, 255, 0.02)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <label htmlFor="roleSelect" style={{ display: "block", marginBottom: "8px", fontWeight: "600", color: "#e2e8f0", fontSize: "15px" }}>
+              1️⃣ Choose your Target Career Track
+
 <h1 className="mb-4 app-main-title" style={{ fontSize: "calc(1.5rem + 1.5vw)", wordBreak: "break-word" }}>🚀 AI Resume Analyzer</h1>
           {/* Role Selector Dropdown */}
           <div className="mb-4 d-flex flex-column align-items-center flex-sm-row justify-content-center role-selector-container" style={{ gap: "8px" }}>
             <label htmlFor="roleSelect" className="role-select-label" style={{ fontWeight: "600" }}>
               Target Career Track:
+
             </label>
             <select
               id="roleSelect"
               className="role-select-dropdown"
               value={targetRole}
               onChange={(e) => setTargetRole(e.target.value)}
+
+              style={{ padding: "10px 16px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.15)", width: "100%", maxWidth: "320px", background: "#1e1e2f", color: "#fff", fontSize: "14px" }}
+
               style={{ padding: "6px 12px", borderRadius: "6px", width: "100%", maxWidth: "250px" }}
+
             >
               <option value="Frontend Developer">Frontend Developer</option>
               <option value="Backend Developer">Backend Developer</option>
               <option value="Data Analyst">Data Analyst</option>
             </select>
           </div>
+
+
+          {/* STEP 2: Enhanced Upload Container */}
+          <div className="mb-5">
+            <span style={{ display: "block", marginBottom: "12px", fontWeight: "600", color: "#e2e8f0", fontSize: "15px" }}>
+              2️⃣ Upload your Document
+            </span>
+            <div className="upload-box" style={{ padding: "32px 20px", border: "2px dashed #6366f1", borderRadius: "12px", background: "rgba(99, 102, 241, 0.03)", transition: "all 0.3s ease" }}>
+              <input
+                type="file"
+                id="fileUpload"
+                hidden
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  if (e.target.files) setFile(e.target.files[0]);
+                }}
+              />
+              <label htmlFor="fileUpload" className="upload-label" style={{ cursor: "pointer", display: "block", fontSize: "15px" }}>
+                📄 {file ? <strong style={{ color: "#a5b4fc" }}>{file.name}</strong> : "Drag & Drop Resume or Click to Browse"}
+              </label>
+            </div>
+          </div>
+
+          {/* STEP 3: Prominent Call to Action Buttons */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", marginTop: "24px" }} className="mb-4">
 
           <div className="upload-box mb-3" style={{ width: "100%", maxWidth: "100%" }}>
             <input
@@ -417,22 +456,57 @@ function App() {
 
           {/* FIXED: Added responsive flex-wrap and set width boundaries for smaller screens */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
+
             <button
               className="analyze-btn"
               onClick={uploadResume}
               disabled={loading}
-              style={{ minHeight: "44px", flex: "1 1 200px", maxWidth: "100%" }}
+
+              style={{
+                padding: "12px 36px",
+                fontSize: "16px",
+                fontWeight: "700",
+                letterSpacing: "0.5px",
+                backgroundColor: "#6366f1",
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                boxShadow: "0 4px 14px rgba(99, 102, 241, 0.4)",
+                transition: "transform 0.2s ease, background-color 0.2s ease",
+                width: "100%",
+                maxWidth: "280px"
+              }}
+            >
+              {loading && analysisSource === "upload" ? "⏳ Processing..." : "🚀 Analyze Resume"}
+             style={{ minHeight: "44px", flex: "1 1 200px", maxWidth: "100%" }}
             >
               {loading && analysisSource === "upload" ? "⏳ Extracting..." : "🚀 Analyze Resume"}
+
             </button>
+            
             <button
               className="secondary-btn"
               onClick={handleSampleResume}
               disabled={loading}
               type="button"
+
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#94a3b8",
+                fontSize: "13px",
+                textDecoration: "underline",
+                cursor: "pointer",
+                marginTop: "4px"
+              }}
+            >
+              {loading && analysisSource === "sample" ? "⏳ Loading..." : "Or try with a sample resume"}
+
               style={{ minHeight: "44px", flex: "1 1 200px", maxWidth: "100%" }}
             >
               {loading && analysisSource === "sample" ? "⏳ Loading..." : "Try Sample Resume"}
+
             </button>
           </div>
 
