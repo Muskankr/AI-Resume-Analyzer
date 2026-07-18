@@ -30,8 +30,18 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
   };
 
   return (
-    <div className="auth-overlay" onClick={onClose}>
-      <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+<div
+  className="auth-overlay"
+  onClick={onClose}
+>      <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
+        <button
+  type="button"
+  className="auth-close-btn"
+  onClick={onClose}
+  aria-label="Close"
+>
+  ✕
+</button>
         <h3>{mode === "login" ? "🔐 Login" : "📝 Sign Up"}</h3>
         <form onSubmit={submit}>
           <input

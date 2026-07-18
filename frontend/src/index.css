@@ -561,6 +561,7 @@ border:0;
 }
 
 .auth-modal {
+  position: relative;
   background: rgba(255,255,255,0.95);
   backdrop-filter: blur(16px);
   border: 1px solid rgba(255,255,255,0.3);
@@ -890,6 +891,43 @@ border:0;
 }
 
 
+
+.auth-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+.auth-close-btn:hover {
+  background: rgba(0, 0, 0, 0.08);
+}
+.auth-close-btn:focus {
+  outline: 2px solid var(--score-accent);
+  outline-offset: 2px;
+}
+[data-theme="dark"] .auth-close-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+
+/* ── Toast Notifications ────────────────── */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+
 /* ── Responsive Navbar ───────────────────── */
 .navbar {
   position: sticky;
@@ -900,6 +938,7 @@ border:0;
   color: var(--card-text);
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
   padding: 15px 30px;
+
   display: flex;
   justify-content: space-between;
   align-items: center;
