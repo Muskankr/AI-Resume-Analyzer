@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useToast } from "./hooks/useToast";
 
 interface AuthModalProps {
   onSignup: (username: string, password: string) => Promise<void>;
@@ -8,14 +7,15 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose }) => {
-  const { showToast } = useToast();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
     setLoading(true);
     try {
       if (mode === "signup") await onSignup(username, password);
@@ -23,7 +23,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
       onClose();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Authentication failed";
-      showToast(msg, "error");
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -103,7 +103,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
         </form>
         <p className="auth-switch">
           {mode === "login" ? "No account? " : "Have an account? "}
-          <button className="auth-switch-btn" onClick={() => { setMode(mode === "login" ? "signup" : "login"); }}>
+          <button className="auth-switch-btn" onClick={() => { setMode(mode === "login" ? "signup" : "login"); setError(""); }}>
             {mode === "login" ? "Sign up" : "Log in"}
           </button>
         </p>
