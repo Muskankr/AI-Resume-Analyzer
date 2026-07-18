@@ -9,6 +9,7 @@ import { AuthModal } from "./AuthModal";
 import { Footer } from "./Footer";
 import AnalysisSkeleton from "./components/AnalysisSkeleton/AnalysisSkeleton";
 import { InfoTooltip } from "./components/InfoTooltip";
+import { useToast } from "./hooks/useToast";
 
 type Theme = "light" | "dark";
 
@@ -57,6 +58,7 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
 }
 
 function App() {
+  const { showToast } = useToast();
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -225,10 +227,11 @@ function App() {
         errorMsg = error.message;
       }
 
-      alert(
+      showToast(
         source === "sample"
           ? `Sample analysis failed: ${errorMsg}`
-          : `Upload failed: ${errorMsg}`
+          : `Upload failed: ${errorMsg}`,
+        "error"
       );
 
       setLoading(false);
@@ -237,7 +240,7 @@ function App() {
 
   const uploadResume = async () => {
     if (!file) {
-      alert("Please upload resume");
+      showToast("Please upload resume", "error");
       return;
     }
     await runAnalysis(file, "upload");
@@ -267,7 +270,7 @@ function App() {
       setActiveFileName(sampleFile.name);
     } catch (error: unknown) {
       console.error(error);
-      alert("Could not load sample resume");
+      showToast("Could not load sample resume", "error");
       setLoading(false);
     }
   };
