@@ -467,7 +467,9 @@ function App() {
                 </div>
               )}
 
-              <AtsScore score={score} />
+              <div id="ats-score">
+                <AtsScore score={score} />
+              </div>
 
               <ResumePreview text={resumeText} skills={skills} />
 
