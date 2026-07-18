@@ -17,18 +17,6 @@ import {
 
 type Theme = "light" | "dark";
 
-interface EducationItem {
-  degree: string;
-  institution: string;
-  duration: string;
-}
-
-interface ExperienceItem {
-  title: string;
-  company: string;
-  duration: string;
-}
-
 function getInitialTheme(): Theme {
   try {
     const saved = localStorage.getItem("theme");
@@ -46,8 +34,10 @@ function highlightSkills(text: string, skills: string[]): React.ReactNode[] {
   if (!text) return [];
   if (skills.length === 0) return [text];
 
+  // Sort longest first so multi-word skills (e.g. "machine learning") match before shorter ones
   const sorted = [...skills].sort((a, b) => b.length - a.length);
   const escaped = sorted.map(s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  // \b works for alphanumeric boundaries; for symbols like c++ we use lookahead/lookbehind
   const pattern = new RegExp(`(?<![\\w])(${escaped.join('|')})(?![\\w])`, 'gi');
   const parts = text.split(pattern);
   const skillSet = new Set(skills.map(s => s.toLowerCase()));
@@ -78,10 +68,8 @@ function App() {
   const [score, setScore] = useState<number | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-
-  // NEW EXTRACTED VALUES STATES
-  const [education, setEducation] = useState<EducationItem[]>([]);
-  const [experience, setExperience] = useState<ExperienceItem[]>([]);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
 
   // Component States
   const [targetRole, setTargetRole] = useState("Frontend Developer");
@@ -126,7 +114,6 @@ function App() {
     }
     clearHistory();
   };
-
   const fetchDbHistory = useCallback(async (token: string) => {
     try {
       const res = await axios.get(`${backendUrl}/api/history/`, {
@@ -168,9 +155,29 @@ function App() {
       // persistence is best-effort; ignore if storage is unavailable
     }
   }, [theme]);
+  
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 400) {
+        setShowBackToTop(true);
+      } else {
+        setShowBackToTop(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === "light" ? "dark" : "light"));
+  };
+  
+  const scrollToTop = () => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
   };
 
   const runAnalysis = async (fileToAnalyze: File, source: "sample" | "upload") => {
@@ -192,16 +199,13 @@ function App() {
       setMissingSkills(res.data.missing_skills || []);
       setResumeText(res.data.resume_text || "");
       setActiveFileName(fileToAnalyze.name);
-      
-      // ASSIGN NEW PAYLOAD ARRAY KEYS TO STATES
-      setEducation(res.data.education || []);
-      setExperience(res.data.experience || []);
 
       setLoading(false);
 
       if (user) {
         await fetchDbHistory(user.token);
-      } else {
+      }
+      else {
         addEntry({
           score: res.data.score,
           skills: res.data.skills_found || [],
@@ -214,13 +218,23 @@ function App() {
       }
     } catch (error: unknown) {
       console.error(error);
+
       let errorMsg = "Unknown error";
+
       if (axios.isAxiosError(error)) {
-        errorMsg = error.response?.data?.error ?? error.message;
+        errorMsg =
+          error.response?.data?.error ??
+          error.message;
       } else if (error instanceof Error) {
         errorMsg = error.message;
       }
-      alert(source === "sample" ? `Sample analysis failed: ${errorMsg}` : `Upload failed: ${errorMsg}`);
+
+      alert(
+        source === "sample"
+          ? `Sample analysis failed: ${errorMsg}`
+          : `Upload failed: ${errorMsg}`
+      );
+
       setLoading(false);
     }
   };
@@ -237,11 +251,23 @@ function App() {
     try {
       setLoading(true);
       setAnalysisSource("sample");
+
       const response = await fetch("/sample-resume.pdf");
-      if (!response.ok) throw new Error("Failed to load sample resume PDF");
+
+      if (!response.ok) {
+        throw new Error("Failed to load sample resume PDF");
+      }
+
       const blob = await response.blob();
-      const sampleFile = new File([blob], "sample-resume.pdf", { type: "application/pdf" });
+
+      const sampleFile = new File(
+        [blob],
+        "sample-resume.pdf",
+        { type: "application/pdf" }
+      );
+
       await runAnalysis(sampleFile, "sample");
+
       setActiveFileName(sampleFile.name);
     } catch (error: unknown) {
       console.error(error);
@@ -258,12 +284,11 @@ function App() {
     setMatchedSkills([]);
     setMissingSkills([]);
     setResumeText("");
-    setEducation([]);
-    setExperience([]);
     setShowAllSkills(false);
     setCopied(false);
     setAnalysisSource(null);
     setActiveFileName("");
+    setShowExportDropdown(false);
   };
 
   const copySuggestionsToClipboard = () => {
@@ -277,6 +302,38 @@ function App() {
       .catch((err) => console.error("Failed to copy text: ", err));
   };
 
+  const getExportTimestamp = () => {
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const d = new Date();
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}-${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
+  };
+
+  const exportJSON = () => {
+    const data = { score, skills, suggestions };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `resume-analysis-${getExportTimestamp()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setShowExportDropdown(false);
+  };
+
+  const exportCSV = () => {
+    const escapeCSV = (str: string) => `"${str.replace(/"/g, '""')}"`;
+    const header = "score,skills,suggestions\n";
+    const row = `${score},${escapeCSV(skills.join(","))},${escapeCSV(suggestions.join(","))}\n`;
+    const blob = new Blob([header + row], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `resume-analysis-${getExportTimestamp()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setShowExportDropdown(false);
+  };
+
   const selectHistoryEntry = (entry: AnalysisEntry) => {
     setScore(entry.score);
     setSkills(entry.skills);
@@ -288,17 +345,17 @@ function App() {
     setShowAllSkills(false);
     setCopied(false);
     setHistoryOpen(false);
+    setShowExportDropdown(false);
   };
-
   const handleLogout = () => {
     logout();
     clearHistory();
   };
-
   return (
     <>
       <HistorySidebar
         entries={entries}
+        activeFileName={activeFileName}
         onSelect={selectHistoryEntry}
         onDelete={handleDeleteEntry}
         onClear={handleClearAll}
@@ -306,8 +363,6 @@ function App() {
         onToggle={() => setHistoryOpen((v) => !v)}
       />
 
-      <div className="container mt-5">
-        <div className="main-card text-center">
       <div className="container mt-5 px-3"> {/* Added padding safety track */}
         <div className="main-card text-center mx-auto" style={{ width: "100%", maxWidth: "600px" }}>
           {/* Theme toggle */}
@@ -321,6 +376,7 @@ function App() {
             {theme === "light" ? <><Moon size={15} /> Dark Mode</> : <><Sun size={15} /> Light Mode</>}
           </button>
 
+          {/* Auth bar */}
           <div className="auth-bar">
             {user ? (
               <>
@@ -344,8 +400,6 @@ function App() {
             <Rocket size={28} /> AI Resume Analyzer
           </h1>
 
-          <div className="mb-4">
-            <label htmlFor="roleSelect" style={{ marginRight: "10px", fontWeight: "600", color: "#fff" }}>
           {/* Role Selector Dropdown */}
           <div className="mb-4 d-flex flex-column align-items-center flex-sm-row justify-content-center" style={{ gap: "8px" }}>
             <label htmlFor="roleSelect" style={{ fontWeight: "600", color: "#fff" }}>
@@ -378,13 +432,6 @@ function App() {
           </div>
 
 
-          <div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
-            <button className="analyze-btn" onClick={uploadResume} disabled={loading}>
-              {loading && analysisSource === "upload" ? "⏳ Extracting and analyzing resume text..." : "🚀 Analyze Resume"}
-            </button>
-            <button className="secondary-btn" onClick={handleSampleResume} disabled={loading} type="button">
-              {loading && analysisSource === "sample" ? "⏳ Loading Sample..." : "Try Sample Resume"}
-
           {/* FIXED: Added responsive flex-wrap and set width boundaries for smaller screens */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
             <button
@@ -410,8 +457,10 @@ function App() {
             </button>
           </div>
 
+          {/* Loading skeleton — shown while the resume is being analyzed */}
           {loading && <AnalysisSkeleton />}
 
+          {/* Results */}
           {score !== null && (
             <>
               {analysisSource === "sample" && (
@@ -424,6 +473,7 @@ function App() {
               )}
 
               <AtsScore score={score} />
+
               <ResumePreview text={resumeText} skills={skills} />
 
               <h5 className="analysis-done mt-3"><CheckCircle size={18} /> Resume Analysis Complete</h5>
@@ -432,40 +482,6 @@ function App() {
                   <FileText size={13} /> {activeFileName}
                 </p>
               )}
-
-              {/* NEW RENDER COMPONENT: WORK EXPERIENCE SECTION */}
-              <div className="mt-4 text-left p-3" style={{ background: "rgba(255,255,255,0.03)", borderRadius: "8px", textAlign: "left" }}>
-                <h4 style={{ color: "#fff", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "6px" }}>💼 Extracted Work Experience</h4>
-                {experience.length === 0 ? (
-                  <p style={{ opacity: 0.6, fontSize: "14px" }}>No formal structured work history blocks parsed.</p>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "10px" }}>
-                    {experience.map((exp, i) => (
-                      <div key={i} style={{ borderLeft: "3px solid #6366f1", paddingLeft: "10px" }}>
-                        <div style={{ fontWeight: "600", color: "#e0e7ff" }}>{exp.title}</div>
-                        <div style={{ fontSize: "13px", opacity: 0.8 }}>{exp.company} <span style={{ opacity: 0.5 }}>| {exp.duration}</span></div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* NEW RENDER COMPONENT: EDUCATION SECTION */}
-              <div className="mt-4 text-left p-3" style={{ background: "rgba(255,255,255,0.03)", borderRadius: "8px", textAlign: "left" }}>
-                <h4 style={{ color: "#fff", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "6px" }}>🎓 Extracted Education</h4>
-                {education.length === 0 ? (
-                  <p style={{ opacity: 0.6, fontSize: "14px" }}>No formal educational segments identified.</p>
-                ) : (
-                  <div style={{ display: "flex", flexDirection: "column", gap: "12px", marginTop: "10px" }}>
-                    {education.map((edu, i) => (
-                      <div key={i} style={{ borderLeft: "3px solid #10b981", paddingLeft: "10px" }}>
-                        <div style={{ fontWeight: "600", color: "#d1fae5" }}>{edu.degree}</div>
-                        <div style={{ fontSize: "13px", opacity: 0.8 }}>{edu.institution} <span style={{ opacity: 0.5 }}>| {edu.duration}</span></div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
 
               {/* Skills container */}
               <div className="mt-4">
@@ -520,9 +536,6 @@ function App() {
                 </div>
               </div>
 
-              {/* Suggestions box */}
-              <div className="suggestion-box mt-4">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
               {/* SUGGESTIONS BOX WITH THE UTILITY BUTTON */}
               <div className="suggestion-box mt-4" style={{ padding: "15px" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "between", alignItems: "center", marginBottom: "12px" }}>
@@ -540,6 +553,7 @@ function App() {
                     </button>
                   )}
                 </div>
+                
 
                 {suggestions.map((s: string, i: number) => (
                   <div key={i} className="suggestion-item" style={{ wordBreak: "break-word", textAlign: "left", display: "flex", alignItems: "flex-start", gap: "6px" }}>
@@ -547,6 +561,7 @@ function App() {
                   </div>
                 ))}
 
+                {/* Reset Button */}
                 <div style={{ marginTop: "24px", textAlign: "center" }}>
                   <button
                     type="button"
@@ -559,13 +574,43 @@ function App() {
                 </div>
               </div>
             </>
-          )}
-        </div>
-      </div>
+          )}   {/* closes the conditional block */}
+        </div> {/* closes .main-card */}
+      </div> {/* closes .container */}
 
-      <Footer />
+      <Footer />  {/* footer should be outside main container */}
+
+      {/* RENDER FLOATING BACK TO TOP BUTTON */}
+      {showBackToTop && (
+        <button
+          onClick={scrollToTop}
+          style={{
+            position: "fixed",
+            bottom: "30px",
+            right: "30px",
+            backgroundColor: "#6366f1",
+            color: "#fff",
+            border: "none",
+            borderRadius: "50%",
+            width: "50px",
+            height: "50px",
+            fontSize: "20px",
+            cursor: "pointer",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+            zIndex: 1000,
+            transition: "all 0.3s ease",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center"
+          }}
+          title="Back to Top"
+          aria-label="Back to Top"
+        >
+          ▲
+        </button>
+      )}
     </>
-  );
-}
+  ); /* closes the return fragment */
+} /* closes App function */
 
 export default App;
