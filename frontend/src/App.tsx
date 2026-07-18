@@ -431,24 +431,44 @@ function App() {
                 )}
               </div>
 
-              {/* Skill gap matrix */}
-              <div className="mt-4 p-3" style={{ background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {/* Skill Gap Matrix */}
+              <div className="mt-5 p-4" style={{ background: "rgba(30, 30, 47, 0.6)", borderRadius: "var(--radius-lg)", border: "1px solid rgba(255, 255, 255, 0.05)", boxShadow: "var(--shadow-card)" }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', margin: "0 0 8px 0", fontSize: "var(--font-size-base)", color: "#fff" }}>
                   🎯 Skill Gap Matrix ({targetRole})
-                  <InfoTooltip content="Shows which required skills are already in your resume and which important skills are missing." />
+                  <InfoTooltip content="Compares your resume text directly against the required keywords for this specific career path." />
                 </h4>
-                <div style={{ display: "flex", justifyContent: "space-around", marginTop: "12px" }}>
-                  <div>
-                    <h6 style={{ color: "#22c55e" }}>Matched Skills</h6>
-                    {matchedSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : matchedSkills.map((s, i) => (
-                      <span key={i} className="badge bg-success m-1">{s}</span>
-                    ))}
+                
+                <div className="matrix-grid">
+                  {/* Matched Skills Column Card */}
+                  <div className="matrix-column-card">
+                    <h6 style={{ color: "#4ade80", fontSize: "var(--font-size-sm)", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", margin: "0 0 12px 0" }}>
+                      🟢 Matched Keywords ({matchedSkills.length})
+                    </h6>
+                    {matchedSkills.length === 0 ? (
+                      <p className="matrix-empty-text">No matching keywords detected for this profile path yet.</p>
+                    ) : (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                        {matchedSkills.map((s, i) => (
+                          <span key={i} className="matrix-badge matrix-badge--matched">{s}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    <h6 style={{ color: "#ef4444" }}>Missing Skills</h6>
-                    {missingSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : missingSkills.map((s, i) => (
-                      <span key={i} className="badge bg-danger m-1">{s}</span>
-                    ))}
+
+                  {/* Missing Skills Column Card */}
+                  <div className="matrix-column-card">
+                    <h6 style={{ color: "#f87171", fontSize: "var(--font-size-sm)", fontWeight: "700", display: "flex", alignItems: "center", gap: "6px", margin: "0 0 12px 0" }}>
+                      🔴 Recommended Skill Additions ({missingSkills.length})
+                    </h6>
+                    {missingSkills.length === 0 ? (
+                      <p className="matrix-empty-text">Excellent! Your profile covers all primary required skills.</p>
+                    ) : (
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                        {missingSkills.map((s, i) => (
+                          <span key={i} className="matrix-badge matrix-badge--missing">{s}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
