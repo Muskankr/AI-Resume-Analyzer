@@ -335,18 +335,20 @@ function App() {
             />
           )}
 
-          <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
 
           {/* Role Selector Dropdown */}
-          <div className="mb-4">
-            <label htmlFor="roleSelect" style={{ marginRight: "10px", fontWeight: "600", color: "#fff" }}>
-              Target Career Track:
+          <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
+
+          {/* STEP 1: Role Selector Container */}
+          <div className="mb-5 p-3" style={{ background: "rgba(255, 255, 255, 0.02)", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <label htmlFor="roleSelect" style={{ display: "block", marginBottom: "8px", fontWeight: "600", color: "#e2e8f0", fontSize: "15px" }}>
+              1️⃣ Choose your Target Career Track
             </label>
             <select
               id="roleSelect"
               value={targetRole}
               onChange={(e) => setTargetRole(e.target.value)}
-              style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #ccc" }}
+              style={{ padding: "10px 16px", borderRadius: "8px", border: "1px solid rgba(255,255,255,0.15)", width: "100%", maxWidth: "320px", background: "#1e1e2f", color: "#fff", fontSize: "14px" }}
             >
               <option value="Frontend Developer">Frontend Developer</option>
               <option value="Backend Developer">Backend Developer</option>
@@ -354,35 +356,67 @@ function App() {
             </select>
           </div>
 
-          <div className="upload-box mb-3">
-            <input
-              type="file"
-              id="fileUpload"
-              hidden
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                if (e.target.files) setFile(e.target.files[0]);
-              }}
-            />
-            <label htmlFor="fileUpload" className="upload-label">
-              📄 {file ? file.name : "Drag & Drop Resume or Click to Upload"}
-            </label>
+          {/* STEP 2: Enhanced Upload Container */}
+          <div className="mb-5">
+            <span style={{ display: "block", marginBottom: "12px", fontWeight: "600", color: "#e2e8f0", fontSize: "15px" }}>
+              2️⃣ Upload your Document
+            </span>
+            <div className="upload-box" style={{ padding: "32px 20px", border: "2px dashed #6366f1", borderRadius: "12px", background: "rgba(99, 102, 241, 0.03)", transition: "all 0.3s ease" }}>
+              <input
+                type="file"
+                id="fileUpload"
+                hidden
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  if (e.target.files) setFile(e.target.files[0]);
+                }}
+              />
+              <label htmlFor="fileUpload" className="upload-label" style={{ cursor: "pointer", display: "block", fontSize: "15px" }}>
+                📄 {file ? <strong style={{ color: "#a5b4fc" }}>{file.name}</strong> : "Drag & Drop Resume or Click to Browse"}
+              </label>
+            </div>
           </div>
 
-          <div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
+          {/* STEP 3: Prominent Call to Action Buttons */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", marginTop: "24px" }} className="mb-4">
             <button
               className="analyze-btn"
               onClick={uploadResume}
               disabled={loading}
+              style={{
+                padding: "12px 36px",
+                fontSize: "16px",
+                fontWeight: "700",
+                letterSpacing: "0.5px",
+                backgroundColor: "#6366f1",
+                color: "#fff",
+                border: "none",
+                borderRadius: "8px",
+                cursor: "pointer",
+                boxShadow: "0 4px 14px rgba(99, 102, 241, 0.4)",
+                transition: "transform 0.2s ease, background-color 0.2s ease",
+                width: "100%",
+                maxWidth: "280px"
+              }}
             >
-              {loading && analysisSource === "upload" ? "⏳ Extracting and analyzing resume text..." : "🚀 Analyze Resume"}
+              {loading && analysisSource === "upload" ? "⏳ Processing..." : "🚀 Analyze Resume"}
             </button>
+            
             <button
               className="secondary-btn"
               onClick={handleSampleResume}
               disabled={loading}
               type="button"
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "#94a3b8",
+                fontSize: "13px",
+                textDecoration: "underline",
+                cursor: "pointer",
+                marginTop: "4px"
+              }}
             >
-              {loading && analysisSource === "sample" ? "⏳ Loading Sample..." : "Try Sample Resume"}
+              {loading && analysisSource === "sample" ? "⏳ Loading..." : "Or try with a sample resume"}
             </button>
           </div>
 
