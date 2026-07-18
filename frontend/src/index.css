@@ -1,4 +1,13 @@
-:root{
+:root {
+  /* Typographic Scale: 12px / 14px / 16px / 20px / 28px / 36px */
+  --font-size-xs: 12px;     /* Captions, labels, tiny tags */
+  --font-size-sm: 14px;     /* Small text, secondary context */
+  --font-size-base: 16px;   /* Standard body copy */
+  --font-size-md: 20px;     /* Subheadings (h3/h4) */
+  --font-size-lg: 28px;     /* Secondary headings (h2) */
+  --font-size-xl: 36px;     /* Page Titles (h1) */
+
+  /* Theme Configurations Variables Group */
   color-scheme: light;
   --body-bg: linear-gradient(135deg,#667eea,#764ba2);
   --card-bg: rgba(255,255,255,0.15);
@@ -29,6 +38,15 @@
   --footer-text: rgba(255,255,255,0.85);
   --footer-link: #ffffff;
 }
+
+/* Base resets mapping default elements to the new scale */
+body {
+  font-size: var(--font-size-base);
+}
+
+h1 { font-size: var(--font-size-xl); font-weight: 700; }
+h4 { font-size: var(--font-size-md); font-weight: 600; }
+h5 { font-size: var(--font-size-base); font-weight: 600; }
 
 [data-theme="dark"]{
   color-scheme: dark;
