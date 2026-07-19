@@ -21,6 +21,7 @@ import { StepProgress } from "./components/StepProgress";
 import resultScreenshot from "./assets/screenshots/result.png";
 import { OnboardingTour } from "./components/OnboardingTour";
 import { HowItWorks } from "./components/HowItWorks";
+import { CompareVersions } from "./components/CompareVersions/CompareVersions";
 
 type Theme = "light" | "dark";
 
@@ -125,10 +126,10 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [analysisSource, setAnalysisSource] = useState<"sample" | "upload" | null>(null);
   const [jobDesc, setJobDesc] = useState("");
-  const [showBackToTop, setShowBackToTop] = useState(false);
   const [resumeText, setResumeText] = useState<string>("");
   const [activeFileName, setActiveFileName] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
 
   let currentStep: 1 | 2 | 3 = 1;
   if (loading) {
@@ -427,7 +428,16 @@ function App() {
         onClear={handleClearAll}
         isOpen={historyOpen}
         onToggle={() => setHistoryOpen((v) => !v)}
+        onCompare={() => setCompareOpen(true)}
       />
+
+      {compareOpen && (
+        <CompareVersions
+          entries={entries}
+          token={user?.token}
+          onClose={() => setCompareOpen(false)}
+        />
+      )}
 
       <Navbar
         theme={theme}
@@ -849,7 +859,7 @@ function App() {
       <button
         type="button"
         className={`back-to-top${showBackToTop ? " back-to-top--visible" : ""}`}
-        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        onClick={scrollToTop}
         aria-label="Back to top"
         title="Back to top"
       >
@@ -889,28 +899,6 @@ function App() {
             Press <kbd style={{ color: "#a5b4fc" }}>Esc</kbd> at any point to clear this helper overlay panel frame views.
           </p>
         </div>
-      )}
-    </>
-  ); 
-}
-
-      <Footer /> 
-
-      {showBackToTop && (
-        <button
-          onClick={scrollToTop}
-          style={{
-            position: "fixed", bottom: "30px", right: "30px", backgroundColor: "#6366f1",
-            color: "#fff", border: "none", borderRadius: "50%", width: "50px", height: "50px",
-            fontSize: "20px", cursor: "pointer", boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-            zIndex: 1000, transition: "all 0.3s ease", display: "flex", alignItems: "center",
-            justifyContent: "center"
-          }}
-          title="Back to Top"
-          aria-label="Back to Top"
-        >
-          ▲
-        </button>
       )}
     </>
   ); 

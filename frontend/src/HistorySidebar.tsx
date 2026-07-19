@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { X, ClipboardList, BookOpen, GitCompare } from "lucide-react";
 import type { AnalysisEntry } from "./hooks/useAnalysisHistory";
 
 const PAGE_SIZE = 10;
@@ -11,6 +12,7 @@ interface HistorySidebarProps {
   onClear: () => void;
   isOpen: boolean;
   onToggle: () => void;
+  onCompare?: () => void;
 }
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
@@ -21,6 +23,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   onClear,
   isOpen,
   onToggle,
+  onCompare,
 }) => {
   const [confirmClear, setConfirmClear] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -71,22 +74,33 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       >
         <div className="history-sidebar-header">
           <h3><BookOpen size={18} /> History</h3>
-          {entries.length > 0 && (
-            <button
-              className="history-clear-btn"
-              onClick={() => {
-                if (confirmClear) {
-                  onClear();
-                  setConfirmClear(false);
-                } else {
-                  setConfirmClear(true);
-                  setTimeout(() => setConfirmClear(false), 2500);
-                }
-              }}
-            >
-              {confirmClear ? "Confirm?" : "Clear All"}
-            </button>
-          )}
+          <div className="history-header-actions">
+            {onCompare && entries.length > 1 && (
+              <button
+                className="history-compare-btn"
+                onClick={onCompare}
+                title="Compare two resume versions"
+              >
+                <GitCompare size={14} /> Compare
+              </button>
+            )}
+            {entries.length > 0 && (
+              <button
+                className="history-clear-btn"
+                onClick={() => {
+                  if (confirmClear) {
+                    onClear();
+                    setConfirmClear(false);
+                  } else {
+                    setConfirmClear(true);
+                    setTimeout(() => setConfirmClear(false), 2500);
+                  }
+                }}
+              >
+                {confirmClear ? "Confirm?" : "Clear All"}
+              </button>
+            )}
+          </div>
         </div>
 
         {entries.length === 0 ? (

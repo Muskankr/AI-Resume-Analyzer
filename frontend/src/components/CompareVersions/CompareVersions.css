@@ -1,0 +1,229 @@
+.compare-modal {
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-lg, 12px);
+  padding: 24px;
+  width: 720px;
+  max-width: 94vw;
+  max-height: 88vh;
+  overflow-y: auto;
+  color: #1e293b;
+  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+}
+
+[data-theme="dark"] .compare-modal {
+  background: rgba(15, 23, 42, 0.97);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: var(--card-text, #e2e8f0);
+}
+
+.compare-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.compare-modal__header h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 18px;
+}
+
+.compare-close-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+  padding: 4px;
+}
+.compare-close-btn:hover {
+  opacity: 1;
+}
+
+.compare-empty {
+  font-size: 14px;
+  opacity: 0.8;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.compare-picker-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-end;
+  margin-bottom: 8px;
+}
+
+.compare-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+
+.compare-picker label {
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.75;
+}
+
+.compare-picker select {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: rgba(148, 163, 184, 0.08);
+  color: inherit;
+  font-size: 13px;
+}
+
+.compare-warning {
+  color: #ef4444;
+  font-size: 13px;
+  margin: 8px 0 0;
+}
+
+.compare-results {
+  margin-top: 20px;
+}
+
+.compare-score-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+  padding: 16px;
+  border-radius: 10px;
+  background: rgba(148, 163, 184, 0.1);
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.compare-score-arrow {
+  opacity: 0.6;
+  font-size: 18px;
+}
+
+.compare-score-delta {
+  font-size: 14px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.2);
+}
+.compare-score-delta.is-positive {
+  color: #16a34a;
+  background: rgba(34, 197, 94, 0.15);
+}
+.compare-score-delta.is-negative {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.compare-delta-icon--up {
+  color: #16a34a;
+}
+.compare-delta-icon--down {
+  color: #dc2626;
+}
+
+.compare-section {
+  margin-bottom: 20px;
+}
+.compare-section h4 {
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  opacity: 0.8;
+  margin: 0 0 10px;
+}
+
+.compare-insight-list {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13.5px;
+  line-height: 1.6;
+}
+.compare-insight-list li {
+  margin-bottom: 6px;
+}
+
+.compare-skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  margin-bottom: 20px;
+}
+.compare-skill-grid h5 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin: 0 0 8px;
+  opacity: 0.85;
+}
+.compare-skill-grid h5.is-positive {
+  color: #16a34a;
+}
+.compare-skill-grid h5.is-negative {
+  color: #dc2626;
+}
+
+.compare-none {
+  font-size: 12px;
+  opacity: 0.6;
+  margin: 0;
+}
+
+.compare-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.compare-text-diff {
+  max-height: 220px;
+  overflow-y: auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  border-radius: 8px;
+  background: rgba(148, 163, 184, 0.08);
+  padding: 10px 12px;
+}
+
+.compare-diff-line {
+  white-space: pre-wrap;
+  padding: 2px 0;
+}
+.compare-diff-line--added {
+  color: #16a34a;
+}
+.compare-diff-line--removed {
+  color: #dc2626;
+  text-decoration: line-through;
+  text-decoration-color: rgba(220, 38, 38, 0.4);
+}
+
+.compare-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.spin {
+  animation: compare-spin 0.8s linear infinite;
+}
+@keyframes compare-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

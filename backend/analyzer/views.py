@@ -16,8 +16,13 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import SimpleRateThrottle
 
+from .comparison import compare_versions
 from .models import ResumeAnalysis
-from .serializers import SignupSerializer, ResumeAnalysisSerializer
+from .serializers import (
+    SignupSerializer,
+    ResumeAnalysisSerializer,
+    VersionComparisonSerializer,
+)
 from .services import analyze_resume
 
 
@@ -134,3 +139,45 @@ def delete_single_history(request, pk):
 def clear_user_history(request):
     ResumeAnalysis.objects.filter(user=request.user).delete()
     return Response({"message": "All history cleared"}, status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def compare_versions_view(request):
+    """Compare two of the current user's resume versions.
+
+    Query params: ``older`` and ``newer`` — primary keys of two
+    ``ResumeAnalysis`` rows owned by the requesting user. Order is
+    caller-supplied (not inferred from ``created_at``) so a user can
+    compare in whichever direction they like; the response always labels
+    them as "older"/"newer" per what was passed in.
+    """
+
+    older_id = request.query_params.get("older")
+    newer_id = request.query_params.get("newer")
+
+    if not older_id or not newer_id:
+        return Response(
+            {"error": "Both 'older' and 'newer' query params (analysis ids) are required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if older_id == newer_id:
+        return Response(
+            {"error": "Select two different versions to compare."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        older = ResumeAnalysis.objects.get(pk=older_id, user=request.user)
+        newer = ResumeAnalysis.objects.get(pk=newer_id, user=request.user)
+    except ResumeAnalysis.DoesNotExist:
+        return Response(
+            {"error": "One or both analyses were not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    comparison = compare_versions(older, newer)
+    serializer = VersionComparisonSerializer(comparison.as_dict())
+
+    return Response(serializer.data)

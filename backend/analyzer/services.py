@@ -65,28 +65,36 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf",user_id=None,j
         for skill in missing
     ]
 
+    analysis_id = None
+
     if user_id:
         try:
             user = User.objects.get(id=user_id)
 
-            analysis_record, created = ResumeAnalysis.objects.update_or_create(
+            # Every upload is kept as its own version so users can later
+            # compare "before" and "after" edits of the same resume. Using
+            # update_or_create keyed on file_name/role/job_description would
+            # silently overwrite the previous analysis and destroy the
+            # version history the comparison feature depends on.
+            analysis_record = ResumeAnalysis.objects.create(
                 user=user,
-                file_name=file_name,          
+                file_name=file_name,
                 target_role=target_role,
                 job_description=job_description,
-                defaults={
-                    'score': score,
-                    'skills_found': detected,
-                    'suggestions': suggestions,
-                    'matched_skills': matched,
-                    'missing_skills': missing,
-                }
+                score=score,
+                skills_found=detected,
+                suggestions=suggestions,
+                matched_skills=matched,
+                missing_skills=missing,
+                resume_text=raw_text,
             )
+            analysis_id = analysis_record.id
 
         except User.DoesNotExist:
             pass
 
     return {
+        "id": analysis_id,
         "score": score,
         "skills_found": detected,
         "suggestions": suggestions,
