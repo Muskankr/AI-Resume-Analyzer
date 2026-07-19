@@ -1269,6 +1269,27 @@ border:0;
   color: #fff;
 
 
+/* Footer Hyperlink Micro-Interactions */
+.footer-link:hover {
+  color: #ffffff !important;
+  text-decoration: underline !important;
+}
+
+.footer-icon-link:hover {
+  color: #6366f1 !important;
+  transform: scale(1.1);
+}
+
+/* Ensure container grid alignment wraps beautifully on tight mobile layouts */
+@media (max-width: 600px) {
+  .app-footer {
+    padding: 30px 16px 16px !important;
+  }
+  .app-footer .container {
+    grid-template-columns: 1fr !important;
+    gap: 24px !important;
+  }
+
 /* Dark mode override for the card container */
 [data-theme="dark"] .app-card-container {
   background-color: #0f172a;
