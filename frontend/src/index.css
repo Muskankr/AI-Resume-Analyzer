@@ -381,6 +381,34 @@ border:0;
   transition: transform 0.3s ease;
   color: var(--card-text);
 }
+/* ==========================================================
+   Custom Scrollbar - History Sidebar
+   ========================================================== */
+
+/* Firefox */
+.history-sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary) var(--card-bg);
+}
+
+/* Chrome / Edge / Safari */
+.history-sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.history-sidebar::-webkit-scrollbar-track {
+  background: var(--card-bg);
+}
+
+.history-sidebar::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 8px;
+  border: 2px solid var(--card-bg);
+}
+
+.history-sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--btn-accent-hover-bg);
+}
 
 .history-sidebar--open {
   transform: translateX(0);
@@ -908,6 +936,7 @@ border:0;
     grid-template-columns: 1fr !important;
     gap: 14px !important;
   }
+}
 
 .password-strength-label span.strength-val.medium {
   color: #f59e0b; /* Amber */
