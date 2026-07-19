@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Navbar } from "./components/Navbar";
 import EmptyState from "./components/EmptyState";
+import { StepProgress } from "./components/StepProgress";
 import resultScreenshot from "./assets/screenshots/result.png";
 import { OnboardingTour } from "./components/OnboardingTour";
 
@@ -126,6 +127,14 @@ function App() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [resumeText, setResumeText] = useState<string>("");
 
+  let currentStep: 1 | 2 | 3 = 1;
+  if (loading) {
+    currentStep = 2;
+  } else if (!loading && score !== null) {
+    currentStep = 3;
+  }
+
+  // Auth
   const { user, signup, login, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -449,6 +458,16 @@ function App() {
               onClose={() => setShowAuthModal(false)}
             />
           )}
+          <h1 className="mb-4 app-main-title" style={{ fontSize: "calc(1.5rem + 1.5vw)", wordBreak: "break-word" }}>🚀 AI Resume Analyzer</h1>
+
+          <StepProgress currentStep={currentStep} />
+
+          {/* STEP 1: Role Selector Container */}
+          <div className="mb-4 d-flex flex-column align-items-center flex-sm-row justify-content-center role-selector-container" style={{ gap: "8px" }}>
+            <label htmlFor="roleSelect" className="role-select-label" style={{ fontWeight: "600" }}>
+              Target Career Track:
+            </label>
+            <div className="custom-select-container">
           
           <h1 className="mb-4 app-main-title" style={{ fontSize: "calc(1.5rem + 1.5vw)", wordBreak: "break-word" }}>
             🚀 AI Resume Analyzer
@@ -476,6 +495,7 @@ function App() {
 
           {/* STEP 2: Upload Container */}
           <div className="mb-5">
+            <div className="upload-box mb-3" style={{ width: "100%", maxWidth: "100%" }}>
             <span style={{ display: "block", marginBottom: "12px", fontWeight: "600", color: "#e2e8f0", fontSize: "var(--font-size-sm)" }}>
               2️⃣ Upload your Document & Job Details
             </span>
@@ -488,11 +508,15 @@ function App() {
                   if (e.target.files) setFile(e.target.files[0]);
                 }}
               />
+              <label htmlFor="fileUpload" className="upload-label" style={{ display: "block", wordBreak: "break-all", padding: "15px" }}>
+                📄 {file ? file.name : "Drag & Drop Resume or Click to Upload"}
               <label htmlFor="fileUpload" className="upload-label" style={{ cursor: "pointer", display: "block", fontSize: "var(--font-size-base)", wordBreak: "break-all" }}>
                 📄 {file ? <strong style={{ color: "#a5b4fc" }}>{file.name}</strong> : "Drag & Drop Resume or Click to Browse"}
               </label>
             </div>
 
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
             <div className="mb-4" style={{ textAlign: "left" }}>
               <label htmlFor="jobDescription" style={{ fontWeight: "600", display: "block", marginBottom: "8px", color: "#e2e8f0" }}>
                 Job Description (Optional)
@@ -562,6 +586,7 @@ function App() {
                 maxWidth: "280px"
               }}
             >
+              {loading && analysisSource === "sample" ? "⏳ Loading..." : "Or try with a sample resume"}
               {loading && analysisSource === "sample"
                 ? <><Loader2 size={15} className="spin" /> Loading...</>
                 : "Try Sample Resume"}
@@ -672,6 +697,7 @@ function App() {
 
               <h5 className="analysis-done mt-3"><CheckCircle size={18} /> Resume Analysis Complete</h5>
               {activeFileName && (
+                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px", wordBreak: "break-all" }}>📄 {activeFileName}</p>
                 <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px", wordBreak: "break-all" }}>
                   <FileText size={13} /> {activeFileName}
                 </p>
@@ -702,6 +728,7 @@ function App() {
               {/* Word Cloud */}
               <SkillWordCloud skills={skills} />
 
+              {/* Skill gap matrix */}
               {/* Skill Gap Matrix */}
               <div className="mt-4 p-3" style={{ background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
                 <h4 style={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", textAlign: "center", gap: "6px" }}>
@@ -733,6 +760,7 @@ function App() {
               </div>
 
               {/* Upgraded Modern Suggestions Section */}
+              <div className="mt-5 p-4" style={{ background: "rgba(30, 30, 47, 0.4)", borderRadius: "var(--radius-lg)", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
               {/* SUGGESTIONS BOX WITH THE UTILITY BUTTON */}
               <div className="suggestion-box mt-4" style={{ padding: "15px" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
@@ -823,6 +851,7 @@ function App() {
                   >
                     <RefreshCw size={15} /> Start New Analysis
                   </button>
+                </div>
                 </div>
               </div>
             </>
