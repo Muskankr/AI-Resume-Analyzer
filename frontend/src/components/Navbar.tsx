@@ -67,6 +67,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </a>
           <a
             href="#"
+            data-tour="history-link"
             onClick={(e) => {
               e.preventDefault();
               onHistoryClick();
