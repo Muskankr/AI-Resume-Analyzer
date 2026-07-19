@@ -58,7 +58,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         aria-label={isOpen ? "Close history" : "Open history"}
         title={isOpen ? "Close history" : "View history"}
       >
-        {isOpen ? "✕" : "📋"}
+        {isOpen ? <X size={18} /> : <ClipboardList size={18} />}
         {!isOpen && entries.length > 0 && (
           <span className="history-badge">{entries.length}</span>
         )}
@@ -70,7 +70,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         aria-hidden={!isOpen}
       >
         <div className="history-sidebar-header">
-          <h3>📚 History</h3>
+          <h3><BookOpen size={18} /> History</h3>
           {entries.length > 0 && (
             <button
               className="history-clear-btn"
