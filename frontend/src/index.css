@@ -878,6 +878,59 @@ border:0;
 .password-strength-label span.strength-val.weak {
   color: var(--color-danger);
 }
+
+/* ==========================================================================
+   ✨ Issue #111: App-Wide Smooth Performance Animations 
+   ========================================================================== */
+
+/* Hardware accelerated transition defaults for interactive elements */
+.app-btn, .analyze-btn, .secondary-btn, .auth-bar-btn, .theme-toggle-btn, select, input {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+/* Button Hover Micro-interactions */
+.app-btn:hover, .analyze-btn:hover, .secondary-btn:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.1);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
+
+.app-btn:active, .analyze-btn:active, .secondary-btn:active {
+  transform: translateY(0);
+}
+
+/* Base Card Entrance Animations */
+.main-card {
+  animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+}
+
+/* Upload Box Pulse Animation when file changes */
+.upload-box {
+  transition: border-color 0.25s ease, background-color 0.25s ease;
+}
+.upload-box:hover {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.02);
+}
+
+/* Smooth Results Container Slide-In Triggers */
+.analysis-done, .resume-preview, .suggestions-grid, .matrix-grid {
+  animation: slideInUpSmooth 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Stagger targets for results elements */
+.resume-preview { animation-delay: 0.05s; }
+.matrix-grid { animation-delay: 0.1s; }
+.suggestions-grid { animation-delay: 0.15s; }
+
+/* Global Keyframe Definitions */
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+
+
 /* Suggestions Section Grid Layout */
 .suggestions-grid {
   display: grid;
@@ -981,12 +1034,24 @@ border:0;
   from {
     opacity: 0;
     transform: translateY(-4px);
+
   }
   to {
     opacity: 1;
     transform: translateY(0);
   }
 }
+
+
+@keyframes slideInUpSmooth {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 
 
 /* ── Responsive Navbar ───────────────────── */
@@ -1368,4 +1433,5 @@ border:0;
   background-color: #1e1e2f;
   color: #ffffff;
   padding: 12px;
+
 }
