@@ -56,6 +56,18 @@
   --btn-accent-text: #ffffff;
   --footer-text: rgba(255,255,255,0.85);
   --footer-link: #ffffff;
+
+  /* Standardized Border Radius Tokens */
+  --radius-sm: 6px;    /* Dropdowns, small chips, badges */
+  --radius-md: 8px;    /* Action buttons, standard alerts */
+  --radius-lg: 12px;   /* Main application cards, upload boxes, modals */
+  --radius-round: 50%; /* Circular elements like floating action buttons */
+
+  /* Standardized Elevation / Shadow Tokens */
+  --shadow-flat: none;
+  --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-modal: 0 20px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  --shadow-floating: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="dark"]{
@@ -368,6 +380,34 @@ border:0;
   transform: translateX(100%);
   transition: transform 0.3s ease;
   color: var(--card-text);
+}
+/* ==========================================================
+   Custom Scrollbar - History Sidebar
+   ========================================================== */
+
+/* Firefox */
+.history-sidebar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-primary) var(--card-bg);
+}
+
+/* Chrome / Edge / Safari */
+.history-sidebar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.history-sidebar::-webkit-scrollbar-track {
+  background: var(--card-bg);
+}
+
+.history-sidebar::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: 8px;
+  border: 2px solid var(--card-bg);
+}
+
+.history-sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--btn-accent-hover-bg);
 }
 
 .history-sidebar--open {
@@ -838,6 +878,65 @@ border:0;
 .password-strength-label span.strength-val.weak {
   color: var(--color-danger);
 }
+/* Suggestions Section Grid Layout */
+.suggestions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+  margin-top: 16px;
+}
+
+/* Reusable Dynamic Suggestion Card */
+.suggestion-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  text-align: left;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.suggestion-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(99, 102, 241, 0.3);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Mini Action Copy Trigger Button Placement */
+.suggestion-copy-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #94a3b8;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-end;
+  margin-top: 14px;
+  transition: all 0.2s;
+}
+
+.suggestion-copy-btn:hover {
+  background: rgba(99, 102, 241, 0.15);
+  border-color: #6366f1;
+  color: #fff;
+}
+
+/* Responsive Overrides */
+@media (max-width: 640px) {
+  .suggestions-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+}
 
 .password-strength-label span.strength-val.medium {
   color: #f59e0b; /* Amber */
@@ -1227,4 +1326,60 @@ border:0;
 .app-btn-custom--secondary:hover {
   color: #fff !important;
   text-decoration: none !important;
+
+/* Custom Styled Select Dropdown Container */
+.custom-select-container {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 320px;
+}
+
+.custom-select-element {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 100%;
+  padding: 10px 40px 10px 16px;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: #ffffff;
+  background-color: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9999px; /* Matches the sleek capsule styling of your controls */
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+  box-shadow: var(--shadow-card);
+}
+
+/* Custom dropdown arrow icon */
+.custom-select-container::after {
+  content: "▼";
+  font-size: 10px;
+  color: #a5b4fc;
+  position: absolute;
+  right: 18px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: color 0.2s ease;
+}
+
+/* Interactive & Accessibility Focus States */
+.custom-select-element:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.custom-select-element:focus-visible {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+}
+
+/* Styled option dropdown items */
+.custom-select-element option {
+  background-color: #1e1e2f;
+  color: #ffffff;
+  padding: 12px;
 }

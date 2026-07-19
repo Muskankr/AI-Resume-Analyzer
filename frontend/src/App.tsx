@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import "./index.css";
 import { AtsScore } from "./AtsScore";
@@ -12,6 +12,7 @@ import { InfoTooltip } from "./components/InfoTooltip";
 import { Button } from "./components/Button";
 import { Navbar } from "./components/Navbar";
 import EmptyState from "./components/EmptyState";
+import { OnboardingTour } from "./components/OnboardingTour";
 
 
 type Theme = "light" | "dark";
@@ -58,6 +59,45 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
     </div>
   );
 }
+
+interface SuggestionCardProps {
+  text: string;
+  index: number;
+}
+
+const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index }) => {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div className="suggestion-card">
+      <div>
+        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
+          <span style={{ fontSize: "16px" }}>💡</span>
+          <span style={{ fontSize: "12px", fontWeight: "700", color: "#a5b4fc", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+            Recommendation #{index + 1}
+          </span>
+        </div>
+        <p style={{ margin: 0, fontSize: "var(--font-size-sm)", color: "#e2e8f0", lineHeight: "1.6" }}>
+          {text}
+        </p>
+      </div>
+      
+      <button 
+        onClick={handleCopy} 
+        className="suggestion-copy-btn"
+        aria-label="Copy recommendation text"
+      >
+        {copied ? "✅ Copied" : "📋 Copy Text"}
+      </button>
+    </div>
+  );
+};
 
 function App() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
@@ -346,13 +386,19 @@ function App() {
     setHistoryOpen(false);
     setShowExportDropdown(false);
   };
+
   const handleLogout = () => {
     logout();
+    logout();           
+    clearHistory();
+  };
+
     logout();          
     clearHistory();
   };
   return (
     <>
+      <OnboardingTour />
       <HistorySidebar
         entries={entries}
         activeFileName={activeFileName}
@@ -408,12 +454,25 @@ function App() {
               onClose={() => setShowAuthModal(false)}
             />
           )}
+          <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
+
+          {/* STEP 1: Role Selector Container */}
+          <div className="mb-5 p-3" style={{ background: "rgba(255, 255, 255, 0.02)", borderRadius: "var(--radius-md)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <label htmlFor="roleSelect" style={{ display: "block", marginBottom: "8px", fontWeight: "600", color: "#e2e8f0", fontSize: "var(--font-size-sm)" }}>
+              1️⃣ Choose your Target Career Track
 
           <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
+
 
           {/* Role Selector Dropdown Container */}
           <div className="mb-4">
             <label htmlFor="roleSelect" style={{ marginRight: "10px", fontWeight: "600", color: "#fff" }}>
+
+          {/* Role Selector Container */}
+          <div className="mb-5 p-4" style={{ background: "rgba(255, 255, 255, 0.02)", borderRadius: "var(--radius-lg)", border: "1px solid rgba(255,255,255,0.04)" }}>
+            <label 
+              htmlFor="roleSelect" 
+              style={{ display: "block", marginBottom: "12px", fontWeight: "600", color: "#e2e8f0", fontSize: "var(--font-size-sm)" }}
 <h1 className="mb-4 app-main-title" style={{ fontSize: "calc(1.5rem + 1.5vw)", wordBreak: "break-word" }}>🚀 AI Resume Analyzer</h1>
           {/* Role Selector Dropdown */}
           <div className="mb-4 d-flex flex-column align-items-center flex-sm-row justify-content-center role-selector-container" style={{ gap: "8px" }}>
@@ -425,16 +484,53 @@ function App() {
               className="role-select-dropdown"
               value={targetRole}
               onChange={(e) => setTargetRole(e.target.value)}
+
               style={{ padding: "6px 12px", borderRadius: "var(--radius-sm)", border: "1px solid #ccc" }}
+
+              style={{ padding: "10px 16px", borderRadius: "var(--radius-sm)", border: "1px solid rgba(255,255,255,0.15)", width: "100%", maxWidth: "320px", background: "#1e1e2f", color: "#fff", fontSize: "var(--font-size-sm)" }}
+
               style={{ padding: "6px 12px", borderRadius: "6px", width: "100%", maxWidth: "250px" }}
             >
-              <option value="Frontend Developer">Frontend Developer</option>
-              <option value="Backend Developer">Backend Developer</option>
-              <option value="Data Analyst">Data Analyst</option>
-            </select>
+              🎯 Target Career Track
+            </label>
+            <div className="custom-select-container">
+              <select
+                id="roleSelect"
+                value={targetRole}
+                onChange={(e) => setTargetRole(e.target.value)}
+                className="custom-select-element"
+              >
+                <option value="Frontend Developer">Frontend Developer</option>
+                <option value="Backend Developer">Backend Developer</option>
+                <option value="Data Analyst">Data Analyst</option>
+              </select>
+            </div>
           </div>
 
+          {/* STEP 2: Enhanced Upload Container */}
+          <div className="mb-5">
+            <span style={{ display: "block", marginBottom: "12px", fontWeight: "600", color: "#e2e8f0", fontSize: "var(--font-size-sm)" }}>
+              2️⃣ Upload your Document
+            </span>
+            <div className="upload-box mb-3" style={{ padding: "32px 20px", border: "2px dashed var(--upload-border)", borderRadius: "var(--radius-lg)", background: "var(--upload-bg)", transition: "all 0.3s ease" }}>
+              <input
+                type="file"
+                id="fileUpload"
+                hidden
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  if (e.target.files) setFile(e.target.files[0]);
+                }}
+              />
+              <label htmlFor="fileUpload" className="upload-label" style={{ cursor: "pointer", display: "block", fontSize: "var(--font-size-base)" }}>
+                📄 {file ? <strong style={{ color: "#a5b4fc" }}>{file.name}</strong> : "Drag & Drop Resume or Click to Browse"}
+              </label>
+            </div>
+          </div>
+
+
           <div className="upload-box mb-4">
+          {/* STEP 3: Prominent Call to Action Buttons */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", marginTop: "24px" }} className="mb-4">
           <div className="upload-box mb-3" style={{ width: "100%", maxWidth: "100%" }}>
             <input
               type="file"
@@ -460,6 +556,24 @@ function App() {
               className="analyze-btn"
               onClick={uploadResume}
               disabled={loading}
+              
+              style={{
+                padding: "12px 36px",
+                fontSize: "var(--font-size-base)",
+                fontWeight: "700",
+                letterSpacing: "0.5px",
+                backgroundColor: "#6366f1",
+                color: "#fff",
+                border: "none",
+                borderRadius: "var(--radius-md)",
+                cursor: "pointer",
+                boxShadow: "var(--shadow-card)",
+                transition: "transform 0.2s ease, background-color 0.2s ease",
+                width: "100%",
+                maxWidth: "280px"
+              }}
+            >
+              {loading && analysisSource === "upload" ? "⏳ Processing..." : "🚀 Analyze Resume"}
               style={{ minHeight: "44px", flex: "1 1 200px", maxWidth: "100%" }}
             >
               {loading && analysisSource === "upload" ? "⏳ Extracting and analyzing resume text..." : "🚀 Analyze Resume"}
@@ -469,11 +583,24 @@ function App() {
               variant="secondary"
               {loading && analysisSource === "upload" ? "⏳ Extracting..." : "🚀 Analyze Resume"}
             </button>
+            
             <button
               className="secondary-btn"
               onClick={handleSampleResume}
               disabled={loading}
               type="button"
+              
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--btn-secondary-text)",
+                fontSize: "var(--font-size-sm)",
+                textDecoration: "underline",
+                cursor: "pointer",
+                marginTop: "4px"
+              }}
+            >
+              {loading && analysisSource === "sample" ? "⏳ Loading..." : "Or try with a sample resume"}
               style={{ minHeight: "44px", flex: "1 1 200px", maxWidth: "100%" }}
             >
               {loading && analysisSource === "sample" ? "⏳ Loading Sample..." : "Or try with a sample resume"}
@@ -509,7 +636,11 @@ function App() {
 
               <h5 className="analysis-done mt-3">✅ Resume Analysis Complete</h5>
               {activeFileName && (
+
+                <p style={{ fontSize: "var(--font-size-sm)", opacity: 0.7, marginTop: "-8px" }}>📄 {activeFileName}</p>
+
                 <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px", wordBreak: "break-all" }}>📄 {activeFileName}</p>
+
               )}
 
               {/* Skills container */}
@@ -533,10 +664,17 @@ function App() {
                 )}
               </div>
 
+
+              {/* Skill gap matrix */}
+              <div className="mt-4 p-3" style={{ background: "rgba(255,255,255,0.05)", borderRadius: "var(--radius-md)" }}>
+                <h4 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  🎯 Skill Gap Matrix ({targetRole})
+
               {/* FIXED: Changed matrix container style to use flex-wrap / grid adaptation for mobile widths */}
               <div className="mt-4 p-3" style={{ background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
                 <h4 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', textAlign: 'center' }}>
                   <span>🎯 Skill Gap Matrix ({targetRole})</span>
+
                   <InfoTooltip content="Shows which required skills are already in your resume and which important skills are missing." />
                 </h4>
                 <div className="skill-gap-layout" style={{ display: "flex", flexWrap: "wrap", gap: "20px", justifyContent: "space-around", marginTop: "12px" }}>
@@ -563,6 +701,27 @@ function App() {
                 </div>
               </div>
 
+              {/* Upgraded Modern Suggestions Section */}
+              <div className="mt-5 p-4" style={{ background: "rgba(30, 30, 47, 0.4)", borderRadius: "var(--radius-lg)", border: "1px solid rgba(255, 255, 255, 0.04)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
+                  <div style={{ textAlign: "left" }}>
+                    <h4 style={{ margin: "0 0 4px 0", fontSize: "var(--font-size-base)", color: "#fff" }}>
+                      💡 Dynamic Profile Optimization Suggestions
+                    </h4>
+                    <p style={{ margin: 0, fontSize: "var(--font-size-sm)", color: "#64748b" }}>
+                      Actionable revisions targeted at elevating scanning compatibility ranks.
+                    </p>
+                  </div>
+                  {suggestions.length > 0 && (
+                    <button
+                      type="button"
+                      className={`app-btn app-btn--accent${copied ? " is-success" : ""}`}
+                      onClick={copySuggestionsToClipboard}
+                      style={{ padding: "8px 16px", fontSize: "13px" }}
+                    >
+                      {copied ? "✅ Copied!" : "📋 Copy All"}
+                    </button>
+                  )}
               {/* SUGGESTIONS BOX WITH THE UTILITY BUTTON */}
               <div className="suggestion-box mt-4" style={{ padding: "15px" }}>
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
@@ -629,6 +788,21 @@ function App() {
                 </div>
                 
 
+                {suggestions.length === 0 ? (
+                  <p style={{ color: "#64748b", fontStyle: "italic", fontSize: "var(--font-size-sm)", textAlign: "left", margin: "16px 0 0 0" }}>
+                    No actionable layout suggestions generated for the current profile structure matrix.
+                  </p>
+                ) : (
+                  <div className="suggestions-grid">
+                    {suggestions.map((suggestion, index) => (
+                      <SuggestionCard 
+                        key={index} 
+                        text={suggestion} 
+                        index={index} 
+                      />
+                    ))}
+                  </div>
+                )}
                 {suggestions.map((s: string, i: number) => (
                   <div key={i} className="suggestion-item" style={{ wordBreak: "break-word", textAlign: "left" }}>📌 {s}</div>
                 ))}
@@ -651,6 +825,11 @@ function App() {
       </div> {/* closes .container */}
 
       <Footer />  {/* footer should be outside main container */}
+
+    </>
+  ); 
+}
+
 
       {/* RENDER FLOATING BACK TO TOP BUTTON */}
       {showBackToTop && (
@@ -684,5 +863,4 @@ function App() {
     </>
   ); /* closes the return fragment */
 } /* closes App function */
-
 export default App;
