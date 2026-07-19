@@ -9,6 +9,12 @@ import { AuthModal } from "./AuthModal";
 import { Footer } from "./Footer";
 import AnalysisSkeleton from "./components/AnalysisSkeleton/AnalysisSkeleton";
 import { InfoTooltip } from "./components/InfoTooltip";
+import { SkillWordCloud } from "./components/SkillWordCloud";
+import {
+  Moon, Sun, User, Lock, FileText, Rocket, Loader2,
+  CheckCircle, ChevronDown, ChevronUp, Clipboard, ClipboardCheck,
+  RefreshCw, Lightbulb, Pin, Target, Info
+} from "lucide-react";
 import { Navbar } from "./components/Navbar";
 import EmptyState from "./components/EmptyState";
 import resultScreenshot from "./assets/screenshots/result.png";
@@ -50,7 +56,7 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
   if (!text) return null;
   return (
     <div className="resume-preview mt-4">
-      <h4>📄 Resume Text Preview</h4>
+      <h4><FileText size={16} /> Resume Text Preview</h4>
       <pre className="resume-preview__body">
         {highlightSkills(text, skills)}
       </pre>
@@ -120,11 +126,9 @@ function App() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [resumeText, setResumeText] = useState<string>("");
 
-  // Auth
   const { user, signup, login, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // History
   const { entries, addEntry, deleteEntry, clearHistory, setEntries } = useAnalysisHistory();
   const [historyOpen, setHistoryOpen] = useState(false);
   const [activeFileName, setActiveFileName] = useState("");
@@ -558,7 +562,9 @@ function App() {
                 maxWidth: "280px"
               }}
             >
-              {loading && analysisSource === "sample" ? "⏳ Loading..." : "Try Sample Resume"}
+              {loading && analysisSource === "sample"
+                ? <><Loader2 size={15} className="spin" /> Loading...</>
+                : "Try Sample Resume"}
             </button>
           </div>
 
@@ -647,12 +653,11 @@ function App() {
           {loading && <AnalysisSkeleton />}
           {score === null && !loading && <EmptyState />}
 
-          {/* Results */}
           {score !== null && (
             <>
               {analysisSource === "sample" && (
                 <div className="sample-notice-banner mb-4" style={{ padding: "10px", wordBreak: "break-word" }}>
-                  <span>ℹ️ Viewing Sample Resume Analysis</span>
+                  <span><Info size={15} /> Viewing Sample Resume Analysis</span>
                   <span style={{ fontWeight: "normal", fontSize: "13px", display: "block" }}>
                     — This analysis is based on a bundled sample resume.
                   </span>
@@ -665,9 +670,11 @@ function App() {
 
               <ResumePreview text={resumeText} skills={skills} />
 
-              <h5 className="analysis-done mt-3">✅ Resume Analysis Complete</h5>
+              <h5 className="analysis-done mt-3"><CheckCircle size={18} /> Resume Analysis Complete</h5>
               {activeFileName && (
-                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px", wordBreak: "break-all" }}>📄 {activeFileName}</p>
+                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px", wordBreak: "break-all" }}>
+                  <FileText size={13} /> {activeFileName}
+                </p>
               )}
 
               <div className="mt-4">
@@ -685,22 +692,26 @@ function App() {
                     style={{ marginTop: "16px", minHeight: "44px" }}
                     onClick={() => setShowAllSkills(!showAllSkills)}
                   >
-                    {showAllSkills ? "Show Less ▲" : `Show More (${skills.length - 15} more) ▼`}
+                    {showAllSkills
+                      ? <><ChevronUp size={15} /> Show Less</>
+                      : <><ChevronDown size={15} /> Show More ({skills.length - 15} more)</>}
                   </button>
                 )}
               </div>
 
+              {/* Word Cloud */}
+              <SkillWordCloud skills={skills} />
 
-              {/* Skill gap matrix */}
-              <div className="mt-4 p-3" style={{ background: "rgba(255,255,255,0.05)", borderRadius: "var(--radius-md)" }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', textAlign: 'center' }}>
-                  <span>🎯 Skill Gap Matrix ({targetRole})</span>
+              {/* Skill Gap Matrix */}
+              <div className="mt-4 p-3" style={{ background: "rgba(255,255,255,0.05)", borderRadius: "8px" }}>
+                <h4 style={{ display: "flex", alignItems: "center", justifyContent: "center", flexWrap: "wrap", textAlign: "center", gap: "6px" }}>
+                  <Target size={18} /> Skill Gap Matrix ({targetRole})
                   <InfoTooltip content="Shows which required skills are already in your resume and which important skills are missing." />
                 </h4>
                 <div className="skill-gap-layout" style={{ display: "flex", flexWrap: "wrap", gap: "20px", justifyContent: "space-around", marginTop: "12px" }}>
                   <div style={{ flex: "1 1 140px", minWidth: "140px" }}>
                     <h6 style={{ color: "#22c55e" }}>Matched Skills</h6>
-                    {matchedSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : 
+                    {matchedSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> :
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", justifyContent: "center" }}>
                         {matchedSkills.map((s, i) => (
                           <span key={i} className="badge bg-success m-1" style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{s}</span>
@@ -710,7 +721,7 @@ function App() {
                   </div>
                   <div style={{ flex: "1 1 140px", minWidth: "140px" }}>
                     <h6 style={{ color: "#ef4444" }}>Missing Skills</h6>
-                    {missingSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> : 
+                    {missingSkills.length === 0 ? <p style={{ fontSize: "12px" }}>None</p> :
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", justifyContent: "center" }}>
                         {missingSkills.map((s, i) => (
                           <span key={i} className="badge bg-danger m-1" style={{ whiteSpace: "normal", wordBreak: "break-word" }}>{s}</span>
@@ -810,7 +821,7 @@ function App() {
                     onClick={resetAnalysis}
                     style={{ minHeight: "44px", width: "100%", maxWidth: "250px" }}
                   >
-                    🔄 Start New Analysis
+                    <RefreshCw size={15} /> Start New Analysis
                   </button>
                 </div>
               </div>
