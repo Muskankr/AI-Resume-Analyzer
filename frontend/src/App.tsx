@@ -11,6 +11,7 @@ import AnalysisSkeleton from "./components/AnalysisSkeleton/AnalysisSkeleton";
 import { InfoTooltip } from "./components/InfoTooltip";
 import { Navbar } from "./components/Navbar";
 import EmptyState from "./components/EmptyState";
+import { OnboardingTour } from "./components/OnboardingTour";
 
 type Theme = "light" | "dark";
 
@@ -395,6 +396,7 @@ function App() {
   };
   return (
     <>
+      <OnboardingTour />
       <HistorySidebar
         entries={entries}
         activeFileName={activeFileName}
