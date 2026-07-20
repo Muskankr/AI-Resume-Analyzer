@@ -27,6 +27,7 @@ import resultScreenshot from "./assets/screenshots/result.png";
 import { OnboardingTour } from "./components/OnboardingTour";
 import { HowItWorks } from "./components/HowItWorks";
 import { CompareVersions } from "./components/CompareVersions/CompareVersions";
+import { SkillChip } from "./components/SkillChip";
 
 type Theme = "light" | "dark";
 
@@ -130,7 +131,7 @@ function App() {
   const [score, setScore] = useState<number | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  
+
   // Validation States
   const [fileError, setFileError] = useState<string | null>(null);
   const [roleError, setRoleError] = useState<string | null>(null);
@@ -232,7 +233,7 @@ function App() {
     document.documentElement.setAttribute("data-theme", theme);
     try {
       localStorage.setItem("theme", theme);
-    } catch {}
+    } catch { }
   }, [theme]);
 
   // Reset analysis helper
@@ -755,9 +756,7 @@ function App() {
                 {skills.length === 0 && <p>No skills detected</p>}
                 <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", justifyContent: "center" }}>
                   {(showAllSkills ? skills : skills.slice(0, 15)).map((skill: string, i: number) => (
-                    <span key={i} className="skill-badge" style={{ wordBreak: "break-word" }}>
-                      {skill}
-                    </span>
+                    <SkillChip key={i} skill={skill} type="detected" />
                   ))}
                 </div>
                 {skills.length > 15 && (
@@ -822,13 +821,7 @@ function App() {
                         }}
                       >
                         {matchedSkills.map((s, i) => (
-                          <span
-                            key={i}
-                            className="badge bg-success m-1"
-                            style={{ whiteSpace: "normal", wordBreak: "break-word" }}
-                          >
-                            {s}
-                          </span>
+                          <SkillChip key={i} skill={s} type="matched" targetRole={targetRole} />
                         ))}
                       </div>
                     )}
@@ -847,13 +840,7 @@ function App() {
                         }}
                       >
                         {missingSkills.map((s, i) => (
-                          <span
-                            key={i}
-                            className="badge bg-danger m-1"
-                            style={{ whiteSpace: "normal", wordBreak: "break-word" }}
-                          >
-                            {s}
-                          </span>
+                          <SkillChip key={i} skill={s} type="missing" targetRole={targetRole} />
                         ))}
                       </div>
                     )}
