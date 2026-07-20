@@ -186,3 +186,26 @@ def compare_versions_view(request):
     serializer = VersionComparisonSerializer(comparison.as_dict())
 
     return Response(serializer.data)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def suggestion_feedback(request):
+    """Log user feedback (helpful/not helpful) for individual suggestions."""
+    suggestion_text = request.data.get("suggestion", "")
+    vote = request.data.get("vote", "")
+    index = request.data.get("index")
+
+    if vote not in ("up", "down"):
+        return Response(
+            {"error": "Invalid vote parameter. Expected 'up' or 'down'."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    print(f"[SUGGESTION FEEDBACK] Index: {index} | Vote: {vote} | Suggestion: {suggestion_text[:60]}")
+
+    return Response({
+        "message": "Feedback recorded. Thank you!",
+        "vote": vote,
+        "index": index,
+    }, status=status.HTTP_200_OK)

@@ -30,6 +30,7 @@ import { CompareVersions } from "./components/CompareVersions/CompareVersions";
 import { SkillChip } from "./components/SkillChip";
 import { requestNotificationPermission, sendAnalysisCompleteNotification } from "./utils/notification";
 import { ProgressBar } from "./components/ProgressBar/ProgressBar";
+import { UndoToast } from "./components/UndoToast/UndoToast";
 
 type Theme = "light" | "dark";
 
@@ -86,15 +87,36 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
 interface SuggestionCardProps {
   text: string;
   index: number;
+  backendUrl?: string;
 }
 
-const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index }) => {
+const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl = "" }) => {
   const [copied, setCopied] = React.useState(false);
+  const [voted, setVoted] = React.useState<"up" | "down" | null>(null);
+  const [isVoting, setIsVoting] = React.useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleVote = async (vote: "up" | "down") => {
+    if (voted !== null || isVoting) return;
+    setIsVoting(true);
+    try {
+      await axios.post(`${backendUrl}/api/suggestion-feedback/`, {
+        suggestion: text,
+        vote,
+        index,
+      });
+      setVoted(vote);
+    } catch (err) {
+      console.error("Failed to send suggestion feedback:", err);
+      setVoted(vote);
+    } finally {
+      setIsVoting(false);
+    }
   };
 
   return (
@@ -119,13 +141,89 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index }) => {
         </p>
       </div>
 
-      <button
-        onClick={handleCopy}
-        className="suggestion-copy-btn"
-        aria-label="Copy recommendation text"
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginTop: "16px",
+          paddingTop: "12px",
+          borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+          gap: "8px",
+          flexWrap: "wrap",
+        }}
       >
-        {copied ? "✅ Copied" : "📋 Copy Text"}
-      </button>
+        {/* Feedback Widget */}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          {voted === null ? (
+            <>
+              <span style={{ fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.6)", fontWeight: "500" }}>
+                Was this helpful?
+              </span>
+              <button
+                type="button"
+                onClick={() => handleVote("up")}
+                disabled={isVoting}
+                title="Helpful"
+                aria-label="Vote helpful"
+                style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "4px 8px",
+                  cursor: "pointer",
+                  color: "#fff",
+                  fontSize: "0.85rem",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                👍
+              </button>
+              <button
+                type="button"
+                onClick={() => handleVote("down")}
+                disabled={isVoting}
+                title="Not helpful"
+                aria-label="Vote not helpful"
+                style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "4px 8px",
+                  cursor: "pointer",
+                  color: "#fff",
+                  fontSize: "0.85rem",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                👎
+              </button>
+            </>
+          ) : (
+            <span
+              style={{
+                fontSize: "0.78rem",
+                color: voted === "up" ? "#4ade80" : "#f87171",
+                fontWeight: "600",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              {voted === "up" ? "Thanks for your feedback! 👍" : "Thanks for your feedback! 👎"}
+            </span>
+          )}
+        </div>
+
+        {/* Copy Button */}
+        <button
+          onClick={handleCopy}
+          className="suggestion-copy-btn"
+          aria-label="Copy recommendation text"
+        >
+          {copied ? "✅ Copied" : "📋 Copy Text"}
+        </button>
+      </div>
     </div>
   );
 };
@@ -265,8 +363,24 @@ function App() {
 }, []);
 
 
-  // Reset analysis helper
+  // Reset analysis helper with Undo snapshotting
   const resetAnalysis = useCallback(() => {
+    if (score !== null || skills.length > 0) {
+      setUndoState({
+        file,
+        score,
+        skills,
+        suggestions,
+        matchedSkills,
+        missingSkills,
+        resumeText,
+        analysisSource,
+        activeFileName,
+        targetRole,
+      });
+      setShowUndoToast(true);
+    }
+
     setFile(null);
     setScore(null);
     setSkills([]);
@@ -281,7 +395,24 @@ function App() {
     setShowExportDropdown(false);
     setFileError(null);
     setRoleError(null);
-  }, []);
+  }, [file, score, skills, suggestions, matchedSkills, missingSkills, resumeText, analysisSource, activeFileName, targetRole]);
+
+  const handleUndoReset = useCallback(() => {
+    if (undoState) {
+      setFile(undoState.file);
+      setScore(undoState.score);
+      setSkills(undoState.skills);
+      setSuggestions(undoState.suggestions);
+      setMatchedSkills(undoState.matchedSkills);
+      setMissingSkills(undoState.missingSkills);
+      setResumeText(undoState.resumeText);
+      setAnalysisSource(undoState.analysisSource);
+      setActiveFileName(undoState.activeFileName);
+      setTargetRole(undoState.targetRole);
+      setUndoState(null);
+      setShowUndoToast(false);
+    }
+  }, [undoState]);
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -1141,7 +1272,7 @@ function App() {
                   ) : (
                     <div className="suggestions-grid">
                       {suggestions.map((suggestion, index) => (
-                        <SuggestionCard key={index} text={suggestion} index={index} />
+                        <SuggestionCard key={index} text={suggestion} index={index} backendUrl={backendUrl} />
                       ))}
                     </div>
                   )}
@@ -1215,6 +1346,18 @@ function App() {
             Press <kbd style={{ color: "#a5b4fc" }}>Esc</kbd> at any point to clear this helper overlay panel.
           </p>
         </div>
+      )}
+
+      {showUndoToast && (
+        <UndoToast
+          message="Analysis reset."
+          durationSeconds={5}
+          onUndo={handleUndoReset}
+          onClose={() => {
+            setShowUndoToast(false);
+            setUndoState(null);
+          }}
+        />
       )}
     </>
   );
