@@ -11,6 +11,7 @@ from .views import (
     delete_single_history,
     clear_user_history,
     compare_versions_view,
+    suggestion_feedback,
 )
 
 urlpatterns = [
@@ -25,4 +26,5 @@ urlpatterns = [
     path("history/<int:pk>/", delete_single_history),
 
     path("compare/", compare_versions_view),
+    path("suggestion-feedback/", suggestion_feedback),
 ]
