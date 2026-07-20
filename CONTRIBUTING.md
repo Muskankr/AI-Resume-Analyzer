@@ -245,6 +245,18 @@ Before submitting your Pull Request, ensure that:
 - Merge conflicts are resolved.
 - Commit messages are meaningful.
 
+## Before submitting a Pull Request
+
+Run the following commands before opening a PR:
+
+```bash
+cd frontend
+npm run lint
+npm run format
+```
+
+Make sure both commands complete successfully.
+
 ---
 
 # Need Help?

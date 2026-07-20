@@ -1,13 +1,13 @@
-import React, { useState } from "react";
-import type { AuthUser } from "../hooks/useAuth";
+import React, { useState } from 'react'
+import type { AuthUser } from '../hooks/useAuth'
 
 interface NavbarProps {
-  theme: "light" | "dark";
-  toggleTheme: () => void;
-  user: AuthUser | null;
-  onLogin: () => void;
-  onLogout: () => void;
-  onHistoryClick: () => void;
+  theme: 'light' | 'dark'
+  toggleTheme: () => void
+  user: AuthUser | null
+  onLogin: () => void
+  onLogout: () => void
+  onHistoryClick: () => void
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -18,7 +18,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   onHistoryClick,
 }) => {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
     <nav className="navbar">
@@ -34,17 +34,14 @@ export const Navbar: React.FC<NavbarProps> = ({
         ☰
       </button>
 
-      <div
-        id="navbar-menu"
-        className={`navbar-menu ${mobileOpen ? "mobile-open" : ""}`}
-      >
+      <div id="navbar-menu" className={`navbar-menu ${mobileOpen ? 'mobile-open' : ''}`}>
         <div className="navbar-links">
           <a
             href="#"
             onClick={(e) => {
-              e.preventDefault();
-              window.scrollTo({ top: 0, behavior: "smooth" });
-              setMobileOpen(false);
+              e.preventDefault()
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+              setMobileOpen(false)
             }}
           >
             Home
@@ -52,15 +49,15 @@ export const Navbar: React.FC<NavbarProps> = ({
           <a
             href="#ats-score"
             onClick={(e) => {
-              e.preventDefault();
+              e.preventDefault()
               // Scroll down slightly or just let user know
-              const atsSection = document.getElementById("ats-score");
+              const atsSection = document.getElementById('ats-score')
               if (atsSection) {
-                atsSection.scrollIntoView({ behavior: "smooth", block: "center" });
+                atsSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
               } else {
-                window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
               }
-              setMobileOpen(false);
+              setMobileOpen(false)
             }}
           >
             ATS Score
@@ -69,9 +66,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             href="#"
             data-tour="history-link"
             onClick={(e) => {
-              e.preventDefault();
-              onHistoryClick();
-              setMobileOpen(false);
+              e.preventDefault()
+              onHistoryClick()
+              setMobileOpen(false)
             }}
           >
             History
@@ -83,13 +80,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             type="button"
             className="app-btn app-btn--secondary theme-toggle-btn theme-toggle-navbar"
             onClick={() => {
-              toggleTheme();
-              setMobileOpen(false);
+              toggleTheme()
+              setMobileOpen(false)
             }}
             aria-label="Toggle theme"
-            aria-pressed={theme === "dark"}
+            aria-pressed={theme === 'dark'}
           >
-            {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
+            {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
           </button>
 
           {user ? (
@@ -98,8 +95,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 className="auth-bar-btn"
                 onClick={() => {
-                  onLogout();
-                  setMobileOpen(false);
+                  onLogout()
+                  setMobileOpen(false)
                 }}
               >
                 Logout
@@ -109,8 +106,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               className="auth-bar-btn"
               onClick={() => {
-                onLogin();
-                setMobileOpen(false);
+                onLogin()
+                setMobileOpen(false)
               }}
             >
               🔐 Login / Sign Up
@@ -119,5 +116,5 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
     </nav>
-  );
-};
+  )
+}

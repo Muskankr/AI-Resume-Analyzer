@@ -21,3 +21,4 @@ server/resumes/
 .DS_Store
 .vscode/
 .idea/
+node_modules
