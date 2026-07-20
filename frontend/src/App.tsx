@@ -147,7 +147,12 @@ function App() {
   const [copied, setCopied] = useState(false);
   const [analysisSource, setAnalysisSource] = useState<"sample" | "upload" | null>(null);
   const [jobDesc, setJobDesc] = useState("");
+  const [jobDescriptionFile, setJobDescriptionFile] = useState<File | null>(null);
   const [resumeText, setResumeText] = useState<string>("");
+  const [jdMatchScore, setJdMatchScore] = useState<number>(0);
+  const [jdMatchingSkills, setJdMatchingSkills] = useState<string[]>([]);
+  const [jdMissingSkills, setJdMissingSkills] = useState<string[]>([]);
+  const [jdSuggestions, setJdSuggestions] = useState<string[]>([]);
   const [activeFileName, setActiveFileName] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
@@ -245,6 +250,11 @@ function App() {
     setMatchedSkills([]);
     setMissingSkills([]);
     setResumeText("");
+    setJobDescriptionFile(null);
+    setJdMatchScore(0);
+    setJdMatchingSkills([]);
+    setJdMissingSkills([]);
+    setJdSuggestions([]);
     setShowAllSkills(false);
     setCopied(false);
     setAnalysisSource(null);
@@ -306,6 +316,9 @@ function App() {
       formData.append("file", fileToAnalyze);
       formData.append("role", targetRole);
       formData.append("job_description", jobDesc);
+      if (jobDescriptionFile) {
+        formData.append("job_description_file", jobDescriptionFile);
+      }
 
       const headers = user ? { Authorization: `Bearer ${user.token}` } : {};
       const res = await axios.post(`${backendUrl}/api/upload/`, formData, { headers });
@@ -316,6 +329,10 @@ function App() {
       setMatchedSkills(res.data.matched_skills || []);
       setMissingSkills(res.data.missing_skills || []);
       setResumeText(res.data.resume_text || "");
+      setJdMatchScore(res.data.job_description_match_score ?? 0);
+      setJdMatchingSkills(res.data.jd_matching_skills || []);
+      setJdMissingSkills(res.data.jd_missing_skills || []);
+      setJdSuggestions(res.data.jd_suggestions || []);
       setActiveFileName(fileToAnalyze.name);
 
       setLoading(false);
@@ -495,156 +512,6 @@ function App() {
               onClose={() => setShowAuthModal(false)}
             />
           )}
- add-eslint-prettier-config
-          <h1 className="mb-4 app-main-title" style={{ fontSize: "calc(1.5rem + 1.5vw)", wordBreak: "break-word" }}>🚀 AI Resume Analyzer</h1>
-
-          <StepProgress currentStep={currentStep} />
-
-          {/* STEP 1: Role Selector Container */}
-          <div className="mb-4 d-flex flex-column align-items-center flex-sm-row justify-content-center role-selector-container" style={{ gap: "8px" }}>
-            <label htmlFor="roleSelect" className="role-select-label" style={{ fontWeight: "600" }}>
-              Target Career Track:
-            </label>
-            <div className="custom-select-container">
-          
-          <h1 className="mb-4 app-main-title" style={{ fontSize: "calc(1.5rem + 1.5vw)", wordBreak: "break-word" }}>
-            🚀 AI Resume Analyzer
-          </h1>
-
-          {/* STEP 1: Role Selector Container */}
-          <div className="mb-5 p-4" style={{ background: "rgba(255, 255, 255, 0.02)", borderRadius: "var(--radius-lg)", border: "1px solid rgba(255,255,255,0.04)" }}>
-            <label htmlFor="roleSelect" style={{ display: "block", marginBottom: "12px", fontWeight: "600", color: "#e2e8f0", fontSize: "var(--font-size-sm)" }}>
-              1️⃣ Choose your Target Career Track
-            </label>
-            <div className="custom-select-container" style={{ display: "flex", justifyContent: "center" }}>
-              <select
-                id="roleSelect"
-                value={targetRole}
-                onChange={(e) => setTargetRole(e.target.value)}
-                className="custom-select-element role-select-dropdown"
-                style={{ padding: "10px 16px", borderRadius: "var(--radius-sm)", border: "1px solid rgba(255,255,255,0.15)", width: "100%", maxWidth: "320px", background: "#1e1e2f", color: "#fff", fontSize: "var(--font-size-sm)" }}
-              >
-                <option value="Frontend Developer">Frontend Developer</option>
-                <option value="Backend Developer">Backend Developer</option>
-                <option value="Data Analyst">Data Analyst</option>
-              </select>
-            </div>
-          </div>
-
-          {/* STEP 2: Upload Container */}
-          <div className="mb-5">
-            <div className="upload-box mb-3" style={{ width: "100%", maxWidth: "100%" }}>
-            <span style={{ display: "block", marginBottom: "12px", fontWeight: "600", color: "#e2e8f0", fontSize: "var(--font-size-sm)" }}>
-              2️⃣ Upload your Document & Job Details
-            </span>
-            <div className="upload-box mb-4" style={{ padding: "32px 20px", border: "2px dashed var(--upload-border)", borderRadius: "var(--radius-lg)", background: "var(--upload-bg)", transition: "all 0.3s ease" }}>
-              <input
-                type="file"
-                id="fileUpload"
-                hidden
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  if (e.target.files) setFile(e.target.files[0]);
-                }}
-              />
-              <label
-  htmlFor="fileUpload"
-  className="upload-label"
-  style={{
-    cursor: "pointer",
-    display: "block",
-    fontSize: "var(--font-size-base)",
-    wordBreak: "break-all",
-  }}
->
-  📄{" "}
-  {file ? (
-    <strong style={{ color: "#a5b4fc" }}>{file.name}</strong>
-  ) : (
-    "Drag & Drop Resume or Click to Browse"
-  )}
-</label>
-            </div>
-
-
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
-            <div className="mb-4" style={{ textAlign: "left" }}>
-              <label htmlFor="jobDescription" style={{ fontWeight: "600", display: "block", marginBottom: "8px", color: "#e2e8f0" }}>
-                Job Description (Optional)
-              </label>
-              <textarea
-                id="jobDescription"
-                className="custom-textarea"
-                value={jobDesc}
-                onChange={(e) => setJobDesc(e.target.value)}
-                placeholder="Paste the job description here..."
-                style={{ width: '100%', minHeight: '100px', padding: '12px', borderRadius: 'var(--radius-md)', background: 'rgba(255, 255, 255, 0.02)', color: 'inherit', border: '1px solid rgba(255, 255, 255, 0.1)' }}
-              />
-              {/* The Live Counter */}
-              <div style={{ 
-                textAlign: 'right', 
-                color: isOver ? '#ef4444' : (isClose ? '#f97316' : 'inherit'),
-                opacity: isOver || isClose ? 1 : 0.7,
-                fontSize: '0.85rem',
-                marginTop: '5px',
-                fontWeight: isOver ? 'bold' : 'normal'
-              }}>
-                {jobDesc.length} / {MAX_CHARS} characters
-              </div>
-            </div>
-          </div>
-
-          {/* STEP 3: Action Buttons */}
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-4">
-            <button
-              className="analyze-btn"
-              onClick={uploadResume}
-              disabled={loading}
-              style={{
-                padding: "12px 36px",
-                fontSize: "var(--font-size-base)",
-                fontWeight: "700",
-                letterSpacing: "0.5px",
-                backgroundColor: "#6366f1",
-                color: "#fff",
-                border: "none",
-                borderRadius: "var(--radius-md)",
-                cursor: "pointer",
-                boxShadow: "var(--shadow-card)",
-                transition: "transform 0.2s ease, background-color 0.2s ease",
-                flex: "1 1 200px",
-                minHeight: "44px",
-                maxWidth: "280px"
-              }}
-            >
-              {loading && analysisSource === "upload" ? "⏳ Processing..." : "🚀 Analyze Resume"}
-            </button>
-            
-            <button
-              className="secondary-btn"
-              onClick={handleSampleResume}
-              disabled={loading}
-              type="button"
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "var(--btn-secondary-text)",
-                fontSize: "var(--font-size-sm)",
-                textDecoration: "underline",
-                cursor: "pointer",
-                minHeight: "44px",
-                flex: "1 1 200px",
-                maxWidth: "280px"
-              }}
-            >
-              {loading && analysisSource === "sample" ? "⏳ Loading..." : "Or try with a sample resume"}
-              {loading && analysisSource === "sample"
-                ? <><Loader2 size={15} className="spin" /> Loading...</>
-                : "Try Sample Resume"}
-            </button>
-          </div>
-
-
- main
 
           <div className={score === null && !loading ? "hero-container" : ""}>
             <div className={score === null && !loading ? "hero-left" : ""}>
@@ -777,7 +644,7 @@ function App() {
                       color: "#e2e8f0",
                     }}
                   >
-                    Job Description (Optional)
+                    Job Description (Optional text or PDF)
                   </label>
                   <textarea
                     id="jobDescription"
@@ -807,6 +674,43 @@ function App() {
                   >
                     {jobDesc.length} / {MAX_CHARS} characters
                   </div>
+                </div>
+
+                <div className="mb-4" style={{ textAlign: "left" }}>
+                  <label
+                    htmlFor="jobDescriptionFile"
+                    style={{
+                      fontWeight: "600",
+                      display: "block",
+                      marginBottom: "8px",
+                      color: "#e2e8f0",
+                    }}
+                  >
+                    Optional Job Description PDF or TXT
+                  </label>
+                  <input
+                    id="jobDescriptionFile"
+                    type="file"
+                    accept=".pdf,.txt"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setJobDescriptionFile(e.target.files[0]);
+                      }
+                    }}
+                    style={{
+                      width: "100%",
+                      padding: "10px 12px",
+                      borderRadius: "var(--radius-md)",
+                      background: "rgba(255, 255, 255, 0.02)",
+                      color: "inherit",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                    }}
+                  />
+                  {jobDescriptionFile && (
+                    <div style={{ marginTop: "8px", fontSize: "13px", opacity: 0.8 }}>
+                      Selected: {jobDescriptionFile.name}
+                    </div>
+                  )}
                 </div>
 
                 {/* STEP 3: Action Buttons */}
@@ -997,6 +901,67 @@ function App() {
                   </div>
                 </div>
               </div>
+
+              {(jobDesc.trim() || jobDescriptionFile || jdMatchScore > 0) && (
+                <div
+                  className="mt-4 p-4"
+                  style={{
+                    background: "rgba(99, 102, 241, 0.12)",
+                    borderRadius: "var(--radius-lg)",
+                    border: "1px solid rgba(129, 140, 248, 0.25)",
+                  }}
+                >
+                  <h4 style={{ marginBottom: "12px" }}>🎯 JD Compatibility Analysis</h4>
+                  <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "12px", marginBottom: "12px" }}>
+                    <div className="p-3" style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", minWidth: "140px" }}>
+                      <div style={{ fontSize: "12px", textTransform: "uppercase", opacity: 0.7 }}>Overall Match</div>
+                      <div style={{ fontSize: "24px", fontWeight: "700" }}>{jdMatchScore}%</div>
+                    </div>
+                    <div className="p-3" style={{ background: "rgba(255,255,255,0.06)", borderRadius: "8px", minWidth: "180px" }}>
+                      <div style={{ fontSize: "12px", textTransform: "uppercase", opacity: 0.7 }}>ATS Keyword Coverage</div>
+                      <div style={{ fontSize: "24px", fontWeight: "700" }}>{jdMatchScore}%</div>
+                    </div>
+                  </div>
+
+                  <div className="skill-gap-layout" style={{ display: "flex", flexWrap: "wrap", gap: "20px", justifyContent: "space-around", marginTop: "12px" }}>
+                    <div style={{ flex: "1 1 180px", minWidth: "180px" }}>
+                      <h6 style={{ color: "#22c55e" }}>Matching Skills</h6>
+                      {jdMatchingSkills.length === 0 ? (
+                        <p style={{ fontSize: "12px" }}>No matching keywords detected from the provided job description.</p>
+                      ) : (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", justifyContent: "center" }}>
+                          {jdMatchingSkills.map((skill, index) => (
+                            <SkillChip key={index} skill={skill} type="matched" targetRole={targetRole} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div style={{ flex: "1 1 180px", minWidth: "180px" }}>
+                      <h6 style={{ color: "#ef4444" }}>Missing Skills</h6>
+                      {jdMissingSkills.length === 0 ? (
+                        <p style={{ fontSize: "12px" }}>No missing keywords detected.</p>
+                      ) : (
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px", justifyContent: "center" }}>
+                          {jdMissingSkills.map((skill, index) => (
+                            <SkillChip key={index} skill={skill} type="missing" targetRole={targetRole} />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {jdSuggestions.length > 0 && (
+                    <div className="mt-3" style={{ textAlign: "left" }}>
+                      <h6 style={{ marginBottom: "8px" }}>Suggested Improvements</h6>
+                      <ul style={{ paddingLeft: "18px", margin: 0 }}>
+                        {jdSuggestions.map((suggestion, index) => (
+                          <li key={index} style={{ marginBottom: "6px" }}>{suggestion}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Upgraded Suggestions Section */}
               <div

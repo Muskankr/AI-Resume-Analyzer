@@ -117,6 +117,21 @@ class AnalyzeResumeTests(TestCase):
         )
         self.assertEqual(result["target_role"], "Some Unknown Role")
 
+    @patch("analyzer.services.pdfplumber.open")
+    def test_job_description_comparison_is_reported(self, mock_open):
+        mock_open.return_value = _fake_pdf("Experienced with Python and Django.")
+        result = analyze_resume(
+            "dummy.pdf",
+            "Frontend Developer",
+            job_description="Need Python, React, and Django experience.",
+        )
+
+        self.assertEqual(result["jd_matching_skills"], ["python", "django"])
+        self.assertEqual(result["jd_missing_skills"], ["react"])
+        self.assertEqual(result["job_description_match_score"], 67)
+        self.assertEqual(result["ats_keyword_coverage"], "67%")
+        self.assertIn("react", result["jd_suggestions"][0])
+
     @patch("analyzer.services.ResumeAnalysis.objects.create")
     @patch("analyzer.services.pdfplumber.open")
     def test_persists_analysis_when_user_provided(self, mock_open, mock_create):

@@ -64,6 +64,8 @@ def upload_resume(request):
     target_role = request.data.get("role", "")
     file_name = file.name if file else "resume.pdf"
     job_desc = request.data.get("job_description", "")[:2000]
+    jd_file = request.FILES.get("job_description_file")
+    job_desc_file_path = None
 
     if not file:
         return Response(
@@ -83,6 +85,11 @@ def upload_resume(request):
 
         file_path = storage.path(saved_name)
 
+        if jd_file:
+            jd_name = f"{uuid.uuid4()}_{jd_file.name}"
+            jd_saved_name = storage.save(jd_name, jd_file)
+            job_desc_file_path = storage.path(jd_saved_name)
+
         user_id = (
             request.user.id
             if request.user.is_authenticated
@@ -95,6 +102,7 @@ def upload_resume(request):
             file_name=file_name,
             user_id=user_id,
             job_description=job_desc,
+            job_description_file_path=job_desc_file_path,
         )
 
         return Response(result)

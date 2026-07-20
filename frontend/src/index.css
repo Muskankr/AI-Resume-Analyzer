@@ -1200,8 +1200,8 @@ h3 { font-size: var(--text-md); }
     flex: 0 0 40%;
     max-width: 40%;
   }
+}
 
- add-eslint-prettier-config
 /* Floating Help Toggle Trigger */
 .shortcut-help-trigger {
   position: fixed;
@@ -1263,7 +1263,7 @@ h3 { font-size: var(--text-md); }
   font-family: monospace;
   font-size: 11px;
   color: #fff;
-
+}
 
 /* Footer Hyperlink Micro-Interactions */
 .footer-link:hover {
@@ -1277,22 +1277,26 @@ h3 { font-size: var(--text-md); }
 }
 
 /* Ensure container grid alignment wraps beautifully on tight mobile layouts */
-@media (max-width: 600px) {}
+@media (max-width: 600px) {
   .app-footer {
     padding: 30px 16px 16px !important;
+  }
 
   .hero-container .role-selector-container {
     justify-content: flex-start;
-main
   }
-  .hero-container .analyze-btn, .hero-container .secondary-btn {
+
+  .hero-container .analyze-btn,
+  .hero-container .secondary-btn {
     width: auto;
     flex: none;
   }
+
   .hero-container .upload-box {
     margin-left: 0;
     margin-right: 0;
   }
+
   .hero-container .action-buttons {
     justify-content: flex-start !important;
   }

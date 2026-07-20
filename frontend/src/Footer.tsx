@@ -1,5 +1,3 @@
-import { Star } from 'lucide-react'
-
 const REPO_URL = 'https://github.com/Muskankr/AI-Resume-Analyzer'
 const LINKEDIN_URL = 'https://www.linkedin.com/in/muskan-kumari-76361b378'
 

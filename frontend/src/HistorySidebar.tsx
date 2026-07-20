@@ -1,12 +1,6 @@
- add-eslint-prettier-config
-import React, { useState, useEffect } from 'react'
-import { X, ClipboardList, BookOpen, GitCompare } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { BookOpen, ClipboardList, GitCompare, Trash2, X } from 'lucide-react'
 import type { AnalysisEntry } from './hooks/useAnalysisHistory'
-
-import React, { useState, useEffect } from "react";
-import { X, ClipboardList, BookOpen, Trash2, GitCompare } from "lucide-react";
-import type { AnalysisEntry } from "./hooks/useAnalysisHistory";
-        main
 
 const PAGE_SIZE = 10
 
@@ -21,7 +15,7 @@ interface HistorySidebarProps {
   onCompare?: () => void
 }
 
-export const HistorySidebar: React.FC<HistorySidebarProps> = ({
+export const HistorySidebar = ({
   entries,
   activeFileName,
   onSelect,
@@ -30,13 +24,12 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   isOpen,
   onToggle,
   onCompare,
-}) => {
+}: HistorySidebarProps) => {
   const [confirmClear, setConfirmClear] = useState(false)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleCount(PAGE_SIZE)
   }, [entries])
 
@@ -60,7 +53,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 
   return (
     <>
-      {/* Toggle button — always visible */}
       <button
         className="history-toggle-btn"
         onClick={onToggle}
@@ -71,22 +63,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         {!isOpen && entries.length > 0 && <span className="history-badge">{entries.length}</span>}
       </button>
 
-      {/* Sidebar panel */}
-      <div
-        className={`history-sidebar ${isOpen ? 'history-sidebar--open' : ''}`}
-        aria-hidden={!isOpen}
-      >
+      <div className={`history-sidebar ${isOpen ? 'history-sidebar--open' : ''}`} aria-hidden={!isOpen}>
         <div className="history-sidebar-header">
           <h3>
             <BookOpen size={18} /> History
           </h3>
           <div className="history-header-actions">
             {onCompare && entries.length > 1 && (
-              <button
-                className="history-compare-btn"
-                onClick={onCompare}
-                title="Compare two resume versions"
-              >
+              <button className="history-compare-btn" onClick={onCompare} title="Compare two resume versions">
                 <GitCompare size={14} /> Compare
               </button>
             )}
@@ -140,23 +124,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                       aria-label="Delete analysis"
                       title="Delete entry"
                     >
- add-eslint-prettier-config
-                      <svg
-                        width="14"
-                        height="14"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="3 6 5 6 21 6"></polyline>
-                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                      </svg>
-
                       <Trash2 size={14} />
- main
                     </button>
                   </div>
                   <div className="history-item-role">{entry.targetRole}</div>
@@ -170,20 +138,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
               ))}
             </ul>
             {visibleCount < entries.length && (
-              <div
-                className="history-load-more-container"
-                style={{ textAlign: 'center', margin: '1rem 0' }}
-              >
-                <button
-                  className="app-btn"
-                  onClick={handleLoadMore}
-                  disabled={isLoadingMore}
-                  style={{
-                    fontSize: '0.9rem',
-                    padding: '0.4rem 0.8rem',
-                    opacity: isLoadingMore ? 0.7 : 1,
-                  }}
-                >
+              <div className="history-load-more-container" style={{ textAlign: 'center', margin: '1rem 0' }}>
+                <button className="app-btn" onClick={handleLoadMore} disabled={isLoadingMore} style={{ fontSize: '0.9rem', padding: '0.4rem 0.8rem', opacity: isLoadingMore ? 0.7 : 1 }}>
                   {isLoadingMore ? 'Loading...' : 'Load More'}
                 </button>
               </div>
