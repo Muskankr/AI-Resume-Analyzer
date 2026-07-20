@@ -1,19 +1,40 @@
 <div align="center">
 
-# AI Resume Analyzer
-
-### *An enterprise-grade automated platform to parse resumes, evaluate ATS scores, extract technical skills, and generate contextual recommendations.*
-
 [![GitHub license](https://img.shields.io/github/license/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=34d399)](https://github.com/Muskankr/AI-Resume-Analyzer/blob/main/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=f43f5e)](https://github.com/Muskankr/AI-Resume-Analyzer/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/Muskankr/AI-Resume-Analyzer?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer/commits/main)
+[![Build](https://img.shields.io/github/actions/workflow/status/Muskankr/AI-Resume-Analyzer/ci.yml?style=for-the-badge)](...)
 [![GitHub stars](https://img.shields.io/github/stars/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=fbbf24)](https://github.com/Muskankr/AI-Resume-Analyzer/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=34d399)](https://github.com/Muskankr/AI-Resume-Analyzer/network/members)
 [![GitHub contributors](https://img.shields.io/github/contributors/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=818cf8)](https://github.com/Muskankr/AI-Resume-Analyzer/graphs/contributors)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge&color=38bdf8)](https://github.com/Muskankr/AI-Resume-Analyzer/pulls)
 [![ECSoC'26](https://img.shields.io/badge/Program-ECSoC'26-orange?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer)
 
-<p align="center">
+# AI Resume Analyzer
+
+## *An enterprise-grade automated platform to parse resumes, evaluate ATS scores, extract technical skills, and generate contextual recommendations.*
+
+## Framework Overview
+
+### Client (Frontend)
+
+![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
+![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white)
+
+### Server (Backend)
+
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/Django-REST_Framework-092E20?style=for-the-badge&logo=django&logoColor=white)
+![DRF](https://img.shields.io/badge/DRF-REST_API-red?style=for-the-badge)
+![PDFPlumber](https://img.shields.io/badge/PDFPlumber-PDF_Parser-orange?style=for-the-badge)
+![CORS](https://img.shields.io/badge/django--cors--headers-CORS-green?style=for-the-badge)
+
+<p align="center>
   <a href="#key-features">Key Features</a> •
-  <a href="#project-preview">Project Preview</a> •
+  <a href="#project-preview">Project Preview</a> •pm tun
   <a href="#architecture--data-flow">Architecture</a> •
   <a href="#tech-stack">Tech Stack</a> •
   <a href="#installation--setup">Installation & Setup</a> •
@@ -36,11 +57,28 @@
 
 ---
 
-## Project Preview
+## Project Preview/ Screenshots
+
+### 🏠 Home Page
 
 <div align="center">
-  <img src="client/public/ui.png" alt="Application Interface Preview" width="850" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);"/>
+  <img src="frontend\src\assets\screenshots\homepage.png" alt="Application Interface Preview" width="850" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);"/>
 </div>
+
+
+### 📤 Resume Upload
+
+<div align="center">
+  <img src="frontend\src\assets\screenshots\awqy65.gif" alt="Application Interface Preview" width="850" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);"/>
+</div>
+
+
+### 📜 Analysis Result
+
+<div align="center">
+  <img src="frontend\src\assets\screenshots\result.png" alt="Application Interface Preview" width="850" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);"/>
+</div>
+
 
 ---
 
@@ -87,7 +125,7 @@
 
 ```text
 ai-resume-analyzer/
-├── client/                 # React frontend application
+├── frontend/                 # React frontend application
 │   ├── public/             # Static public assets (ui.png, favicon, etc.)
 │   ├── src/
 │   │   ├── assets/         # Images, logos, and Vite assets
@@ -98,7 +136,7 @@ ai-resume-analyzer/
 │   ├── package.json        # Node modules and dependency matrix
 │   └── tsconfig.json       # TypeScript compiler settings
 │
-├── server/                 # Django REST API backend
+├── backend/                 # Django REST API backend
 │   ├── resume_analyzer/    # Main settings, routing, and configurations
 │   ├── analyzer/           # App endpoints, models, viewsets, and migrations
 │   │   ├── migrations/     # Database migration schema
@@ -123,6 +161,7 @@ Ensure you have the following packages installed on your local development machi
 - **Node.js** (v18 or higher)
 - **Python** (v3.10 or higher)
 - **Git**
+- **Redis Server** (running locally on port 6379 for Celery tasks)
 
 ---
 
@@ -151,6 +190,12 @@ venv\Scripts\activate
 # macOS/Linux:
 source venv/bin/activate
 
+# Create local environment configuration from the example
+# Windows:
+copy .env.example .env
+# macOS/Linux:
+cp .env.example .env
+
 # Install dependencies
 pip install -r requirements.txt
 
@@ -159,8 +204,19 @@ python manage.py migrate
 
 # Spin up Django development server
 python manage.py runserver
+
+# In a separate terminal, activate the venv and start the Celery background worker:
+# (Use --pool=solo on Windows to avoid process spawning issues)
+celery -A resume_analyzer worker -l info --pool=solo
 ```
 The API server starts on: `http://127.0.0.1:8000/`
+
+#### Server Environment Variables
+| Variable | Description | Default / Placeholder |
+| :--- | :--- | :--- |
+| `SECRET_KEY` | Secret key for Django cryptographic signing | `django-insecure-local-development-secret-key-change-me` |
+| `DEBUG` | Set to `True` for development, `False` for production | `True` |
+| `ALLOWED_HOSTS` | Comma-separated list of allowed host/domain names | `localhost,127.0.0.1,127.0.0.1:8000` |
 
 ---
 
@@ -170,6 +226,12 @@ The API server starts on: `http://127.0.0.1:8000/`
 # Open a new terminal instance and navigate to client directory
 cd client
 
+# Create local environment configuration from the example
+# Windows:
+copy .env.example .env
+# macOS/Linux:
+cp .env.example .env
+
 # Install packages
 npm install
 
@@ -177,6 +239,11 @@ npm install
 npm run dev
 ```
 The client application will run at: `http://localhost:5173/`
+
+#### Client Environment Variables
+| Variable | Description | Default / Placeholder |
+| :--- | :--- | :--- |
+| `VITE_BACKEND_URL` | The URL of the Django backend REST API server | `http://127.0.0.1:8000` |
 
 ---
 
@@ -214,6 +281,30 @@ Validates and parses an uploaded resume, matches standard technical keywords, ca
 
 ---
 
+## Rate Limiting
+
+The resume upload endpoint (`POST /api/upload/`) is throttled per client IP using DRF's `SimpleRateThrottle`.
+
+| Setting | Default | Description |
+| :--- | :--- | :--- |
+| `RESUME_UPLOAD_RATE` | `10/hour` | Max requests per IP. Format: `<n>/hour`, `<n>/day`, `<n>/min` |
+
+To change the limit, set `RESUME_UPLOAD_RATE` in your `server/.env`:
+
+```env
+RESUME_UPLOAD_RATE=20/hour
+```
+
+When the limit is exceeded, the API returns:
+
+```json
+// HTTP 429 Too Many Requests
+// Retry-After: <seconds>
+{ "detail": "Request was throttled. Expected available in <N> seconds." }
+```
+
+---
+
 ## Roadmap
 
 - [ ] **DOCX Document Parsing** — Integrate `python-docx` to support Word resume parser pipelines.
@@ -228,6 +319,8 @@ Validates and parses an uploaded resume, matches standard technical keywords, ca
 
 We welcome contributions of all levels under the **ECSoC'26** program!
 
+📜 Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating in this project. By contributing, you agree to abide by its guidelines.
+
 1. **Fork** the repository on GitHub.
 2. Clone your fork and create a checkout branch:
    ```bash
@@ -237,6 +330,17 @@ We welcome contributions of all levels under the **ECSoC'26** program!
 4. Push changes to your fork and create a **Pull Request (PR)** targeting the upstream `main` branch.
 
 Please review active issues before creating duplicates, and always link open issues to your Pull Request!
+
+---
+
+## Code Owners
+
+This repository uses a [`CODEOWNERS`](.github/CODEOWNERS) file to automatically request reviews from maintainers whenever a Pull Request is opened.
+
+- The file lives at `.github/CODEOWNERS`.
+- Currently, all files (`*`) are owned by [@Muskankr](https://github.com/Muskankr).
+- When you open a PR, GitHub will automatically add the code owner as a reviewer.
+- As the project grows, ownership can be split by folder (e.g. `/frontend/` → frontend maintainers, `/backend/` → backend maintainers).
 
 ---
 

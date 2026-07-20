@@ -1,0 +1,202 @@
+/* Reusable Skeleton Shimmer Styling */
+
+:root {
+  --skeleton-base: rgba(255, 255, 255, 0.08);
+  --skeleton-highlight: rgba(255, 255, 255, 0.18);
+  --skeleton-border: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='dark'] {
+  --skeleton-base: rgba(255, 255, 255, 0.04);
+  --skeleton-highlight: rgba(255, 255, 255, 0.1);
+  --skeleton-border: rgba(255, 255, 255, 0.05);
+}
+
+.analysis-skeleton {
+  width: 100%;
+  margin-top: 2rem;
+  text-align: center;
+}
+
+/* Shimmer Animation Base */
+.skeleton-shimmer {
+  display: inline-block;
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 25%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-base) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer-pulse 1.2s infinite linear;
+  border-radius: 4px;
+}
+
+@keyframes skeleton-shimmer-pulse {
+  0% {
+    background-position: 200% 0;
+  }
+
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ATS Score Card Skeleton */
+.skeleton-score-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.skeleton-circle {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.skeleton-score-title {
+  height: 28px;
+  width: 180px;
+  border-radius: 6px;
+}
+
+/* Resume Preview Section */
+.skeleton-resume-preview {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--skeleton-border);
+  background: var(--skeleton-base);
+  text-align: left;
+}
+
+.skeleton-preview-header {
+  height: 22px;
+  width: 160px;
+  margin-bottom: 1rem;
+}
+
+.skeleton-line {
+  height: 12px;
+  width: 100%;
+  margin-bottom: 0.75rem;
+  border-radius: 3px;
+}
+
+.skeleton-line:last-child {
+  margin-bottom: 0;
+}
+
+/* Complete Banner & Subtext */
+.skeleton-status-banner {
+  height: 24px;
+  width: 240px;
+  margin: 1.5rem auto 0.75rem;
+}
+
+.skeleton-filename {
+  height: 14px;
+  width: 120px;
+  margin: 0 auto 1.5rem;
+}
+
+/* Skills Badges Container */
+.skeleton-skills-section {
+  margin-top: 2rem;
+}
+
+.skeleton-section-title {
+  height: 22px;
+  width: 140px;
+  margin: 0 auto 1rem;
+}
+
+.skeleton-badge-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.skeleton-badge {
+  height: 32px;
+  border-radius: 20px;
+}
+
+/* Skill Gap Matrix Section */
+.skeleton-matrix {
+  margin-top: 2rem;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 8px;
+  border: 1px solid var(--skeleton-border);
+}
+
+.skeleton-matrix-title {
+  height: 22px;
+  width: 220px;
+  margin: 0 auto 1.5rem;
+}
+
+.skeleton-matrix-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.skeleton-matrix-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.skeleton-matrix-header {
+  height: 18px;
+  width: 100px;
+  margin-bottom: 1rem;
+}
+
+/* Suggestions Section */
+.skeleton-suggestions-box {
+  margin-top: 2rem;
+  text-align: left;
+}
+
+.skeleton-suggestions-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.skeleton-suggestions-title {
+  height: 22px;
+  width: 130px;
+}
+
+.skeleton-suggestions-btn {
+  height: 30px;
+  width: 140px;
+  border-radius: 6px;
+}
+
+.skeleton-suggestion-row {
+  height: 44px;
+  width: 100%;
+  margin-bottom: 0.5rem;
+  border-radius: 8px;
+}
+
+.skeleton-suggestion-row:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+  .skeleton-matrix-columns {
+    grid-template-columns: 1fr;
+  }
+}

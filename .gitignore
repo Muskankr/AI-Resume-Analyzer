@@ -1,0 +1,24 @@
+# Node / Frontend
+client/node_modules/
+client/dist/
+client/dist-ssr/
+client/*.local
+client/.env
+
+# Python / Django
+**/__pycache__/
+*.py[cod]
+*$py.class
+server/venv/
+server/env/
+server/ENV/
+server/.env
+server/db.sqlite3
+server/resumes/
+
+# Logs & OS Files
+*.log
+.DS_Store
+.vscode/
+.idea/
+node_modules
