@@ -32,6 +32,10 @@ import { requestNotificationPermission, sendAnalysisCompleteNotification } from 
 
 type Theme = "light" | "dark";
 
+const DEFAULT_TITLE = "AI Resume Analyzer";
+const READY_TITLE = "✅ Analysis Ready — AI Resume Analyzer";
+
+
 function getInitialTheme(): Theme {
   try {
     const saved = localStorage.getItem("theme");
@@ -237,6 +241,24 @@ function App() {
     } catch { }
   }, [theme]);
 
+  useEffect(() => {
+  const handleVisibilityChange = () => {
+    if (!document.hidden) {
+      document.title = DEFAULT_TITLE;
+    }
+  };
+
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+
+  return () => {
+    document.removeEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+  };
+}, []);
+
+
   // Reset analysis helper
   const resetAnalysis = useCallback(() => {
     setFile(null);
@@ -318,6 +340,11 @@ function App() {
       setMissingSkills(res.data.missing_skills || []);
       setResumeText(res.data.resume_text || "");
       setActiveFileName(fileToAnalyze.name);
+
+      // Change the browser tab title only if the user is on another tab
+      if (document.hidden) {
+         document.title = READY_TITLE;
+      }
 
       setLoading(false);
 
