@@ -139,7 +139,6 @@ function App() {
   const [showBackToTop, setShowBackToTop] = useState(false);
   const [showExportDropdown, setShowExportDropdown] = useState(false);
 
-  // Component States
   const [targetRole, setTargetRole] = useState("Frontend Developer");
   const [matchedSkills, setMatchedSkills] = useState<string[]>([]);
   const [missingSkills, setMissingSkills] = useState<string[]>([]);
