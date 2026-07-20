@@ -107,8 +107,17 @@ http://127.0.0.1:8000
 
 ### 3️⃣ Frontend Setup (React)
 
+Create your environment variables by copying the provided examples:
+
+```bash
+cd resume-frontend
+cp .env.development.example .env.development
+cp .env.production.example .env.production
 ```
-cd frontend
+
+Then install dependencies and start the app:
+
+```bash
 npm install
 npm run dev
 ```
