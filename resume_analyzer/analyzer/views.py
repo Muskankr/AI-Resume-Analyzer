@@ -1,6 +1,7 @@
 from rest_framework.decorators import api_view, parser_classes
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.response import Response
+from .models import AnalysisResult
 import pdfplumber
 
 skills_list = [
@@ -68,7 +69,17 @@ def upload_resume(request):
             else:
                 missing_skills.append(skill)
 
+    result = AnalysisResult.objects.create(
+        score=score,
+        skills_found=detected_skills,
+        suggestions=suggestions,
+        target_role=target_role,
+        matched_skills=matched_skills,
+        missing_skills=missing_skills
+    )
+
     return Response({
+        "id": str(result.id),
         "score": score,
         "skills_found": detected_skills,
         "suggestions": suggestions,
@@ -76,4 +87,19 @@ def upload_resume(request):
         "matched_skills": matched_skills,
         "missing_skills": missing_skills
     })
-    
+
+@api_view(["GET"])
+def get_shared_result(request, pk):
+    try:
+        result = AnalysisResult.objects.get(pk=pk)
+        return Response({
+            "id": str(result.id),
+            "score": result.score,
+            "skills_found": result.skills_found,
+            "suggestions": result.suggestions,
+            "target_role": result.target_role,
+            "matched_skills": result.matched_skills,
+            "missing_skills": result.missing_skills
+        })
+    except AnalysisResult.DoesNotExist:
+        return Response({"error": "Result not found"}, status=404)
