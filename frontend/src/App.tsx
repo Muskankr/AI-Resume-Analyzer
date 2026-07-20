@@ -138,7 +138,6 @@ function App() {
     currentStep = 3;
   }
 
-  // Auth
   const { user, signup, login, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -586,7 +585,6 @@ function App() {
                 maxWidth: "280px"
               }}
             >
-              {loading && analysisSource === "sample" ? "⏳ Loading..." : "Or try with a sample resume"}
               {loading && analysisSource === "sample"
                 ? <><Loader2 size={15} className="spin" /> Loading...</>
                 : "Try Sample Resume"}
@@ -705,7 +703,6 @@ function App() {
 
               <h5 className="analysis-done mt-3"><CheckCircle size={18} /> Resume Analysis Complete</h5>
               {activeFileName && (
-                <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px", wordBreak: "break-all" }}>📄 {activeFileName}</p>
                 <p style={{ fontSize: "13px", opacity: 0.7, marginTop: "-8px", wordBreak: "break-all" }}>
                   <FileText size={13} /> {activeFileName}
                 </p>
