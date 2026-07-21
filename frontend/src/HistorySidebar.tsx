@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { X, ClipboardList, BookOpen, Trash2, GitCompare } from "lucide-react";
-import type { AnalysisEntry } from "./hooks/useAnalysisHistory";
+import React, { useState, useEffect } from 'react'
+import { X, ClipboardList, BookOpen, Trash2, GitCompare } from 'lucide-react'
+import type { AnalysisEntry } from './hooks/useAnalysisHistory'
 const PAGE_SIZE = 10
 
 interface HistorySidebarProps {
@@ -93,7 +93,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       >
         {isOpen ? <X size={18} /> : <ClipboardList size={18} />}
         {!isOpen && unreadCount > 0 && (
-          <span className="history-badge" title={`${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`}>
+          <span
+            className="history-badge"
+            title={`${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`}
+          >
             {unreadCount}
           </span>
         )}
@@ -167,8 +170,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                       <button
                         className="history-item-delete"
                         onClick={(e) => {
-                          e.stopPropagation();
-                          onDelete(entry.id);
+                          e.stopPropagation()
+                          onDelete(entry.id)
                         }}
                         aria-label="Delete analysis notification"
                         title="Delete notification entry"

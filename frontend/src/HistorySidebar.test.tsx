@@ -49,10 +49,7 @@ describe('HistorySidebar component (#246)', () => {
     })
 
     expect(toggleBtn).toBeInTheDocument()
-    expect(toggleBtn).toHaveAttribute(
-      'title',
-      'Notifications & Analysis History (2 unread)'
-    )
+    expect(toggleBtn).toHaveAttribute('title', 'Notifications & Analysis History (2 unread)')
   })
 
   it('displays the unread badge count when unreadCount > 0 and panel is closed', () => {
