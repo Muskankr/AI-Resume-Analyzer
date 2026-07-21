@@ -278,7 +278,7 @@ function App() {
   const { user, signup, login, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const { entries, addEntry, deleteEntry, updateTag, clearHistory, setEntries } = useAnalysisHistory();
+  const { entries, unreadCount, lastViewedTimestamp, markAllAsViewed, addEntry, deleteEntry, updateTag, clearHistory, setEntries } = useAnalysisHistory();
   const { activeTag, setActiveTag, availableTags, filteredEntries } = useTagFilter(entries);
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000";
@@ -730,6 +730,9 @@ function App() {
         availableTags={availableTags}
         activeTag={activeTag}
         onSelectTag={setActiveTag}
+        unreadCount={unreadCount}
+        lastViewedTimestamp={lastViewedTimestamp}
+        onMarkAllAsViewed={markAllAsViewed}
         activeFileName={activeFileName}
         onSelect={selectHistoryEntry}
         onDelete={handleDeleteEntry}

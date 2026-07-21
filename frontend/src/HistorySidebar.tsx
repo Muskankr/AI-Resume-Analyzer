@@ -9,6 +9,9 @@ interface HistorySidebarProps {
   availableTags?: string[]
   activeTag?: string | null
   onSelectTag?: (tag: string | null) => void
+  unreadCount?: number
+  lastViewedTimestamp?: number
+  onMarkAllAsViewed?: () => void
   activeFileName?: string
   onSelect: (entry: AnalysisEntry) => void
   onDelete: (id: string) => void
@@ -25,6 +28,9 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   availableTags = [],
   activeTag = null,
   onSelectTag,
+  unreadCount = 0,
+  lastViewedTimestamp = 0,
+  onMarkAllAsViewed,
   activeFileName,
   onSelect,
   onDelete,
@@ -46,6 +52,19 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleCount(PAGE_SIZE)
   }, [entries])
+
+  useEffect(() => {
+    if (isOpen && onMarkAllAsViewed) {
+      onMarkAllAsViewed()
+    }
+  }, [isOpen, onMarkAllAsViewed])
+
+  const handleToggleClick = () => {
+    if (!isOpen && onMarkAllAsViewed) {
+      onMarkAllAsViewed()
+    }
+    onToggle()
+  }
 
   const handleLoadMore = () => {
     setIsLoadingMore(true)
@@ -79,17 +98,33 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     setEditingId(null)
   }
 
+  const toggleTitle = isOpen
+    ? 'Close Notifications & History'
+    : unreadCount > 0
+      ? `Notifications & Analysis History (${unreadCount} unread)`
+      : 'Notifications & Analysis History'
+
+  const toggleAriaLabel = isOpen
+    ? 'Close notifications and history'
+    : unreadCount > 0
+      ? `Notifications and analysis history, ${unreadCount} unread`
+      : 'Notifications and analysis history'
+
   return (
     <>
       {/* Toggle button — always visible */}
       <button
         className="history-toggle-btn"
-        onClick={onToggle}
-        aria-label={isOpen ? 'Close history' : 'Open history'}
-        title={isOpen ? 'Close history' : 'View history'}
+        onClick={handleToggleClick}
+        aria-label={toggleAriaLabel}
+        title={toggleTitle}
       >
         {isOpen ? <X size={18} /> : <ClipboardList size={18} />}
-        {!isOpen && totalCount > 0 && <span className="history-badge">{totalCount}</span>}
+        {!isOpen && unreadCount > 0 && (
+          <span className="history-badge" title={`${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`}>
+            {unreadCount}
+          </span>
+        )}
       </button>
 
       {/* Sidebar panel */}
@@ -99,7 +134,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       >
         <div className="history-sidebar-header">
           <h3>
-            <BookOpen size={18} /> History
+            <BookOpen size={18} /> Notifications & History
           </h3>
           <div className="history-header-actions">
             {onCompare && entries.length > 1 && (
@@ -158,108 +193,114 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 
         {entries.length === 0 ? (
           <p className="history-empty">
-            {activeTag ? `No entries tagged with "${activeTag}".` : 'No past analyses yet.'}
+            {activeTag ? `No entries tagged with "${activeTag}".` : 'No notifications or past analyses yet.'}
           </p>
         ) : (
           <>
             <ul className="history-list">
-              {entries.slice(0, visibleCount).map((entry) => (
-                <li
-                  key={entry.id}
-                  role="button"
-                  tabIndex={0}
-                  aria-current={activeFileName === entry.fileName ? 'true' : undefined}
-                  className={`history-item ${activeFileName === entry.fileName ? 'history-item--active' : ''}`}
-                  onClick={() => onSelect(entry)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      onSelect(entry)
-                    }
-                  }}
-                >
-                  <div className="history-item-top">
-                    <span className="history-item-score">{entry.score}%</span>
-                    <button
-                      className="history-item-delete"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(entry.id);
-                      }}
-                      aria-label="Delete analysis"
-                      title="Delete entry"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                  <div className="history-item-role">{entry.targetRole}</div>
-                  <div className="history-item-file">{entry.fileName}</div>
-
-                  {/* Tag Display & Inline Editor */}
-                  <div className="history-item-tag-row" onClick={(e) => e.stopPropagation()}>
-                    {editingId === entry.id ? (
-                      <form
-                        className="history-tag-edit-form"
-                        onSubmit={(e) => handleSaveTag(e, entry.id)}
+              {entries.slice(0, visibleCount).map((entry) => {
+                const isNew = entry.timestamp > lastViewedTimestamp;
+                return (
+                  <li
+                    key={entry.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-current={activeFileName === entry.fileName ? 'true' : undefined}
+                    className={`history-item ${activeFileName === entry.fileName ? 'history-item--active' : ''}`}
+                    onClick={() => onSelect(entry)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        onSelect(entry)
+                      }
+                    }}
+                  >
+                    <div className="history-item-top">
+                      <div className="history-item-badges">
+                        <span className="history-item-score">{entry.score}%</span>
+                        {isNew && <span className="history-item-new-badge">NEW</span>}
+                      </div>
+                      <button
+                        className="history-item-delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(entry.id);
+                        }}
+                        aria-label="Delete analysis notification"
+                        title="Delete notification entry"
                       >
-                        <input
-                          type="text"
-                          className="history-tag-input"
-                          value={tagInput}
-                          onChange={(e) => setTagInput(e.target.value)}
-                          placeholder="e.g. Applied - Google, Draft"
-                          autoFocus
-                          onKeyDown={(e) => {
-                            if (e.key === 'Escape') setEditingId(null)
-                          }}
-                        />
-                        <button
-                          type="submit"
-                          className="history-tag-save-btn"
-                          title="Save tag"
-                          aria-label="Save tag"
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    <div className="history-item-role">{entry.targetRole}</div>
+                    <div className="history-item-file">{entry.fileName}</div>
+
+                    {/* Tag Display & Inline Editor */}
+                    <div className="history-item-tag-row" onClick={(e) => e.stopPropagation()}>
+                      {editingId === entry.id ? (
+                        <form
+                          className="history-tag-edit-form"
+                          onSubmit={(e) => handleSaveTag(e, entry.id)}
                         >
-                          <Check size={12} />
-                        </button>
-                      </form>
-                    ) : (
-                      <div className="history-tag-display">
-                        {entry.tag ? (
-                          <span
-                            className="history-tag-chip"
-                            onClick={(e) => handleStartEditing(e, entry)}
-                            title="Click to edit tag"
+                          <input
+                            type="text"
+                            className="history-tag-input"
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            placeholder="e.g. Applied - Google, Draft"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Escape') setEditingId(null)
+                            }}
+                          />
+                          <button
+                            type="submit"
+                            className="history-tag-save-btn"
+                            title="Save tag"
+                            aria-label="Save tag"
                           >
-                            <Tag size={10} /> {entry.tag}
+                            <Check size={12} />
+                          </button>
+                        </form>
+                      ) : (
+                        <div className="history-tag-display">
+                          {entry.tag ? (
+                            <span
+                              className="history-tag-chip"
+                              onClick={(e) => handleStartEditing(e, entry)}
+                              title="Click to edit tag"
+                            >
+                              <Tag size={10} /> {entry.tag}
+                              <button
+                                type="button"
+                                className="history-tag-edit-icon"
+                                onClick={(e) => handleStartEditing(e, entry)}
+                                aria-label="Edit tag"
+                              >
+                                <Edit2 size={10} />
+                              </button>
+                            </span>
+                          ) : (
                             <button
                               type="button"
-                              className="history-tag-edit-icon"
+                              className="history-tag-add-btn"
                               onClick={(e) => handleStartEditing(e, entry)}
-                              aria-label="Edit tag"
                             >
-                              <Edit2 size={10} />
+                              <Plus size={10} /> Add tag
                             </button>
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="history-tag-add-btn"
-                            onClick={(e) => handleStartEditing(e, entry)}
-                          >
-                            <Plus size={10} /> Add tag
-                          </button>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
 
-                  <div className="history-item-time">{formatDate(entry.timestamp)}</div>
-                  <div className="history-item-skills">
-                    {entry.skills.slice(0, 4).join(' · ')}
-                    {entry.skills.length > 4 && ` +${entry.skills.length - 4} more`}
-                  </div>
-                </li>
-              ))}
+                    <div className="history-item-time">{formatDate(entry.timestamp)}</div>
+                    <div className="history-item-skills">
+                      {entry.skills.slice(0, 4).join(' · ')}
+                      {entry.skills.length > 4 && ` +${entry.skills.length - 4} more`}
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
             {visibleCount < entries.length && (
               <div

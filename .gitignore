@@ -1,24 +1,46 @@
-# Node / Frontend
+# Node / Frontend Dependencies & Builds
+node_modules/
+**/node_modules/
+frontend/node_modules/
 client/node_modules/
-client/dist/
-client/dist-ssr/
+frontend/dist/
+frontend/dist-ssr/
+frontend/*.local
+frontend/.env
 client/*.local
 client/.env
 
-# Python / Django
+# Python / Django Virtual Envs, DB, & Storage
 **/__pycache__/
 *.py[cod]
 *$py.class
+venv/
+**/venv/
+env/
+**/env/
+backend/venv/
+backend/env/
+backend/.env
+backend/db.sqlite3
+backend/resumes/
+backend/tmp/
 server/venv/
 server/env/
-server/ENV/
 server/.env
 server/db.sqlite3
 server/resumes/
 
-# Logs & OS Files
+# Coverage & Test Output
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+.vitest/
+coverage/
+
+# Logs & OS / IDE Files
 *.log
 .DS_Store
 .vscode/
 .idea/
-node_modules
+
