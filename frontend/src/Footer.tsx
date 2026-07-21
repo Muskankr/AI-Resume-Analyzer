@@ -194,7 +194,7 @@ export const Footer: React.FC = () => {
               }}
               className="footer-icon-link"
             >
-              <GithubIcon size={20} />
+              <Github size={20} />
               <span>GitHub</span>
             </a>
             <a
@@ -214,7 +214,7 @@ export const Footer: React.FC = () => {
               }}
               className="footer-icon-link"
             >
-              <LinkedinIcon size={20} />
+              <Linkedin size={20} />
               <span>LinkedIn</span>
             </a>
           </div>
