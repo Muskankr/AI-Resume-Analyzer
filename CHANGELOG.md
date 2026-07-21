@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Custom-styled career track dropdown arrow conforming to design theme (#261).
 - Automatic issue keyword auto-labeler GitHub Action workflow (#210).
 - Test coverage reporting for backend (coverage.py) and frontend (Vitest), initial coverage badges in README, and documented thresholds (#214).
 - First-time onboarding walkthrough for new users.
