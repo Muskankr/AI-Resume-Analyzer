@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Routes, Route } from "react-router-dom";
+import NotFound from "./components/NotFound";
 import axios from "axios";
 import "./index.css";
 import { AtsScore } from "./AtsScore";
@@ -235,6 +237,8 @@ function App() {
   const [score, setScore] = useState<number | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [undoState, setUndoState] = useState<any>(null);
+  const [showUndoToast, setShowUndoToast] = useState(false);
 
   // Validation States
   const [fileError, setFileError] = useState<string | null>(null);
@@ -693,7 +697,8 @@ function App() {
         onLogout={handleLogout}
         onHistoryClick={() => setHistoryOpen(true)}
       />
-
+<Routes>
+  <Route path="/" element={
       <div className="container mt-5 px-3">
         <div
           className="main-card text-center mx-auto"
@@ -1293,7 +1298,9 @@ function App() {
           )}
         </div>
       </div>
-
+      } />
+      <Route path="*" element={<NotFound />} />
+      </Routes>
       {/* Floating Back to Top Button */}
       <button
         type="button"
