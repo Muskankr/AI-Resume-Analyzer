@@ -53,7 +53,7 @@
   --btn-accent-hover-bg: #2563eb;
   --btn-success-bg: var(--color-accent);
   --btn-accent-text: #ffffff;
-  --footer-text: rgba(255,255,255,0.85);
+  --footer-text: #ffffff;
   --footer-link: #ffffff;
 
   /* Standardized Border Radius Tokens */
@@ -97,7 +97,7 @@
   --btn-accent-hover-bg: #60a5fa;
   --btn-success-bg: var(--color-accent);
   --btn-accent-text: #ffffff;
-  --footer-text: rgba(226,232,240,0.85);
+  --footer-text: #e2e8f0;
   --footer-link: #e2e8f0;
 }
 
@@ -136,13 +136,13 @@ body {
     margin:50px 0;
 }
 
-.hero-stat h2{
+.hero-stats h2{
     font-size:3rem;
     color:white;
     margin-bottom:8px;
 }
 
-.hero-stat p{
+.hero-stats p{
     color:#94a3b8;
 }
 
@@ -267,6 +267,7 @@ h3 { font-size: var(--text-md); }
   cursor: pointer;
   font-weight: 500;
   font-size: var(--text-base);
+  color: var(--card-text);
 }
 
 .analyze-btn {
@@ -852,7 +853,6 @@ h3 { font-size: var(--text-md); }
 
 .app-footer__copy {
   margin: 0;
-  opacity: 0.85;
 }
 
 /* ── Resume Preview Pane ────────────────── */

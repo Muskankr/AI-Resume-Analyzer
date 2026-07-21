@@ -57,7 +57,6 @@ export const HowItWorks: React.FC = () => {
               style={{
                 margin: 0,
                 fontSize: 'var(--font-size-sm, 0.875rem)',
-                opacity: 0.8,
                 lineHeight: '1.5',
               }}
             >
