@@ -24,6 +24,13 @@ ROLE_SKILLS = {
     ],
 }
 
+PIPELINE_STAGES = [
+    {"stage": "extracting", "label": "Extracting text from document", "percent": 25},
+    {"stage": "matching", "label": "Detecting & matching skills", "percent": 60},
+    {"stage": "scoring", "label": "Generating ATS score & recommendations", "percent": 90},
+    {"stage": "done", "label": "Analysis complete", "percent": 100},
+]
+
 
 def analyze_resume(file_path, target_role, file_name="resume.pdf",user_id=None,job_description=None):
 
@@ -93,6 +100,12 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf",user_id=None,j
         except User.DoesNotExist:
             pass
 
+    progress_info = {
+        "current_stage": "done",
+        "percent": 100,
+        "stages": PIPELINE_STAGES,
+    }
+
     return {
         "id": analysis_id,
         "score": score,
@@ -102,4 +115,6 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf",user_id=None,j
         "missing_skills": missing,
         "target_role": target_role,
         "resume_text": raw_text,
+        "progress": progress_info,
+        "pipeline_stages": PIPELINE_STAGES,
     }

@@ -24,6 +24,7 @@ from .serializers import (
     VersionComparisonSerializer,
 )
 from .services import analyze_resume
+from .url_fetcher import download_and_validate_url
 
 
 class UploadRateThrottle(SimpleRateThrottle):
@@ -61,27 +62,33 @@ def signup(request):
 def upload_resume(request):
 
     file = request.FILES.get("file")
+    url = request.data.get("url") or request.data.get("resume_url")
     target_role = request.data.get("role", "")
-    file_name = file.name if file else "resume.pdf"
     job_desc = request.data.get("job_description", "")[:2000]
 
-    if not file:
+    if not file and not url:
         return Response(
-            {"error": "No file uploaded"},
+            {"error": "Please provide a resume file or shareable link."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     try:
-        temp_dir = os.path.join(settings.BASE_DIR, "tmp")
-        os.makedirs(temp_dir, exist_ok=True)
-
-        storage = FileSystemStorage(location=temp_dir)
-
-        unique_name = f"{uuid.uuid4()}_{file.name}"
-
-        saved_name = storage.save(unique_name, file)
-
-        file_path = storage.path(saved_name)
+        if url:
+            try:
+                file_path, file_name = download_and_validate_url(url)
+            except ValueError as ve:
+                return Response(
+                    {"error": str(ve)},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            file_name = file.name if file else "resume.pdf"
+            temp_dir = os.path.join(settings.BASE_DIR, "tmp")
+            os.makedirs(temp_dir, exist_ok=True)
+            storage = FileSystemStorage(location=temp_dir)
+            unique_name = f"{uuid.uuid4()}_{file.name}"
+            saved_name = storage.save(unique_name, file)
+            file_path = storage.path(saved_name)
 
         user_id = (
             request.user.id
@@ -101,9 +108,7 @@ def upload_resume(request):
 
     except Exception as e:
         import traceback
-
         traceback.print_exc()
-
         return Response(
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -181,3 +186,26 @@ def compare_versions_view(request):
     serializer = VersionComparisonSerializer(comparison.as_dict())
 
     return Response(serializer.data)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def suggestion_feedback(request):
+    """Log user feedback (helpful/not helpful) for individual suggestions."""
+    suggestion_text = request.data.get("suggestion", "")
+    vote = request.data.get("vote", "")
+    index = request.data.get("index")
+
+    if vote not in ("up", "down"):
+        return Response(
+            {"error": "Invalid vote parameter. Expected 'up' or 'down'."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    print(f"[SUGGESTION FEEDBACK] Index: {index} | Vote: {vote} | Suggestion: {suggestion_text[:60]}")
+
+    return Response({
+        "message": "Feedback recorded. Thank you!",
+        "vote": vote,
+        "index": index,
+    }, status=status.HTTP_200_OK)

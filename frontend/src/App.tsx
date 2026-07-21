@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
+import { Routes, Route } from "react-router-dom";
+import NotFound from "./components/NotFound";
 import axios from "axios";
 import "./index.css";
 import { AtsScore } from "./AtsScore";
@@ -29,8 +31,15 @@ import { OnboardingTour } from "./components/OnboardingTour";
 import { HowItWorks } from "./components/HowItWorks";
 import { CompareVersions } from "./components/CompareVersions/CompareVersions";
 import { SkillChip } from "./components/SkillChip";
+import { requestNotificationPermission, sendAnalysisCompleteNotification } from "./utils/notification";
+import { ProgressBar } from "./components/ProgressBar/ProgressBar";
+import { UndoToast } from "./components/UndoToast/UndoToast";
 
 type Theme = "light" | "dark";
+
+const DEFAULT_TITLE = "AI Resume Analyzer";
+const READY_TITLE = "✅ Analysis Ready — AI Resume Analyzer";
+
 
 function getInitialTheme(): Theme {
   try {
@@ -81,15 +90,36 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
 interface SuggestionCardProps {
   text: string;
   index: number;
+  backendUrl?: string;
 }
 
-const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index }) => {
+const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl = "" }) => {
   const [copied, setCopied] = React.useState(false);
+  const [voted, setVoted] = React.useState<"up" | "down" | null>(null);
+  const [isVoting, setIsVoting] = React.useState(false);
 
   const handleCopy = () => {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleVote = async (vote: "up" | "down") => {
+    if (voted !== null || isVoting) return;
+    setIsVoting(true);
+    try {
+      await axios.post(`${backendUrl}/api/suggestion-feedback/`, {
+        suggestion: text,
+        vote,
+        index,
+      });
+      setVoted(vote);
+    } catch (err) {
+      console.error("Failed to send suggestion feedback:", err);
+      setVoted(vote);
+    } finally {
+      setIsVoting(false);
+    }
   };
 
   return (
@@ -114,13 +144,89 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index }) => {
         </p>
       </div>
 
-      <button
-        onClick={handleCopy}
-        className="suggestion-copy-btn"
-        aria-label="Copy recommendation text"
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          marginTop: "16px",
+          paddingTop: "12px",
+          borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+          gap: "8px",
+          flexWrap: "wrap",
+        }}
       >
-        {copied ? "✅ Copied" : "📋 Copy Text"}
-      </button>
+        {/* Feedback Widget */}
+        <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          {voted === null ? (
+            <>
+              <span style={{ fontSize: "0.78rem", color: "rgba(255, 255, 255, 0.6)", fontWeight: "500" }}>
+                Was this helpful?
+              </span>
+              <button
+                type="button"
+                onClick={() => handleVote("up")}
+                disabled={isVoting}
+                title="Helpful"
+                aria-label="Vote helpful"
+                style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "4px 8px",
+                  cursor: "pointer",
+                  color: "#fff",
+                  fontSize: "0.85rem",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                👍
+              </button>
+              <button
+                type="button"
+                onClick={() => handleVote("down")}
+                disabled={isVoting}
+                title="Not helpful"
+                aria-label="Vote not helpful"
+                style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "4px 8px",
+                  cursor: "pointer",
+                  color: "#fff",
+                  fontSize: "0.85rem",
+                  transition: "all 0.2s ease",
+                }}
+              >
+                👎
+              </button>
+            </>
+          ) : (
+            <span
+              style={{
+                fontSize: "0.78rem",
+                color: voted === "up" ? "#4ade80" : "#f87171",
+                fontWeight: "600",
+                display: "flex",
+                alignItems: "center",
+                gap: "4px",
+              }}
+            >
+              {voted === "up" ? "Thanks for your feedback! 👍" : "Thanks for your feedback! 👎"}
+            </span>
+          )}
+        </div>
+
+        {/* Copy Button */}
+        <button
+          onClick={handleCopy}
+          className="suggestion-copy-btn"
+          aria-label="Copy recommendation text"
+        >
+          {copied ? "✅ Copied" : "📋 Copy Text"}
+        </button>
+      </div>
     </div>
   );
 };
@@ -129,10 +235,14 @@ function App() {
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [retryAfter, setRetryAfter] = useState<number | null>(null);
+  const [retryDisabled, setRetryDisabled] = useState(false);
   const [score, setScore] = useState<number | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [sectionScores, setSectionScores] = useState([]);
+  const [undoState, setUndoState] = useState<any>(null);
+  const [showUndoToast, setShowUndoToast] = useState(false);
 
   // Validation States
   const [fileError, setFileError] = useState<string | null>(null);
@@ -153,6 +263,11 @@ function App() {
   const [activeFileName, setActiveFileName] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
+  const [analysisProgress, setAnalysisProgress] = useState<number>(0);
+  const [analysisStageLabel, setAnalysisStageLabel] = useState<string>("");
+  const [uploadMode, setUploadMode] = useState<"file" | "url">("file");
+  const [resumeUrl, setResumeUrl] = useState<string>("");
+  const [urlError, setUrlError] = useState<string | null>(null);
 
   let currentStep: 1 | 2 | 3 = 1;
   if (loading) {
@@ -238,8 +353,42 @@ function App() {
     } catch { }
   }, [theme]);
 
-  // Reset analysis helper
+  useEffect(() => {
+  const handleVisibilityChange = () => {
+    if (!document.hidden) {
+      document.title = DEFAULT_TITLE;
+    }
+  };
+
+  document.addEventListener("visibilitychange", handleVisibilityChange);
+
+  return () => {
+    document.removeEventListener(
+      "visibilitychange",
+      handleVisibilityChange
+    );
+  };
+}, []);
+
+
+  
   const resetAnalysis = useCallback(() => {
+    if (score !== null || skills.length > 0) {
+      setUndoState({
+        file,
+        score,
+        skills,
+        suggestions,
+        matchedSkills,
+        missingSkills,
+        resumeText,
+        analysisSource,
+        activeFileName,
+        targetRole,
+      });
+      setShowUndoToast(true);
+    }
+
     setFile(null);
     setScore(null);
     setSkills([]);
@@ -254,7 +403,24 @@ function App() {
     setShowExportDropdown(false);
     setFileError(null);
     setRoleError(null);
-  }, []);
+  }, [file, score, skills, suggestions, matchedSkills, missingSkills, resumeText, analysisSource, activeFileName, targetRole]);
+
+  const handleUndoReset = useCallback(() => {
+    if (undoState) {
+      setFile(undoState.file);
+      setScore(undoState.score);
+      setSkills(undoState.skills);
+      setSuggestions(undoState.suggestions);
+      setMatchedSkills(undoState.matchedSkills);
+      setMissingSkills(undoState.missingSkills);
+      setResumeText(undoState.resumeText);
+      setAnalysisSource(undoState.analysisSource);
+      setActiveFileName(undoState.activeFileName);
+      setTargetRole(undoState.targetRole);
+      setUndoState(null);
+      setShowUndoToast(false);
+    }
+  }, [undoState]);
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -300,17 +466,44 @@ function App() {
     });
   };
 
+
   const runAnalysis = async (fileToAnalyze: File, source: "sample" | "upload") => {
+
+
     try {
       setLoading(true);
       setAnalysisSource(source);
+      setAnalysisProgress(25);
+      setAnalysisStageLabel(url ? "Fetching document from URL..." : "Stage 1/3: Extracting text from document...");
+
       const formData = new FormData();
-      formData.append("file", fileToAnalyze);
+      if (fileToAnalyze) {
+        formData.append("file", fileToAnalyze);
+      }
+      if (url) {
+        formData.append("url", url);
+      }
       formData.append("role", targetRole);
       formData.append("job_description", jobDesc);
 
+      const stageTimer1 = setTimeout(() => {
+        setAnalysisProgress(60);
+        setAnalysisStageLabel("Stage 2/3: Detecting & matching skills...");
+      }, 500);
+
+      const stageTimer2 = setTimeout(() => {
+        setAnalysisProgress(90);
+        setAnalysisStageLabel("Stage 3/3: Generating ATS score & recommendations...");
+      }, 1000);
+
       const headers = user ? { Authorization: `Bearer ${user.token}` } : {};
       const res = await axios.post(`${backendUrl}/api/upload/`, formData, { headers });
+
+      clearTimeout(stageTimer1);
+      clearTimeout(stageTimer2);
+
+      setAnalysisProgress(100);
+      setAnalysisStageLabel("Analysis complete!");
 
       setScore(res.data.score);
       setSkills(res.data.skills_found || []);
@@ -320,6 +513,15 @@ function App() {
       setResumeText(res.data.resume_text || "");
       setSectionScores(res.data.section_breakdown || []);
       setActiveFileName(fileToAnalyze.name);
+      const fileName = fileToAnalyze ? fileToAnalyze.name : (url ? "Imported Resume" : "Resume");
+      setActiveFileName(fileName);
+
+      // Change the browser tab title only if the user is on another tab
+      if (document.hidden) {
+         document.title = READY_TITLE;
+      }
+
+      
 
       setLoading(false);
 
@@ -333,19 +535,63 @@ function App() {
           matchedSkills: res.data.matched_skills || [],
           missingSkills: res.data.missing_skills || [],
           targetRole: targetRole,
-          fileName: fileToAnalyze.name,
+          fileName: fileName,
         });
       }
+
+      // Send native browser notification if tab is hidden / unfocused
+      sendAnalysisCompleteNotification(fileName);
     } catch (error: any) {
       console.error(error);
       let errorMsg = "Unknown error";
       if (axios.isAxiosError(error)) {
-        errorMsg = error.response?.data?.error ?? error.message;
-      } else if (error instanceof Error) {
-        errorMsg = error.message;
-      }
-      alert(source === "sample" ? `Sample analysis failed: ${errorMsg}` : `Upload failed: ${errorMsg}`);
-      setLoading(false);
+
+    if (error.response?.status === 429) {
+
+        const retryHeader =
+            error.response.headers["retry-after"];
+
+        const retrySeconds =
+            Number(retryHeader) || Number(error.response.data?.retry_after) || 30;
+
+        setRetryAfter(retrySeconds);
+        setRetryDisabled(true);
+
+        let remaining = retrySeconds;
+
+        const timer = setInterval(() => {
+
+            remaining--;
+
+            setRetryAfter(remaining);
+
+            if (remaining <= 0) {
+                clearInterval(timer);
+                setRetryDisabled(false);
+                setRetryAfter(null);
+            }
+
+        }, 1000);
+
+        errorMsg =
+            `Too many requests. Please wait ${retrySeconds}s before trying again.`;
+
+        } else {
+
+        errorMsg =
+            error.response?.data?.error ?? error.message;
+
+       }
+     }
+    if (!(axios.isAxiosError(error) &&error.response?.status === 429)) {
+       alert(
+         source === "sample"
+            ? `Sample analysis failed: ${errorMsg}`
+            : `Upload failed: ${errorMsg}`
+  );
+}
+
+setLoading(false);
     }
   };
 
@@ -359,20 +605,38 @@ function App() {
       setRoleError(null);
     }
 
-    if (!file) {
-      setFileError("Please upload a resume file before analyzing.");
-      hasError = true;
+    if (uploadMode === "file") {
+      if (!file) {
+        setFileError("Please upload a resume file before analyzing.");
+        hasError = true;
+      } else {
+        setFileError(null);
+      }
     } else {
-      setFileError(null);
+      if (!resumeUrl || resumeUrl.trim() === "") {
+        setUrlError("Please enter a shareable link (Google Drive, Dropbox, or PDF URL).");
+        hasError = true;
+      } else if (!resumeUrl.trim().startsWith("http://") && !resumeUrl.trim().startsWith("https://")) {
+        setUrlError("URL must start with http:// or https://");
+        hasError = true;
+      } else {
+        setUrlError(null);
+      }
     }
 
     if (hasError) return;
 
-    await runAnalysis(file!, "upload");
+    await requestNotificationPermission();
+    if (uploadMode === "file") {
+      await runAnalysis(file!, "upload");
+    } else {
+      await runAnalysis(null, "upload", resumeUrl.trim());
+    }
   };
 
   const handleSampleResume = async () => {
     try {
+      await requestNotificationPermission();
       setLoading(true);
       setAnalysisSource("sample");
       const response = await fetch("/sample-resume.pdf");
@@ -485,7 +749,8 @@ function App() {
         onLogout={handleLogout}
         onHistoryClick={() => setHistoryOpen(true)}
       />
-
+<Routes>
+  <Route path="/" element={
       <div className="container mt-5 px-3">
         <div
           className="main-card text-center mx-auto"
@@ -498,7 +763,6 @@ function App() {
               onClose={() => setShowAuthModal(false)}
             />
           )}
-          
 
           <div className={score === null && !loading ? "hero-container" : ""}>
             <div className={score === null && !loading ? "hero-left" : ""}>
@@ -569,43 +833,126 @@ function App() {
                 )}
               </div>
 
-              {/* STEP 2: Upload File & Job Description */}
+              {/* STEP 2: Upload File / Link & Job Description */}
               <div className="mb-5">
-                <div
-                  className="upload-box mb-3"
-                  style={{ width: "100%", maxWidth: "100%", padding: "32px 20px" }}
-                >
-                  <input
-                    type="file"
-                    id="fileUpload"
-                    hidden
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                      if (e.target.files && e.target.files[0]) {
-                        setFile(e.target.files[0]);
-                        setFileError(null);
-                      }
+                {/* Mode Switcher Tabs */}
+                <div style={{ display: "flex", gap: "8px", justifyContent: "center", marginBottom: "16px" }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUploadMode("file");
+                      setUrlError(null);
                     }}
-                  />
-                  <label
-                    htmlFor="fileUpload"
-                    className="upload-label"
                     style={{
+                      padding: "8px 16px",
+                      borderRadius: "var(--radius-md)",
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
                       cursor: "pointer",
-                      display: "block",
-                      wordBreak: "break-all",
-                      fontSize: "var(--font-size-base)",
+                      background: uploadMode === "file" ? "#6366f1" : "rgba(255, 255, 255, 0.05)",
+                      color: "#fff",
+                      border: "1px solid rgba(255, 255, 255, 0.15)",
+                      transition: "all 0.2s ease",
                     }}
                   >
-                    📄{" "}
-                    {file ? (
-                      <strong style={{ color: "#a5b4fc" }}>{file.name}</strong>
-                    ) : (
-                      "Drag & Drop Resume or Click to Browse"
-                    )}
-                  </label>
+                    📄 Local File Upload
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setUploadMode("url");
+                      setFileError(null);
+                    }}
+                    style={{
+                      padding: "8px 16px",
+                      borderRadius: "var(--radius-md)",
+                      fontSize: "0.85rem",
+                      fontWeight: "600",
+                      cursor: "pointer",
+                      background: uploadMode === "url" ? "#6366f1" : "rgba(255, 255, 255, 0.05)",
+                      color: "#fff",
+                      border: "1px solid rgba(255, 255, 255, 0.15)",
+                      transition: "all 0.2s ease",
+                    }}
+                  >
+                    🔗 Import via Link
+                  </button>
                 </div>
 
-                {fileError && (
+                {uploadMode === "file" ? (
+                  <div
+                    className="upload-box mb-3"
+                    style={{ width: "100%", maxWidth: "100%", padding: "32px 20px" }}
+                  >
+                    <input
+                      type="file"
+                      id="fileUpload"
+                      hidden
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                        if (e.target.files && e.target.files[0]) {
+                          setFile(e.target.files[0]);
+                          setFileError(null);
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="fileUpload"
+                      className="upload-label"
+                      style={{
+                        cursor: "pointer",
+                        display: "block",
+                        wordBreak: "break-all",
+                        fontSize: "var(--font-size-base)",
+                      }}
+                    >
+                      📄{" "}
+                      {file ? (
+                        <strong style={{ color: "#a5b4fc" }}>{file.name}</strong>
+                      ) : (
+                        "Drag & Drop Resume or Click to Browse"
+                      )}
+                    </label>
+                  </div>
+                ) : (
+                  <div className="mb-3" style={{ textAlign: "left" }}>
+                    <label
+                      htmlFor="resumeUrlInput"
+                      style={{
+                        fontWeight: "600",
+                        display: "block",
+                        marginBottom: "8px",
+                        color: "#e2e8f0",
+                        fontSize: "0.85rem",
+                      }}
+                    >
+                      Paste Shareable Link (Google Drive / Dropbox / Direct PDF)
+                    </label>
+                    <input
+                      type="url"
+                      id="resumeUrlInput"
+                      value={resumeUrl}
+                      onChange={(e) => {
+                        setResumeUrl(e.target.value);
+                        if (e.target.value.trim() !== "") setUrlError(null);
+                      }}
+                      placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                      style={{
+                        width: "100%",
+                        padding: "12px 16px",
+                        borderRadius: "var(--radius-md)",
+                        background: "rgba(255, 255, 255, 0.04)",
+                        color: "#fff",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                        fontSize: "0.9rem",
+                      }}
+                    />
+                    <span style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.6)", marginTop: "6px", display: "block" }}>
+                      ℹ️ Note: Make sure link permissions are set to "Anyone with the link can view".
+                    </span>
+                  </div>
+                )}
+
+                {fileError && uploadMode === "file" && (
                   <div
                     style={{
                       color: "#ef4444",
@@ -617,6 +964,21 @@ function App() {
                     }}
                   >
                     ⚠️ {fileError}
+                  </div>
+                )}
+
+                {urlError && uploadMode === "url" && (
+                  <div
+                    style={{
+                      color: "#ef4444",
+                      fontSize: "13px",
+                      marginTop: "4px",
+                      marginBottom: "16px",
+                      fontWeight: "500",
+                      textAlign: "center",
+                    }}
+                  >
+                    ⚠️ {urlError}
                   </div>
                 )}
 
@@ -677,7 +1039,7 @@ function App() {
                   <button
                     className="analyze-btn"
                     onClick={uploadResume}
-                    disabled={loading}
+                    disabled={loading || retryDisabled}
                     style={{ minHeight: "44px", flex: "1 1 200px", maxWidth: "100%" }}
                   >
                     {loading && analysisSource === "upload" ? "⏳ Extracting..." : "🚀 Analyze Resume"}
@@ -686,7 +1048,7 @@ function App() {
                   <button
                     className="secondary-btn"
                     onClick={handleSampleResume}
-                    disabled={loading}
+                    disabled={loading || retryDisabled}
                     type="button"
                     style={{ minHeight: "44px", flex: "1 1 200px", maxWidth: "100%" }}
                   >
@@ -699,6 +1061,18 @@ function App() {
                     )}
                   </button>
                 </div>
+                {retryDisabled && retryAfter !== null && (
+                  <p
+                    style={{
+                      color: "#ef4444",
+                      marginTop: "10px",
+                      fontWeight: 600,
+                      textAlign: "center",
+                }}
+              >
+                 Too many requests. Please wait {retryAfter}s before trying again.
+                </p>
+             )}
               </div>
             </div>
 
@@ -709,8 +1083,13 @@ function App() {
             )}
           </div>
 
-          {/* Loading Skeleton */}
-          {loading && <AnalysisSkeleton />}
+          {/* Loading Skeleton & Determinate Progress Bar */}
+          {loading && (
+            <div className="my-4">
+              <ProgressBar progress={analysisProgress} stageLabel={analysisStageLabel} />
+              <AnalysisSkeleton />
+            </div>
+          )}
 
           {/* Empty State / How It Works */}
           {score === null && !loading && (
@@ -831,25 +1210,7 @@ function App() {
                       </div>
                     )}
                   </div>
-                  <div style={{ flex: "1 1 140px", minWidth: "140px" }}>
-                    <h6 style={{ color: "#ef4444" }}>Missing Skills</h6>
-                    {missingSkills.length === 0 ? (
-                      <p style={{ fontSize: "12px" }}>None</p>
-                    ) : (
-                      <div
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: "4px",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {missingSkills.map((s, i) => (
-                          <SkillChip key={i} skill={s} type="missing" targetRole={targetRole} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  
                 </div>
               </div>
 
@@ -963,7 +1324,7 @@ function App() {
                   ) : (
                     <div className="suggestions-grid">
                       {suggestions.map((suggestion, index) => (
-                        <SuggestionCard key={index} text={suggestion} index={index} />
+                        <SuggestionCard key={index} text={suggestion} index={index} backendUrl={backendUrl} />
                       ))}
                     </div>
                   )}
@@ -984,7 +1345,9 @@ function App() {
           )}
         </div>
       </div>
-
+      } />
+      <Route path="*" element={<NotFound />} />
+      </Routes>
       {/* Floating Back to Top Button */}
       <button
         type="button"
@@ -1037,6 +1400,18 @@ function App() {
             Press <kbd style={{ color: "#a5b4fc" }}>Esc</kbd> at any point to clear this helper overlay panel.
           </p>
         </div>
+      )}
+
+      {showUndoToast && (
+        <UndoToast
+          message="Analysis reset."
+          durationSeconds={5}
+          onUndo={handleUndoReset}
+          onClose={() => {
+            setShowUndoToast(false);
+            setUndoState(null);
+          }}
+        />
       )}
     </>
   );
