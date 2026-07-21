@@ -1,16 +1,21 @@
-import React, { useState, useEffect } from "react";
-import { X, ClipboardList, BookOpen, Trash2, GitCompare } from "lucide-react";
-import type { AnalysisEntry } from "./hooks/useAnalysisHistory";
+import React, { useState, useEffect } from 'react'
+import { X, ClipboardList, BookOpen, Trash2, GitCompare, Tag, Plus, Edit2, Check } from 'lucide-react'
+import type { AnalysisEntry } from './hooks/useAnalysisHistory'
 const PAGE_SIZE = 10
 
 interface HistorySidebarProps {
   entries: AnalysisEntry[]
+  allEntriesCount?: number
+  availableTags?: string[]
+  activeTag?: string | null
+  onSelectTag?: (tag: string | null) => void
   unreadCount?: number
   lastViewedTimestamp?: number
   onMarkAllAsViewed?: () => void
   activeFileName?: string
   onSelect: (entry: AnalysisEntry) => void
   onDelete: (id: string) => void
+  onUpdateTag?: (id: string, tag: string) => void
   onClear: () => void
   isOpen: boolean
   onToggle: () => void
@@ -19,12 +24,17 @@ interface HistorySidebarProps {
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   entries,
+  allEntriesCount,
+  availableTags = [],
+  activeTag = null,
+  onSelectTag,
   unreadCount = 0,
   lastViewedTimestamp = 0,
   onMarkAllAsViewed,
   activeFileName,
   onSelect,
   onDelete,
+  onUpdateTag,
   onClear,
   isOpen,
   onToggle,
@@ -33,6 +43,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   const [confirmClear, setConfirmClear] = useState(false)
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [tagInput, setTagInput] = useState('')
+
+  const totalCount = allEntriesCount ?? entries.length
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -68,6 +82,20 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       hour: '2-digit',
       minute: '2-digit',
     })
+  }
+
+  const handleStartEditing = (e: React.MouseEvent, entry: AnalysisEntry) => {
+    e.stopPropagation()
+    setEditingId(entry.id)
+    setTagInput(entry.tag || '')
+  }
+
+  const handleSaveTag = (e: React.SyntheticEvent, id: string) => {
+    e.stopPropagation()
+    if (onUpdateTag) {
+      onUpdateTag(id, tagInput)
+    }
+    setEditingId(null)
   }
 
   const toggleTitle = isOpen
@@ -118,7 +146,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 <GitCompare size={14} /> Compare
               </button>
             )}
-            {entries.length > 0 && (
+            {totalCount > 0 && (
               <button
                 className="history-clear-btn"
                 onClick={() => {
@@ -137,13 +165,41 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           </div>
         </div>
 
+        {/* Tag Filter Bar */}
+        {availableTags.length > 0 && onSelectTag && (
+          <div className="history-tag-filter-container">
+            <span className="history-tag-filter-label">
+              <Tag size={12} /> Filter by tag:
+            </span>
+            <div className="history-tag-filter-pills">
+              <button
+                className={`history-tag-pill ${activeTag === null ? 'history-tag-pill--active' : ''}`}
+                onClick={() => onSelectTag(null)}
+              >
+                All
+              </button>
+              {availableTags.map((tag) => (
+                <button
+                  key={tag}
+                  className={`history-tag-pill ${activeTag === tag ? 'history-tag-pill--active' : ''}`}
+                  onClick={() => onSelectTag(activeTag === tag ? null : tag)}
+                >
+                  {tag}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {entries.length === 0 ? (
-          <p className="history-empty">No notifications or past analyses yet.</p>
+          <p className="history-empty">
+            {activeTag ? `No entries tagged with "${activeTag}".` : 'No notifications or past analyses yet.'}
+          </p>
         ) : (
           <>
             <ul className="history-list">
               {entries.slice(0, visibleCount).map((entry) => {
-                const isNew = entry.timestamp > lastViewedTimestamp
+                const isNew = entry.timestamp > lastViewedTimestamp;
                 return (
                   <li
                     key={entry.id}
@@ -178,6 +234,65 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                     </div>
                     <div className="history-item-role">{entry.targetRole}</div>
                     <div className="history-item-file">{entry.fileName}</div>
+
+                    {/* Tag Display & Inline Editor */}
+                    <div className="history-item-tag-row" onClick={(e) => e.stopPropagation()}>
+                      {editingId === entry.id ? (
+                        <form
+                          className="history-tag-edit-form"
+                          onSubmit={(e) => handleSaveTag(e, entry.id)}
+                        >
+                          <input
+                            type="text"
+                            className="history-tag-input"
+                            value={tagInput}
+                            onChange={(e) => setTagInput(e.target.value)}
+                            placeholder="e.g. Applied - Google, Draft"
+                            autoFocus
+                            onKeyDown={(e) => {
+                              if (e.key === 'Escape') setEditingId(null)
+                            }}
+                          />
+                          <button
+                            type="submit"
+                            className="history-tag-save-btn"
+                            title="Save tag"
+                            aria-label="Save tag"
+                          >
+                            <Check size={12} />
+                          </button>
+                        </form>
+                      ) : (
+                        <div className="history-tag-display">
+                          {entry.tag ? (
+                            <span
+                              className="history-tag-chip"
+                              onClick={(e) => handleStartEditing(e, entry)}
+                              title="Click to edit tag"
+                            >
+                              <Tag size={10} /> {entry.tag}
+                              <button
+                                type="button"
+                                className="history-tag-edit-icon"
+                                onClick={(e) => handleStartEditing(e, entry)}
+                                aria-label="Edit tag"
+                              >
+                                <Edit2 size={10} />
+                              </button>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              className="history-tag-add-btn"
+                              onClick={(e) => handleStartEditing(e, entry)}
+                            >
+                              <Plus size={10} /> Add tag
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
                     <div className="history-item-time">{formatDate(entry.timestamp)}</div>
                     <div className="history-item-skills">
                       {entry.skills.slice(0, 4).join(' · ')}

@@ -5,6 +5,7 @@ import { AtsScore } from './AtsScore';
 import { StepProgress } from './components/StepProgress';
 import { SkillChip } from './components/SkillChip';
 import EmptyState from './components/EmptyState';
+import { HistorySidebar } from './HistorySidebar';
 
 describe('Frontend Component Tests', () => {
   it('renders Footer component correctly', () => {
@@ -21,18 +22,51 @@ describe('Frontend Component Tests', () => {
   });
 
   it('renders StepProgress component with current step', () => {
-    render(<StepProgress currentStep={2} isAnalyzing={false} isComplete={false} />);
-    expect(screen.getByText(/Select Career Track/i)).toBeInTheDocument();
-    expect(screen.getByText(/Upload Resume/i)).toBeInTheDocument();
+    render(<StepProgress currentStep={2} />);
+    expect(screen.getByText(/Upload/i)).toBeInTheDocument();
+    expect(screen.getByText(/Analyzing/i)).toBeInTheDocument();
+    expect(screen.getByText(/Results/i)).toBeInTheDocument();
   });
 
   it('renders SkillChip component correctly', () => {
-    render(<SkillChip name="Python" type="matched" />);
+    render(<SkillChip skill="Python" type="matched" />);
     expect(screen.getByText('Python')).toBeInTheDocument();
   });
 
-  it('renders EmptyState component with action button', () => {
-    render(<EmptyState onReset={() => {}} />);
-    expect(screen.getByText(/No Resume Analyzed Yet/i)).toBeInTheDocument();
+  it('renders EmptyState component', () => {
+    render(<EmptyState />);
+    expect(screen.getByText(/No resume uploaded yet/i)).toBeInTheDocument();
+  });
+
+  it('renders HistorySidebar with tag filter pills and entry tags', () => {
+    const mockEntries = [
+      {
+        id: '1',
+        timestamp: Date.now(),
+        score: 85,
+        skills: ['Python', 'Django'],
+        suggestions: ['Add React'],
+        matchedSkills: ['Python'],
+        missingSkills: ['React'],
+        targetRole: 'Backend Developer',
+        fileName: 'resume.pdf',
+        tag: 'Applied - Google',
+      },
+    ];
+    render(
+      <HistorySidebar
+        entries={mockEntries}
+        availableTags={['Applied - Google']}
+        activeTag={null}
+        onSelectTag={() => {}}
+        onSelect={() => {}}
+        onDelete={() => {}}
+        onClear={() => {}}
+        isOpen={true}
+        onToggle={() => {}}
+      />
+    );
+    expect(screen.getByText(/History/i)).toBeInTheDocument();
+    expect(screen.getByText('Applied - Google')).toBeInTheDocument();
   });
 });

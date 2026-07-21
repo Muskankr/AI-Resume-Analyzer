@@ -10,6 +10,7 @@ export interface AnalysisEntry {
   missingSkills: string[]
   targetRole: string
   fileName: string
+  tag?: string
 }
 
 const STORAGE_KEY = 'resume_analysis_history'
@@ -91,6 +92,19 @@ export function useAnalysisHistory() {
     setEntries((prev) => prev.filter((e) => e.id !== id))
   }
 
+  const updateTag = useCallback((id: string, tag: string) => {
+    setEntries((prev) =>
+      prev.map((entry) => {
+        if (entry.id !== id) return entry
+        const trimmed = tag.trim()
+        return {
+          ...entry,
+          tag: trimmed ? trimmed : undefined,
+        }
+      })
+    )
+  }, [])
+
   const clearHistory = () => {
     setEntries([])
   }
@@ -102,6 +116,7 @@ export function useAnalysisHistory() {
     markAllAsViewed,
     addEntry,
     deleteEntry,
+    updateTag,
     clearHistory,
     setEntries,
   }
