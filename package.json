@@ -1,4 +1,14 @@
 {
+  "name": "ai-resume-analyzer",
+  "private": true,
+  "scripts": {
+    "test": "npm --prefix frontend test && cd backend && python manage.py test analyzer",
+    "test:frontend": "npm --prefix frontend test",
+    "test:backend": "cd backend && python manage.py test analyzer",
+    "test:coverage": "npm --prefix frontend run test:coverage && cd backend && coverage run manage.py test analyzer && coverage report",
+    "test:coverage:frontend": "npm --prefix frontend run test:coverage",
+    "test:coverage:backend": "cd backend && coverage run manage.py test analyzer && coverage report"
+  },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^8.64.0",
     "@typescript-eslint/parser": "^8.64.0",

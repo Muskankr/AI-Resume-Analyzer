@@ -264,3 +264,26 @@ class CompareVersionsAPITests(TestCase):
             "/api/compare/", {"older": self.older.id, "newer": foreign.id}
         )
         self.assertEqual(resp.status_code, 404)
+
+
+from analyzer.url_fetcher import convert_to_direct_download_url, download_and_validate_url
+
+
+class UrlFetcherTests(TestCase):
+    def test_convert_gdrive_url(self):
+        gdrive_share_url = "https://drive.google.com/file/d/11A2b3C4d5E6f7G8h9I/view?usp=sharing"
+        direct_url, filename = convert_to_direct_download_url(gdrive_share_url)
+        self.assertEqual(direct_url, "https://drive.google.com/uc?export=download&id=11A2b3C4d5E6f7G8h9I")
+        self.assertEqual(filename, "gdrive_11A2b3C4d5E6f7G8h9I.pdf")
+
+    def test_convert_dropbox_url(self):
+        dropbox_url = "https://www.dropbox.com/s/xyz123/my_resume.pdf?dl=0"
+        direct_url, filename = convert_to_direct_download_url(dropbox_url)
+        self.assertIn("dl=1", direct_url)
+        self.assertEqual(filename, "my_resume.pdf")
+
+    def test_invalid_url_scheme_raises_value_error(self):
+        with self.assertRaises(ValueError) as ctx:
+            download_and_validate_url("ftp://example.com/file.pdf")
+        self.assertIn("valid URL starting with http", str(ctx.exception))
+

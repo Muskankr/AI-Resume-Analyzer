@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Test coverage reporting for backend (coverage.py) and frontend (Vitest), initial coverage badges in README, and documented thresholds (#214).
 - First-time onboarding walkthrough for new users.
 - Step progress indicator during resume analysis.
 - "How It Works" section to improve user guidance.

@@ -250,12 +250,16 @@ Before submitting your Pull Request, ensure that:
 Run the following commands before opening a PR:
 
 ```bash
+# Run linters and formatters
 cd frontend
 npm run lint
 npm run format
+
+# Run test suites with coverage check
+npm run test:coverage
 ```
 
-Make sure both commands complete successfully.
+Make sure all commands complete successfully and coverage meets defined thresholds (Backend: 60%, Frontend: 50%).
 
 ---
 
