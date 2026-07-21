@@ -39,10 +39,7 @@ type Theme = "light" | "dark";
 const DEFAULT_TITLE = "AI Resume Analyzer";
 const READY_TITLE = "✅ Analysis Ready — AI Resume Analyzer";
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 7ae27ca (feat: handle 429 rate limiting with retry countdown)
 function getInitialTheme(): Theme {
   try {
     const saved = localStorage.getItem("theme");
@@ -372,11 +369,7 @@ function App() {
 }, []);
 
 
-<<<<<<< HEAD
-  // Reset analysis helper with Undo snapshotting
-=======
-  // Reset analysis helper
->>>>>>> 7ae27ca (feat: handle 429 rate limiting with retry countdown)
+  
   const resetAnalysis = useCallback(() => {
     if (score !== null || skills.length > 0) {
       setUndoState({
@@ -471,12 +464,10 @@ function App() {
     });
   };
 
-<<<<<<< HEAD
-  const runAnalysis = async (fileToAnalyze: File | null, source: "sample" | "upload", url?: string) => {
-=======
+
   const runAnalysis = async (fileToAnalyze: File, source: "sample" | "upload") => {
 
->>>>>>> 7ae27ca (feat: handle 429 rate limiting with retry countdown)
+
     try {
       setLoading(true);
       setAnalysisSource(source);
@@ -526,10 +517,7 @@ function App() {
          document.title = READY_TITLE;
       }
 
-      // Change the browser tab title only if the user is on another tab
-      if (document.hidden) {
-         document.title = READY_TITLE;
-      }
+      
 
       setLoading(false);
 
@@ -1217,25 +1205,7 @@ setLoading(false);
                       </div>
                     )}
                   </div>
-                  <div style={{ flex: "1 1 140px", minWidth: "140px" }}>
-                    <h6 style={{ color: "#ef4444" }}>Missing Skills</h6>
-                    {missingSkills.length === 0 ? (
-                      <p style={{ fontSize: "12px" }}>None</p>
-                    ) : (
-                      <div
-                        style={{
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: "4px",
-                          justifyContent: "center",
-                        }}
-                      >
-                        {missingSkills.map((s, i) => (
-                          <SkillChip key={i} skill={s} type="missing" targetRole={targetRole} />
-                        ))}
-                      </div>
-                    )}
-                  </div>
+                  
                 </div>
               </div>
 
