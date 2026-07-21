@@ -13,6 +13,7 @@ export interface AnalysisEntry {
 }
 
 const STORAGE_KEY = 'resume_analysis_history'
+const LAST_VIEWED_KEY = 'resume_analysis_last_viewed'
 
 function loadHistory(): AnalysisEntry[] {
   try {
@@ -34,13 +35,41 @@ function saveHistory(entries: AnalysisEntry[]): void {
   }
 }
 
+function loadLastViewed(): number {
+  try {
+    const raw = localStorage.getItem(LAST_VIEWED_KEY)
+    if (!raw) return 0
+    const val = Number(raw)
+    return isNaN(val) ? 0 : val
+  } catch {
+    return 0
+  }
+}
+
+function saveLastViewed(ts: number): void {
+  try {
+    localStorage.setItem(LAST_VIEWED_KEY, ts.toString())
+  } catch {
+    // localStorage may be unavailable
+  }
+}
+
 export function useAnalysisHistory() {
   const [entries, setEntries] = useState<AnalysisEntry[]>(() => loadHistory())
+  const [lastViewedTimestamp, setLastViewedTimestamp] = useState<number>(() => loadLastViewed())
 
   // Sync to localStorage whenever entries change
   useEffect(() => {
     saveHistory(entries)
   }, [entries])
+
+  const markAllAsViewed = useCallback(() => {
+    const now = Date.now()
+    setLastViewedTimestamp(now)
+    saveLastViewed(now)
+  }, [])
+
+  const unreadCount = entries.filter((entry) => entry.timestamp > lastViewedTimestamp).length
 
   const addEntry = useCallback((entry: Omit<AnalysisEntry, 'id' | 'timestamp'>) => {
     setEntries((prev) => {
@@ -65,8 +94,12 @@ export function useAnalysisHistory() {
   const clearHistory = () => {
     setEntries([])
   }
+
   return {
     entries,
+    unreadCount,
+    lastViewedTimestamp,
+    markAllAsViewed,
     addEntry,
     deleteEntry,
     clearHistory,
