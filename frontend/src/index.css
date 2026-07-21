@@ -558,6 +558,23 @@ h3 { font-size: var(--text-md); }
   justify-content: space-between;
 }
 
+.history-item-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-item-new-badge {
+  background: var(--color-danger, #ef4444);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
 .history-item-score {
   font-size: var(--text-md);
   font-weight: 700;

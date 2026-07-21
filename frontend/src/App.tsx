@@ -275,7 +275,7 @@ function App() {
   const { user, signup, login, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  const { entries, addEntry, deleteEntry, clearHistory, setEntries } = useAnalysisHistory();
+  const { entries, unreadCount, lastViewedTimestamp, markAllAsViewed, addEntry, deleteEntry, clearHistory, setEntries } = useAnalysisHistory();
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000";
 
@@ -722,6 +722,9 @@ function App() {
       <OnboardingTour />
       <HistorySidebar
         entries={entries}
+        unreadCount={unreadCount}
+        lastViewedTimestamp={lastViewedTimestamp}
+        onMarkAllAsViewed={markAllAsViewed}
         activeFileName={activeFileName}
         onSelect={selectHistoryEntry}
         onDelete={handleDeleteEntry}

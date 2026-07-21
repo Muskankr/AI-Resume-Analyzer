@@ -5,6 +5,9 @@ const PAGE_SIZE = 10
 
 interface HistorySidebarProps {
   entries: AnalysisEntry[]
+  unreadCount?: number
+  lastViewedTimestamp?: number
+  onMarkAllAsViewed?: () => void
   activeFileName?: string
   onSelect: (entry: AnalysisEntry) => void
   onDelete: (id: string) => void
@@ -16,6 +19,9 @@ interface HistorySidebarProps {
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   entries,
+  unreadCount = 0,
+  lastViewedTimestamp = 0,
+  onMarkAllAsViewed,
   activeFileName,
   onSelect,
   onDelete,
@@ -32,6 +38,19 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleCount(PAGE_SIZE)
   }, [entries])
+
+  useEffect(() => {
+    if (isOpen && onMarkAllAsViewed) {
+      onMarkAllAsViewed()
+    }
+  }, [isOpen, onMarkAllAsViewed])
+
+  const handleToggleClick = () => {
+    if (!isOpen && onMarkAllAsViewed) {
+      onMarkAllAsViewed()
+    }
+    onToggle()
+  }
 
   const handleLoadMore = () => {
     setIsLoadingMore(true)
@@ -51,17 +70,33 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     })
   }
 
+  const toggleTitle = isOpen
+    ? 'Close Notifications & History'
+    : unreadCount > 0
+      ? `Notifications & Analysis History (${unreadCount} unread)`
+      : 'Notifications & Analysis History'
+
+  const toggleAriaLabel = isOpen
+    ? 'Close notifications and history'
+    : unreadCount > 0
+      ? `Notifications and analysis history, ${unreadCount} unread`
+      : 'Notifications and analysis history'
+
   return (
     <>
       {/* Toggle button — always visible */}
       <button
         className="history-toggle-btn"
-        onClick={onToggle}
-        aria-label={isOpen ? 'Close history' : 'Open history'}
-        title={isOpen ? 'Close history' : 'View history'}
+        onClick={handleToggleClick}
+        aria-label={toggleAriaLabel}
+        title={toggleTitle}
       >
         {isOpen ? <X size={18} /> : <ClipboardList size={18} />}
-        {!isOpen && entries.length > 0 && <span className="history-badge">{entries.length}</span>}
+        {!isOpen && unreadCount > 0 && (
+          <span className="history-badge" title={`${unreadCount} unread notification${unreadCount > 1 ? 's' : ''}`}>
+            {unreadCount}
+          </span>
+        )}
       </button>
 
       {/* Sidebar panel */}
@@ -71,7 +106,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       >
         <div className="history-sidebar-header">
           <h3>
-            <BookOpen size={18} /> History
+            <BookOpen size={18} /> Notifications & History
           </h3>
           <div className="history-header-actions">
             {onCompare && entries.length > 1 && (
@@ -103,48 +138,54 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         </div>
 
         {entries.length === 0 ? (
-          <p className="history-empty">No past analyses yet.</p>
+          <p className="history-empty">No notifications or past analyses yet.</p>
         ) : (
           <>
             <ul className="history-list">
-              {entries.slice(0, visibleCount).map((entry) => (
-                <li
-                  key={entry.id}
-                  role="button"
-                  tabIndex={0}
-                  aria-current={activeFileName === entry.fileName ? 'true' : undefined}
-                  className={`history-item ${activeFileName === entry.fileName ? 'history-item--active' : ''}`}
-                  onClick={() => onSelect(entry)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault()
-                      onSelect(entry)
-                    }
-                  }}
-                >
-                  <div className="history-item-top">
-                    <span className="history-item-score">{entry.score}%</span>
-                    <button
-                      className="history-item-delete"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDelete(entry.id);
-                      }}
-                      aria-label="Delete analysis"
-                      title="Delete entry"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                  <div className="history-item-role">{entry.targetRole}</div>
-                  <div className="history-item-file">{entry.fileName}</div>
-                  <div className="history-item-time">{formatDate(entry.timestamp)}</div>
-                  <div className="history-item-skills">
-                    {entry.skills.slice(0, 4).join(' · ')}
-                    {entry.skills.length > 4 && ` +${entry.skills.length - 4} more`}
-                  </div>
-                </li>
-              ))}
+              {entries.slice(0, visibleCount).map((entry) => {
+                const isNew = entry.timestamp > lastViewedTimestamp
+                return (
+                  <li
+                    key={entry.id}
+                    role="button"
+                    tabIndex={0}
+                    aria-current={activeFileName === entry.fileName ? 'true' : undefined}
+                    className={`history-item ${activeFileName === entry.fileName ? 'history-item--active' : ''}`}
+                    onClick={() => onSelect(entry)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault()
+                        onSelect(entry)
+                      }
+                    }}
+                  >
+                    <div className="history-item-top">
+                      <div className="history-item-badges">
+                        <span className="history-item-score">{entry.score}%</span>
+                        {isNew && <span className="history-item-new-badge">NEW</span>}
+                      </div>
+                      <button
+                        className="history-item-delete"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(entry.id);
+                        }}
+                        aria-label="Delete analysis notification"
+                        title="Delete notification entry"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                    <div className="history-item-role">{entry.targetRole}</div>
+                    <div className="history-item-file">{entry.fileName}</div>
+                    <div className="history-item-time">{formatDate(entry.timestamp)}</div>
+                    <div className="history-item-skills">
+                      {entry.skills.slice(0, 4).join(' · ')}
+                      {entry.skills.length > 4 && ` +${entry.skills.length - 4} more`}
+                    </div>
+                  </li>
+                )
+              })}
             </ul>
             {visibleCount < entries.length && (
               <div
