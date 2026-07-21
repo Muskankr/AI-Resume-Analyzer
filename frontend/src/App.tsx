@@ -21,7 +21,10 @@ import {
   RefreshCw,
   Target,
   Info,
+  HelpCircle,
+  X,
 } from 'lucide-react'
+
 import { Navbar } from './components/Navbar'
 import EmptyState from './components/EmptyState'
 import { StepProgress } from './components/StepProgress'
@@ -35,10 +38,12 @@ import {
 } from './utils/notification'
 import { ProgressBar } from './components/ProgressBar/ProgressBar'
 import { UndoToast } from './components/UndoToast/UndoToast'
+
 type Theme = 'light' | 'dark'
 
 const DEFAULT_TITLE = 'AI Resume Analyzer'
 const READY_TITLE = '✅ Analysis Ready — AI Resume Analyzer'
+
 
 function getInitialTheme(): Theme {
   try {
@@ -1477,7 +1482,7 @@ function App() {
       {/* Floating Back to Top Button */}
       <button
         type="button"
-        className={`back-to-top${showBackToTop ? ' back-to-top--visible' : ''}`}
+        className={`fab-btn back-to-top${showBackToTop ? " back-to-top--visible" : ""}`}
         onClick={scrollToTop}
         aria-label="Back to top"
         title="Back to top"
@@ -1489,13 +1494,48 @@ function App() {
 
       {/* Keyboard Shortcuts Help Button & Overlay */}
       <button
-        className="shortcut-help-trigger"
+        className="fab-btn shortcut-help-trigger"
         onClick={() => setShowShortcutHelp(!showShortcutHelp)}
         title="Toggle Keyboard Shortcuts Help"
-        aria-label="Toggle keyboard shortcuts menu"
+        aria-label="Toggle keyboard shortcuts help menu"
+        aria-expanded={showShortcutHelp}
       >
-        ?
+        {showShortcutHelp ? <X size={20} /> : <HelpCircle size={20} />}
       </button>
+
+      {showShortcutHelp && (
+        <div className="shortcut-overlay-card">
+          <h5
+            style={{
+              margin: "0 0 12px 0",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            ⌨️ Keyboard Quick Actions
+          </h5>
+
+          <div className="shortcut-row">
+            <span style={{ color: "#94a3b8" }}>Upload Resume</span>
+            <span className="shortcut-key-badge">Alt + U</span>
+          </div>
+
+          <div className="shortcut-row">
+            <span style={{ color: "#94a3b8" }}>Reset Analysis</span>
+            <span className="shortcut-key-badge">Alt + R</span>
+          </div>
+
+          <div className="shortcut-row">
+            <span style={{ color: "#94a3b8" }}>Close Modals / Sidebar</span>
+            <span className="shortcut-key-badge">Esc</span>
+          </div>
+        </div>
+      )}
+      
+        ↑
+      
 
       {showShortcutHelp && (
         <div className="shortcut-overlay-card">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect, useCallback } from 'react'
 import type { AuthUser } from '../hooks/useAuth'
 
 interface NavbarProps {
@@ -10,6 +10,8 @@ interface NavbarProps {
   onHistoryClick: () => void
 }
 
+const MOBILE_BREAKPOINT = 1024
+
 export const Navbar: React.FC<NavbarProps> = ({
   theme,
   toggleTheme,
@@ -20,13 +22,33 @@ export const Navbar: React.FC<NavbarProps> = ({
 }) => {
   const [mobileOpen, setMobileOpen] = useState(false)
 
+  const closeMenu = useCallback(() => setMobileOpen(false), [])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeMenu()
+    }
+    if (mobileOpen) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [mobileOpen, closeMenu])
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > MOBILE_BREAKPOINT) closeMenu()
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [closeMenu])
+
   return (
     <nav className="navbar">
       <div className="navbar-brand">🚀 AI Resume Analyzer</div>
 
       <button
         className="navbar-toggle"
-        onClick={() => setMobileOpen(!mobileOpen)}
+        onClick={() => setMobileOpen((prev) => !prev)}
         aria-expanded={mobileOpen}
         aria-controls="navbar-menu"
         aria-label="Toggle navigation"
@@ -34,14 +56,20 @@ export const Navbar: React.FC<NavbarProps> = ({
         ☰
       </button>
 
-      <div id="navbar-menu" className={`navbar-menu ${mobileOpen ? 'mobile-open' : ''}`}>
+      <div
+        className={`navbar-backdrop${mobileOpen ? ' visible' : ''}`}
+        onClick={closeMenu}
+        aria-hidden="true"
+      />
+
+      <div id="navbar-menu" className={`navbar-menu${mobileOpen ? ' mobile-open' : ''}`}>
         <div className="navbar-links">
           <a
             href="#"
             onClick={(e) => {
               e.preventDefault()
               window.scrollTo({ top: 0, behavior: 'smooth' })
-              setMobileOpen(false)
+              closeMenu()
             }}
           >
             Home
@@ -50,14 +78,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             href="#ats-score"
             onClick={(e) => {
               e.preventDefault()
-              // Scroll down slightly or just let user know
               const atsSection = document.getElementById('ats-score')
               if (atsSection) {
                 atsSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
               } else {
                 window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
               }
-              setMobileOpen(false)
+              closeMenu()
             }}
           >
             ATS Score
@@ -68,7 +95,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             onClick={(e) => {
               e.preventDefault()
               onHistoryClick()
-              setMobileOpen(false)
+              closeMenu()
             }}
           >
             History
@@ -81,7 +108,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             className="app-btn app-btn--secondary theme-toggle-btn theme-toggle-navbar"
             onClick={() => {
               toggleTheme()
-              setMobileOpen(false)
+              closeMenu()
             }}
             aria-label="Toggle theme"
             aria-pressed={theme === 'dark'}
@@ -96,7 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({
                 className="auth-bar-btn"
                 onClick={() => {
                   onLogout()
-                  setMobileOpen(false)
+                  closeMenu()
                 }}
               >
                 Logout
@@ -107,7 +134,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               className="auth-bar-btn"
               onClick={() => {
                 onLogin()
-                setMobileOpen(false)
+                closeMenu()
               }}
             >
               🔐 Login / Sign Up

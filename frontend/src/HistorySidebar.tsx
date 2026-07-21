@@ -86,12 +86,13 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     <>
       {/* Toggle button — always visible */}
       <button
-        className="history-toggle-btn"
+        className="fab-btn history-toggle-btn"
         onClick={handleToggleClick}
         aria-label={toggleAriaLabel}
+        aria-expanded={isOpen}
         title={toggleTitle}
       >
-        {isOpen ? <X size={18} /> : <ClipboardList size={18} />}
+        {isOpen ? <X size={20} /> : <ClipboardList size={20} />}
         {!isOpen && unreadCount > 0 && (
           <span
             className="history-badge"
