@@ -176,46 +176,36 @@ export const Footer: React.FC = () => {
           >
             Connect
           </h5>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '16px' }}>
             <a
               href={REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub Repository"
-              title="GitHub Repository"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '14px',
+                fontSize: '20px',
                 color: '#94a3b8',
                 textDecoration: 'none',
                 transition: 'color 0.2s',
               }}
               className="footer-icon-link"
             >
-              <Github size={20} />
-              <span>GitHub</span>
+              🐙
             </a>
             <a
               href={LINKEDIN_URL}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="LinkedIn Profile"
-              title="LinkedIn Profile"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '14px',
+                fontSize: '20px',
                 color: '#94a3b8',
                 textDecoration: 'none',
                 transition: 'color 0.2s',
               }}
               className="footer-icon-link"
             >
-              <Linkedin size={20} />
-              <span>LinkedIn</span>
+              💼
             </a>
           </div>
         </div>
