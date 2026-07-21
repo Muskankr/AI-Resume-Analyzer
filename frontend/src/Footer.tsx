@@ -49,8 +49,7 @@ export const Footer: React.FC = () => {
               margin: 0,
             }}
           >
-            Optimizing application structural profiles against automated parsing matrices with fluid
-            data visualization pipelines.
+            Helping you beat ATS filters and land more interviews.
           </p>
         </div>
 
