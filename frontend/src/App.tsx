@@ -12,7 +12,6 @@ import { Footer } from "./Footer";
 import AnalysisSkeleton from "./components/AnalysisSkeleton/AnalysisSkeleton";
 import { InfoTooltip } from "./components/InfoTooltip";
 import { SkillWordCloud } from "./components/SkillWordCloud";
-import ResumeSectionBreakdown from "./components/ResumeSectionBreakdown";
 import {
   FileText,
   Loader2,
@@ -238,7 +237,6 @@ function App() {
   const [score, setScore] = useState<number | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [sectionScores, setSectionScores] = useState([]);
   const [undoState, setUndoState] = useState<any>(null);
   const [showUndoToast, setShowUndoToast] = useState(false);
 
@@ -513,8 +511,6 @@ function App() {
       setMatchedSkills(res.data.matched_skills || []);
       setMissingSkills(res.data.missing_skills || []);
       setResumeText(res.data.resume_text || "");
-      setSectionScores(res.data.section_breakdown || []);
-      setActiveFileName(fileToAnalyze.name);
       const fileName = fileToAnalyze ? fileToAnalyze.name : (url ? "Imported Resume" : "Resume");
       setActiveFileName(fileName);
 
@@ -1136,7 +1132,7 @@ function App() {
                   <HowItWorks />
                 </div>
               </div>
-              <ResumeSectionBreakdown sections={sectionScores} />
+            )}
 
             {/* Results Display Panel */}
             {score !== null && !loading && (

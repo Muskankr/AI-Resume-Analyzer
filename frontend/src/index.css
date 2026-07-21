@@ -1239,17 +1239,6 @@ h3 { font-size: var(--text-md); }
 
 @media (min-width: 900px) {
   .hero-container {
-    flex-direction: row;
-    text-align: left;
-    align-items: center;
-    justify-content: space-between;
-    gap: 40px;
-  }
-}
-  
-  .hero-left {
-    flex: 0 0 55%;
-    max-width: 55%;
     padding: 90px 48px;
   }
 
@@ -1336,30 +1325,26 @@ h3 { font-size: var(--text-md); }
 }
 
 /* Ensure container grid alignment wraps beautifully on tight mobile layouts */
-@media (max-width: 600px) {
+@media (max-width: 600px) {}
   .app-footer {
     padding: 30px 16px 16px !important;
-  }
 
   .hero-container .role-selector-container {
     justify-content: flex-start;
   }
-
-  .hero-container .analyze-btn,
-  .hero-container .secondary-btn {
+  .hero-container .analyze-btn, .hero-container .secondary-btn {
     width: auto;
     flex: none;
   }
-
   .hero-container .upload-box {
     margin-left: 0;
     margin-right: 0;
   }
-
   .hero-container .action-buttons {
     justify-content: flex-start !important;
   }
 }
+
 .hero-screenshot {
   width: 100%;
   border-radius: 12px;
@@ -1664,64 +1649,4 @@ h3 { font-size: var(--text-md); }
     opacity: 1;
     transform: translateX(-50%) translateY(-8px);
   }
-}
-/* ===============================
-   Resume Section Breakdown
-================================= */
-
-.section-breakdown {
-  margin-top: 30px;
-  padding: 24px;
-  background: rgba(30, 41, 59, 0.6);
-  border-radius: 16px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.section-breakdown h3 {
-  text-align: center;
-  margin-bottom: 24px;
-  color: var(--card-text);
-}
-
-.section-card {
-  background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
-  padding: 18px;
-  margin-bottom: 18px;
-  border: 1px solid rgba(255,255,255,0.06);
-  transition: all 0.3s ease;
-}
-
-.section-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.2);
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-
-.progress {
-  width: 100%;
-  height: 10px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 999px;
-  overflow: hidden;
-  margin-bottom: 12px;
-}
-
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #6366f1, #22c55e);
-  border-radius: 999px;
-  transition: width 0.5s ease;
-}
-
-.section-card p {
-  margin: 6px 0;
-  font-size: 14px;
 }
