@@ -109,8 +109,58 @@ body {
   font-size: var(--text-base);
 }
 
-h1, .app-main-title {
-  font-size: var(--text-xl) !important;
+.hero-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+
+    padding:12px 22px;
+
+    border-radius:999px;
+
+    background:rgba(99,102,241,.15);
+
+    border:1px solid rgba(99,102,241,.35);
+
+    color:#93c5fd;
+
+    font-weight:600;
+
+    margin-bottom:30px;
+}
+
+.hero-stats{
+    display:flex;
+    justify-content:center;
+    gap:70px;
+    margin:50px 0;
+}
+
+.hero-stat h2{
+    font-size:3rem;
+    color:white;
+    margin-bottom:8px;
+}
+
+.hero-stat p{
+    color:#94a3b8;
+}
+
+.hero-stats span{
+color:#94a3b8;
+font-size:0.95rem;
+}
+
+h1 {
+  font-size: var(--text-xl);
+}
+
+.app-main-title {
+  font-size: clamp(3.5rem, 7vw, 5.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  color: #ffffff;
 }
 
 h2 { font-size: var(--text-lg); }
@@ -1175,33 +1225,30 @@ h3 { font-size: var(--text-md); }
 
 /* Hero Section */
 .hero-container {
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-  align-items: center;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 40px 32px 20px;
+}
+
+.hero-left {
+  width: 100%;
+  max-width: 100%;
   text-align: center;
 }
 
 @media (min-width: 900px) {
   .hero-container {
-    flex-direction: row;
-    text-align: left;
-    align-items: center;
-    justify-content: space-between;
-    gap: 40px;
+    padding: 90px 48px;
   }
-  
+
   .hero-left {
-    flex: 0 0 55%;
-    max-width: 55%;
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
   }
+}
 
-  .hero-right {
-    flex: 0 0 40%;
-    max-width: 40%;
-  }
-
- add-eslint-prettier-config
 /* Floating Help Toggle Trigger */
 .shortcut-help-trigger {
   position: fixed;
@@ -1263,6 +1310,7 @@ h3 { font-size: var(--text-md); }
   font-family: monospace;
   font-size: 11px;
   color: #fff;
+}
 
 
 /* Footer Hyperlink Micro-Interactions */
@@ -1283,7 +1331,6 @@ h3 { font-size: var(--text-md); }
 
   .hero-container .role-selector-container {
     justify-content: flex-start;
-main
   }
   .hero-container .analyze-btn, .hero-container .secondary-btn {
     width: auto;
@@ -1313,12 +1360,12 @@ main
 }
 
 .hero-description {
-  color: var(--color-neutral);
-  font-size: var(--text-md);
-  margin-bottom: 24px;
-  line-height: 1.5;
+  max-width: 820px;
+  margin: 28px auto 40px;
+  color: #cbd5e1;
+  font-size: 1.2rem;
+  line-height: 1.8;
 }
-
 /* Custom Select Dropdown Container */
 .custom-select-container {
   position: relative;
