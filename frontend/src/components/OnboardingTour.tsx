@@ -66,6 +66,7 @@ export const OnboardingTour: React.FC = () => {
   }, [currentStep, isVisible])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     updateTargetRect()
 
     const handleResize = () => {
@@ -85,6 +86,11 @@ export const OnboardingTour: React.FC = () => {
       window.removeEventListener('scroll', handleScroll, true)
     }
   }, [updateTargetRect])
+
+  function finishTour() {
+    localStorage.setItem('hasSeenOnboarding', 'true')
+    setIsVisible(false)
+  }
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -129,11 +135,6 @@ export const OnboardingTour: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
-
-  const finishTour = () => {
-    localStorage.setItem('hasSeenOnboarding', 'true')
-    setIsVisible(false)
-  }
 
   const nextStep = () => {
     if (currentStep < steps.length - 1) {

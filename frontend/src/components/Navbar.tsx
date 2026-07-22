@@ -21,7 +21,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [mobileOpen, setMobileOpen] = useState(false)
 
   return (
-    <nav className="navbar">
+    <header className="navbar">
       <div className="navbar-brand">🚀 AI Resume Analyzer</div>
 
       <button
@@ -34,7 +34,11 @@ export const Navbar: React.FC<NavbarProps> = ({
         ☰
       </button>
 
-      <div id="navbar-menu" className={`navbar-menu ${mobileOpen ? 'mobile-open' : ''}`}>
+      <nav
+        id="navbar-menu"
+        className={`navbar-menu ${mobileOpen ? 'mobile-open' : ''}`}
+        aria-label="Main Navigation"
+      >
         <div className="navbar-links">
           <a
             href="#"
@@ -114,7 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
         </div>
-      </div>
-    </nav>
+      </nav>
+    </header>
   )
 }
