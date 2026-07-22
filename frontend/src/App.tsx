@@ -582,11 +582,15 @@ function App() {
         }
       }
       if (!(axios.isAxiosError(error) && error.response?.status === 429)) {
-        alert(
-          source === "sample"
-            ? `Sample analysis failed: ${errorMsg}`
-            : `Upload failed: ${errorMsg}`
-        );
+        if (axios.isAxiosError(error) && error.response?.status === 400 && uploadMode === "url" && source === "upload") {
+          setUrlError(errorMsg);
+        } else {
+          alert(
+            source === "sample"
+              ? `Sample analysis failed: ${errorMsg}`
+              : `Upload failed: ${errorMsg}`
+          );
+        }
       }
 
       setLoading(false);
@@ -618,7 +622,13 @@ function App() {
         setUrlError("URL must start with http:// or https://");
         hasError = true;
       } else {
-        setUrlError(null);
+        try {
+          new URL(resumeUrl.trim());
+          setUrlError(null);
+        } catch {
+          setUrlError("Please enter a valid URL.");
+          hasError = true;
+        }
       }
     }
 
