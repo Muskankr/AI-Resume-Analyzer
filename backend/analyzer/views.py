@@ -11,19 +11,24 @@ from rest_framework.decorators import (
     permission_classes,
     throttle_classes,
 )
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import SimpleRateThrottle
 
+from .comparison import compare_versions
 from .models import ResumeAnalysis
-from .serializers import SignupSerializer, ResumeAnalysisSerializer
+from .serializers import (
+    SignupSerializer,
+    ResumeAnalysisSerializer,
+    VersionComparisonSerializer,
+)
 from .services import analyze_resume
+from .url_fetcher import download_and_validate_url
 
 
 class UploadRateThrottle(SimpleRateThrottle):
     scope = "upload"
-
     def get_rate(self):
         return getattr(settings, "RESUME_UPLOAD_RATE", "10/hour")
 
@@ -51,32 +56,39 @@ def signup(request):
 
 
 @api_view(["POST"])
-@parser_classes([MultiPartParser, FormParser])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
 @permission_classes([AllowAny])
 @throttle_classes([UploadRateThrottle])
 def upload_resume(request):
 
     file = request.FILES.get("file")
+    url = request.data.get("url") or request.data.get("resume_url")
     target_role = request.data.get("role", "")
-    file_name = file.name if file else "resume.pdf"
+    job_desc = request.data.get("job_description", "")[:2000]
 
-    if not file:
+    if not file and not url:
         return Response(
-            {"error": "No file uploaded"},
+            {"error": "Please provide a resume file or shareable link."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     try:
-        temp_dir = os.path.join(settings.BASE_DIR, "tmp")
-        os.makedirs(temp_dir, exist_ok=True)
-
-        storage = FileSystemStorage(location=temp_dir)
-
-        unique_name = f"{uuid.uuid4()}_{file.name}"
-
-        saved_name = storage.save(unique_name, file)
-
-        file_path = storage.path(saved_name)
+        if url:
+            try:
+                file_path, file_name = download_and_validate_url(url)
+            except ValueError as ve:
+                return Response(
+                    {"error": str(ve)},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            file_name = file.name if file else "resume.pdf"
+            temp_dir = os.path.join(settings.BASE_DIR, "tmp")
+            os.makedirs(temp_dir, exist_ok=True)
+            storage = FileSystemStorage(location=temp_dir)
+            unique_name = f"{uuid.uuid4()}_{file.name}"
+            saved_name = storage.save(unique_name, file)
+            file_path = storage.path(saved_name)
 
         user_id = (
             request.user.id
@@ -89,15 +101,14 @@ def upload_resume(request):
             target_role=target_role,
             file_name=file_name,
             user_id=user_id,
+            job_description=job_desc,
         )
 
         return Response(result)
 
     except Exception as e:
         import traceback
-
         traceback.print_exc()
-
         return Response(
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -133,3 +144,68 @@ def delete_single_history(request, pk):
 def clear_user_history(request):
     ResumeAnalysis.objects.filter(user=request.user).delete()
     return Response({"message": "All history cleared"}, status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def compare_versions_view(request):
+    """Compare two of the current user's resume versions.
+
+    Query params: ``older`` and ``newer`` — primary keys of two
+    ``ResumeAnalysis`` rows owned by the requesting user. Order is
+    caller-supplied (not inferred from ``created_at``) so a user can
+    compare in whichever direction they like; the response always labels
+    them as "older"/"newer" per what was passed in.
+    """
+
+    older_id = request.query_params.get("older")
+    newer_id = request.query_params.get("newer")
+
+    if not older_id or not newer_id:
+        return Response(
+            {"error": "Both 'older' and 'newer' query params (analysis ids) are required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if older_id == newer_id:
+        return Response(
+            {"error": "Select two different versions to compare."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        older = ResumeAnalysis.objects.get(pk=older_id, user=request.user)
+        newer = ResumeAnalysis.objects.get(pk=newer_id, user=request.user)
+    except ResumeAnalysis.DoesNotExist:
+        return Response(
+            {"error": "One or both analyses were not found."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    comparison = compare_versions(older, newer)
+    serializer = VersionComparisonSerializer(comparison.as_dict())
+
+    return Response(serializer.data)
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def suggestion_feedback(request):
+    """Log user feedback (helpful/not helpful) for individual suggestions."""
+    suggestion_text = request.data.get("suggestion", "")
+    vote = request.data.get("vote", "")
+    index = request.data.get("index")
+
+    if vote not in ("up", "down"):
+        return Response(
+            {"error": "Invalid vote parameter. Expected 'up' or 'down'."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    print(f"[SUGGESTION FEEDBACK] Index: {index} | Vote: {vote} | Suggestion: {suggestion_text[:60]}")
+
+    return Response({
+        "message": "Feedback recorded. Thank you!",
+        "vote": vote,
+        "index": index,
+    }, status=status.HTTP_200_OK)
