@@ -301,9 +301,9 @@ h3 {
 }
 
 .secondary-btn {
-  background: rgba(255, 255, 255, 0.15);
-  color: var(--card-text);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+   background: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
   padding: 10px 25px;
   border-radius: 8px;
   font-weight: 600;
@@ -313,7 +313,7 @@ h3 {
 }
 
 .secondary-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.25);
+  
   transform: scale(1.05);
 }
 
