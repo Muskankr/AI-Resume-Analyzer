@@ -44,7 +44,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <nav className="navbar">
-      <div className="navbar-brand">🚀 AI Resume Analyzer</div>
+      <div className="navbar-brand">
+        <span role="img" aria-label="rocket">🚀</span>
+        <span>AI Resume Analyzer</span>
+      </div>
 
       <button
         className="navbar-toggle"

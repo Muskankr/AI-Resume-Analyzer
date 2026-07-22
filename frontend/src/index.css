@@ -1175,6 +1175,17 @@ h3 { font-size: var(--text-md); }
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  gap: 8px;
+  color: var(--card-text) !important;
+  text-decoration: none;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transition: color 0.3s ease;
+}
+
+.navbar-brand:hover,
+.navbar-brand:focus {
+  color: var(--card-text) !important;
 }
 
 .navbar-toggle {
@@ -1805,3 +1816,69 @@ h3 { font-size: var(--text-md); }
   background: #ffffff;
   color: #0f172a;
 }
+
+/* ── Issue #275: Empty State Component Styles & Contrast ────── */
+.empty-state-container {
+  margin-top: 1.5rem;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  border: 2px dashed var(--upload-border, #cbd5e1);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--card-bg, rgba(255, 255, 255, 0.05));
+  backdrop-filter: blur(8px);
+  opacity: 1 !important;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.empty-state-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  color: #2563eb;
+  margin-bottom: 1rem;
+  opacity: 1 !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.12);
+}
+
+.empty-state-title {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+  font-size: var(--text-md, 1.25rem);
+  font-weight: 600;
+  color: var(--card-text, #0f172a);
+  opacity: 1 !important;
+}
+
+.empty-state-description {
+  margin: 0 auto;
+  max-width: 480px;
+  font-size: var(--text-base, 0.95rem);
+  line-height: 1.6;
+  color: #475569;
+  opacity: 1 !important;
+}
+
+[data-theme="dark"] .empty-state-container {
+  border-color: var(--upload-border, #475569);
+  background: var(--card-bg, rgba(2, 6, 23, 0.6));
+}
+
+[data-theme="dark"] .empty-state-icon-wrapper {
+  background: rgba(59, 130, 246, 0.18);
+  border-color: rgba(96, 165, 250, 0.35);
+  color: #60a5fa;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+}
+
+[data-theme="dark"] .empty-state-title {
+  color: var(--card-text, #f8fafc);
+}
+
+[data-theme="dark"] .empty-state-description {
+  color: #cbd5e1;
+}
