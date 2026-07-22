@@ -218,8 +218,8 @@ font-weight:500;
 }
 
 .analyze-btn{
-background: var(--btn-bg);
-color: var(--btn-text);
+background: var(--btn-accent-bg);
+color: var(--btn-accent-text);
 border:none;
 padding:10px 25px;
 border-radius:8px;
@@ -229,13 +229,14 @@ cursor: pointer;
 }
 
 .analyze-btn:hover:not(:disabled){
+background: var(--btn-accent-hover-bg);
 transform:scale(1.05);
 }
 
 .secondary-btn{
-background: rgba(255,255,255,0.15);
+background: transparent;
 color: var(--card-text);
-border: 1px solid rgba(255,255,255,0.3);
+border: 1px solid var(--btn-secondary-border);
 padding:10px 25px;
 border-radius:8px;
 font-weight:600;
@@ -244,7 +245,7 @@ cursor: pointer;
 }
 
 .secondary-btn:hover:not(:disabled){
-background: rgba(255,255,255,0.25);
+background: var(--btn-secondary-hover-bg);
 transform:scale(1.05);
 }
 
