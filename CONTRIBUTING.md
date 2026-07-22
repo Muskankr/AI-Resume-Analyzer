@@ -261,6 +261,8 @@ npm run test:coverage
 
 Make sure all commands complete successfully and coverage meets defined thresholds (Backend: 60%, Frontend: 50%).
 
+- Ensure any UI changes have been verified against the [Theme QA Checklist](docs/THEME_QA_CHECKLIST.md).
+
 ---
 
 # Need Help?
