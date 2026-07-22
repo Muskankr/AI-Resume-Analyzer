@@ -5,3 +5,4 @@ django-cors-headers>=4.0.0
 pdfplumber>=0.10.0
 gunicorn>=23.0.0
 whitenoise>=6.8.0
+coverage>=7.0.0

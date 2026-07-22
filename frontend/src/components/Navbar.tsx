@@ -1,14 +1,16 @@
-import React, { useState } from "react";
-import type { AuthUser } from "../hooks/useAuth";
+import React, { useState, useEffect, useCallback } from 'react'
+import type { AuthUser } from '../hooks/useAuth'
 
 interface NavbarProps {
-  theme: "light" | "dark";
-  toggleTheme: () => void;
-  user: AuthUser | null;
-  onLogin: () => void;
-  onLogout: () => void;
-  onHistoryClick: () => void;
+  theme: 'light' | 'dark'
+  toggleTheme: () => void
+  user: AuthUser | null
+  onLogin: () => void
+  onLogout: () => void
+  onHistoryClick: () => void
 }
+
+const MOBILE_BREAKPOINT = 1024
 
 export const Navbar: React.FC<NavbarProps> = ({
   theme,
@@ -18,15 +20,38 @@ export const Navbar: React.FC<NavbarProps> = ({
   onLogout,
   onHistoryClick,
 }) => {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false)
+
+  const closeMenu = useCallback(() => setMobileOpen(false), [])
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') closeMenu()
+    }
+    if (mobileOpen) {
+      document.addEventListener('keydown', handleKeyDown)
+      return () => document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [mobileOpen, closeMenu])
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > MOBILE_BREAKPOINT) closeMenu()
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [closeMenu])
 
   return (
     <nav className="navbar">
-      <div className="navbar-brand">🚀 AI Resume Analyzer</div>
+      <div className="navbar-brand">
+        <span role="img" aria-label="rocket">🚀</span>
+        <span>AI Resume Analyzer</span>
+      </div>
 
       <button
         className="navbar-toggle"
-        onClick={() => setMobileOpen(!mobileOpen)}
+        onClick={() => setMobileOpen((prev) => !prev)}
         aria-expanded={mobileOpen}
         aria-controls="navbar-menu"
         aria-label="Toggle navigation"
@@ -35,16 +60,19 @@ export const Navbar: React.FC<NavbarProps> = ({
       </button>
 
       <div
-        id="navbar-menu"
-        className={`navbar-menu ${mobileOpen ? "mobile-open" : ""}`}
-      >
+        className={`navbar-backdrop${mobileOpen ? ' visible' : ''}`}
+        onClick={closeMenu}
+        aria-hidden="true"
+      />
+
+      <div id="navbar-menu" className={`navbar-menu${mobileOpen ? ' mobile-open' : ''}`}>
         <div className="navbar-links">
           <a
             href="#"
             onClick={(e) => {
-              e.preventDefault();
-              window.scrollTo({ top: 0, behavior: "smooth" });
-              setMobileOpen(false);
+              e.preventDefault()
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+              closeMenu()
             }}
           >
             Home
@@ -52,15 +80,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           <a
             href="#ats-score"
             onClick={(e) => {
-              e.preventDefault();
-              // Scroll down slightly or just let user know
-              const atsSection = document.getElementById("ats-score");
+              e.preventDefault()
+              const atsSection = document.getElementById('ats-score')
               if (atsSection) {
-                atsSection.scrollIntoView({ behavior: "smooth", block: "center" });
+                atsSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
               } else {
-                window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
               }
-              setMobileOpen(false);
+              closeMenu()
             }}
           >
             ATS Score
@@ -69,9 +96,9 @@ export const Navbar: React.FC<NavbarProps> = ({
             href="#"
             data-tour="history-link"
             onClick={(e) => {
-              e.preventDefault();
-              onHistoryClick();
-              setMobileOpen(false);
+              e.preventDefault()
+              onHistoryClick()
+              closeMenu()
             }}
           >
             History
@@ -83,13 +110,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             type="button"
             className="app-btn app-btn--secondary theme-toggle-btn theme-toggle-navbar"
             onClick={() => {
-              toggleTheme();
-              setMobileOpen(false);
+              toggleTheme()
+              closeMenu()
             }}
             aria-label="Toggle theme"
-            aria-pressed={theme === "dark"}
+            aria-pressed={theme === 'dark'}
           >
-            {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
+            {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
           </button>
 
           {user ? (
@@ -98,8 +125,8 @@ export const Navbar: React.FC<NavbarProps> = ({
               <button
                 className="auth-bar-btn"
                 onClick={() => {
-                  onLogout();
-                  setMobileOpen(false);
+                  onLogout()
+                  closeMenu()
                 }}
               >
                 Logout
@@ -109,8 +136,8 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button
               className="auth-bar-btn"
               onClick={() => {
-                onLogin();
-                setMobileOpen(false);
+                onLogin()
+                closeMenu()
               }}
             >
               🔐 Login / Sign Up
@@ -119,5 +146,5 @@ export const Navbar: React.FC<NavbarProps> = ({
         </div>
       </div>
     </nav>
-  );
-};
+  )
+}

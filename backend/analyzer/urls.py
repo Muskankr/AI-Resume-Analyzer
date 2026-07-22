@@ -9,7 +9,9 @@ from .views import (
     signup,
     analysis_history,
     delete_single_history,
-    clear_user_history
+    clear_user_history,
+    compare_versions_view,
+    suggestion_feedback,
 )
 
 urlpatterns = [
@@ -22,4 +24,7 @@ urlpatterns = [
     path("history/", analysis_history),
     path("history/clear/", clear_user_history),
     path("history/<int:pk>/", delete_single_history),
+
+    path("compare/", compare_versions_view),
+    path("suggestion-feedback/", suggestion_feedback),
 ]

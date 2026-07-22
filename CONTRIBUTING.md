@@ -207,6 +207,23 @@ Before submitting a PR:
 - Resolve merge conflicts.
 - Keep the PR focused on one issue.
 - Link the related issue.
+- Update 'CHANGELOG.md' if you pull request introduces a notable feature, bug fix, enhancement, or other user-visible change.
+
+### Updating the Changelog
+
+This project follows the **Keep a Changelog** format.
+
+When your pull request includes a notable change:
+
+- Add a new entry under the **Unreleased** section in `CHANGELOG.md`.
+- Use the appropriate category:
+  - **Added** – New features or functionality.
+  - **Changed** – Improvements or modifications to existing features.
+  - **Fixed** – Bug fixes.
+  - **Removed** – Removed or deprecated functionality.
+- Keep entries concise and user-focused.
+- When a new release is created, move entries from **Unreleased** into a versioned release section.
+
 
 Example:
 
@@ -227,6 +244,22 @@ Before submitting your Pull Request, ensure that:
 - Issue is linked.
 - Merge conflicts are resolved.
 - Commit messages are meaningful.
+
+## Before submitting a Pull Request
+
+Run the following commands before opening a PR:
+
+```bash
+# Run linters and formatters
+cd frontend
+npm run lint
+npm run format
+
+# Run test suites with coverage check
+npm run test:coverage
+```
+
+Make sure all commands complete successfully and coverage meets defined thresholds (Backend: 60%, Frontend: 50%).
 
 ---
 
