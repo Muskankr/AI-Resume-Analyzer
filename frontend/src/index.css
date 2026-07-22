@@ -35,8 +35,13 @@
   --card-text: #0f172a;
   --score-track: rgba(255, 255, 255, 0.2);
   --score-accent: #00ffae;
-  --upload-border: #cccccc;
-  --upload-bg: rgba(255, 255, 255, 0.1);
+  --upload-border: #94a3b8;
+  --upload-bg: rgba(241, 245, 249, 0.6);
+  --upload-bg-hover: rgba(99, 102, 241, 0.08);
+  --upload-text: #0f172a;
+  --upload-text-secondary: #475569;
+  --upload-icon-color: #4f46e5;
+  --upload-file-name: #4338ca;
   --btn-bg: #ffffff;
   --btn-text: #333333;
   --analysis-done: #d4ffdc;
@@ -83,7 +88,12 @@
   --score-track: rgba(255, 255, 255, 0.08);
   --score-accent: #22d3ee;
   --upload-border: #475569;
-  --upload-bg: rgba(255, 255, 255, 0.05);
+  --upload-bg: rgba(15, 23, 42, 0.6);
+  --upload-bg-hover: rgba(99, 102, 241, 0.15);
+  --upload-text: #f8fafc;
+  --upload-text-secondary: #94a3b8;
+  --upload-icon-color: #818cf8;
+  --upload-file-name: #a5b4fc;
   --btn-bg: #1e293b;
   --btn-text: #e2e8f0;
   --analysis-done: #86efac;
@@ -272,16 +282,80 @@ h3 {
 
 .upload-box {
   border: 2px dashed var(--upload-border);
-  padding: 25px;
-  border-radius: 10px;
+  padding: 32px 20px;
+  border-radius: var(--radius-lg);
   cursor: pointer;
   background: var(--upload-bg);
+  transition: all 0.25s ease;
+  position: relative;
+}
+
+.upload-box:hover,
+.upload-box.dragging {
+  border-color: #6366f1;
+  background: var(--upload-bg-hover);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
 }
 
 .upload-label {
   cursor: pointer;
   font-weight: 500;
   font-size: var(--text-base);
+  color: var(--upload-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.upload-icon-wrapper {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: rgba(99, 102, 241, 0.1);
+  color: var(--upload-icon-color);
+  transition: transform 0.25s ease, background-color 0.25s ease;
+}
+
+.upload-box:hover .upload-icon-wrapper,
+.upload-box.dragging .upload-icon-wrapper {
+  transform: translateY(-2px) scale(1.06);
+  background: rgba(99, 102, 241, 0.18);
+}
+
+.upload-text-primary {
+  display: block;
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--upload-text);
+  line-height: 1.4;
+}
+
+.upload-text-browse {
+  color: var(--upload-icon-color);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 700;
+}
+
+.upload-text-secondary {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 400;
+  color: var(--upload-text-secondary);
+  margin-top: 4px;
+}
+
+.upload-file-name {
+  color: var(--upload-file-name);
+  font-size: var(--text-base);
+  font-weight: 600;
+  word-break: break-all;
 }
 
 .analyze-btn {
@@ -301,9 +375,9 @@ h3 {
 }
 
 .secondary-btn {
-  background: rgba(255, 255, 255, 0.15);
-  color: var(--card-text);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+   background: var(--btn-bg);
+  color: var(--btn-text);
+  border: none;
   padding: 10px 25px;
   border-radius: 8px;
   font-weight: 600;
@@ -313,7 +387,7 @@ h3 {
 }
 
 .secondary-btn:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.25);
+  
   transform: scale(1.05);
 }
 
@@ -1129,15 +1203,7 @@ input {
   will-change: transform, opacity;
 }
 
-.upload-box {
-  transition:
-    border-color 0.25s ease,
-    background-color 0.25s ease;
-}
-.upload-box:hover {
-  border-color: #6366f1;
-  background: rgba(99, 102, 241, 0.02);
-}
+
 
 .analysis-done,
 .resume-preview,
