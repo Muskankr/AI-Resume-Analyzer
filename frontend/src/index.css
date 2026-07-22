@@ -53,6 +53,7 @@
   --btn-accent-hover-bg: #2563eb;
   --btn-success-bg: var(--color-accent);
   --btn-accent-text: #ffffff;
+  --navbar-bg: #ffffff;
   --footer-text: #ffffff;
   --footer-link: #ffffff;
 
@@ -97,6 +98,7 @@
   --btn-accent-hover-bg: #60a5fa;
   --btn-success-bg: var(--color-accent);
   --btn-accent-text: #ffffff;
+  --navbar-bg: rgba(2,6,23,0.92);
   --footer-text: #e2e8f0;
   --footer-link: #e2e8f0;
 }
@@ -1154,7 +1156,8 @@ h3 { font-size: var(--text-md); }
   position: sticky;
   top: 0;
   z-index: 999;
-  background: var(--card-bg);
+  background: var(--navbar-bg);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   color: var(--card-text);
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -1242,7 +1245,8 @@ h3 { font-size: var(--text-md); }
     top: 100%;
     left: 0;
     width: 100%;
-    background: var(--card-bg);
+    background: var(--navbar-bg);
+    -webkit-backdrop-filter: blur(16px);
     backdrop-filter: blur(16px);
     padding: 0 20px;
     max-height: 0;
