@@ -53,7 +53,8 @@
   --btn-accent-hover-bg: #2563eb;
   --btn-success-bg: var(--color-accent);
   --btn-accent-text: #ffffff;
-  --footer-text: rgba(255,255,255,0.85);
+  --navbar-bg: #ffffff;
+  --footer-text: #ffffff;
   --footer-link: #ffffff;
 
   /* Standardized Border Radius Tokens */
@@ -97,7 +98,8 @@
   --btn-accent-hover-bg: #60a5fa;
   --btn-success-bg: var(--color-accent);
   --btn-accent-text: #ffffff;
-  --footer-text: rgba(226,232,240,0.85);
+  --navbar-bg: rgba(2,6,23,0.92);
+  --footer-text: #e2e8f0;
   --footer-link: #e2e8f0;
 }
 
@@ -136,13 +138,13 @@ body {
     margin:50px 0;
 }
 
-.hero-stat h2{
+.hero-stats h2{
     font-size:3rem;
     color:white;
     margin-bottom:8px;
 }
 
-.hero-stat p{
+.hero-stats p{
     color:#94a3b8;
 }
 
@@ -267,6 +269,7 @@ h3 { font-size: var(--text-md); }
   cursor: pointer;
   font-weight: 500;
   font-size: var(--text-base);
+  color: var(--card-text);
 }
 
 .analyze-btn {
@@ -852,7 +855,6 @@ h3 { font-size: var(--text-md); }
 
 .app-footer__copy {
   margin: 0;
-  opacity: 0.85;
 }
 
 /* ── Resume Preview Pane ────────────────── */
@@ -1154,7 +1156,8 @@ h3 { font-size: var(--text-md); }
   position: sticky;
   top: 0;
   z-index: 999;
-  background: var(--card-bg);
+  background: var(--navbar-bg);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   color: var(--card-text);
   box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -1163,6 +1166,7 @@ h3 { font-size: var(--text-md); }
   justify-content: space-between;
   align-items: center;
   transition: background 0.3s ease, color 0.3s ease;
+  overflow-x: hidden;
 }
 
 .navbar-brand {
@@ -1191,6 +1195,13 @@ h3 { font-size: var(--text-md); }
   color: var(--card-text);
   font-size: var(--text-lg);
   cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: background 0.2s ease;
+}
+
+.navbar-toggle:hover {
+  background: var(--btn-secondary-bg);
 }
 
 .navbar-menu {
@@ -1198,6 +1209,10 @@ h3 { font-size: var(--text-md); }
   align-items: center;
   gap: 28px;
   flex-shrink: 0;
+}
+
+.navbar-backdrop {
+  display: none;
 }
 
 .navbar-links {
@@ -1231,31 +1246,57 @@ h3 { font-size: var(--text-md); }
   flex-shrink: 0;
 }
 
-@media (max-width: 768px) {
-  .navbar { padding: 12px 68px 12px 20px; }
+@media (max-width: 1024px) {
+  .navbar { padding: 12px 56px 12px 20px; }
   .navbar-toggle { display: block; }
   .navbar-menu {
-    display: none;
+    display: flex;
     flex-direction: column;
     position: absolute;
     top: 100%;
     left: 0;
     width: 100%;
-    background: var(--card-bg);
+    background: var(--navbar-bg);
+    -webkit-backdrop-filter: blur(16px);
     backdrop-filter: blur(16px);
-    padding: 20px;
+    padding: 0 20px;
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.25s ease, padding 0.3s ease;
     box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-    gap: 20px;
+    gap: 0;
     border-top: 1px solid rgba(255,255,255,0.1);
   }
 
-  .navbar-menu.mobile-open { display: flex; }
+  .navbar-menu.mobile-open {
+    max-height: 400px;
+    opacity: 1;
+    padding: 20px;
+    gap: 20px;
+  }
 
   .navbar-links, .navbar-actions {
     flex-direction: column;
     align-items: flex-start;
     width: 100%;
     gap: 15px;
+  }
+
+  .navbar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 998;
+    background: rgba(0, 0, 0, 0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+
+  .navbar-backdrop.visible {
+    opacity: 1;
+    pointer-events: auto;
   }
 }
 
