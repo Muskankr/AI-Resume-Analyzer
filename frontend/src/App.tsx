@@ -878,57 +878,15 @@ function App() {
                         border: '1px solid rgba(255,255,255,0.04)',
                       }}
                     >
-<button
-                        type="button"
-                        onClick={() => {
-                          setUploadMode('file')
-                          setUrlError(null)
-                        }}
+                      <label
+                        htmlFor="roleSelect"
                         style={{
-                          padding: '8px 16px',
-                          borderRadius: 'var(--radius-md)',
-                          fontSize: '0.85rem',
+                          display: 'block',
+                          marginBottom: '12px',
                           fontWeight: '600',
-                          cursor: 'pointer',
-                          background: uploadMode === 'file' ? '#6366f1' : 'rgba(0, 0, 0, 0.05)',
-                          color: uploadMode === 'file' ? '#fff' : (theme === 'light' ? '#1e293b' : 'rgba(255, 255, 255, 0.6)'),
-                          border: '1px solid rgba(0, 0, 0, 0.1)',
-                          transition: 'all 0.2s ease',
+                          color: '#e2e8f0',
+                          fontSize: 'var(--font-size-sm)',
                         }}
-                      >
-                        📄 Local File Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUploadMode('url')
-                          setFileError(null)
-                        }}
-                        style={{
-                          padding: '8px 16px',
-                          borderRadius: 'var(--radius-md)',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          background: uploadMode === 'url' ? '#6366f1' : 'rgba(0, 0, 0, 0.05)',
-                          color: uploadMode === 'url' ? '#fff' : (theme === 'light' ? '#1e293b' : 'rgba(255, 255, 255, 0.6)'),
-                          border: '1px solid rgba(0, 0, 0, 0.1)',
-                          transition: 'all 0.2s ease',
-                        }}
-                      >
-                        🔗 Import via Link
-                      </button>
-                    </div>
-
-                    <label
-                      htmlFor="roleSelect"
-                      style={{
-                        display: 'block',
-                        marginBottom: '12px',
-                        fontWeight: '600',
-                        color: theme === 'light' ? '#1e293b' : '#e2e8f0',
-                        fontSize: 'var(--font-size-sm)',
-                      }}
                       >
                         🎯 Target Career Track
                       </label>
