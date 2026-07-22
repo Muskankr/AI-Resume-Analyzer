@@ -2,7 +2,8 @@ import { Target } from 'lucide-react'
 
 export function NotFound() {
   return (
-    <div
+    <main
+      id="main-content"
       className="container mt-5 px-3"
       style={{
         minHeight: '70vh',
@@ -56,7 +57,7 @@ export function NotFound() {
           </a>
         </div>
       </div>
-    </div>
+    </main>
   )
 }
 
