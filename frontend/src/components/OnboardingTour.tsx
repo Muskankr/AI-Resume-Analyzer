@@ -92,15 +92,13 @@ export const OnboardingTour: React.FC = () => {
       window.removeEventListener('scroll', handleScroll, true)
     }
   }, [updateTargetRect])
+  
   const finishTour = useCallback(() => {
     localStorage.setItem('hasSeenOnboarding', 'true')
     setIsVisible(false)
   }, [])
 
-  function finishTour() {
-    localStorage.setItem('hasSeenOnboarding', 'true')
-    setIsVisible(false)
-  }
+ 
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -140,10 +138,16 @@ export const OnboardingTour: React.FC = () => {
       }
     }
   }, [isVisible, currentStep])
-  useEffect(() => {
-    window.addEventListener('keydown', handleKeyDown)
 
-  const nextStep = () => {
+  useEffect(() => {
+  window.addEventListener("keydown", handleKeyDown);
+
+  return () => {
+    window.removeEventListener("keydown", handleKeyDown);
+  };
+}, [handleKeyDown]);
+
+const nextStep = () => {
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1)
     } else {
