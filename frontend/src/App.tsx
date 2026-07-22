@@ -24,7 +24,6 @@ import {
   HelpCircle,
   X,
 } from 'lucide-react'
-
 import { Navbar } from './components/Navbar'
 import EmptyState from './components/EmptyState'
 import { StepProgress } from './components/StepProgress'
@@ -38,12 +37,23 @@ import {
 } from './utils/notification'
 import { ProgressBar } from './components/ProgressBar/ProgressBar'
 import { UndoToast } from './components/UndoToast/UndoToast'
-
 type Theme = 'light' | 'dark'
+
+interface UndoState {
+  file: File | null
+  score: number | null
+  skills: string[]
+  suggestions: string[]
+  matchedSkills: string[]
+  missingSkills: string[]
+  resumeText: string
+  analysisSource: 'sample' | 'upload' | null
+  activeFileName: string
+  targetRole: string
+}
 
 const DEFAULT_TITLE = 'AI Resume Analyzer'
 const READY_TITLE = '✅ Analysis Ready — AI Resume Analyzer'
-
 
 function getInitialTheme(): Theme {
   try {
@@ -95,29 +105,6 @@ interface SuggestionCardProps {
   text: string
   index: number
   backendUrl?: string
-}
-interface UndoState {
-  file: File | null
-  score: number | null
-  skills: string[]
-  suggestions: string[]
-  matchedSkills: string[]
-  missingSkills: string[]
-  resumeText: string
-  analysisSource: 'sample' | 'upload' | null
-  activeFileName: string
-  targetRole: string
-}
-interface HistoryApiItem {
-  id: number
-  created_at: string
-  score: number
-  skills_found: string[]
-  suggestions: string[]
-  matched_skills: string[]
-  missing_skills: string[]
-  target_role: string
-  file_name: string
 }
 
 const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl = '' }) => {
@@ -345,7 +332,7 @@ function App() {
   }
 
   const MAX_CHARS = 2000
-  const isClose = jobDesc.length >= MAX_CHARS * 0.8
+  const isClose = jobDesc.length >= MAX_CHARS * 0.9
   const isOver = jobDesc.length > MAX_CHARS
 
   const handleClearAll = async () => {
@@ -367,25 +354,37 @@ function App() {
         const res = await axios.get(`${backendUrl}/api/history/`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-        const dbEntries: AnalysisEntry[] = res.data.map((item: HistoryApiItem) => ({
-          id: String(item.id),
-          timestamp: new Date(item.created_at).getTime(),
-          score: item.score,
-          skills: item.skills_found,
-          suggestions: item.suggestions,
-          matchedSkills: item.matched_skills,
-          missingSkills: item.missing_skills,
-          targetRole: item.target_role,
-          fileName: item.file_name,
-        }))
+        const dbEntries: AnalysisEntry[] = res.data.map(
+          (item: {
+            id: string | number
+            created_at: string | number
+            score: number
+            skills_found: string[]
+            suggestions: string[]
+            matched_skills: string[]
+            missing_skills: string[]
+            target_role: string
+            file_name: string
+          }) => ({
+            id: String(item.id),
+            timestamp: new Date(item.created_at).getTime(),
+            score: item.score,
+            skills: item.skills_found,
+            suggestions: item.suggestions,
+            matchedSkills: item.matched_skills,
+            missingSkills: item.missing_skills,
+            targetRole: item.target_role,
+            fileName: item.file_name,
+          })
+        )
         const uniqueDbEntries = dbEntries.filter(
           (entry, index, self) =>
             index ===
             self.findIndex((t) => t.fileName === entry.fileName && t.score === entry.score)
         )
         setEntries(uniqueDbEntries)
-      } catch (error) {
-        console.debug('Failed to fetch history', error)
+      } catch {
+        /* silently ignore */
       }
     },
     [backendUrl, setEntries]
@@ -397,11 +396,10 @@ function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-
     try {
       localStorage.setItem('theme', theme)
-    } catch (error) {
-      console.debug('Unable to save theme', error)
+    } catch {
+      // Ignore localStorage access restrictions in private browsing modes
     }
   }, [theme])
 
@@ -768,6 +766,9 @@ function App() {
 
   return (
     <>
+      <a href="#main-content" className="skip-to-content">
+        Skip to main content
+      </a>
       <OnboardingTour />
       <HistorySidebar
         entries={entries}
@@ -803,7 +804,7 @@ function App() {
         <Route
           path="/"
           element={
-            <main className="landing-page">
+            <main id="main-content" className="landing-page">
               {showAuthModal && (
                 <AuthModal
                   onSignup={signup}
@@ -815,7 +816,7 @@ function App() {
               <div className={score === null && !loading ? 'hero-container' : ''}>
                 <div className={score === null && !loading ? 'hero-left' : ''}>
                   {score === null && !loading && (
-                    <>
+                    <section className="hero-intro" aria-label="Introduction">
                       <span className="hero-badge">⭐ AI Powered Resume Optimization</span>
 
                       <h1
@@ -862,74 +863,22 @@ function App() {
                           <span>AI Available</span>
                         </div>
                       </div>
-                    </>
+                    </section>
                   )}
 
                   {(loading || score !== null) && <StepProgress currentStep={currentStep} />}
 
-                  {/* STEP 1: Target Career Track */}
-                  <div
-                    className="mb-4 p-4 role-selector-container"
-                    style={{
-                      background: 'rgba(255, 255, 255, 0.02)',
-                      borderRadius: 'var(--radius-lg)',
-                      border: '1px solid rgba(255,255,255,0.04)',
-                    }}
-                  >
-                    <label
-                      htmlFor="roleSelect"
-                      style={{
-                        display: 'block',
-                        marginBottom: '12px',
-                        fontWeight: '600',
-                        color: '#e2e8f0',
-                        fontSize: 'var(--font-size-sm)',
-                      }}
-                    >
-                      🎯 Target Career Track
-                    </label>
-                    <div className="custom-select-container">
-                      <select
-                        id="roleSelect"
-                        value={targetRole}
-                        onChange={(e) => {
-                          setTargetRole(e.target.value)
-                          if (e.target.value.trim() !== '') setRoleError(null)
-                        }}
-                        className="custom-select-element"
-                      >
-                        <option value="Frontend Developer">Frontend Developer</option>
-                        <option value="Backend Developer">Backend Developer</option>
-                        <option value="Data Analyst">Data Analyst</option>
-                      </select>
-                    </div>
-                    {roleError && (
-                      <div
-                        style={{
-                          color: '#ef4444',
-                          fontSize: '13px',
-                          marginTop: '8px',
-                          fontWeight: '500',
-                          textAlign: 'center',
-                        }}
-                      >
-                        ⚠️ {roleError}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* STEP 2: Upload File / Link & Job Description */}
-                  <div className="mb-5">
-                    {/* Mode Switcher Tabs */}
+                  <section className="analyzer-form-section" aria-label="Resume Analyzer Form">
+                    {/* STEP 1: Target Career Track */}
                     <div
+                      className="mb-4 p-4 role-selector-container"
                       style={{
-                        display: 'flex',
-                        gap: '8px',
-                        justifyContent: 'center',
-                        marginBottom: '16px',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        borderRadius: 'var(--radius-lg)',
+                        border: '1px solid rgba(255,255,255,0.04)',
                       }}
                     >
-                      <button
+<button
                         type="button"
                         onClick={() => {
                           setUploadMode('file')
@@ -971,245 +920,333 @@ function App() {
                       </button>
                     </div>
 
-                    {uploadMode === 'file' ? (
-                      <div
-                        className="upload-box mb-3"
-                        style={{ width: '100%', maxWidth: '100%', padding: '32px 20px' }}
+                    <label
+                      htmlFor="roleSelect"
+                      style={{
+                        display: 'block',
+                        marginBottom: '12px',
+                        fontWeight: '600',
+                        color: theme === 'light' ? '#1e293b' : '#e2e8f0',
+                        fontSize: 'var(--font-size-sm)',
+                      }}
                       >
-                        <input
-                          type="file"
-                          id="fileUpload"
-                          hidden
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            if (e.target.files && e.target.files[0]) {
-                              setFile(e.target.files[0])
-                              setFileError(null)
-                            }
+                        🎯 Target Career Track
+                      </label>
+                      <div className="custom-select-container">
+                        <select
+                          id="roleSelect"
+                          value={targetRole}
+                          onChange={(e) => {
+                            setTargetRole(e.target.value)
+                            if (e.target.value.trim() !== '') setRoleError(null)
                           }}
-                        />
-                        <label
-                          htmlFor="fileUpload"
-                          className="upload-label"
+                          className="custom-select-element"
+                        >
+                          <option value="Frontend Developer">Frontend Developer</option>
+                          <option value="Backend Developer">Backend Developer</option>
+                          <option value="Data Analyst">Data Analyst</option>
+                        </select>
+                      </div>
+                      {roleError && (
+                        <div
                           style={{
-                            cursor: 'pointer',
-                            display: 'block',
-                            wordBreak: 'break-all',
-                            fontSize: 'var(--font-size-base)',
+                            color: '#ef4444',
+                            fontSize: '13px',
+                            marginTop: '8px',
+                            fontWeight: '500',
+                            textAlign: 'center',
                           }}
                         >
-                          📄{' '}
-                          {file ? (
-                            <strong style={{ color: '#a5b4fc' }}>{file.name}</strong>
-                          ) : (
-                            'Drag & Drop Resume or Click to Browse'
-                          )}
-                        </label>
+                          ⚠️ {roleError}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* STEP 2: Upload File / Link & Job Description */}
+                    <div className="mb-5">
+                      {/* Mode Switcher Tabs */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '8px',
+                          justifyContent: 'center',
+                          marginBottom: '16px',
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUploadMode('file')
+                            setUrlError(null)
+                          }}
+                          style={{
+                            padding: '8px 16px',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            background:
+                              uploadMode === 'file' ? '#6366f1' : 'rgba(255, 255, 255, 0.05)',
+                            color: '#fff',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          📄 Local File Upload
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUploadMode('url')
+                            setFileError(null)
+                          }}
+                          style={{
+                            padding: '8px 16px',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            background:
+                              uploadMode === 'url' ? '#6366f1' : 'rgba(255, 255, 255, 0.05)',
+                            color: '#fff',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          🔗 Import via Link
+                        </button>
                       </div>
-                    ) : (
-                      <div className="mb-3" style={{ textAlign: 'left' }}>
+
+                      {uploadMode === 'file' ? (
+                        <div
+                          className="upload-box mb-3"
+                          style={{ width: '100%', maxWidth: '100%', padding: '32px 20px' }}
+                        >
+                          <input
+                            type="file"
+                            id="fileUpload"
+                            hidden
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              if (e.target.files && e.target.files[0]) {
+                                setFile(e.target.files[0])
+                                setFileError(null)
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor="fileUpload"
+                            className="upload-label"
+                            style={{
+                              cursor: 'pointer',
+                              display: 'block',
+                              wordBreak: 'break-all',
+                              fontSize: 'var(--font-size-base)',
+                            }}
+                          >
+                            📄{' '}
+                            {file ? (
+                              <strong style={{ color: '#a5b4fc' }}>{file.name}</strong>
+                            ) : (
+                              'Drag & Drop Resume or Click to Browse'
+                            )}
+                          </label>
+                        </div>
+                      ) : (
+                        <div className="mb-3" style={{ textAlign: 'left' }}>
+                          <label
+                            htmlFor="resumeUrlInput"
+                            style={{
+                              fontWeight: '600',
+                              display: 'block',
+                              marginBottom: '8px',
+                              color: '#e2e8f0',
+                              fontSize: '0.85rem',
+                            }}
+                          >
+                            Paste Shareable Link (Google Drive / Dropbox / Direct PDF)
+                          </label>
+                          <input
+                            type="url"
+                            id="resumeUrlInput"
+                            value={resumeUrl}
+                            onChange={(e) => {
+                              setResumeUrl(e.target.value)
+                              if (e.target.value.trim() !== '') setUrlError(null)
+                            }}
+                            placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: 'var(--radius-md)',
+                              background: 'rgba(255, 255, 255, 0.04)',
+                              color: '#fff',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              fontSize: '0.9rem',
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontSize: '0.78rem',
+                              color: 'rgba(255,255,255,0.6)',
+                              marginTop: '6px',
+                              display: 'block',
+                            }}
+                          >
+                            ℹ️ Note: Make sure link permissions are set to "Anyone with the link can
+                            view".
+                          </span>
+                        </div>
+                      )}
+
+                      {fileError && uploadMode === 'file' && (
+                        <div
+                          style={{
+                            color: '#ef4444',
+                            fontSize: '13px',
+                            marginTop: '-4px',
+                            marginBottom: '16px',
+                            fontWeight: '500',
+                            textAlign: 'center',
+                          }}
+                        >
+                          ⚠️ {fileError}
+                        </div>
+                      )}
+
+                      {urlError && uploadMode === 'url' && (
+                        <div
+                          style={{
+                            color: '#ef4444',
+                            fontSize: '13px',
+                            marginTop: '4px',
+                            marginBottom: '16px',
+                            fontWeight: '500',
+                            textAlign: 'center',
+                          }}
+                        >
+                          ⚠️ {urlError}
+                        </div>
+                      )}
+
+                      {/* Optional Job Description */}
+                      <div className="mb-4" style={{ textAlign: 'left' }}>
                         <label
-                          htmlFor="resumeUrlInput"
+                          htmlFor="jobDescription"
                           style={{
                             fontWeight: '600',
                             display: 'block',
                             marginBottom: '8px',
                             color: '#e2e8f0',
-                            fontSize: '0.85rem',
                           }}
                         >
-                          Paste Shareable Link (Google Drive / Dropbox / Direct PDF)
+                          Job Description (Optional)
                         </label>
-                        <input
-                          type="url"
-                          id="resumeUrlInput"
-                          value={resumeUrl}
-                          onChange={(e) => {
-                            setResumeUrl(e.target.value)
-                            if (e.target.value.trim() !== '') setUrlError(null)
-                          }}
-                          placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                        <textarea
+                          id="jobDescription"
+                          className="custom-textarea"
+                          value={jobDesc}
+                          onChange={(e) => setJobDesc(e.target.value)}
+                          placeholder="Paste the job description here..."
                           style={{
                             width: '100%',
-                            padding: '12px 16px',
+                            minHeight: '100px',
+                            padding: '12px',
                             borderRadius: 'var(--radius-md)',
-                            background: 'rgba(255, 255, 255, 0.04)',
-                            color: '#fff',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            fontSize: '0.9rem',
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            color: 'inherit',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
                           }}
                         />
-                        <span
+                        <div
                           style={{
-                            fontSize: '0.78rem',
-                            color: 'rgba(255,255,255,0.6)',
-                            marginTop: '6px',
-                            display: 'block',
+                            textAlign: 'right',
+                            color: isOver ? '#ef4444' : isClose ? '#f97316' : 'inherit',
+                            opacity: isOver || isClose ? 1 : 0.7,
+                            fontSize: '0.85rem',
+                            marginTop: '5px',
+                            fontWeight: isOver ? 'bold' : 'normal',
                           }}
                         >
-                          ℹ️ Note: Make sure link permissions are set to "Anyone with the link can
-                          view".
-                        </span>
-                      </div>
-                    )}
-
-                    {fileError && uploadMode === 'file' && (
-                      <div
-                        style={{
-                          color: '#ef4444',
-                          fontSize: '13px',
-                          marginTop: '-4px',
-                          marginBottom: '16px',
-                          fontWeight: '500',
-                          textAlign: 'center',
-                        }}
-                      >
-                        ⚠️ {fileError}
-                      </div>
-                    )}
-
-                    {urlError && uploadMode === 'url' && (
-                      <div
-                        style={{
-                          color: '#ef4444',
-                          fontSize: '13px',
-                          marginTop: '4px',
-                          marginBottom: '16px',
-                          fontWeight: '500',
-                          textAlign: 'center',
-                        }}
-                      >
-                        ⚠️ {urlError}
-                      </div>
-                    )}
-
-                    {/* Optional Job Description */}
-                    <div className="mb-4" style={{ textAlign: 'left' }}>
-                      <label
-                        htmlFor="jobDescription"
-                        style={{
-                          fontWeight: '600',
-                          display: 'block',
-                          marginBottom: '8px',
-                          color: '#e2e8f0',
-                        }}
-                      >
-                        Job Description (Optional)
-                      </label>
-                      <textarea
-                        id="jobDescription"
-                        className="custom-textarea"
-                        value={jobDesc}
-                        onChange={(e) => setJobDesc(e.target.value)}
-                        placeholder="Paste the job description here..."
-                        style={{
-                          width: '100%',
-                          minHeight: '100px',
-                          padding: '12px',
-                          borderRadius: 'var(--radius-md)',
-                          background: 'rgba(255, 255, 255, 0.02)',
-                          color: 'inherit',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                        }}
-                      />
-                      <div
-                        aria-live="polite"
-                        style={{
-                          textAlign: 'right',
-                          color: isOver
-                            ? '#dc2626'
-                            : isClose
-                              ? '#d97706'
-                              : theme === 'dark'
-                                ? '#f3f4f6'
-                                : '#111827',
-                          fontSize: '0.95rem',
-                          marginTop: '8px',
-                          fontWeight: isClose ? 700 : 600,
-                        }}
-                      >
-                        <>
                           {jobDesc.length} / {MAX_CHARS} characters
-                          {isClose && !isOver && ' • Approaching limit'}
-                          {isOver && ' • Limit exceeded'}
-                        </>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* STEP 3: Action Buttons */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '12px',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}
-                      className="action-buttons"
-                    >
-                      <button
-                        className="analyze-btn"
-                        onClick={uploadResume}
-                        disabled={loading || retryDisabled}
-                        style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
-                      >
-                        {loading && analysisSource === 'upload'
-                          ? '⏳ Extracting...'
-                          : '🚀 Analyze Resume'}
-                      </button>
-
-                      <button
-                        className="secondary-btn"
-                        onClick={handleSampleResume}
-                        disabled={loading || retryDisabled}
-                        type="button"
-                        style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
-                      >
-                        {loading && analysisSource === 'sample' ? (
-                          <>
-                            <Loader2 size={15} className="spin" /> Loading...
-                          </>
-                        ) : (
-                          'Try Sample Resume'
-                        )}
-                      </button>
-                    </div>
-                    {retryDisabled && retryAfter !== null && (
-                      <p
+                      {/* STEP 3: Action Buttons */}
+                      <div
                         style={{
-                          color: '#ef4444',
-                          marginTop: '10px',
-                          fontWeight: 600,
-                          textAlign: 'center',
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '12px',
+                          justifyContent: 'center',
+                          alignItems: 'center',
                         }}
+                        className="action-buttons"
                       >
-                        Too many requests. Please wait {retryAfter}s before trying again.
-                      </p>
-                    )}
-                  </div>
+                        <button
+                          className="analyze-btn"
+                          onClick={uploadResume}
+                          disabled={loading || retryDisabled}
+                          style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
+                        >
+                          {loading && analysisSource === 'upload'
+                            ? '⏳ Extracting...'
+                            : '🚀 Analyze Resume'}
+                        </button>
+
+                        <button
+                          className="secondary-btn"
+                          onClick={handleSampleResume}
+                          disabled={loading || retryDisabled}
+                          type="button"
+                          style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
+                        >
+                          {loading && analysisSource === 'sample' ? (
+                            <>
+                              <Loader2 size={15} className="spin" /> Loading...
+                            </>
+                          ) : (
+                            'Try Sample Resume'
+                          )}
+                        </button>
+                      </div>
+                      {retryDisabled && retryAfter !== null && (
+                        <p
+                          style={{
+                            color: '#ef4444',
+                            marginTop: '10px',
+                            fontWeight: 600,
+                            textAlign: 'center',
+                          }}
+                        >
+                          Too many requests. Please wait {retryAfter}s before trying again.
+                        </p>
+                      )}
+                    </div>
+                  </section>
                 </div>
               </div>
 
               {/* Loading Skeleton & Determinate Progress Bar */}
               {loading && (
-                <div className="my-4">
+                <section className="my-4" aria-live="polite" aria-label="Analysis Progress">
                   <ProgressBar progress={analysisProgress} stageLabel={analysisStageLabel} />
                   <AnalysisSkeleton />
-                </div>
+                </section>
               )}
 
               {/* Empty State / How It Works */}
               {score === null && !loading && (
-                <div style={{ paddingBottom: '2rem' }}>
+                <section style={{ paddingBottom: '2rem' }} aria-label="About the Resume Analyzer">
                   <EmptyState />
                   <div className="mt-4">
                     <HowItWorks />
                   </div>
-                </div>
+                </section>
               )}
 
               {/* Results Display Panel */}
               {score !== null && !loading && (
-                <>
+                <section aria-label="Analysis Results">
                   {analysisSource === 'sample' && (
                     <div
                       className="sample-notice-banner mb-4"
@@ -1247,8 +1284,8 @@ function App() {
                   )}
 
                   {/* Skills Section */}
-                  <div className="mt-4">
-                    <h4>Skills Found ({skills.length})</h4>
+                  <section className="mt-4" aria-labelledby="skills-found-heading">
+                    <h4 id="skills-found-heading">Skills Found ({skills.length})</h4>
                     {skills.length === 0 && <p>No skills detected</p>}
                     <div
                       style={{
@@ -1282,17 +1319,19 @@ function App() {
                         )}
                       </button>
                     )}
-                  </div>
+                  </section>
 
                   {/* Word Cloud */}
                   <SkillWordCloud skills={skills} />
 
                   {/* Skill Gap Matrix */}
-                  <div
+                  <section
                     className="mt-4 p-3"
                     style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}
+                    aria-labelledby="skill-gap-heading"
                   >
                     <h4
+                      id="skill-gap-heading"
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -1335,10 +1374,10 @@ function App() {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </section>
 
                   {/* Upgraded Suggestions Section */}
-                  <div
+                  <section
                     className="mt-5 p-4"
                     style={{
                       background: 'rgba(30, 30, 47, 0.4)',
@@ -1357,7 +1396,9 @@ function App() {
                           marginBottom: '12px',
                         }}
                       >
-                        <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
+                        <h4 id="suggestions-heading" style={{ margin: 0 }}>
+                          💡 Suggestions
+                        </h4>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                           {suggestions.length > 0 && (
                             <button
@@ -1469,8 +1510,8 @@ function App() {
                         </button>
                       </div>
                     </div>
-                  </div>
-                </>
+                  </section>
+                </section>
               )}
             </main>
           }
@@ -1480,7 +1521,7 @@ function App() {
       {/* Floating Back to Top Button */}
       <button
         type="button"
-        className={`fab-btn back-to-top${showBackToTop ? " back-to-top--visible" : ""}`}
+        className={`fab-btn back-to-top${showBackToTop ? ' back-to-top--visible' : ''}`}
         onClick={scrollToTop}
         aria-label="Back to top"
         title="Back to top"
@@ -1500,40 +1541,6 @@ function App() {
       >
         {showShortcutHelp ? <X size={20} /> : <HelpCircle size={20} />}
       </button>
-
-      {showShortcutHelp && (
-        <div className="shortcut-overlay-card">
-          <h5
-            style={{
-              margin: "0 0 12px 0",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-          >
-            ⌨️ Keyboard Quick Actions
-          </h5>
-
-          <div className="shortcut-row">
-            <span style={{ color: "#94a3b8" }}>Upload Resume</span>
-            <span className="shortcut-key-badge">Alt + U</span>
-          </div>
-
-          <div className="shortcut-row">
-            <span style={{ color: "#94a3b8" }}>Reset Analysis</span>
-            <span className="shortcut-key-badge">Alt + R</span>
-          </div>
-
-          <div className="shortcut-row">
-            <span style={{ color: "#94a3b8" }}>Close Modals / Sidebar</span>
-            <span className="shortcut-key-badge">Esc</span>
-          </div>
-        </div>
-      )}
-      
-        ↑
-      
 
       {showShortcutHelp && (
         <div className="shortcut-overlay-card">
