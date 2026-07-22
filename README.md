@@ -3,9 +3,11 @@
 [![GitHub license](https://img.shields.io/github/license/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=34d399)](https://github.com/Muskankr/AI-Resume-Analyzer/blob/main/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=f43f5e)](https://github.com/Muskankr/AI-Resume-Analyzer/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Muskankr/AI-Resume-Analyzer?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer/commits/main)
-[![Build](https://img.shields.io/github/actions/workflow/status/Muskankr/AI-Resume-Analyzer/ci.yml?style=for-the-badge)](...)
-[![GitHub stars](https://img.shields.io/github/stars/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=fbbf24)](https://github.com/Muskankr/AI-Resume-Analyzer/stargazers)
-![Forks](https://img.shields.io/github/forks/Muskankr/AI-Resume-Analyzer?style=for-the-badge)
+[![Build](https://img.shields.io/github/actions/workflow/status/Muskankr/AI-Resume-Analyzer/ci.yml?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer/actions)
+[![Backend Coverage](https://img.shields.io/badge/Backend%20Coverage-94%25-brightgreen?style=for-the-badge&logo=python)](https://github.com/Muskankr/AI-Resume-Analyzer)
+[![Frontend Coverage](https://img.shields.io/badge/Frontend%20Coverage-80%25-brightgreen?style=for-the-badge&logo=vitest)](https://github.com/Muskankr/AI-Resume-Analyzer)
+[![GitHub stars](https://img.shields.io/badge/stars-ECSoC'26-fbbf24?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=34d399)](https://github.com/Muskankr/AI-Resume-Analyzer/network/members)
 [![GitHub contributors](https://img.shields.io/github/contributors/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=818cf8)](https://github.com/Muskankr/AI-Resume-Analyzer/graphs/contributors)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge&color=38bdf8)](https://github.com/Muskankr/AI-Resume-Analyzer/pulls)
 [![ECSoC'26](https://img.shields.io/badge/Program-ECSoC'26-orange?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer)
@@ -32,9 +34,9 @@
 ![PDFPlumber](https://img.shields.io/badge/PDFPlumber-PDF_Parser-orange?style=for-the-badge)
 ![CORS](https://img.shields.io/badge/django--cors--headers-CORS-green?style=for-the-badge)
 
-<p align="center">
+<p align="center>
   <a href="#key-features">Key Features</a> •
-  <a href="#project-preview">Project Preview</a> •
+  <a href="#project-preview">Project Preview</a> •pm tun
   <a href="#architecture--data-flow">Architecture</a> •
   <a href="#tech-stack">Tech Stack</a> •
   <a href="#installation--setup">Installation & Setup</a> •
@@ -244,6 +246,46 @@ The client application will run at: `http://localhost:5173/`
 | Variable | Description | Default / Placeholder |
 | :--- | :--- | :--- |
 | `VITE_BACKEND_URL` | The URL of the Django backend REST API server | `http://127.0.0.1:8000` |
+
+---
+
+### Testing & Coverage Setup
+
+Test suites and coverage reports are wired into the project setup for both backend and frontend submodules.
+
+#### Root Workspace Commands
+
+```bash
+# Run test coverage for both Frontend and Backend
+npm run test:coverage
+
+# Run Frontend tests with Vitest coverage
+npm run test:coverage:frontend
+
+# Run Backend tests with Coverage.py
+npm run test:coverage:backend
+```
+
+#### Backend Coverage (Django + Coverage.py)
+
+```bash
+cd backend
+coverage run manage.py test analyzer
+coverage report
+```
+
+* **Coverage Configuration**: Configured in [`backend/.coveragerc`](backend/.coveragerc)
+* **Minimum Threshold**: **60%** line coverage.
+
+#### Frontend Coverage (React + Vitest)
+
+```bash
+cd frontend
+npm run test:coverage
+```
+
+* **Coverage Configuration**: Configured in [`frontend/vite.config.ts`](frontend/vite.config.ts)
+* **Minimum Threshold**: **50%** across lines, functions, branches, and statements.
 
 ---
 
