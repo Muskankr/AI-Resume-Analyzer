@@ -39,14 +39,14 @@
     />
     <meta name="twitter:image" content="/favicon.svg" />
     <script>
-      (function() {
+      ;(function () {
         try {
-          const savedTheme = localStorage.getItem('theme');
-          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          const theme = savedTheme || (prefersDark ? 'dark' : 'light');
-          document.documentElement.setAttribute('data-theme', theme);
+          const savedTheme = localStorage.getItem('theme')
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const theme = savedTheme || (prefersDark ? 'dark' : 'light')
+          document.documentElement.setAttribute('data-theme', theme)
         } catch (e) {}
-      })();
+      })()
     </script>
   </head>
   <body>
