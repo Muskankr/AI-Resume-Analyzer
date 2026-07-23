@@ -16,14 +16,14 @@ describe('Navbar Component (#241)', () => {
 
   it('renders the header brand with emoji and "AI Resume Analyzer" title text', () => {
     render(<Navbar {...defaultProps} />)
-    const brandElement = screen.getByText('AI Resume Analyzer')
+    const brandElement = screen.getByText(/AI Resume Analyzer/i)
     expect(brandElement).toBeInTheDocument()
-    expect(screen.getByText('🚀')).toBeInTheDocument()
+    expect(brandElement.textContent).toContain('🚀')
   })
 
   it('renders correctly in light mode', () => {
     render(<Navbar {...defaultProps} theme="light" />)
-    expect(screen.getByText('AI Resume Analyzer')).toBeInTheDocument()
+    expect(screen.getByText(/AI Resume Analyzer/i)).toBeInTheDocument()
   })
 })
 

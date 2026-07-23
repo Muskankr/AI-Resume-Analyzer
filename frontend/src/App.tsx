@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { Navbar } from './components/Navbar'
 import EmptyState from './components/EmptyState'
+import { CuratedTips } from './components/CuratedTips'
 import { StepProgress } from './components/StepProgress'
 import { OnboardingTour } from './components/OnboardingTour'
 import { HowItWorks } from './components/HowItWorks'
@@ -1537,6 +1538,8 @@ function App() {
                           ))}
                         </div>
                       )}
+
+                      <CuratedTips targetRole={targetRole} />
 
                       <div style={{ marginTop: '24px', textAlign: 'center' }}>
                         <button
