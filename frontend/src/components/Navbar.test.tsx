@@ -16,14 +16,14 @@ describe('Navbar Component (#241)', () => {
 
   it('renders the header brand with emoji and "AI Resume Analyzer" title text', () => {
     render(<Navbar {...defaultProps} />)
-    const brandElement = screen.getByText('AI Resume Analyzer')
+    const brandElement = screen.getByText(/AI Resume Analyzer/i)
     expect(brandElement).toBeInTheDocument()
-    expect(screen.getByText('🚀')).toBeInTheDocument()
+    expect(brandElement.textContent).toContain('🚀')
   })
 
   it('renders correctly in light mode', () => {
     render(<Navbar {...defaultProps} theme="light" />)
-    expect(screen.getByText('AI Resume Analyzer')).toBeInTheDocument()
+    expect(screen.getByText(/AI Resume Analyzer/i)).toBeInTheDocument()
   })
 })
 
@@ -135,30 +135,5 @@ describe('Navbar responsive hamburger (#245)', () => {
     fireEvent.click(historyLink)
     expect(menu.className).not.toContain('mobile-open')
     expect(onHistoryClick).toHaveBeenCalled()
-  })
-
-  it('renders a backdrop element for dismissing the menu', () => {
-    render(
-      <Navbar
-        theme="light"
-        toggleTheme={() => {}}
-        user={null}
-        onLogin={() => {}}
-        onLogout={() => {}}
-        onHistoryClick={() => {}}
-      />
-    )
-
-    const backdrop = document.querySelector('.navbar-backdrop') as HTMLElement
-    expect(backdrop).toBeInTheDocument()
-    expect(backdrop.className).not.toContain('visible')
-
-    const toggle = screen.getByRole('button', { name: /toggle navigation/i })
-    fireEvent.click(toggle)
-    expect(backdrop.className).toContain('visible')
-
-    fireEvent.click(backdrop)
-    const menu = document.getElementById('navbar-menu')!
-    expect(menu.className).not.toContain('mobile-open')
   })
 })

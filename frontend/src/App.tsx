@@ -12,6 +12,8 @@ import { Footer } from './Footer'
 import AnalysisSkeleton from './components/AnalysisSkeleton/AnalysisSkeleton'
 import { InfoTooltip } from './components/InfoTooltip'
 import { SkillWordCloud } from './components/SkillWordCloud'
+import { TrackMatrix } from './components/TrackMatrix'
+import type { TrackComparisons } from './components/TrackMatrix'
 import {
   FileText,
   Loader2,
@@ -26,6 +28,7 @@ import {
 } from 'lucide-react'
 import { Navbar } from './components/Navbar'
 import EmptyState from './components/EmptyState'
+import { CuratedTips } from './components/CuratedTips'
 import { StepProgress } from './components/StepProgress'
 import { OnboardingTour } from './components/OnboardingTour'
 import { HowItWorks } from './components/HowItWorks'
@@ -37,6 +40,9 @@ import {
 } from './utils/notification'
 import { ProgressBar } from './components/ProgressBar/ProgressBar'
 import { UndoToast } from './components/UndoToast/UndoToast'
+import { FilePreview } from './components/FilePreview/FilePreview'
+import { ShareResult } from './components/ShareResult'
+import { SharedResultView } from './SharedResultView'
 type Theme = 'light' | 'dark'
 
 interface UndoState {
@@ -284,6 +290,7 @@ function App() {
   const [showAllSkills, setShowAllSkills] = useState(false)
   const [copied, setCopied] = useState(false)
   const [analysisSource, setAnalysisSource] = useState<'sample' | 'upload' | null>(null)
+  const [shareId, setShareId] = useState<string | null>(null)
   const [jobDesc, setJobDesc] = useState('')
   const [resumeText, setResumeText] = useState<string>('')
   const [activeFileName, setActiveFileName] = useState('')
@@ -292,8 +299,33 @@ function App() {
   const [analysisProgress, setAnalysisProgress] = useState<number>(0)
   const [analysisStageLabel, setAnalysisStageLabel] = useState<string>('')
   const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file')
+  const [trackComparisons, setTrackComparisons] = useState<TrackComparisons | null>(null)
+  const [activeTab, setActiveTab] = useState<'detailed' | 'matrix'>('detailed')
   const [resumeUrl, setResumeUrl] = useState<string>('')
   const [urlError, setUrlError] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0])
+      setFileError(null)
+    }
+  }
 
   let currentStep: 1 | 2 | 3 = 1
   if (loading) {
@@ -444,6 +476,7 @@ function App() {
     setShowAllSkills(false)
     setCopied(false)
     setAnalysisSource(null)
+    setShareId(null)
     setActiveFileName('')
     setShowExportDropdown(false)
     setFileError(null)
@@ -570,6 +603,9 @@ function App() {
       setMatchedSkills(res.data.matched_skills || [])
       setMissingSkills(res.data.missing_skills || [])
       setResumeText(res.data.resume_text || '')
+      if (res.data.share_id) setShareId(res.data.share_id)
+      setTrackComparisons(res.data.track_comparisons || null)
+      setActiveTab('detailed')
       const fileName = fileToAnalyze ? fileToAnalyze.name : url ? 'Imported Resume' : 'Resume'
       setActiveFileName(fileName)
 
@@ -628,9 +664,20 @@ function App() {
         }
       }
       if (!(axios.isAxiosError(error) && error.response?.status === 429)) {
-        alert(
-          source === 'sample' ? `Sample analysis failed: ${errorMsg}` : `Upload failed: ${errorMsg}`
-        )
+        if (
+          axios.isAxiosError(error) &&
+          error.response?.status === 400 &&
+          uploadMode === 'url' &&
+          source === 'upload'
+        ) {
+          setUrlError(errorMsg)
+        } else {
+          alert(
+            source === 'sample'
+              ? `Sample analysis failed: ${errorMsg}`
+              : `Upload failed: ${errorMsg}`
+          )
+        }
       }
 
       setLoading(false)
@@ -665,7 +712,13 @@ function App() {
         setUrlError('URL must start with http:// or https://')
         hasError = true
       } else {
-        setUrlError(null)
+        try {
+          new URL(resumeUrl.trim())
+          setUrlError(null)
+        } catch {
+          setUrlError('Please enter a valid URL.')
+          hasError = true
+        }
       }
     }
 
@@ -801,6 +854,7 @@ function App() {
         onHistoryClick={() => setHistoryOpen(true)}
       />
       <Routes>
+        <Route path="/shared/:shareId" element={<SharedResultView />} />
         <Route
           path="/"
           element={
@@ -978,8 +1032,11 @@ function App() {
 
                       {uploadMode === 'file' ? (
                         <div
-                          className="upload-box mb-3"
-                          style={{ width: '100%', maxWidth: '100%', padding: '32px 20px' }}
+                          className={`upload-box mb-3 ${isDragging ? 'dragging' : ''}`}
+                          style={{ width: '100%', maxWidth: '100%' }}
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          onDrop={handleDrop}
                         >
                           <input
                             type="file"
@@ -992,22 +1049,55 @@ function App() {
                               }
                             }}
                           />
-                          <label
-                            htmlFor="fileUpload"
-                            className="upload-label"
-                            style={{
-                              cursor: 'pointer',
-                              display: 'block',
-                              wordBreak: 'break-all',
-                              fontSize: 'var(--font-size-base)',
-                            }}
-                          >
-                            📄{' '}
-                            {file ? (
-                              <strong style={{ color: '#a5b4fc' }}>{file.name}</strong>
-                            ) : (
-                              'Drag & Drop Resume or Click to Browse'
-                            )}
+                          <label htmlFor="fileUpload" className="upload-label">
+                            <div className="upload-icon-wrapper" aria-hidden="true">
+                              {file ? (
+                                <svg
+                                  width="28"
+                                  height="28"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                                  <polyline points="14 2 14 8 20 8" />
+                                  <path d="M9 15l2 2 4-4" />
+                                </svg>
+                              ) : (
+                                <svg
+                                  width="28"
+                                  height="28"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="17 8 12 3 7 8" />
+                                  <line x1="12" y1="3" x2="12" y2="15" />
+                                </svg>
+                              )}
+                            </div>
+                            <div style={{ textAlign: 'center' }}>
+                              {file ? (
+                                <strong className="upload-file-name">{file.name}</strong>
+                              ) : (
+                                <>
+                                  <span className="upload-text-primary">
+                                    Drag &amp; Drop Resume or{' '}
+                                    <span className="upload-text-browse">Click to Browse</span>
+                                  </span>
+                                  <span className="upload-text-secondary">
+                                    Supports PDF, DOCX, TXT up to 10MB
+                                  </span>
+                                </>
+                              )}
+                            </div>
                           </label>
                         </div>
                       ) : (
@@ -1056,7 +1146,11 @@ function App() {
                           </span>
                         </div>
                       )}
-
+                      {file && uploadMode === 'file' && (
+                        <div className="mb-3">
+                          <FilePreview file={file} />
+                        </div>
+                      )}
                       {fileError && uploadMode === 'file' && (
                         <div
                           style={{
@@ -1243,7 +1337,62 @@ function App() {
                     </p>
                   )}
 
-                  {/* Skills Section */}
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '16px', marginBottom: '16px', justifyContent: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('detailed')}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: '0.9rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        background: activeTab === 'detailed' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                        color: '#fff',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      Detailed View
+                    </button>
+                    {trackComparisons && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('matrix')}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          background: activeTab === 'matrix' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                          color: '#fff',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        Compare All Tracks
+                      </button>
+                    )}
+                  </div>
+
+                  {activeTab === 'matrix' && trackComparisons ? (
+                    <TrackMatrix 
+                      trackComparisons={trackComparisons}
+                      activeRole={targetRole}
+                      onRowClick={(role) => {
+                        setTargetRole(role)
+                        const comp = trackComparisons[role]
+                        setScore(comp.score)
+                        setMatchedSkills(comp.matched_skills)
+                        setMissingSkills(comp.missing_skills)
+                        setSuggestions(comp.suggestions)
+                        setActiveTab('detailed')
+                      }}
+                    />
+                  ) : (
+                    <>
+                      {/* Skills Section */}
                   <section className="mt-4" aria-labelledby="skills-found-heading">
                     <h4 id="skills-found-heading">Skills Found ({skills.length})</h4>
                     {skills.length === 0 && <p>No skills detected</p>}
@@ -1345,6 +1494,8 @@ function App() {
                       border: '1px solid rgba(255, 255, 255, 0.04)',
                     }}
                   >
+                    {shareId && <ShareResult shareId={shareId} />}
+
                     <div className="suggestion-box mt-4" style={{ padding: '15px' }}>
                       <div
                         style={{
@@ -1459,6 +1610,8 @@ function App() {
                         </div>
                       )}
 
+                      <CuratedTips targetRole={targetRole} />
+
                       <div style={{ marginTop: '24px', textAlign: 'center' }}>
                         <button
                           type="button"
@@ -1471,6 +1624,8 @@ function App() {
                       </div>
                     </div>
                   </section>
+                    </>
+                  )}
                 </section>
               )}
             </main>
