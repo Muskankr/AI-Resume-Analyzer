@@ -209,3 +209,73 @@ def suggestion_feedback(request):
         "vote": vote,
         "index": index,
     }, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def health_check(request):
+    """Health check endpoint for uptime monitoring.
+
+    Verifies that the server is active and the database is accessible.
+    """
+    from django.db import connection
+
+    health_status = {
+        "status": "healthy",
+        "services": {
+            "api": "up",
+            "database": "down",
+        },
+    }
+
+    try:
+        # Validate database connectivity by executing a raw query
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        health_status["services"]["database"] = "up"
+        return Response(health_status, status=status.HTTP_200_OK)
+    except Exception as e:
+        health_status["status"] = "unhealthy"
+        health_status["error"] = str(e)
+        return Response(
+            health_status, status=status.HTTP_503_SERVICE_UNAVAILABLE
+        )
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_account(request):
+    """Permanently delete the authenticated user's account and all associated data.
+
+    Requires password verification and confirmation text.
+    """
+    password = request.data.get("password")
+    confirm_text = request.data.get("confirm_text")
+
+    if not password:
+        return Response(
+            {"error": "Password is required to confirm account deletion."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if confirm_text != "DELETE":
+        return Response(
+            {"error": "Please type 'DELETE' exactly to confirm your intent."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    user = request.user
+    if not user.check_password(password):
+        return Response(
+            {"error": "Incorrect password. Account deletion aborted."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Permanently delete the user (triggers CASCADE on ResumeAnalysis)
+    user.delete()
+
+    return Response(
+        {"detail": "Your account and all associated data have been permanently deleted."},
+        status=status.HTTP_200_OK,
+    )
+
