@@ -287,3 +287,24 @@ class UrlFetcherTests(TestCase):
             download_and_validate_url("ftp://example.com/file.pdf")
         self.assertIn("valid URL starting with http", str(ctx.exception))
 
+
+class HealthCheckTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_health_check_healthy(self):
+        resp = self.client.get("/api/health/")
+        self.assertEqual(resp.status_code, 200)
+        self.assertEqual(resp.data["status"], "healthy")
+        self.assertEqual(resp.data["services"]["api"], "up")
+        self.assertEqual(resp.data["services"]["database"], "up")
+
+    @patch("django.db.connection.cursor")
+    def test_health_check_unhealthy(self, mock_cursor):
+        # Mock database connection cursor to throw an exception
+        mock_cursor.side_effect = Exception("Database is down")
+        resp = self.client.get("/api/health/")
+        self.assertEqual(resp.status_code, 503)
+        self.assertEqual(resp.data["status"], "unhealthy")
+        self.assertEqual(resp.data["services"]["database"], "down")
+        self.assertIn("Database is down", resp.data["error"])

@@ -11,6 +11,9 @@
 [![GitHub contributors](https://img.shields.io/github/contributors/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=818cf8)](https://github.com/Muskankr/AI-Resume-Analyzer/graphs/contributors)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge&color=38bdf8)](https://github.com/Muskankr/AI-Resume-Analyzer/pulls)
 [![ECSoC'26](https://img.shields.io/badge/Program-ECSoC'26-orange?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer)
+[![Uptime (Frontend)](https://img.shields.io/uptimerobot/status/m796245367-placeholder?style=for-the-badge&label=Frontend%20Uptime)](https://ai-resume-analyzer-nine-brown.vercel.app)
+[![Uptime (Backend)](https://img.shields.io/uptimerobot/status/m796245367-placeholder?style=for-the-badge&label=Backend%20Uptime)](https://ai-resume-analyzer-nine-brown.vercel.app)
+
 
 # AI Resume Analyzer
 
@@ -347,6 +350,28 @@ When the limit is exceeded, the API returns:
 
 ---
 
+## Uptime Monitoring
+
+Uptime monitoring is set up to continuously track the availability of the frontend application and backend API, alerting the maintainers if any downtime occurs.
+
+- **Frontend Monitor:** Tracks the main user interface.
+- **Backend Monitor:** Tracks the health and database connectivity via the dedicated health check endpoint: `/api/health/`.
+
+### Setting Up Free Uptime Monitoring (for Maintainers)
+
+To set up uptime monitoring for the deployed application (e.g. using UptimeRobot):
+
+1. **Sign Up:** Create a free account at [UptimeRobot](https://uptimerobot.com) or [Better Stack Uptime](https://betterstack.com/uptime).
+2. **Create Monitors:**
+   - **Frontend Monitor:** Add an HTTP(s) monitor pointing to your frontend URL (e.g. `https://ai-resume-analyzer-nine-brown.vercel.app`).
+   - **Backend Monitor:** Add an HTTP(s) monitor pointing to your backend health endpoint (e.g. `https://ai-resume-analyzer-backend.onrender.com/api/health/`).
+3. **Configure Alerting:**
+   - Enter your email address or configure a Discord/Slack webhook in the monitor's "Alert Contacts" to get instant notifications when the site goes down.
+4. **Status Badges:**
+   - In UptimeRobot, create a public status page or generate a badge.
+   - Replace the badge placeholders at the top of this `README.md` with your actual monitor ID to display live health status.
+
+---
 ## Roadmap
 
 - [ ] **DOCX Document Parsing** — Integrate `python-docx` to support Word resume parser pipelines.

@@ -209,3 +209,34 @@ def suggestion_feedback(request):
         "vote": vote,
         "index": index,
     }, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def health_check(request):
+    """Health check endpoint for uptime monitoring.
+
+    Verifies that the server is active and the database is accessible.
+    """
+    from django.db import connection
+
+    health_status = {
+        "status": "healthy",
+        "services": {
+            "api": "up",
+            "database": "down",
+        },
+    }
+
+    try:
+        # Validate database connectivity by executing a raw query
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        health_status["services"]["database"] = "up"
+        return Response(health_status, status=status.HTTP_200_OK)
+    except Exception as e:
+        health_status["status"] = "unhealthy"
+        health_status["error"] = str(e)
+        return Response(
+            health_status, status=status.HTTP_503_SERVICE_UNAVAILABLE
+        )

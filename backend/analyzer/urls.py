@@ -12,9 +12,11 @@ from .views import (
     clear_user_history,
     compare_versions_view,
     suggestion_feedback,
+    health_check,
 )
 
 urlpatterns = [
+    path("health/", health_check),
     path("upload/", upload_resume),
 
     path("auth/signup/", signup),
