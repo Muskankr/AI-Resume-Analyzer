@@ -23,7 +23,7 @@ export interface VersionComparison {
   insights: string[]
 }
 
-const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
+import { BACKEND_URL } from '../config'
 
 export function useCompareVersions(token: string | undefined) {
   const [comparison, setComparison] = useState<VersionComparison | null>(null)
@@ -39,7 +39,7 @@ export function useCompareVersions(token: string | undefined) {
       setLoading(true)
       setError(null)
       try {
-        const res = await axios.get<VersionComparison>(`${BACKEND}/api/compare/`, {
+        const res = await axios.get<VersionComparison>(`${BACKEND_URL}/api/compare/`, {
           headers: { Authorization: `Bearer ${token}` },
           params: { older: olderId, newer: newerId },
         })

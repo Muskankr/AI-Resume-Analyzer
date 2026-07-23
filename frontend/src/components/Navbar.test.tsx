@@ -11,7 +11,7 @@ describe('Navbar Component (#241)', () => {
     user: null,
     onLogin: vi.fn(),
     onLogout: vi.fn(),
-    onHistoryClick: vi.fn(),
+    onSettingsClick: vi.fn(), onHistoryClick: vi.fn(),
   }
 
   it('renders the header brand with emoji and "AI Resume Analyzer" title text', () => {
@@ -36,7 +36,7 @@ describe('Navbar Component right-side cluster (#244)', () => {
         user={null}
         onLogin={() => {}}
         onLogout={() => {}}
-        onHistoryClick={() => {}}
+        onSettingsClick={() => {}} onHistoryClick={() => {}}
       />
     )
 
@@ -58,7 +58,7 @@ describe('Navbar Component right-side cluster (#244)', () => {
         user={user}
         onLogin={() => {}}
         onLogout={() => {}}
-        onHistoryClick={() => {}}
+        onSettingsClick={() => {}} onHistoryClick={() => {}}
       />
     )
 
@@ -76,7 +76,7 @@ describe('Navbar responsive hamburger (#245)', () => {
         user={null}
         onLogin={() => {}}
         onLogout={() => {}}
-        onHistoryClick={() => {}}
+        onSettingsClick={() => {}} onHistoryClick={() => {}}
       />
     )
 
@@ -94,7 +94,7 @@ describe('Navbar responsive hamburger (#245)', () => {
         user={null}
         onLogin={() => {}}
         onLogout={() => {}}
-        onHistoryClick={() => {}}
+        onSettingsClick={() => {}} onHistoryClick={() => {}}
       />
     )
 
@@ -121,6 +121,7 @@ describe('Navbar responsive hamburger (#245)', () => {
         user={null}
         onLogin={() => {}}
         onLogout={() => {}}
+        onSettingsClick={() => {}}
         onHistoryClick={onHistoryClick}
       />
     )
@@ -145,7 +146,7 @@ describe('Navbar responsive hamburger (#245)', () => {
         user={null}
         onLogin={() => {}}
         onLogout={() => {}}
-        onHistoryClick={() => {}}
+        onSettingsClick={() => {}} onHistoryClick={() => {}}
       />
     )
 

@@ -25,6 +25,7 @@ import {
 } from 'lucide-react'
 import { Navbar } from './components/Navbar'
 import EmptyState from './components/EmptyState'
+import { BACKEND_URL } from './config'
 import { CuratedTips } from './components/CuratedTips'
 import { StepProgress } from './components/StepProgress'
 import { OnboardingTour } from './components/OnboardingTour'
@@ -124,10 +125,9 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
 interface SuggestionCardProps {
   text: string
   index: number
-  backendUrl?: string
 }
 
-const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl = '' }) => {
+const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index }) => {
   const [copied, setCopied] = React.useState(false)
   const [voted, setVoted] = React.useState<'up' | 'down' | null>(null)
   const [isVoting, setIsVoting] = React.useState(false)
@@ -142,7 +142,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
     if (voted !== null || isVoting) return
     setIsVoting(true)
     try {
-      await axios.post(`${backendUrl}/api/suggestion-feedback/`, {
+      await axios.post(`${BACKEND_URL}/api/suggestion-feedback/`, {
         suggestion: text,
         vote,
         index,
@@ -362,12 +362,10 @@ function App() {
     setEntries,
   } = useAnalysisHistory()
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
-
   const handleDeleteEntry = async (id: string) => {
     if (user) {
       try {
-        await axios.delete(`${backendUrl}/api/history/${id}/`, {
+        await axios.delete(`${BACKEND_URL}/api/history/${id}/`, {
           headers: { Authorization: `Bearer ${user.token}` },
         })
       } catch (error) {
@@ -384,7 +382,7 @@ function App() {
   const handleClearAll = async () => {
     if (user) {
       try {
-        await axios.delete(`${backendUrl}/api/history/clear/`, {
+        await axios.delete(`${BACKEND_URL}/api/history/clear/`, {
           headers: { Authorization: `Bearer ${user.token}` },
         })
       } catch (error) {
@@ -397,7 +395,7 @@ function App() {
   const fetchDbHistory = useCallback(
     async (token: string) => {
       try {
-        const res = await axios.get(`${backendUrl}/api/history/`, {
+        const res = await axios.get(`${BACKEND_URL}/api/history/`, {
           headers: { Authorization: `Bearer ${token}` },
         })
         const dbEntries: AnalysisEntry[] = res.data.map(
@@ -433,7 +431,7 @@ function App() {
         /* silently ignore */
       }
     },
-    [backendUrl, setEntries]
+    [setEntries]
   )
 
   useEffect(() => {
@@ -602,7 +600,7 @@ function App() {
       }, 1000)
 
       const headers = user ? { Authorization: `Bearer ${user.token}` } : {}
-      const res = await axios.post(`${backendUrl}/api/upload/`, formData, { headers })
+      const res = await axios.post(`${BACKEND_URL}/api/upload/`, formData, { headers })
 
       clearTimeout(stageTimer1)
       clearTimeout(stageTimer2)
@@ -1626,7 +1624,6 @@ function App() {
                               key={index}
                               text={suggestion}
                               index={index}
-                              backendUrl={backendUrl}
                             />
                           ))}
                         </div>

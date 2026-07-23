@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { X, Trash2, Loader2, ShieldAlert } from "lucide-react";
+import { BACKEND_URL } from "../config";
 import type { AuthUser } from "../hooks/useAuth";
 import axios from "axios";
 
@@ -20,8 +21,6 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
   const [loading, setLoading] = useState(false);
   const [showDeleteZone, setShowDeleteZone] = useState(false);
 
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000";
-
   const handleDelete = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -35,7 +34,7 @@ export const AccountSettingsModal: React.FC<AccountSettingsModalProps> = ({
     setLoading(true);
 
     try {
-      await axios.delete(`${backendUrl}/api/auth/delete-account/`, {
+      await axios.delete(`${BACKEND_URL}/api/auth/delete-account/`, {
         headers: { Authorization: `Bearer ${user.token}` },
         data: { password, confirm_text: confirmText },
       });

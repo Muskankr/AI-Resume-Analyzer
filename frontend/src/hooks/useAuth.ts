@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import axios from 'axios'
 
-const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
+import { BACKEND_URL } from '../config'
 
 export interface AuthUser {
   username: string
@@ -31,13 +31,13 @@ export function useAuth() {
   }
 
   const signup = useCallback(async (username: string, password: string) => {
-    await axios.post(`${BACKEND}/api/auth/signup/`, { username, password })
-    const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password })
+    await axios.post(`${BACKEND_URL}/api/auth/signup/`, { username, password })
+    const res = await axios.post(`${BACKEND_URL}/api/auth/login/`, { username, password })
     persist({ username, token: res.data.access })
   }, [])
 
   const login = useCallback(async (username: string, password: string) => {
-    const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password })
+    const res = await axios.post(`${BACKEND_URL}/api/auth/login/`, { username, password })
     persist({ username, token: res.data.access })
   }, [])
 
