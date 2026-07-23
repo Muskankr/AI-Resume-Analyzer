@@ -12,6 +12,8 @@ import { Footer } from './Footer'
 import AnalysisSkeleton from './components/AnalysisSkeleton/AnalysisSkeleton'
 import { InfoTooltip } from './components/InfoTooltip'
 import { SkillWordCloud } from './components/SkillWordCloud'
+import { TrackMatrix } from './components/TrackMatrix'
+import type { TrackComparisons } from './components/TrackMatrix'
 import {
   FileText,
   Loader2,
@@ -293,6 +295,8 @@ function App() {
   const [analysisProgress, setAnalysisProgress] = useState<number>(0)
   const [analysisStageLabel, setAnalysisStageLabel] = useState<string>('')
   const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file')
+  const [trackComparisons, setTrackComparisons] = useState<TrackComparisons | null>(null)
+  const [activeTab, setActiveTab] = useState<'detailed' | 'matrix'>('detailed')
   const [resumeUrl, setResumeUrl] = useState<string>('')
   const [urlError, setUrlError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -594,6 +598,8 @@ function App() {
       setMatchedSkills(res.data.matched_skills || [])
       setMissingSkills(res.data.missing_skills || [])
       setResumeText(res.data.resume_text || '')
+      setTrackComparisons(res.data.track_comparisons || null)
+      setActiveTab('detailed')
       const fileName = fileToAnalyze ? fileToAnalyze.name : url ? 'Imported Resume' : 'Resume'
       setActiveFileName(fileName)
 
@@ -1322,7 +1328,62 @@ function App() {
                     </p>
                   )}
 
-                  {/* Skills Section */}
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '16px', marginBottom: '16px', justifyContent: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('detailed')}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: '0.9rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        background: activeTab === 'detailed' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                        color: '#fff',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      Detailed View
+                    </button>
+                    {trackComparisons && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('matrix')}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          background: activeTab === 'matrix' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                          color: '#fff',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        Compare All Tracks
+                      </button>
+                    )}
+                  </div>
+
+                  {activeTab === 'matrix' && trackComparisons ? (
+                    <TrackMatrix 
+                      trackComparisons={trackComparisons}
+                      activeRole={targetRole}
+                      onRowClick={(role) => {
+                        setTargetRole(role)
+                        const comp = trackComparisons[role]
+                        setScore(comp.score)
+                        setMatchedSkills(comp.matched_skills)
+                        setMissingSkills(comp.missing_skills)
+                        setSuggestions(comp.suggestions)
+                        setActiveTab('detailed')
+                      }}
+                    />
+                  ) : (
+                    <>
+                      {/* Skills Section */}
                   <section className="mt-4" aria-labelledby="skills-found-heading">
                     <h4 id="skills-found-heading">Skills Found ({skills.length})</h4>
                     {skills.length === 0 && <p>No skills detected</p>}
@@ -1550,6 +1611,8 @@ function App() {
                       </div>
                     </div>
                   </section>
+                    </>
+                  )}
                 </section>
               )}
             </main>
