@@ -133,8 +133,3 @@ REST_FRAMEWORK = {
 
 # Rate limiting: resume upload endpoint
 RESUME_UPLOAD_RATE = os.environ.get('RESUME_UPLOAD_RATE', '10/hour')
-
-# CSRF Security Hardening (Issue #323)
-CSRF_COOKIE_SECURE = not DEBUG
-CSRF_COOKIE_SAMESITE = 'Lax'
-
