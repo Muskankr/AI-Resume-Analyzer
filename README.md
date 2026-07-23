@@ -347,6 +347,28 @@ When the limit is exceeded, the API returns:
 
 ---
 
+## Security Configuration & Headers
+
+Standard security headers are configured for both the frontend (client) and backend (server) environments to mitigate common vulnerabilities:
+
+### Configured Headers
+
+1. **Content-Security-Policy (CSP):** Limits the resources (scripts, styles, connections) the browser is allowed to load.
+   - *Client:* Allows `'self'` resources, inline scripts/styles for React/Bootstrap, and local/production backend API connections.
+   - *Server (API):* Uses a strict `default-src 'none';` for JSON API responses, and standard self-hosting for Django admin.
+2. **X-Frame-Options (`DENY`):** Prevents the app from being embedded in `<iframe>` tags, mitigating Clickjacking attacks.
+3. **X-Content-Type-Options (`nosniff`):** Disables MIME-type sniffing to prevent MIME-based attacks.
+4. **Referrer-Policy (`strict-origin-when-cross-origin`):** Protects privacy by stripping referrer paths when making cross-origin requests.
+
+### Local Development Parity
+
+To ensure parity between local development and production environments, the headers are applied in both locations:
+- **Production (Vercel):** Configured via [vercel.json](file:///e:/ECSOC-26/AI-Resume-Analyzer/frontend/vercel.json) files in the root and frontend directories.
+- **Local Development (Vite):** Preconfigured in [vite.config.ts](file:///e:/ECSOC-26/AI-Resume-Analyzer/frontend/vite.config.ts) to send headers when running the local dev server (`npm run dev`).
+- **Django Backend:** Applied dynamically in all environments via Django settings and a custom middleware in [middleware.py](file:///e:/ECSOC-26/AI-Resume-Analyzer/backend/resume_analyzer/middleware.py).
+
+---
+
 ## Roadmap
 
 - [ ] **DOCX Document Parsing** — Integrate `python-docx` to support Word resume parser pipelines.

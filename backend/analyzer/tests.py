@@ -287,3 +287,48 @@ class UrlFetcherTests(TestCase):
             download_and_validate_url("ftp://example.com/file.pdf")
         self.assertIn("valid URL starting with http", str(ctx.exception))
 
+
+class SecurityHeadersTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_security_headers_are_present_on_api_responses(self):
+        # Trigger an API request
+        resp = self.client.get("/api/compare/")
+        
+        # Check that Content-Security-Policy is present and configured for APIs
+        self.assertIn("Content-Security-Policy", resp)
+        self.assertEqual(
+            resp["Content-Security-Policy"],
+            "default-src 'none'; frame-ancestors 'none';"
+        )
+        
+        # Check standard secure headers
+        self.assertIn("X-Frame-Options", resp)
+        self.assertEqual(resp["X-Frame-Options"], "DENY")
+        
+        self.assertIn("X-Content-Type-Options", resp)
+        self.assertEqual(resp["X-Content-Type-Options"], "nosniff")
+        
+        self.assertIn("Referrer-Policy", resp)
+        self.assertEqual(resp["Referrer-Policy"], "strict-origin-when-cross-origin")
+
+    def test_security_headers_are_present_on_html_responses(self):
+        # Trigger an HTML view request
+        resp = self.client.get("/admin/login/")
+        
+        # Check that Content-Security-Policy is configured for HTML/Admin
+        self.assertIn("Content-Security-Policy", resp)
+        self.assertIn("default-src 'self'", resp["Content-Security-Policy"])
+        
+        # Check standard secure headers
+        self.assertIn("X-Frame-Options", resp)
+        self.assertEqual(resp["X-Frame-Options"], "DENY")
+        
+        self.assertIn("X-Content-Type-Options", resp)
+        self.assertEqual(resp["X-Content-Type-Options"], "nosniff")
+        
+        self.assertIn("Referrer-Policy", resp)
+        self.assertEqual(resp["Referrer-Policy"], "strict-origin-when-cross-origin")
+
+
