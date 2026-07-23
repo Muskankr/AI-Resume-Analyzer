@@ -56,6 +56,11 @@ export const Navbar: React.FC<NavbarProps> = ({
         ☰
       </button>
 
+      <div
+        className={`navbar-backdrop ${mobileOpen ? 'visible' : ''}`}
+        onClick={() => setMobileOpen(false)}
+      />
+
       <nav
         id="navbar-menu"
         className={`navbar-menu ${mobileOpen ? 'mobile-open' : ''}`}
