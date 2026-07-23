@@ -25,6 +25,7 @@ from .serializers import (
 )
 from .services import analyze_resume
 from .url_fetcher import download_and_validate_url
+from django.shortcuts import get_object_or_404
 
 
 class UploadRateThrottle(SimpleRateThrottle):
@@ -189,23 +190,30 @@ def compare_versions_view(request):
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def suggestion_feedback(request):
-    """Log user feedback (helpful/not helpful) for individual suggestions."""
-    suggestion_text = request.data.get("suggestion", "")
-    vote = request.data.get("vote", "")
-    index = request.data.get("index")
+    """
+    Handle upvote/downvote or comments on a specific suggestion.
+    In a real app, you'd store this in a SuggestionFeedback model.
+    """
+    analysis_id = request.data.get("analysis_id")
+    suggestion_text = request.data.get("suggestion_text")
+    vote = request.data.get("vote")  # 'up' or 'down'
 
-    if vote not in ("up", "down"):
+    if not analysis_id or not suggestion_text or not vote:
         return Response(
-            {"error": "Invalid vote parameter. Expected 'up' or 'down'."},
-            status=status.HTTP_400_BAD_REQUEST,
+            {"detail": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    print(f"[SUGGESTION FEEDBACK] Index: {index} | Vote: {vote} | Suggestion: {suggestion_text[:60]}")
+    return Response({"detail": "Feedback recorded successfully."})
 
-    return Response({
-        "message": "Feedback recorded. Thank you!",
-        "vote": vote,
-        "index": index,
-    }, status=status.HTTP_200_OK)
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_shared_result(request, share_id):
+    """
+    Fetch a specific ResumeAnalysis by its unguessable share_id,
+    without requiring authentication.
+    """
+    analysis = get_object_or_404(ResumeAnalysis, share_id=share_id)
+    serializer = ResumeAnalysisSerializer(analysis)
+    return Response(serializer.data)

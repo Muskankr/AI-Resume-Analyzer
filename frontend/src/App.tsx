@@ -41,6 +41,8 @@ import {
 import { ProgressBar } from './components/ProgressBar/ProgressBar'
 import { UndoToast } from './components/UndoToast/UndoToast'
 import { FilePreview } from './components/FilePreview/FilePreview'
+import { ShareResult } from './components/ShareResult'
+import { SharedResultView } from './SharedResultView'
 type Theme = 'light' | 'dark'
 
 interface UndoState {
@@ -288,6 +290,7 @@ function App() {
   const [showAllSkills, setShowAllSkills] = useState(false)
   const [copied, setCopied] = useState(false)
   const [analysisSource, setAnalysisSource] = useState<'sample' | 'upload' | null>(null)
+  const [shareId, setShareId] = useState<string | null>(null)
   const [jobDesc, setJobDesc] = useState('')
   const [resumeText, setResumeText] = useState<string>('')
   const [activeFileName, setActiveFileName] = useState('')
@@ -473,6 +476,7 @@ function App() {
     setShowAllSkills(false)
     setCopied(false)
     setAnalysisSource(null)
+    setShareId(null)
     setActiveFileName('')
     setShowExportDropdown(false)
     setFileError(null)
@@ -599,6 +603,7 @@ function App() {
       setMatchedSkills(res.data.matched_skills || [])
       setMissingSkills(res.data.missing_skills || [])
       setResumeText(res.data.resume_text || '')
+      if (res.data.share_id) setShareId(res.data.share_id)
       setTrackComparisons(res.data.track_comparisons || null)
       setActiveTab('detailed')
       const fileName = fileToAnalyze ? fileToAnalyze.name : url ? 'Imported Resume' : 'Resume'
@@ -849,6 +854,7 @@ function App() {
         onHistoryClick={() => setHistoryOpen(true)}
       />
       <Routes>
+        <Route path="/shared/:shareId" element={<SharedResultView />} />
         <Route
           path="/"
           element={
@@ -1486,6 +1492,8 @@ function App() {
                       border: '1px solid rgba(255, 255, 255, 0.04)',
                     }}
                   >
+                    {shareId && <ShareResult shareId={shareId} />}
+
                     <div className="suggestion-box mt-4" style={{ padding: '15px' }}>
                       <div
                         style={{
