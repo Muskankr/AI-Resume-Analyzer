@@ -385,3 +385,35 @@ class DeleteAccountTests(TestCase):
         
         # Check cascade deletion: related analyses must be deleted too
         self.assertEqual(ResumeAnalysis.objects.filter(user_id=self.user.id).count(), 0)
+
+
+class CsrfProtectionTests(TestCase):
+    def setUp(self):
+        self.username = "testuser"
+        self.password = "validpassword123"
+        self.user = User.objects.create_user(username=self.username, password=self.password)
+        # Instantiate a client that strictly enforces CSRF checks
+        self.client = APIClient(enforce_csrf=True)
+
+    def test_session_auth_enforces_csrf_rejection(self):
+        # Log in using Django session auth
+        self.client.login(username=self.username, password=self.password)
+        
+        # A state-changing request (POST) to a session-authenticated view
+        # (e.g. Django Admin) without CSRF token should return 403 Forbidden
+        response = self.client.post("/admin/login/", {"username": self.username, "password": self.password})
+        self.assertEqual(response.status_code, 403)
+
+    def test_jwt_auth_does_not_require_csrf(self):
+        # Log in to retrieve JWT access token
+        resp = self.client.post("/api/auth/login/", {"username": self.username, "password": self.password}, format="json")
+        token = resp.data["access"]
+        
+        # Authenticate using JWT Authorization header
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+        
+        # Accessing an authenticated endpoint (history) should succeed
+        # without CSRF headers because headers are immune to CSRF
+        response = self.client.get("/api/history/")
+        self.assertEqual(response.status_code, 200)
+
