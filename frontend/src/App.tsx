@@ -37,6 +37,7 @@ import {
 } from './utils/notification'
 import { ProgressBar } from './components/ProgressBar/ProgressBar'
 import { UndoToast } from './components/UndoToast/UndoToast'
+import { FilePreview } from './components/FilePreview/FilePreview'
 type Theme = 'light' | 'dark'
 
 interface UndoState {
@@ -1131,7 +1132,11 @@ function App() {
                           </span>
                         </div>
                       )}
-
+                      {file && uploadMode === 'file' && (
+                        <div className="mb-3">
+                          <FilePreview file={file} />
+                        </div>
+                      )}
                       {fileError && uploadMode === 'file' && (
                         <div
                           style={{
