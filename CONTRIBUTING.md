@@ -120,6 +120,21 @@ AI-Resume-Analyzer
 
 ---
 
+# Project Board
+
+Track development progress using our GitHub Project:
+
+<Project URL>
+
+_Project Columns to create:_
+
+- _To Do_
+- _In Progress_
+- _In Review_
+- _Done_
+
+---
+
 # Branch Naming Convention
 
 Use meaningful branch names.
@@ -223,7 +238,6 @@ When your pull request includes a notable change:
   - **Removed** – Removed or deprecated functionality.
 - Keep entries concise and user-focused.
 - When a new release is created, move entries from **Unreleased** into a versioned release section.
-
 
 Example:
 
