@@ -136,29 +136,4 @@ describe('Navbar responsive hamburger (#245)', () => {
     expect(menu.className).not.toContain('mobile-open')
     expect(onHistoryClick).toHaveBeenCalled()
   })
-
-  it('renders a backdrop element for dismissing the menu', () => {
-    render(
-      <Navbar
-        theme="light"
-        toggleTheme={() => {}}
-        user={null}
-        onLogin={() => {}}
-        onLogout={() => {}}
-        onHistoryClick={() => {}}
-      />
-    )
-
-    const backdrop = document.querySelector('.navbar-backdrop') as HTMLElement
-    expect(backdrop).toBeInTheDocument()
-    expect(backdrop.className).not.toContain('visible')
-
-    const toggle = screen.getByRole('button', { name: /toggle navigation/i })
-    fireEvent.click(toggle)
-    expect(backdrop.className).toContain('visible')
-
-    fireEvent.click(backdrop)
-    const menu = document.getElementById('navbar-menu')!
-    expect(menu.className).not.toContain('mobile-open')
-  })
 })

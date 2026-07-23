@@ -319,7 +319,9 @@ h3 {
   border-radius: 50%;
   background: rgba(99, 102, 241, 0.1);
   color: var(--upload-icon-color);
-  transition: transform 0.25s ease, background-color 0.25s ease;
+  transition:
+    transform 0.25s ease,
+    background-color 0.25s ease;
 }
 
 .upload-box:hover .upload-icon-wrapper,
@@ -375,7 +377,7 @@ h3 {
 }
 
 .secondary-btn {
-   background: var(--btn-bg);
+  background: var(--btn-bg);
   color: var(--btn-text);
   border: none;
   padding: 10px 25px;
@@ -387,7 +389,6 @@ h3 {
 }
 
 .secondary-btn:hover:not(:disabled) {
-  
   transform: scale(1.05);
 }
 
@@ -1202,8 +1203,6 @@ input {
   animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   will-change: transform, opacity;
 }
-
-
 
 .analysis-done,
 .resume-preview,
