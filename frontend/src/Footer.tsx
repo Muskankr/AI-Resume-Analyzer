@@ -1,4 +1,4 @@
-import {  } from 'lucide-react'
+import {} from 'lucide-react'
 
 const REPO_URL = 'https://github.com/Muskankr/AI-Resume-Analyzer'
 const LINKEDIN_URL = 'https://www.linkedin.com/in/muskan-kumari-76361b378'
@@ -12,7 +12,7 @@ export const Footer: React.FC = () => {
       style={{
         marginTop: '80px',
         borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-        background: 'rgba(30, 30, 47, 0.4)',
+        background: 'rgba(30, 30, 47, 0.8)',
         padding: '40px 20px 20px',
       }}
     >
@@ -44,7 +44,7 @@ export const Footer: React.FC = () => {
           <p
             style={{
               fontSize: 'var(--font-size-sm)',
-              color: '#94a3b8',
+              color: 'var(--footer-text)',
               lineHeight: '1.6',
               margin: 0,
             }}
@@ -176,46 +176,36 @@ export const Footer: React.FC = () => {
           >
             Connect
           </h5>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: '16px' }}>
             <a
               href={REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="GitHub Repository"
-              title="GitHub Repository"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '14px',
+                fontSize: '20px',
                 color: '#94a3b8',
                 textDecoration: 'none',
                 transition: 'color 0.2s',
               }}
               className="footer-icon-link"
             >
-              <Github size={20} />
-              <span>GitHub</span>
+              🐙
             </a>
             <a
               href={LINKEDIN_URL}
               target="_blank"
               rel="noopener noreferrer"
               aria-label="LinkedIn Profile"
-              title="LinkedIn Profile"
               style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                fontSize: '14px',
+                fontSize: '20px',
                 color: '#94a3b8',
                 textDecoration: 'none',
                 transition: 'color 0.2s',
               }}
               className="footer-icon-link"
             >
-              <Linkedin size={20} />
-              <span>LinkedIn</span>
+              💼
             </a>
           </div>
         </div>
@@ -235,10 +225,10 @@ export const Footer: React.FC = () => {
           gap: '12px',
         }}
       >
-        <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
+        <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
           &copy; {currentYear} AI Resume Analyzer. All architectural systems operational.
         </p>
-        <p style={{ fontSize: '12px', color: '#64748b', margin: 0 }}>
+        <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
           Built with React & TypeScript
         </p>
       </div>

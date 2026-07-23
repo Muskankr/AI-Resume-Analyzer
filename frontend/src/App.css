@@ -212,25 +212,29 @@
   color: rgba(255, 255, 255, 0.5);
 }
 
-body, 
-.main-card, 
-.navbar, 
-.hero-description, 
-button, 
-input, 
-select, 
+body,
+.main-card,
+.navbar,
+.hero-description,
+button,
+input,
+select,
 textarea {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body, 
-  .main-card, 
-  .navbar, 
-  .hero-description, 
-  button, 
-  input, 
-  select, 
+  body,
+  .main-card,
+  .navbar,
+  .hero-description,
+  button,
+  input,
+  select,
   textarea {
     transition: none !important;
   }
