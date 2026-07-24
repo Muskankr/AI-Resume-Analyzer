@@ -186,9 +186,9 @@
   min-height: 120px;
   padding: 12px;
   border-radius: 8px;
-  border: 1px solid #ccc;
-  background-color: #fff;
-  color: #000;
+  border: 1px solid var(--control-border);
+  background-color: var(--control-bg);
+  color: var(--control-text);
   font-family: inherit;
   resize: vertical;
   transition:
@@ -202,35 +202,33 @@
   border-color: #3b82f6;
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
 }
-[data-theme='dark'] .custom-textarea {
-  background-color: rgba(255, 255, 255, 0.05);
-  color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+.custom-textarea::placeholder {
+  color: var(--muted-text);
 }
 
-[data-theme='dark'] .custom-textarea::placeholder {
-  color: rgba(255, 255, 255, 0.5);
-}
-
-body, 
-.main-card, 
-.navbar, 
-.hero-description, 
-button, 
-input, 
-select, 
+body,
+.main-card,
+.navbar,
+.hero-description,
+button,
+input,
+select,
 textarea {
-  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  body, 
-  .main-card, 
-  .navbar, 
-  .hero-description, 
-  button, 
-  input, 
-  select, 
+  body,
+  .main-card,
+  .navbar,
+  .hero-description,
+  button,
+  input,
+  select,
   textarea {
     transition: none !important;
   }
