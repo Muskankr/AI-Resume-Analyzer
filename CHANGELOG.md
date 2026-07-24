@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Added quick-switch chips for recently selected career tracks saved in local storage for faster re-selection (#356).
 - Responsive hamburger navigation menu below 1024px with slide-in animation, backdrop overlay, Escape key dismiss, and auto-close on resize (#245).
 - Custom-styled career track dropdown arrow conforming to design theme (#261).
 - Automatic issue keyword auto-labeler GitHub Action workflow (#210).

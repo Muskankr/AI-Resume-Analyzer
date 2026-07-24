@@ -1916,7 +1916,28 @@ input {
   }
 }
 
-/* ── Target Career Track Custom Select (#261) ───────────────── */
+/* ── Target Career Track Custom Select & Chips (#261, #356) ── */
+.recent-track-chip:hover {
+  background-color: rgba(99, 102, 241, 0.15) !important;
+  border-color: rgba(99, 102, 241, 0.4) !important;
+}
+
+[data-theme="light"] .recent-tracks-label {
+  color: #64748b !important;
+}
+
+[data-theme="light"] .recent-track-chip {
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+  color: #334155 !important;
+}
+
+[data-theme="light"] .recent-track-chip.active {
+  background-color: #e0e7ff !important;
+  border-color: #6366f1 !important;
+  color: #4338ca !important;
+}
+
 .custom-select-container {
   position: relative;
   width: 100%;
