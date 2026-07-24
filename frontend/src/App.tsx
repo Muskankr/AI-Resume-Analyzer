@@ -21,28 +21,9 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
+  RefreshCw,
   Target,
   Info,
-
-} from "lucide-react";
-import { Navbar } from "./components/Navbar";
-import EmptyState from "./components/EmptyState";
-import { StepProgress } from "./components/StepProgress";
-import resultScreenshot from "./assets/screenshots/result.png";
-import { OnboardingTour } from "./components/OnboardingTour";
-import { HowItWorks } from "./components/HowItWorks";
-import { CompareVersions } from "./components/CompareVersions/CompareVersions";
-import { SkillChip } from "./components/SkillChip";
-import { SuggestionsSection } from "./components/SuggestionsSection";
-import {
-  analyzeResume,
-  fetchAnalysisHistory,
-  deleteHistoryEntry,
-  clearAnalysisHistory,
-} from "./services/api";
-
-type Theme = "light" | "dark";
-
   HelpCircle,
   X,
 } from 'lucide-react'
@@ -80,7 +61,6 @@ interface UndoState {
 
 const DEFAULT_TITLE = 'AI Resume Analyzer'
 const READY_TITLE = '✅ Analysis Ready — AI Resume Analyzer'
-
 
 function getInitialTheme(): Theme {
   try {
@@ -127,7 +107,6 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
     </div>
   )
 }
-
 
 interface SuggestionCardProps {
   text: string
@@ -298,29 +277,7 @@ function App() {
   const [undoState, setUndoState] = useState<UndoState | null>(null)
   const [showUndoToast, setShowUndoToast] = useState(false)
 
-  // Interactive Checklist State
-  const [addressedSuggestions, setAddressedSuggestions] = useState<number[]>([]);
-
   // Validation States
-
-  const [fileError, setFileError] = useState<string | null>(null);
-  const [roleError, setRoleError] = useState<string | null>(null);
-
-  const [showShortcutHelp, setShowShortcutHelp] = useState(false);
-  const [showBackToTop, setShowBackToTop] = useState(false);
-
-  const [targetRole, setTargetRole] = useState("Frontend Developer");
-  const [matchedSkills, setMatchedSkills] = useState<string[]>([]);
-  const [missingSkills, setMissingSkills] = useState<string[]>([]);
-  const [showAllSkills, setShowAllSkills] = useState(false);
-  const [analysisSource, setAnalysisSource] = useState<"sample" | "upload" | null>(null);
-  const [jobDesc, setJobDesc] = useState("");
-  const [resumeText, setResumeText] = useState<string>("");
-  const [activeFileName, setActiveFileName] = useState("");
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [compareOpen, setCompareOpen] = useState(false);
-
-  let currentStep: 1 | 2 | 3 = 1;
   const [fileError, setFileError] = useState<string | null>(null)
   const [roleError, setRoleError] = useState<string | null>(null)
 
@@ -372,7 +329,6 @@ function App() {
   }
 
   let currentStep: 1 | 2 | 3 = 1
-
   if (loading) {
     currentStep = 2
   } else if (!loading && score !== null) {
@@ -393,54 +349,14 @@ function App() {
     setEntries,
   } = useAnalysisHistory()
 
-
-  // Persistent localStorage key scoped to current session/file
-  const storageKey = `addressed_suggestions_${activeFileName || 'default'}`;
-
-  // Load addressed suggestions from localStorage when current resume changes
-  useEffect(() => {
-    if (activeFileName || suggestions.length > 0) {
-      try {
-        const saved = localStorage.getItem(storageKey);
-        if (saved) {
-          setAddressedSuggestions(JSON.parse(saved));
-        } else {
-          setAddressedSuggestions([]);
-        }
-      } catch {
-        setAddressedSuggestions([]);
-      }
-    }
-  }, [activeFileName, storageKey, suggestions.length]);
-
-  // Sync state changes to localStorage
-  const toggleSuggestion = (index: number) => {
-    setAddressedSuggestions((prev) => {
-      const updated = prev.includes(index)
-        ? prev.filter((i) => i !== index)
-        : [...prev, index];
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(updated));
-      } catch (e) {
-        console.error("Failed to persist addressed suggestions to localStorage", e);
-      }
-      return updated;
-    });
-  };
-
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
-
 
   const handleDeleteEntry = async (id: string) => {
     if (user) {
       try {
-
-        await deleteHistoryEntry(id, user.token);
-
         await axios.delete(`${backendUrl}/api/history/${id}/`, {
           headers: { Authorization: `Bearer ${user.token}` },
         })
-
       } catch (error) {
         console.error('Failed to delete from database', error)
       }
@@ -455,12 +371,9 @@ function App() {
   const handleClearAll = async () => {
     if (user) {
       try {
-
-        await clearAnalysisHistory(user.token);
         await axios.delete(`${backendUrl}/api/history/clear/`, {
           headers: { Authorization: `Bearer ${user.token}` },
         })
-
       } catch (error) {
         console.error('Failed to clear database history', error)
       }
@@ -471,20 +384,6 @@ function App() {
   const fetchDbHistory = useCallback(
     async (token: string) => {
       try {
-
-        const data = await fetchAnalysisHistory(token);
-        const dbEntries: AnalysisEntry[] = data.map((item: any) => ({
-          id: String(item.id),
-          timestamp: new Date(item.created_at).getTime(),
-          score: item.score,
-          skills: item.skills_found,
-          suggestions: item.suggestions,
-          matchedSkills: item.matched_skills,
-          missingSkills: item.missing_skills,
-          targetRole: item.target_role,
-          fileName: item.file_name,
-        }));
-
         const res = await axios.get(`${backendUrl}/api/history/`, {
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -511,7 +410,6 @@ function App() {
             fileName: item.file_name,
           })
         )
-
         const uniqueDbEntries = dbEntries.filter(
           (entry, index, self) =>
             index ===
@@ -522,12 +420,8 @@ function App() {
         /* silently ignore */
       }
     },
-
-    [setEntries]
-  );
     [backendUrl, setEntries]
   )
-
 
   useEffect(() => {
     if (user) fetchDbHistory(user.token)
@@ -557,22 +451,6 @@ function App() {
   }, [])
 
   const resetAnalysis = useCallback(() => {
-
-    setFile(null);
-    setScore(null);
-    setSkills([]);
-    setSuggestions([]);
-    setAddressedSuggestions([]);
-    setMatchedSkills([]);
-    setMissingSkills([]);
-    setResumeText("");
-    setShowAllSkills(false);
-    setAnalysisSource(null);
-    setActiveFileName("");
-    setFileError(null);
-    setRoleError(null);
-  }, []);
-
     if (score !== null || skills.length > 0) {
       setUndoState({
         file,
@@ -684,23 +562,6 @@ function App() {
     url?: string
   ) => {
     try {
-
-      setLoading(true);
-      setAnalysisSource(source);
-      setAddressedSuggestions([]);
-
-      const data = await analyzeResume(fileToAnalyze, targetRole, jobDesc, user?.token);
-
-      setScore(data.score);
-      setSkills(data.skills_found || []);
-      setSuggestions(data.suggestions || []);
-      setMatchedSkills(data.matched_skills || []);
-      setMissingSkills(data.missing_skills || []);
-      setResumeText(data.resume_text || "");
-      setActiveFileName(fileToAnalyze.name);
-
-      setLoading(false);
-
       setLoading(true)
       setAnalysisSource(source)
       setAnalysisProgress(25)
@@ -756,16 +617,15 @@ function App() {
 
       setLoading(false)
 
-
       if (user) {
         await fetchDbHistory(user.token)
       } else {
         addEntry({
-          score: data.score,
-          skills: data.skills_found || [],
-          suggestions: data.suggestions || [],
-          matchedSkills: data.matched_skills || [],
-          missingSkills: data.missing_skills || [],
+          score: res.data.score,
+          skills: res.data.skills_found || [],
+          suggestions: res.data.suggestions || [],
+          matchedSkills: res.data.matched_skills || [],
+          missingSkills: res.data.missing_skills || [],
           targetRole: targetRole,
           fileName: fileName,
         })
@@ -893,8 +753,6 @@ function App() {
     }
   }
 
-
-
   const copySuggestionsToClipboard = () => {
     if (suggestions.length === 0) return
     const plainTextSuggestions = suggestions.map((s: string) => `• ${s}`).join('\n')
@@ -907,7 +765,6 @@ function App() {
       .catch((err) => console.error('Failed to copy text: ', err))
   }
 
-
   const getExportTimestamp = () => {
     const pad = (n: number) => n.toString().padStart(2, '0')
     const d = new Date()
@@ -917,42 +774,6 @@ function App() {
   }
 
   const exportJSON = () => {
-
-    const data = { score, skills, suggestions };
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `resume-analysis-${getExportTimestamp()}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const exportCSV = () => {
-    const escapeCSV = (str: string) => `"${str.replace(/"/g, '""')}"`;
-    const header = "score,skills,suggestions\n";
-    const row = `${score},${escapeCSV(skills.join(","))},${escapeCSV(suggestions.join(","))}\n`;
-    const blob = new Blob([header + row], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `resume-analysis-${getExportTimestamp()}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const selectHistoryEntry = (entry: AnalysisEntry) => {
-    setScore(entry.score);
-    setSkills(entry.skills);
-    setSuggestions(entry.suggestions);
-    setMatchedSkills(entry.matchedSkills);
-    setMissingSkills(entry.missingSkills);
-    setTargetRole(entry.targetRole);
-    setActiveFileName(entry.fileName);
-    setShowAllSkills(false);
-    setHistoryOpen(false);
-  };
-
     const data = { score, skills, suggestions }
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
@@ -1611,22 +1432,6 @@ function App() {
                     )}
                   </section>
 
-
-              {/* Refactored Suggestions Checklist Section */}
-              <SuggestionsSection
-                suggestions={suggestions}
-                addressedSuggestions={addressedSuggestions}
-                theme={theme}
-                onToggleSuggestion={toggleSuggestion}
-                onResetAnalysis={resetAnalysis}
-                exportJSON={exportJSON}
-                exportCSV={exportCSV}
-              />
-            </>
-          )}
-        </div>
-      </div>
-
                   {/* Word Cloud */}
                   <SkillWordCloud skills={skills} />
 
@@ -1808,7 +1613,6 @@ function App() {
                       )}
 
                       <CuratedTips targetRole={targetRole} />
-
 
                       <div style={{ marginTop: '24px', textAlign: 'center' }}>
                         <button
