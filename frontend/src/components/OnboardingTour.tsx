@@ -250,7 +250,7 @@ export const OnboardingTour: React.FC = () => {
           ...tooltipStyle,
           width: '300px',
           backgroundColor: 'var(--bg-card, #1e1e2f)',
-          color: 'var(--text-color, #e2e8f0)',
+          color: 'var(--text-readable-inverse)',
           padding: '20px',
           borderRadius: '12px',
           boxShadow: '0 10px 25px rgba(0, 0, 0, 0.5)',
@@ -280,7 +280,7 @@ export const OnboardingTour: React.FC = () => {
             marginTop: '8px',
           }}
         >
-          <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted-inverse)' }}>
             {currentStep + 1} of {steps.length}
           </span>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -324,7 +324,7 @@ export const OnboardingTour: React.FC = () => {
             style={{
               background: 'transparent',
               border: 'none',
-              color: '#94a3b8',
+              color: 'var(--text-readable-inverse)',
               fontSize: '0.8rem',
               textDecoration: 'underline',
               cursor: 'pointer',

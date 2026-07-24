@@ -52,7 +52,7 @@ self.addEventListener('fetch', (event) => {
                   body { background: #0f0f19; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; text-align: center; }
                   .container { padding: 20px; border: 1px solid rgba(255,255,255,0.08); background: #1e1e2f; border-radius: 12px; max-width: 400px; }
                   h1 { font-size: 24px; margin-bottom: 8px; color: #a5b4fc; }
-                  p { color: #94a3b8; font-size: 14px; line-height: 1.5; }
+                  p { color: #cbd5e1; font-size: 14px; line-height: 1.5; }
                 </style>
               </head>
               <body>

@@ -170,7 +170,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
           style={{
             margin: 0,
             fontSize: 'var(--font-size-sm)',
-            color: '#e2e8f0',
+            color: 'var(--text-readable)',
             lineHeight: '1.6',
           }}
         >
@@ -197,7 +197,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
               <span
                 style={{
                   fontSize: '0.78rem',
-                  color: 'rgba(255, 255, 255, 0.6)',
+                  color: 'var(--text-readable)',
                   fontWeight: '500',
                 }}
               >
@@ -882,7 +882,7 @@ function App() {
                         display: 'block',
                         marginBottom: '12px',
                         fontWeight: '600',
-                        color: '#e2e8f0',
+                        color: 'var(--text-readable)',
                         fontSize: 'var(--font-size-sm)',
                       }}
                     >
@@ -1015,7 +1015,7 @@ function App() {
                             fontWeight: '600',
                             display: 'block',
                             marginBottom: '8px',
-                            color: '#e2e8f0',
+                            color: 'var(--text-readable)',
                             fontSize: '0.85rem',
                           }}
                         >
@@ -1043,7 +1043,7 @@ function App() {
                         <span
                           style={{
                             fontSize: '0.78rem',
-                            color: 'rgba(255,255,255,0.6)',
+                            color: 'var(--text-muted)',
                             marginTop: '6px',
                             display: 'block',
                           }}
@@ -1092,7 +1092,7 @@ function App() {
                           fontWeight: '600',
                           display: 'block',
                           marginBottom: '8px',
-                          color: '#e2e8f0',
+                          color: 'var(--text-readable)',
                         }}
                       >
                         Job Description (Optional)
@@ -1239,7 +1239,7 @@ function App() {
                     <p
                       style={{
                         fontSize: '13px',
-                        opacity: 0.7,
+                        color: 'var(--text-muted)',
                         marginTop: '-8px',
                         wordBreak: 'break-all',
                       }}
@@ -1437,7 +1437,7 @@ function App() {
                       {suggestions.length === 0 ? (
                         <p
                           style={{
-                            color: '#64748b',
+                          color: 'var(--text-readable)',
                             fontStyle: 'italic',
                             fontSize: 'var(--font-size-sm)',
                             textAlign: 'left',
@@ -1518,17 +1518,17 @@ function App() {
           </h5>
 
           <div className="shortcut-row">
-            <span style={{ color: "#94a3b8" }}>Upload Resume</span>
+            <span style={{ color: "var(--text-readable-inverse)" }}>Upload Resume</span>
             <span className="shortcut-key-badge">Alt + U</span>
           </div>
 
           <div className="shortcut-row">
-            <span style={{ color: "#94a3b8" }}>Reset Analysis</span>
+            <span style={{ color: "var(--text-readable-inverse)" }}>Reset Analysis</span>
             <span className="shortcut-key-badge">Alt + R</span>
           </div>
 
           <div className="shortcut-row">
-            <span style={{ color: "#94a3b8" }}>Close Modals / Sidebar</span>
+            <span style={{ color: "var(--text-readable-inverse)" }}>Close Modals / Sidebar</span>
             <span className="shortcut-key-badge">Esc</span>
           </div>
         </div>
@@ -1551,22 +1551,22 @@ function App() {
             ⌨️ Keyboard Quick Actions
           </h5>
           <div className="shortcut-row">
-            <span style={{ color: '#94a3b8' }}>Upload Resume</span>
+            <span style={{ color: 'var(--text-readable-inverse)' }}>Upload Resume</span>
             <span className="shortcut-key-badge">Alt + U</span>
           </div>
           <div className="shortcut-row">
-            <span style={{ color: '#94a3b8' }}>Reset Analysis</span>
+            <span style={{ color: 'var(--text-readable-inverse)' }}>Reset Analysis</span>
             <span className="shortcut-key-badge">Alt + R</span>
           </div>
           <div className="shortcut-row">
-            <span style={{ color: '#94a3b8' }}>Close Modals / Sidebar</span>
+            <span style={{ color: 'var(--text-readable-inverse)' }}>Close Modals / Sidebar</span>
             <span className="shortcut-key-badge">Esc</span>
           </div>
           <p
             style={{
               margin: '12px 0 0 0',
               fontSize: '11px',
-              color: '#64748b',
+              color: 'var(--text-muted-inverse)',
               fontStyle: 'italic',
             }}
           >

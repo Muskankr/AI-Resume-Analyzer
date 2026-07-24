@@ -209,7 +209,7 @@
 }
 
 [data-theme='dark'] .custom-textarea::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted);
 }
 
 body, 

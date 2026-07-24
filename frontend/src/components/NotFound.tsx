@@ -29,7 +29,7 @@ export function NotFound() {
         {/* Using actual existing CSS variables like var(--card-text) */}
         <p
           className="hero-description mb-4"
-          style={{ color: 'var(--card-text)', opacity: 0.8, fontSize: 'var(--font-size-base)' }}
+          style={{ color: 'var(--text-readable)', fontSize: 'var(--font-size-base)' }}
         >
           Oops! It looks like you've navigated off the tracking path. The page you are looking for
           doesn't exist or has been moved.
