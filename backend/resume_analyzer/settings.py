@@ -98,7 +98,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+PASSWORD_RESET_TIMEOUT = 3600
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'

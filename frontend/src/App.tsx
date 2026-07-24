@@ -13,6 +13,7 @@ import AnalysisSkeleton from './components/AnalysisSkeleton/AnalysisSkeleton'
 import { InfoTooltip } from './components/InfoTooltip'
 import { SkillWordCloud } from './components/SkillWordCloud'
 import { TrackMatrix } from './components/TrackMatrix'
+import { ResetPasswordConfirmPage } from './components/ResetPasswordConfirmPage'
 import type { TrackComparisons } from './components/TrackMatrix'
 import {
   FileText,
@@ -855,6 +856,7 @@ function App() {
       />
       <Routes>
         <Route path="/shared/:shareId" element={<SharedResultView />} />
+        <Route path="/reset-password/:uid/:token" element={<ResetPasswordConfirmPage />} />
         <Route
           path="/"
           element={
