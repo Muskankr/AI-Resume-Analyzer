@@ -6,7 +6,7 @@
   --skeleton-border: rgba(255, 255, 255, 0.1);
 }
 
-[data-theme="dark"] {
+[data-theme='dark'] {
   --skeleton-base: rgba(255, 255, 255, 0.04);
   --skeleton-highlight: rgba(255, 255, 255, 0.1);
   --skeleton-border: rgba(255, 255, 255, 0.05);
@@ -21,10 +21,12 @@
 /* Shimmer Animation Base */
 .skeleton-shimmer {
   display: inline-block;
-  background: linear-gradient(90deg,
-      var(--skeleton-base) 25%,
-      var(--skeleton-highlight) 50%,
-      var(--skeleton-base) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--skeleton-base) 25%,
+    var(--skeleton-highlight) 50%,
+    var(--skeleton-base) 75%
+  );
   background-size: 200% 100%;
   animation: skeleton-shimmer-pulse 1.2s infinite linear;
   border-radius: 4px;
