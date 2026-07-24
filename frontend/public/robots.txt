@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://ai-resume-analyzer.vercel.app/sitemap.xml

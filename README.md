@@ -3,9 +3,11 @@
 [![GitHub license](https://img.shields.io/github/license/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=34d399)](https://github.com/Muskankr/AI-Resume-Analyzer/blob/main/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=f43f5e)](https://github.com/Muskankr/AI-Resume-Analyzer/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Muskankr/AI-Resume-Analyzer?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer/commits/main)
-[![Build](https://img.shields.io/github/actions/workflow/status/Muskankr/AI-Resume-Analyzer/ci.yml?style=for-the-badge)](...)
-[![GitHub stars](https://img.shields.io/github/stars/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=fbbf24)](https://github.com/Muskankr/AI-Resume-Analyzer/stargazers)
-![Forks](https://img.shields.io/github/forks/Muskankr/AI-Resume-Analyzer?style=for-the-badge)
+[![Build](https://img.shields.io/github/actions/workflow/status/Muskankr/AI-Resume-Analyzer/ci.yml?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer/actions)
+[![Backend Coverage](https://img.shields.io/badge/Backend%20Coverage-94%25-brightgreen?style=for-the-badge&logo=python)](https://github.com/Muskankr/AI-Resume-Analyzer)
+[![Frontend Coverage](https://img.shields.io/badge/Frontend%20Coverage-80%25-brightgreen?style=for-the-badge&logo=vitest)](https://github.com/Muskankr/AI-Resume-Analyzer)
+[![GitHub stars](https://img.shields.io/badge/stars-ECSoC'26-fbbf24?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=34d399)](https://github.com/Muskankr/AI-Resume-Analyzer/network/members)
 [![GitHub contributors](https://img.shields.io/github/contributors/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=818cf8)](https://github.com/Muskankr/AI-Resume-Analyzer/graphs/contributors)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge&color=38bdf8)](https://github.com/Muskankr/AI-Resume-Analyzer/pulls)
 [![ECSoC'26](https://img.shields.io/badge/Program-ECSoC'26-orange?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer)
@@ -32,9 +34,9 @@
 ![PDFPlumber](https://img.shields.io/badge/PDFPlumber-PDF_Parser-orange?style=for-the-badge)
 ![CORS](https://img.shields.io/badge/django--cors--headers-CORS-green?style=for-the-badge)
 
-<p align="center">
+<p align="center>
   <a href="#key-features">Key Features</a> •
-  <a href="#project-preview">Project Preview</a> •
+  <a href="#project-preview">Project Preview</a> •pm tun
   <a href="#architecture--data-flow">Architecture</a> •
   <a href="#tech-stack">Tech Stack</a> •
   <a href="#installation--setup">Installation & Setup</a> •
@@ -282,6 +284,46 @@ For local development, you do **not** need to set the Sentry DSNs.
 
 ---
 
+### Testing & Coverage Setup
+
+Test suites and coverage reports are wired into the project setup for both backend and frontend submodules.
+
+#### Root Workspace Commands
+
+```bash
+# Run test coverage for both Frontend and Backend
+npm run test:coverage
+
+# Run Frontend tests with Vitest coverage
+npm run test:coverage:frontend
+
+# Run Backend tests with Coverage.py
+npm run test:coverage:backend
+```
+
+#### Backend Coverage (Django + Coverage.py)
+
+```bash
+cd backend
+coverage run manage.py test analyzer
+coverage report
+```
+
+* **Coverage Configuration**: Configured in [`backend/.coveragerc`](backend/.coveragerc)
+* **Minimum Threshold**: **60%** line coverage.
+
+#### Frontend Coverage (React + Vitest)
+
+```bash
+cd frontend
+npm run test:coverage
+```
+
+* **Coverage Configuration**: Configured in [`frontend/vite.config.ts`](frontend/vite.config.ts)
+* **Minimum Threshold**: **50%** across lines, functions, branches, and statements.
+
+---
+
 ## API Reference
 
 ### Parse Resume File
@@ -340,6 +382,28 @@ When the limit is exceeded, the API returns:
 
 ---
 
+## Security Configuration & Headers
+
+Standard security headers are configured for both the frontend (client) and backend (server) environments to mitigate common vulnerabilities:
+
+### Configured Headers
+
+1. **Content-Security-Policy (CSP):** Limits the resources (scripts, styles, connections) the browser is allowed to load.
+   - *Client:* Allows `'self'` resources, inline scripts/styles for React/Bootstrap, and local/production backend API connections.
+   - *Server (API):* Uses a strict `default-src 'none';` for JSON API responses, and standard self-hosting for Django admin.
+2. **X-Frame-Options (`DENY`):** Prevents the app from being embedded in `<iframe>` tags, mitigating Clickjacking attacks.
+3. **X-Content-Type-Options (`nosniff`):** Disables MIME-type sniffing to prevent MIME-based attacks.
+4. **Referrer-Policy (`strict-origin-when-cross-origin`):** Protects privacy by stripping referrer paths when making cross-origin requests.
+
+### Local Development Parity
+
+To ensure parity between local development and production environments, the headers are applied in both locations:
+- **Production (Vercel):** Configured via [vercel.json](file:///e:/ECSOC-26/AI-Resume-Analyzer/frontend/vercel.json) files in the root and frontend directories.
+- **Local Development (Vite):** Preconfigured in [vite.config.ts](file:///e:/ECSOC-26/AI-Resume-Analyzer/frontend/vite.config.ts) to send headers when running the local dev server (`npm run dev`).
+- **Django Backend:** Applied dynamically in all environments via Django settings and a custom middleware in [middleware.py](file:///e:/ECSOC-26/AI-Resume-Analyzer/backend/resume_analyzer/middleware.py).
+
+---
+
 ## Roadmap
 
 - [ ] **DOCX Document Parsing** — Integrate `python-docx` to support Word resume parser pipelines.
@@ -365,6 +429,17 @@ We welcome contributions of all levels under the **ECSoC'26** program!
 4. Push changes to your fork and create a **Pull Request (PR)** targeting the upstream `main` branch.
 
 Please review active issues before creating duplicates, and always link open issues to your Pull Request!
+
+---
+
+## Code Owners
+
+This repository uses a [`CODEOWNERS`](.github/CODEOWNERS) file to automatically request reviews from maintainers whenever a Pull Request is opened.
+
+- The file lives at `.github/CODEOWNERS`.
+- Currently, all files (`*`) are owned by [@Muskankr](https://github.com/Muskankr).
+- When you open a PR, GitHub will automatically add the code owner as a reviewer.
+- As the project grows, ownership can be split by folder (e.g. `/frontend/` → frontend maintainers, `/backend/` → backend maintainers).
 
 ---
 

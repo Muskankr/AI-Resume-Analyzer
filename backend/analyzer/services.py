@@ -1,45 +1,10 @@
-import re
 import os
 import pdfplumber
 from django.contrib.auth import get_user_model
 from .models import ResumeAnalysis
+from .skill_matcher import extract_skills
 
 User = get_user_model()
-
-
-SKILLS = [
-    # Languages — only include ones unlikely to false-match as common words
-    "python", "java", "c++", "javascript", "typescript",
-    "kotlin", "swift", "ruby", "php", "rust",
-
-    # C and single-letter langs need explicit listing but matched carefully
-    "c",
-
-    # Web Frontend
-    "html", "css", "react", "react.js", "angular", "vue", "vue.js",
-    "next.js", "tailwind", "bootstrap", "sass", "webpack",
-
-    # Web Backend
-    "node.js", "express", "express.js", "django", "flask", "fastapi",
-    "spring boot", "laravel",
-
-    # Databases
-    "sql", "mysql", "postgresql", "mongodb", "firebase", "redis",
-    "sqlite", "cassandra", "dynamodb",
-
-    # ML / AI
-    "machine learning", "deep learning", "data analysis",
-    "tensorflow", "keras", "pytorch", "scikit-learn", "opencv",
-    "mediapipe", "lstm", "cnn", "llm", "nlp", "pandas", "numpy",
-    "matplotlib", "seaborn", "huggingface",
-
-    # Cloud & DevOps
-    "aws", "azure", "gcp", "docker", "kubernetes", "terraform", "linux",
-
-    # Tools
-    "git", "github", "postman", "jupyter", "vs code", "excel",
-]
-
 
 ROLE_SKILLS = {
     "Frontend Developer": [
@@ -59,8 +24,15 @@ ROLE_SKILLS = {
     ],
 }
 
+PIPELINE_STAGES = [
+    {"stage": "extracting", "label": "Extracting text from document", "percent": 25},
+    {"stage": "matching", "label": "Detecting & matching skills", "percent": 60},
+    {"stage": "scoring", "label": "Generating ATS score & recommendations", "percent": 90},
+    {"stage": "done", "label": "Analysis complete", "percent": 100},
+]
 
-def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None):
+
+def analyze_resume(file_path, target_role, file_name="resume.pdf",user_id=None,job_description=None):
 
     text = ""
 
@@ -76,13 +48,7 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None)
             os.remove(file_path)
 
     raw_text = text
-    text = text.lower()
-
-    def skill_in_text(skill, text):
-        escaped = re.escape(skill)
-        return bool(re.search(rf'(?<![\w]){escaped}(?![\w])', text, re.IGNORECASE))
-
-    detected = [skill for skill in SKILLS if skill_in_text(skill, text)]
+    detected = extract_skills(text)
 
     matched = []
     missing = []
@@ -106,25 +72,60 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None)
         for skill in missing
     ]
 
+    analysis_id = None
+
     if user_id:
         try:
             user = User.objects.get(id=user_id)
 
-            ResumeAnalysis.objects.create(
+            # Every upload is kept as its own version so users can later
+            # compare "before" and "after" edits of the same resume. Using
+            # update_or_create keyed on file_name/role/job_description would
+            # silently overwrite the previous analysis and destroy the
+            # version history the comparison feature depends on.
+            analysis_record = ResumeAnalysis.objects.create(
                 user=user,
                 file_name=file_name,
+                target_role=target_role,
+                job_description=job_description,
                 score=score,
                 skills_found=detected,
                 suggestions=suggestions,
                 matched_skills=matched,
                 missing_skills=missing,
-                target_role=target_role,
+                resume_text=raw_text,
             )
+            analysis_id = analysis_record.id
 
         except User.DoesNotExist:
             pass
 
+    progress_info = {
+        "current_stage": "done",
+        "percent": 100,
+        "stages": PIPELINE_STAGES,
+    }
+
+    track_comparisons = {}
+    for role, req_skills in ROLE_SKILLS.items():
+        role_matched = [s for s in req_skills if s in detected]
+        role_missing = [s for s in req_skills if s not in detected]
+        role_score = (
+            int(len(role_matched) / len(req_skills) * 100)
+            if req_skills
+            else min(len(detected) * 10, 100)
+        )
+        role_suggestions = [f"Add projects or experience with {s.title()}" for s in role_missing]
+        
+        track_comparisons[role] = {
+            "score": role_score,
+            "matched_skills": role_matched,
+            "missing_skills": role_missing,
+            "suggestions": role_suggestions,
+        }
+
     return {
+        "id": analysis_id,
         "score": score,
         "skills_found": detected,
         "suggestions": suggestions,
@@ -132,4 +133,7 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None)
         "missing_skills": missing,
         "target_role": target_role,
         "resume_text": raw_text,
+        "progress": progress_info,
+        "pipeline_stages": PIPELINE_STAGES,
+        "track_comparisons": track_comparisons,
     }

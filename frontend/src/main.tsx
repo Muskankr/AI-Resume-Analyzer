@@ -4,6 +4,8 @@ import * as Sentry from '@sentry/react'
 import './index.css'
 import App from './App.tsx'
 import 'bootstrap/dist/css/bootstrap.min.css'
+import ErrorBoundary from './components/ErrorBoundary'
+import { BrowserRouter } from 'react-router-dom'
 
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
@@ -36,6 +38,18 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <App />
-  </StrictMode>,
+    <ErrorBoundary>
+      <BrowserRouter>
+        <App />
+      </BrowserRouter>
+    </ErrorBoundary>
+  </StrictMode>
 )
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((reg) => console.log('Service Worker registered successfully:', reg.scope))
+      .catch((err) => console.error('Service Worker registration failed:', err))
+  })
+}

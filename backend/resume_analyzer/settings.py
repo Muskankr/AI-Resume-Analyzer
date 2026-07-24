@@ -46,6 +46,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'resume_analyzer.middleware.ContentSecurityPolicyMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',   # ← Add this line
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -98,7 +99,8 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+PASSWORD_RESET_TIMEOUT = 3600
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -164,3 +166,9 @@ if SENTRY_DSN:
         profiles_sample_rate=1.0,
         before_send=sentry_before_send,
     )
+# Security Headers Configuration (Issue #319)
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+X_FRAME_OPTIONS = 'DENY'
+

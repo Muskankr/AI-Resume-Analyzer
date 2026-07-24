@@ -1,0 +1,26 @@
+[run]
+source = analyzer
+omit =
+    */migrations/*
+    */tests.py
+    */__init__.py
+    manage.py
+    resume_analyzer/*
+
+[report]
+fail_under = 60
+show_missing = True
+precision = 2
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if self.debug:
+    if __name__ == .__main__.:
+    raise NotImplementedError
+    raise ImportError
+
+[html]
+directory = htmlcov
+
+[xml]
+output = coverage.xml

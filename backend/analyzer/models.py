@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+import uuid
 
 
 class Resume(models.Model):
@@ -20,6 +21,9 @@ class ResumeAnalysis(models.Model):
     missing_skills = models.JSONField(default=list)
     target_role = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
+    job_description = models.TextField(blank=True, null=True)
+    resume_text = models.TextField(blank=True, null=True)
+    share_id = models.UUIDField(default=uuid.uuid4, unique=True)
 
     class Meta:
         ordering = ["-created_at"]

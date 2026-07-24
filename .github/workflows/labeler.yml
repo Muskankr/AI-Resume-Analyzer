@@ -1,0 +1,117 @@
+name: Issue Auto-Labeler
+
+on:
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  issues: write
+
+jobs:
+  label:
+    name: Auto-label Issue
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Automatically Label Issue Based on Keywords
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // =========================================================================
+            // ISSUE AUTO-LABELER KEYWORD DICTIONARY
+            // =========================================================================
+            // Below is the complete list of trigger keywords used to auto-label issues:
+            //
+            // 1. FRONTEND:
+            //    - Keywords: frontend, client, react, ui, ux, component, css, bootstrap,
+            //                tailwind, vite, navbar, modal, sidebar, page, button, html, a11y, accessibility
+            //
+            // 2. BACKEND:
+            //    - Keywords: backend, server, django, drf, python, api, endpoint, database,
+            //                db, sqlite, model, serializer, viewset, celery, redis, jwt, pdfplumber
+            //
+            // 3. BUG:
+            //    - Keywords: bug, fix, error, broken, crash, failure, fault, exception,
+            //                invalid, unexpected, patch
+            //
+            // 4. DOCS:
+            //    - Keywords: docs, documentation, readme, changelog, contributing, guide,
+            //                wiki, license, docstring
+            //
+            // 5. ENHANCEMENT:
+            //    - Keywords: feature, feat, enhancement, add, improve, improvement, support,
+            //                option, allow
+            //
+            // 6. TESTING:
+            //    - Keywords: test, testing, coverage, vitest, coverage.py, pytest
+            //
+            // 7. SECURITY:
+            //    - Keywords: security, vulnerability, cve, secret, cors, csrf, xss
+            // =========================================================================
+
+            const issue = context.payload.issue;
+            if (!issue) return;
+
+            const title = (issue.title || '').toLowerCase();
+            const body = (issue.body || '').toLowerCase();
+            const fullContent = `${title} ${body}`;
+
+            // Define label matching rules (regex patterns matching trigger keywords)
+            const labelRules = [
+              {
+                label: 'frontend',
+                pattern: /\b(frontend|client|react|ui|ux|component|css|bootstrap|tailwind|vite|navbar|modal|sidebar|page|button|html|a11y|accessibility)\b/i,
+              },
+              {
+                label: 'backend',
+                pattern: /\b(backend|server|django|drf|python|api|endpoint|database|db|sqlite|model|serializer|viewset|celery|redis|jwt|pdfplumber)\b/i,
+              },
+              {
+                label: 'bug',
+                pattern: /\b(bug|fix|error|broken|crash|failure|fault|exception|invalid|unexpected|patch)\b/i,
+              },
+              {
+                label: 'docs',
+                pattern: /\b(docs|documentation|readme|changelog|contributing|guide|wiki|license|docstring)\b/i,
+              },
+              {
+                label: 'enhancement',
+                pattern: /\b(feature|feat|enhancement|add|improve|improvement|support|option|allow)\b/i,
+              },
+              {
+                label: 'testing',
+                pattern: /\b(test|testing|coverage|vitest|coverage\.py|pytest)\b/i,
+              },
+              {
+                label: 'security',
+                pattern: /\b(security|vulnerability|cve|secret|cors|csrf|xss)\b/i,
+              },
+            ];
+
+            // Determine which labels match the issue content
+            const labelsToAdd = labelRules
+              .filter(rule => rule.pattern.test(fullContent))
+              .map(rule => rule.label);
+
+            if (labelsToAdd.length === 0) {
+              console.log('No matching keyword labels found for this issue.');
+              return;
+            }
+
+            // Get existing label names on the issue to avoid duplicates
+            const existingLabels = issue.labels ? issue.labels.map(l => l.name) : [];
+            const newLabels = labelsToAdd.filter(l => !existingLabels.includes(l));
+
+            if (newLabels.length === 0) {
+              console.log('All matching labels are already present on the issue.');
+              return;
+            }
+
+            console.log(`Adding labels to issue #${issue.number}: ${newLabels.join(', ')}`);
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              labels: newLabels,
+            });
