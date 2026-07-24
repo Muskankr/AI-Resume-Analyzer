@@ -1278,7 +1278,62 @@ function App() {
                         </p>
                       )}
                     </div>
-                  </section>
+
+                    {/* STEP 3: Action Buttons */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '12px',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                      }}
+                      className="action-buttons"
+                    >
+                      <button
+                        className="analyze-btn"
+                        onClick={uploadResume}
+                        disabled={loading || retryDisabled}
+                        style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
+                      >
+                        {loading && analysisSource === 'upload' ? (
+                          <>
+                            <Loader2 size={16} className="spin" /> Analyzing Resume...
+                          </>
+                        ) : (
+                          '🚀 Analyze Resume'
+                        )}
+                      </button>
+
+                      <button
+                        className="secondary-btn"
+                        onClick={handleSampleResume}
+                        disabled={loading || retryDisabled}
+                        type="button"
+                        style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
+                      >
+                        {loading && analysisSource === 'sample' ? (
+                          <>
+                            <Loader2 size={15} className="spin" /> Loading...
+                          </>
+                        ) : (
+                          'Try Sample Resume'
+                        )}
+                      </button>
+                    </div>
+                    {retryDisabled && retryAfter !== null && (
+                      <p
+                        style={{
+                          color: '#ef4444',
+                          marginTop: '10px',
+                          fontWeight: 600,
+                          textAlign: 'center',
+                        }}
+                      >
+                        Too many requests. Please wait {retryAfter}s before trying again.
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
