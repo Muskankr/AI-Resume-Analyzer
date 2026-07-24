@@ -1821,6 +1821,24 @@ input {
   padding: 16px 0;
 }
 
+/* Interactive states for our reusable Button component */
+.app-btn-custom:not(:disabled):hover {
+  filter: brightness(1.1);
+  transform: translateY(-1px);
+}
+
+.app-btn-custom:not(:disabled):active {
+  transform: translateY(0);
+}
+
+.app-btn-custom--secondary:hover {
+  color: #fff !important;
+  text-decoration: none !important;
+
+/* Custom Styled Select Dropdown Container */
+.custom-select-container {
+
+
 .wordcloud-fallback-word {
   font-size: var(--text-lg);
   font-weight: 700;

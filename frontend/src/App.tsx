@@ -1,3 +1,19 @@
+
+import React, { useState, useEffect, useCallback } from "react";
+import axios from "axios";
+import "./index.css";
+import { AtsScore } from "./AtsScore";
+import { useAnalysisHistory, type AnalysisEntry } from "./hooks/useAnalysisHistory";
+import { HistorySidebar } from "./HistorySidebar";
+import { useAuth } from "./hooks/useAuth";
+import { AuthModal } from "./AuthModal";
+import { Footer } from "./Footer";
+import AnalysisSkeleton from "./components/AnalysisSkeleton/AnalysisSkeleton";
+import { InfoTooltip } from "./components/InfoTooltip";
+import { Button } from "./components/Button";
+import { Navbar } from "./components/Navbar";
+import EmptyState from "./components/EmptyState";
+import { OnboardingTour } from "./components/OnboardingTour";
 import React, { useState, useEffect, useCallback } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import NotFound from './components/NotFound'
@@ -61,6 +77,8 @@ interface UndoState {
 const DEFAULT_TITLE = 'AI Resume Analyzer'
 const READY_TITLE = '✅ Analysis Ready — AI Resume Analyzer'
 
+
+type Theme = "light" | "dark";
 function getInitialTheme(): Theme {
   try {
     const saved = localStorage.getItem('theme')
@@ -813,6 +831,11 @@ function App() {
   }
 
   const handleLogout = () => {
+
+    logout();
+    logout();           
+    clearHistory();
+  };
     logout()
     clearHistory()
   }
@@ -837,13 +860,40 @@ function App() {
         onCompare={() => setCompareOpen(true)}
       />
 
-      {compareOpen && (
+
+      <div className="container mt-5">
+        <div className="main-card text-center">
+          {/* Top Control Bar: Side-by-Side Theme & Auth Buttons */}
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "12px", marginBottom: "24px" }}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={toggleTheme}
+              aria-label="Toggle theme"
+              aria-pressed={theme === "dark"}
+            >
+              {theme === "light" ? "🌙 Dark Mode" : "☀️ Light Mode"}
+            </Button>
+
+            <div className="auth-bar" style={{ margin: 0 }}>
+              {user ? (
+                <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+                  <span className="auth-username" style={{ color: "#fff", fontSize: "var(--font-size-sm)" }}>👤 {user.username}</span>
+                  <Button variant="ghost" onClick={handleLogout}>Logout</Button>
+                </div>
+              ) : (
+                <Button variant="ghost" onClick={() => setShowAuthModal(true)}>🔐 Login / Sign Up</Button>
+              )}
+            </div>
+          </div>      
+          {compareOpen && (
         <CompareVersions
           entries={entries}
           token={user?.token}
           onClose={() => setCompareOpen(false)}
         />
       )}
+
 
       <Navbar
         theme={theme}
@@ -866,6 +916,179 @@ function App() {
                   onClose={() => setShowAuthModal(false)}
                 />
               )}
+
+
+      <div className="container mt-5 px-3"> {/* Added padding safety track */}
+        <div className="main-card text-center mx-auto" style={{ width: "100%", maxWidth: "600px" }}>
+
+          {showAuthModal && (
+            <AuthModal
+              onSignup={signup}
+              onLogin={login}
+              onClose={() => setShowAuthModal(false)}
+            />
+          )}
+          <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
+
+          {/* STEP 1: Role Selector Container */}
+          <div className="mb-5 p-3" style={{ background: "rgba(255, 255, 255, 0.02)", borderRadius: "var(--radius-md)", border: "1px solid rgba(255,255,255,0.05)" }}>
+            <label htmlFor="roleSelect" style={{ display: "block", marginBottom: "8px", fontWeight: "600", color: "#e2e8f0", fontSize: "var(--font-size-sm)" }}>
+              1️⃣ Choose your Target Career Track
+
+          <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
+
+
+          {/* Role Selector Dropdown Container */}
+          <div className="mb-4">
+            <label htmlFor="roleSelect" style={{ marginRight: "10px", fontWeight: "600", color: "#fff" }}>
+
+          {/* Role Selector Container */}
+          <div className="mb-5 p-4" style={{ background: "rgba(255, 255, 255, 0.02)", borderRadius: "var(--radius-lg)", border: "1px solid rgba(255,255,255,0.04)" }}>
+            <label 
+              htmlFor="roleSelect" 
+              style={{ display: "block", marginBottom: "12px", fontWeight: "600", color: "#e2e8f0", fontSize: "var(--font-size-sm)" }}
+<h1 className="mb-4 app-main-title" style={{ fontSize: "calc(1.5rem + 1.5vw)", wordBreak: "break-word" }}>🚀 AI Resume Analyzer</h1>
+          {/* Role Selector Dropdown */}
+          <div className="mb-4 d-flex flex-column align-items-center flex-sm-row justify-content-center role-selector-container" style={{ gap: "8px" }}>
+            <label htmlFor="roleSelect" className="role-select-label" style={{ fontWeight: "600" }}>
+              Target Career Track:
+            </label>
+            <select
+              id="roleSelect"
+              className="role-select-dropdown"
+              value={targetRole}
+              onChange={(e) => setTargetRole(e.target.value)}
+
+              style={{ padding: "6px 12px", borderRadius: "var(--radius-sm)", border: "1px solid #ccc" }}
+
+              style={{ padding: "10px 16px", borderRadius: "var(--radius-sm)", border: "1px solid rgba(255,255,255,0.15)", width: "100%", maxWidth: "320px", background: "#1e1e2f", color: "#fff", fontSize: "var(--font-size-sm)" }}
+
+              style={{ padding: "6px 12px", borderRadius: "6px", width: "100%", maxWidth: "250px" }}
+            >
+              🎯 Target Career Track
+            </label>
+            <div className="custom-select-container">
+              <select
+                id="roleSelect"
+                value={targetRole}
+                onChange={(e) => setTargetRole(e.target.value)}
+                className="custom-select-element"
+              >
+                <option value="Frontend Developer">Frontend Developer</option>
+                <option value="Backend Developer">Backend Developer</option>
+                <option value="Data Analyst">Data Analyst</option>
+              </select>
+            </div>
+          </div>
+
+          {/* STEP 2: Enhanced Upload Container */}
+          <div className="mb-5">
+            <span style={{ display: "block", marginBottom: "12px", fontWeight: "600", color: "#e2e8f0", fontSize: "var(--font-size-sm)" }}>
+              2️⃣ Upload your Document
+            </span>
+            <div className="upload-box mb-3" style={{ padding: "32px 20px", border: "2px dashed var(--upload-border)", borderRadius: "var(--radius-lg)", background: "var(--upload-bg)", transition: "all 0.3s ease" }}>
+              <input
+                type="file"
+                id="fileUpload"
+                hidden
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  if (e.target.files) setFile(e.target.files[0]);
+                }}
+              />
+              <label htmlFor="fileUpload" className="upload-label" style={{ cursor: "pointer", display: "block", fontSize: "var(--font-size-base)" }}>
+                📄 {file ? <strong style={{ color: "#a5b4fc" }}>{file.name}</strong> : "Drag & Drop Resume or Click to Browse"}
+              </label>
+            </div>
+          </div>
+
+
+          <div className="upload-box mb-4">
+          {/* STEP 3: Prominent Call to Action Buttons */}
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px", alignItems: "center", marginTop: "24px" }} className="mb-4">
+          <div className="upload-box mb-3" style={{ width: "100%", maxWidth: "100%" }}>
+            <input
+              type="file"
+              id="fileUpload"
+              hidden
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                if (e.target.files) setFile(e.target.files[0]);
+              }}
+            />
+            <label htmlFor="fileUpload" className="upload-label" style={{ display: "block", wordBreak: "break-all", padding: "15px" }}>
+              📄 {file ? file.name : "Drag & Drop Resume or Click to Upload"}
+            </label>
+          </div>
+
+          {/* Action Blocks: Primary Action stacked above Secondary Link */}
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "8px" }} className="mb-4">
+            <Button
+              variant="primary"
+
+          {/* FIXED: Added responsive flex-wrap and set width boundaries for smaller screens */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
+            <button
+              className="analyze-btn"
+              onClick={uploadResume}
+              disabled={loading}
+              
+              style={{
+                padding: "12px 36px",
+                fontSize: "var(--font-size-base)",
+                fontWeight: "700",
+                letterSpacing: "0.5px",
+                backgroundColor: "#6366f1",
+                color: "#fff",
+                border: "none",
+                borderRadius: "var(--radius-md)",
+                cursor: "pointer",
+                boxShadow: "var(--shadow-card)",
+                transition: "transform 0.2s ease, background-color 0.2s ease",
+                width: "100%",
+                maxWidth: "280px"
+              }}
+            >
+              {loading && analysisSource === "upload" ? "⏳ Processing..." : "🚀 Analyze Resume"}
+              style={{ minHeight: "44px", flex: "1 1 200px", maxWidth: "100%" }}
+            >
+              {loading && analysisSource === "upload" ? "⏳ Extracting and analyzing resume text..." : "🚀 Analyze Resume"}
+            </Button>
+            
+            <Button
+              variant="secondary"
+              {loading && analysisSource === "upload" ? "⏳ Extracting..." : "🚀 Analyze Resume"}
+            </button>
+            
+            <button
+              className="secondary-btn"
+              onClick={handleSampleResume}
+              disabled={loading}
+              type="button"
+              
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "var(--btn-secondary-text)",
+                fontSize: "var(--font-size-sm)",
+                textDecoration: "underline",
+                cursor: "pointer",
+                marginTop: "4px"
+              }}
+            >
+              {loading && analysisSource === "sample" ? "⏳ Loading..." : "Or try with a sample resume"}
+              style={{ minHeight: "44px", flex: "1 1 200px", maxWidth: "100%" }}
+            >
+              {loading && analysisSource === "sample" ? "⏳ Loading Sample..." : "Or try with a sample resume"}
+            </Button>
+              {loading && analysisSource === "sample" ? "⏳ Loading..." : "Try Sample Resume"}
+            </button>
+          </div>
+
+
+          {/* Loading skeleton — shown while the resume is being analyzed */}
+          {loading && <AnalysisSkeleton />}
+          {score === null && !loading && (
+  <EmptyState />
+)}
 
               <div className={score === null && !loading ? 'hero-container' : ''}>
                 <div className={score === null && !loading ? 'hero-left' : ''}>
@@ -922,8 +1145,66 @@ function App() {
 
                   {(loading || score !== null) && <StepProgress currentStep={currentStep} />}
 
+
+
+                  {/* STEP 1: Target Career Track */}
+                  <div
+                    className="mb-4 p-4 role-selector-container"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      borderRadius: 'var(--radius-lg)',
+                      border: '1px solid rgba(255,255,255,0.04)',
+                    }}
+                  >
+                    <label
+                      htmlFor="roleSelect"
+                      style={{
+                        display: 'block',
+                        marginBottom: '12px',
+                        fontWeight: '600',
+                        color: '#e2e8f0',
+                        fontSize: 'var(--font-size-sm)',
+                      }}
+                    >
+                      🎯 Target Career Track
+                    </label>
+                    <div className="custom-select-container">
+                      <select
+                        id="roleSelect"
+                        value={targetRole}
+                        onChange={(e) => {
+                          setTargetRole(e.target.value)
+                          if (e.target.value.trim() !== '') setRoleError(null)
+                        }}
+                        className="custom-select-element"
+                      >
+                        <option value="Frontend Developer">Frontend Developer</option>
+                        <option value="Backend Developer">Backend Developer</option>
+                        <option value="Data Analyst">Data Analyst</option>
+                      </select>
+                    </div>
+                    {roleError && (
+                      <div
+                        style={{
+                          color: '#ef4444',
+                          fontSize: '13px',
+                          marginTop: '8px',
+                          fontWeight: '500',
+                          textAlign: 'center',
+                        }}
+                      >
+                        ⚠️ {roleError}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* STEP 2: Upload File / Link & Job Description */}
+                  <div className="mb-5">
+                    {/* Mode Switcher Tabs */}
+
                   <section className="analyzer-form-section" aria-label="Resume Analyzer Form">
                     {/* STEP 1: Target Career Track */}
+
                     <div
                       className="mb-4 p-4 role-selector-container"
                       style={{
