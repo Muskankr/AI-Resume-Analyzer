@@ -43,8 +43,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [closeMenu])
 
   return (
-    <header className="navbar">
-      <div style={{ color: theme === 'light' ? '#000000' : '#ffffff' }}>🚀 AI Resume Analyzer</div>
+    <nav className="navbar">
+      <div className={`navbar-brand ${theme === 'dark' ? 'text-white' : 'text-black'}`}>🚀 AI Resume Analyzer </div>
 
       <button
         className="navbar-toggle"
@@ -108,7 +108,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="navbar-actions">
           <button
             type="button"
-            className="app-btn app-btn--secondary theme-toggle-btn theme-toggle-navbar"
+            className={`app-btn app-btn--secondary theme-toggle-btn theme-toggle-navbar pt-[15px] ${theme === 'dark' ? 'text-white' : 'text-black'}`}
             onClick={() => {
               toggleTheme()
               closeMenu()
