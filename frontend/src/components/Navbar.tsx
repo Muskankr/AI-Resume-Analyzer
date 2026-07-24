@@ -43,8 +43,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, [closeMenu])
 
   return (
-    <nav className="navbar">
-      <div className="navbar-brand">🚀 AI Resume Analyzer</div>
+    <header className="navbar">
+      <div style={{ color: theme === 'light' ? '#000000' : '#ffffff' }}>🚀 AI Resume Analyzer</div>
 
       <button
         className="navbar-toggle"
@@ -57,12 +57,15 @@ export const Navbar: React.FC<NavbarProps> = ({
       </button>
 
       <div
-        className={`navbar-backdrop${mobileOpen ? ' visible' : ''}`}
-        onClick={closeMenu}
-        aria-hidden="true"
+        className={`navbar-backdrop ${mobileOpen ? 'visible' : ''}`}
+        onClick={() => setMobileOpen(false)}
       />
 
-      <div id="navbar-menu" className={`navbar-menu${mobileOpen ? ' mobile-open' : ''}`}>
+      <nav
+        id="navbar-menu"
+        className={`navbar-menu ${mobileOpen ? 'mobile-open' : ''}`}
+        aria-label="Main Navigation"
+      >
         <div className="navbar-links">
           <a
             href="#"
@@ -141,7 +144,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             </button>
           )}
         </div>
-      </div>
-    </nav>
+      </nav>
+    </header>
   )
 }

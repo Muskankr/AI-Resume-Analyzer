@@ -10,7 +10,7 @@ export interface AuthUser {
 
 function loadUser(): AuthUser | null {
   try {
-    const raw = localStorage.getItem('auth_user')
+    const raw = localStorage.getItem('auth_user') || sessionStorage.getItem('auth_user')
     return raw ? JSON.parse(raw) : null
   } catch {
     return null
@@ -20,11 +20,21 @@ function loadUser(): AuthUser | null {
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(loadUser)
 
-  const persist = (u: AuthUser | null) => {
+    const persist = (u: AuthUser | null, remember: boolean = true) => {
     setUser(u)
     try {
-      if (u) localStorage.setItem('auth_user', JSON.stringify(u))
-      else localStorage.removeItem('auth_user')
+      if (u) {
+        if (remember) {
+          localStorage.setItem('auth_user', JSON.stringify(u))
+          sessionStorage.removeItem('auth_user')
+        } else {
+          sessionStorage.setItem('auth_user', JSON.stringify(u))
+          localStorage.removeItem('auth_user')
+        }
+      } else {
+        localStorage.removeItem('auth_user')
+        sessionStorage.removeItem('auth_user')
+      }
     } catch {
       /* ignore */
     }
@@ -33,12 +43,12 @@ export function useAuth() {
   const signup = useCallback(async (username: string, password: string) => {
     await axios.post(`${BACKEND}/api/auth/signup/`, { username, password })
     const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password })
-    persist({ username, token: res.data.access })
+    persist({ username, token: res.data.access }, true)
   }, [])
 
-  const login = useCallback(async (username: string, password: string) => {
+  const login = useCallback(async (username: string, password: string, rememberMe: boolean = true) => {
     const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password })
-    persist({ username, token: res.data.access })
+    persist({ username, token: res.data.access }, rememberMe)
   }, [])
 
   const logout = useCallback(() => persist(null), [])
