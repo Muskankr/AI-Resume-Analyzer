@@ -292,6 +292,31 @@ function App() {
   const [showExportDropdown, setShowExportDropdown] = useState(false)
 
   const [targetRole, setTargetRole] = useState('Frontend Developer')
+  const [recentRoles, setRecentRoles] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('recent_career_tracks')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed)) return parsed.slice(0, 3)
+      }
+    } catch (e) {
+      // ignore JSON parse errors
+    }
+    return []
+  })
+
+  const updateRecentRoles = (newRole: string) => {
+    if (!newRole || !newRole.trim()) return
+    setRecentRoles((prev) => {
+      const updated = [newRole, ...prev.filter((r) => r !== newRole)].slice(0, 3)
+      try {
+        localStorage.setItem('recent_career_tracks', JSON.stringify(updated))
+      } catch (e) {
+        // ignore storage errors
+      }
+      return updated
+    })
+  }
   const [matchedSkills, setMatchedSkills] = useState<string[]>([])
   const [missingSkills, setMissingSkills] = useState<string[]>([])
   const [showAllSkills, setShowAllSkills] = useState(false)
@@ -888,13 +913,51 @@ function App() {
                     >
                       🎯 Target Career Track
                     </label>
+                    {recentRoles.length > 0 && (
+                      <div className="recent-tracks-container" style={{ marginBottom: '10px' }}>
+                        <span className="recent-tracks-label" style={{ fontSize: '12px', color: '#94a3b8', marginRight: '8px' }}>
+                          Recent:
+                        </span>
+                        <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {recentRoles.map((role) => (
+                            <button
+                              key={role}
+                              type="button"
+                              className={`recent-track-chip ${targetRole === role ? 'active' : ''}`}
+                              onClick={() => {
+                                setTargetRole(role)
+                                updateRecentRoles(role)
+                                setRoleError(null)
+                              }}
+                              style={{
+                                padding: '4px 10px',
+                                borderRadius: '14px',
+                                fontSize: '12px',
+                                fontWeight: 500,
+                                cursor: 'pointer',
+                                border: targetRole === role ? '1px solid var(--accent-color, #6366f1)' : '1px solid rgba(255, 255, 255, 0.15)',
+                                backgroundColor: targetRole === role ? 'rgba(99, 102, 241, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                                color: targetRole === role ? '#a5b4fc' : '#cbd5e1',
+                                transition: 'all 0.2s ease',
+                              }}
+                            >
+                              {role}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="custom-select-container">
                       <select
                         id="roleSelect"
                         value={targetRole}
                         onChange={(e) => {
-                          setTargetRole(e.target.value)
-                          if (e.target.value.trim() !== '') setRoleError(null)
+                          const val = e.target.value
+                          setTargetRole(val)
+                          if (val.trim() !== '') {
+                            updateRecentRoles(val)
+                            setRoleError(null)
+                          }
                         }}
                         className="custom-select-element"
                       >
