@@ -2,8 +2,10 @@ import React from 'react'
 import { FiUploadCloud, FiCpu, FiCheckCircle } from 'react-icons/fi'
 
 const steps = [
+  
   {
     icon: <FiUploadCloud size={36} />,
+    color: '#eeeff5',
     title: '1. Upload',
     description: 'Upload your resume in PDF format.',
   },
@@ -28,7 +30,7 @@ export const HowItWorks: React.FC = () => {
         borderTop: '1px solid var(--border-color, rgba(128, 128, 128, 0.2))',
       }}
     >
-      <h3 style={{ marginBottom: '1.5rem', fontSize: '1.2rem', fontWeight: '600' }}>
+      <h3 style={{ color: 'var(--text-primary)', textAlign: 'center', marginBottom: '2rem' }}>
         How It Works
       </h3>
 
@@ -57,7 +59,6 @@ export const HowItWorks: React.FC = () => {
               style={{
                 margin: 0,
                 fontSize: 'var(--font-size-sm, 0.875rem)',
-                opacity: 0.8,
                 lineHeight: '1.5',
               }}
             >

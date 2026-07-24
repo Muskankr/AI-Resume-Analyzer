@@ -1,25 +1,25 @@
-import React from 'react';
-import './ProgressBar.css';
+import React from 'react'
+import './ProgressBar.css'
 
 export interface PipelineStage {
-  stage: string;
-  label: string;
-  percent: number;
+  stage: string
+  label: string
+  percent: number
 }
 
 export interface ProgressBarProps {
-  progress?: number; // 0 to 100
-  stageLabel?: string;
-  stages?: PipelineStage[];
-  isIndeterminate?: boolean;
+  progress?: number // 0 to 100
+  stageLabel?: string
+  stages?: PipelineStage[]
+  isIndeterminate?: boolean
 }
 
-export const DEFAULT_PIPELINE_STAGES: PipelineStage[] = [
+const DEFAULT_PIPELINE_STAGES: PipelineStage[] = [
   { stage: 'extracting', label: 'Extracting text from document', percent: 25 },
   { stage: 'matching', label: 'Detecting & matching skills', percent: 60 },
   { stage: 'scoring', label: 'Generating ATS score & suggestions', percent: 90 },
   { stage: 'done', label: 'Analysis complete', percent: 100 },
-];
+]
 
 export const ProgressBar: React.FC<ProgressBarProps> = ({
   progress = 0,
@@ -27,22 +27,20 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
   stages = DEFAULT_PIPELINE_STAGES,
   isIndeterminate = false,
 }) => {
-  const currentPercent = Math.min(100, Math.max(0, progress));
+  const currentPercent = Math.min(100, Math.max(0, progress))
 
   // Determine active stage label
   const activeStage = stages.reduce<PipelineStage | null>((acc, stage) => {
-    if (currentPercent >= stage.percent) return stage;
-    return acc;
-  }, stages[0] || null);
+    if (currentPercent >= stage.percent) return stage
+    return acc
+  }, stages[0] || null)
 
-  const displayLabel = stageLabel || (activeStage ? activeStage.label : 'Analyzing resume...');
+  const displayLabel = stageLabel || (activeStage ? activeStage.label : 'Analyzing resume...')
 
   return (
     <div className="determinate-progress-wrapper my-4" role="status" aria-live="polite">
       <div className="progress-header">
-        <span className="progress-stage-label">
-          {displayLabel}
-        </span>
+        <span className="progress-stage-label">{displayLabel}</span>
         <span className="progress-percentage-text">
           {isIndeterminate ? 'Analyzing...' : `${Math.round(currentPercent)}%`}
         </span>
@@ -66,7 +64,7 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
       {!isIndeterminate && stages && stages.length > 0 && (
         <div className="progress-stages-stepper mt-3">
           {stages.map((stg) => {
-            const isCompleted = currentPercent >= stg.percent;
+            const isCompleted = currentPercent >= stg.percent
             return (
               <div
                 key={stg.stage}
@@ -75,12 +73,12 @@ export const ProgressBar: React.FC<ProgressBarProps> = ({
                 <div className="checkpoint-dot" />
                 <span className="checkpoint-label">{stg.percent}%</span>
               </div>
-            );
+            )
           })}
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default ProgressBar;
+export default ProgressBar
