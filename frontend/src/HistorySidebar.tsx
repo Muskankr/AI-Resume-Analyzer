@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { X, ClipboardList, BookOpen, Trash2, GitCompare, Loader2 } from 'lucide-react'
+import { X, ClipboardList, BookOpen, Trash2, GitCompare } from 'lucide-react'
 import type { AnalysisEntry } from './hooks/useAnalysisHistory'
 const PAGE_SIZE = 10
 
@@ -207,13 +207,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                     opacity: isLoadingMore ? 0.7 : 1,
                   }}
                 >
-                  {isLoadingMore ? (
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                      <Loader2 size={14} className="spin" /> Loading...
-                    </span>
-                  ) : (
-                    'Load More'
-                  )}
+                  {isLoadingMore ? 'Loading...' : 'Load More'}
                 </button>
               </div>
             )}
