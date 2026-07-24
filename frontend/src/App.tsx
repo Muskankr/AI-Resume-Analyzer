@@ -28,6 +28,8 @@ import { Footer } from './Footer'
 import AnalysisSkeleton from './components/AnalysisSkeleton/AnalysisSkeleton'
 import { InfoTooltip } from './components/InfoTooltip'
 import { SkillWordCloud } from './components/SkillWordCloud'
+import { TrackMatrix } from './components/TrackMatrix'
+import type { TrackComparisons } from './components/TrackMatrix'
 import {
   FileText,
   Loader2,
@@ -40,9 +42,9 @@ import {
   HelpCircle,
   X,
 } from 'lucide-react'
-
 import { Navbar } from './components/Navbar'
 import EmptyState from './components/EmptyState'
+import { CuratedTips } from './components/CuratedTips'
 import { StepProgress } from './components/StepProgress'
 import { OnboardingTour } from './components/OnboardingTour'
 import { HowItWorks } from './components/HowItWorks'
@@ -54,11 +56,27 @@ import {
 } from './utils/notification'
 import { ProgressBar } from './components/ProgressBar/ProgressBar'
 import { UndoToast } from './components/UndoToast/UndoToast'
-
+import { FilePreview } from './components/FilePreview/FilePreview'
+import { ShareResult } from './components/ShareResult'
+import { SharedResultView } from './SharedResultView'
 type Theme = 'light' | 'dark'
+
+interface UndoState {
+  file: File | null
+  score: number | null
+  skills: string[]
+  suggestions: string[]
+  matchedSkills: string[]   
+  missingSkills: string[]
+  resumeText: string
+  analysisSource: 'sample' | 'upload' | null
+  activeFileName: string
+  targetRole: string
+}
 
 const DEFAULT_TITLE = 'AI Resume Analyzer'
 const READY_TITLE = '✅ Analysis Ready — AI Resume Analyzer'
+
 
 type Theme = "light" | "dark";
 function getInitialTheme(): Theme {
@@ -112,29 +130,6 @@ interface SuggestionCardProps {
   index: number
   backendUrl?: string
 }
-interface UndoState {
-  file: File | null
-  score: number | null
-  skills: string[]
-  suggestions: string[]
-  matchedSkills: string[]
-  missingSkills: string[]
-  resumeText: string
-  analysisSource: 'sample' | 'upload' | null
-  activeFileName: string
-  targetRole: string
-}
-interface HistoryApiItem {
-  id: number
-  created_at: string
-  score: number
-  skills_found: string[]
-  suggestions: string[]
-  matched_skills: string[]
-  missing_skills: string[]
-  target_role: string
-  file_name: string
-}
 
 const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl = '' }) => {
   const [copied, setCopied] = React.useState(false)
@@ -174,7 +169,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
             style={{
               fontSize: '12px',
               fontWeight: '700',
-              color: '#a5b4fc',
+              color: 'var(--color-primary)',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
             }}
@@ -186,7 +181,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
           style={{
             margin: 0,
             fontSize: 'var(--font-size-sm)',
-            color: '#e2e8f0',
+            color: 'var(--body-text)',
             lineHeight: '1.6',
           }}
         >
@@ -201,7 +196,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
           justifyContent: 'space-between',
           marginTop: '16px',
           paddingTop: '12px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          borderTop: '1px solid var(--surface-border)',
           gap: '8px',
           flexWrap: 'wrap',
         }}
@@ -213,7 +208,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
               <span
                 style={{
                   fontSize: '0.78rem',
-                  color: 'rgba(255, 255, 255, 0.6)',
+                  color: 'var(--muted-text)',
                   fontWeight: '500',
                 }}
               >
@@ -226,12 +221,12 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
                 title="Helpful"
                 aria-label="Vote helpful"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  background: 'var(--surface-soft-bg)',
+                  border: '1px solid var(--surface-border)',
                   borderRadius: 'var(--radius-sm)',
                   padding: '4px 8px',
                   cursor: 'pointer',
-                  color: '#fff',
+                  color: 'var(--body-text)',
                   fontSize: '0.85rem',
                   transition: 'all 0.2s ease',
                 }}
@@ -245,12 +240,12 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
                 title="Not helpful"
                 aria-label="Vote not helpful"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  background: 'var(--surface-soft-bg)',
+                  border: '1px solid var(--surface-border)',
                   borderRadius: 'var(--radius-sm)',
                   padding: '4px 8px',
                   cursor: 'pointer',
-                  color: '#fff',
+                  color: 'var(--body-text)',
                   fontSize: '0.85rem',
                   transition: 'all 0.2s ease',
                 }}
@@ -313,6 +308,7 @@ function App() {
   const [showAllSkills, setShowAllSkills] = useState(false)
   const [copied, setCopied] = useState(false)
   const [analysisSource, setAnalysisSource] = useState<'sample' | 'upload' | null>(null)
+  const [shareId, setShareId] = useState<string | null>(null)
   const [jobDesc, setJobDesc] = useState('')
   const [resumeText, setResumeText] = useState<string>('')
   const [activeFileName, setActiveFileName] = useState('')
@@ -321,8 +317,33 @@ function App() {
   const [analysisProgress, setAnalysisProgress] = useState<number>(0)
   const [analysisStageLabel, setAnalysisStageLabel] = useState<string>('')
   const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file')
+  const [trackComparisons, setTrackComparisons] = useState<TrackComparisons | null>(null)
+  const [activeTab, setActiveTab] = useState<'detailed' | 'matrix'>('detailed')
   const [resumeUrl, setResumeUrl] = useState<string>('')
   const [urlError, setUrlError] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      setFile(e.dataTransfer.files[0])
+      setFileError(null)
+    }
+  }
 
   let currentStep: 1 | 2 | 3 = 1
   if (loading) {
@@ -361,7 +382,7 @@ function App() {
   }
 
   const MAX_CHARS = 2000
-  const isClose = jobDesc.length >= MAX_CHARS * 0.8
+  const isClose = jobDesc.length >= MAX_CHARS * 0.9
   const isOver = jobDesc.length > MAX_CHARS
 
   const handleClearAll = async () => {
@@ -383,25 +404,37 @@ function App() {
         const res = await axios.get(`${backendUrl}/api/history/`, {
           headers: { Authorization: `Bearer ${token}` },
         })
-        const dbEntries: AnalysisEntry[] = res.data.map((item: HistoryApiItem) => ({
-          id: String(item.id),
-          timestamp: new Date(item.created_at).getTime(),
-          score: item.score,
-          skills: item.skills_found,
-          suggestions: item.suggestions,
-          matchedSkills: item.matched_skills,
-          missingSkills: item.missing_skills,
-          targetRole: item.target_role,
-          fileName: item.file_name,
-        }))
+        const dbEntries: AnalysisEntry[] = res.data.map(
+          (item: {
+            id: string | number
+            created_at: string | number
+            score: number
+            skills_found: string[]
+            suggestions: string[]
+            matched_skills: string[]
+            missing_skills: string[]
+            target_role: string
+            file_name: string
+          }) => ({
+            id: String(item.id),
+            timestamp: new Date(item.created_at).getTime(),
+            score: item.score,
+            skills: item.skills_found,
+            suggestions: item.suggestions,
+            matchedSkills: item.matched_skills,
+            missingSkills: item.missing_skills,
+            targetRole: item.target_role,
+            fileName: item.file_name,
+          })
+        )
         const uniqueDbEntries = dbEntries.filter(
           (entry, index, self) =>
             index ===
             self.findIndex((t) => t.fileName === entry.fileName && t.score === entry.score)
         )
         setEntries(uniqueDbEntries)
-      } catch (error) {
-        console.debug('Failed to fetch history', error)
+      } catch {
+        /* silently ignore */
       }
     },
     [backendUrl, setEntries]
@@ -413,11 +446,10 @@ function App() {
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
-
     try {
       localStorage.setItem('theme', theme)
-    } catch (error) {
-      console.debug('Unable to save theme', error)
+    } catch {
+      // Ignore localStorage access restrictions in private browsing modes
     }
   }, [theme])
 
@@ -462,6 +494,7 @@ function App() {
     setShowAllSkills(false)
     setCopied(false)
     setAnalysisSource(null)
+    setShareId(null)
     setActiveFileName('')
     setShowExportDropdown(false)
     setFileError(null)
@@ -588,6 +621,9 @@ function App() {
       setMatchedSkills(res.data.matched_skills || [])
       setMissingSkills(res.data.missing_skills || [])
       setResumeText(res.data.resume_text || '')
+      if (res.data.share_id) setShareId(res.data.share_id)
+      setTrackComparisons(res.data.track_comparisons || null)
+      setActiveTab('detailed')
       const fileName = fileToAnalyze ? fileToAnalyze.name : url ? 'Imported Resume' : 'Resume'
       setActiveFileName(fileName)
 
@@ -646,9 +682,20 @@ function App() {
         }
       }
       if (!(axios.isAxiosError(error) && error.response?.status === 429)) {
-        alert(
-          source === 'sample' ? `Sample analysis failed: ${errorMsg}` : `Upload failed: ${errorMsg}`
-        )
+        if (
+          axios.isAxiosError(error) &&
+          error.response?.status === 400 &&
+          uploadMode === 'url' &&
+          source === 'upload'
+        ) {
+          setUrlError(errorMsg)
+        } else {
+          alert(
+            source === 'sample'
+              ? `Sample analysis failed: ${errorMsg}`
+              : `Upload failed: ${errorMsg}`
+          )
+        }
       }
 
       setLoading(false)
@@ -683,7 +730,13 @@ function App() {
         setUrlError('URL must start with http:// or https://')
         hasError = true
       } else {
-        setUrlError(null)
+        try {
+          new URL(resumeUrl.trim())
+          setUrlError(null)
+        } catch {
+          setUrlError('Please enter a valid URL.')
+          hasError = true
+        }
       }
     }
 
@@ -789,6 +842,9 @@ function App() {
 
   return (
     <>
+      <a href="#main-content" className="skip-to-content">
+        Skip to main content
+      </a>
       <OnboardingTour />
       <HistorySidebar
         entries={entries}
@@ -848,10 +904,11 @@ function App() {
         onHistoryClick={() => setHistoryOpen(true)}
       />
       <Routes>
+        <Route path="/shared/:shareId" element={<SharedResultView />} />
         <Route
           path="/"
           element={
-            <main className="landing-page">
+            <main id="main-content" className="landing-page">
               {showAuthModal && (
                 <AuthModal
                   onSignup={signup}
@@ -1036,7 +1093,7 @@ function App() {
               <div className={score === null && !loading ? 'hero-container' : ''}>
                 <div className={score === null && !loading ? 'hero-left' : ''}>
                   {score === null && !loading && (
-                    <>
+                    <section className="hero-intro" aria-label="Introduction">
                       <span className="hero-badge">⭐ AI Powered Resume Optimization</span>
 
                       <h1
@@ -1067,7 +1124,7 @@ function App() {
                         compatibility and receive personalized recommendations in seconds.
                       </p>
 
-                      <div className="hero-stats">
+                      <div className="hero-stats" style={{ color: theme === 'light' ? '#000000' : '#ffffff' }}>
                         <div>
                           <h2>50K+</h2>
                           <span>Resumes Reviewed</span>
@@ -1083,10 +1140,11 @@ function App() {
                           <span>AI Available</span>
                         </div>
                       </div>
-                    </>
+                    </section>
                   )}
 
                   {(loading || score !== null) && <StepProgress currentStep={currentStep} />}
+
 
 
                   {/* STEP 1: Target Career Track */}
@@ -1143,297 +1201,387 @@ function App() {
                   {/* STEP 2: Upload File / Link & Job Description */}
                   <div className="mb-5">
                     {/* Mode Switcher Tabs */}
+
+                  <section className="analyzer-form-section" aria-label="Resume Analyzer Form">
+                    {/* STEP 1: Target Career Track */}
+
                     <div
+                      className="mb-4 p-4 role-selector-container"
                       style={{
-                        display: 'flex',
-                        gap: '8px',
-                        justifyContent: 'center',
-                        marginBottom: '16px',
+                        background: 'rgba(255, 255, 255, 0.02)',
+                        borderRadius: 'var(--radius-lg)',
+                        border: '1px solid rgba(255,255,255,0.04)',
                       }}
                     >
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUploadMode('file')
-                          setUrlError(null)
-                        }}
+                      <label
+                        htmlFor="roleSelect"
                         style={{
-                          padding: '8px 16px',
-                          borderRadius: 'var(--radius-md)',
-                          fontSize: '0.85rem',
+                          color: theme === 'light' ? '#000000' : '#ffffff',
+                          display: 'block',
+                          marginBottom: '12px',
                           fontWeight: '600',
-                          cursor: 'pointer',
-                          background:
-                            uploadMode === 'file' ? '#6366f1' : 'rgba(255, 255, 255, 0.05)',
-                          color: '#fff',
-                          border: '1px solid rgba(255, 255, 255, 0.15)',
-                          transition: 'all 0.2s ease',
+                          textAlign: 'center',
+                          fontSize: 'var(--font-size-sm)',
                         }}
                       >
-                        📄 Local File Upload
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUploadMode('url')
-                          setFileError(null)
-                        }}
-                        style={{
-                          padding: '8px 16px',
-                          borderRadius: 'var(--radius-md)',
-                          fontSize: '0.85rem',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          background:
-                            uploadMode === 'url' ? '#6366f1' : 'rgba(255, 255, 255, 0.05)',
-                          color: '#fff',
-                          border: '1px solid rgba(255, 255, 255, 0.15)',
-                          transition: 'all 0.2s ease',
-                        }}
-                      >
-                        🔗 Import via Link
-                      </button>
-                    </div>
-
-                    {uploadMode === 'file' ? (
-                      <div
-                        className="upload-box mb-3"
-                        style={{ width: '100%', maxWidth: '100%', padding: '32px 20px' }}
-                      >
-                        <input
-                          type="file"
-                          id="fileUpload"
-                          hidden
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            if (e.target.files && e.target.files[0]) {
-                              setFile(e.target.files[0])
-                              setFileError(null)
-                            }
+                        🎯 Target Career Track
+                      </label>
+                      <div className="custom-select-container">
+                        <select
+                          id="roleSelect"
+                          value={targetRole}
+                          onChange={(e) => {
+                            setTargetRole(e.target.value)
+                            if (e.target.value.trim() !== '') setRoleError(null)
                           }}
-                        />
-                        <label
-                          htmlFor="fileUpload"
-                          className="upload-label"
+                          className="custom-select-element"
+                        >
+                          <option value="Frontend Developer">Frontend Developer</option>
+                          <option value="Backend Developer">Backend Developer</option>
+                          <option value="Data Analyst">Data Analyst</option>
+                        </select>
+                      </div>
+                      {roleError && (
+                        <div
                           style={{
-                            cursor: 'pointer',
-                            display: 'block',
-                            wordBreak: 'break-all',
-                            fontSize: 'var(--font-size-base)',
+                            color: '#ef4444',
+                            fontSize: '13px',
+                            marginTop: '8px',
+                            fontWeight: '500',
+                            textAlign: 'center',
                           }}
                         >
-                          📄{' '}
-                          {file ? (
-                            <strong style={{ color: '#a5b4fc' }}>{file.name}</strong>
-                          ) : (
-                            'Drag & Drop Resume or Click to Browse'
-                          )}
-                        </label>
-                      </div>
-                    ) : (
-                      <div className="mb-3" style={{ textAlign: 'left' }}>
-                        <label
-                          htmlFor="resumeUrlInput"
+                          ⚠️ {roleError}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* STEP 2: Upload File / Link & Job Description */}
+                    <div className="mb-5">
+                      {/* Mode Switcher Tabs */}
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '8px',
+                          justifyContent: 'center',
+                          marginBottom: '16px',
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUploadMode('file')
+                            setUrlError(null)
+                          }}
                           style={{
+                            padding: '8px 16px',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            background:
+                              uploadMode === 'file' ? '#6366f1' : 'rgba(255, 255, 255, 0.05)',
+                            color: '#fff',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          📄 Local File Upload
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUploadMode('url')
+                            setFileError(null)
+                          }}
+                          style={{
+                             padding: '8px 16px',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: '0.85rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            background:
+                              uploadMode === 'file' ? '#6366f1' : 'rgba(255, 255, 255, 0.05)',
+                            color: '#fff',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          🔗 Import via Link
+                        </button>
+                      </div>
+
+                      {uploadMode === 'file' ? (
+                        <div
+                          className={`upload-box mb-3 ${isDragging ? 'dragging' : ''}`}
+                          style={{ width: '100%', maxWidth: '100%' }}
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          onDrop={handleDrop}
+                        >
+                          <input
+                            type="file"
+                            id="fileUpload"
+                            hidden
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              if (e.target.files && e.target.files[0]) {
+                                setFile(e.target.files[0])
+                                setFileError(null)
+                              }
+                            }}
+                          />
+                          <label htmlFor="fileUpload" className="upload-label">
+                            <div className="upload-icon-wrapper" aria-hidden="true">
+                              {file ? (
+                                <svg
+                                  width="28"
+                                  height="28"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                                  <polyline points="14 2 14 8 20 8" />
+                                  <path d="M9 15l2 2 4-4" />
+                                </svg>
+                              ) : (
+                                <svg
+                                  width="28"
+                                  height="28"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                  <polyline points="17 8 12 3 7 8" />
+                                  <line x1="12" y1="3" x2="12" y2="15" />
+                                </svg>
+                              )}
+                            </div>
+                            <div style={{ textAlign: 'center' }}>
+                              {file ? (
+                                <strong className="upload-file-name">{file.name}</strong>
+                              ) : (
+                                <>
+                                  <span className="upload-text-primary">
+                                    Drag &amp; Drop Resume or{' '}
+                                    <span className="upload-text-browse">Click to Browse</span>
+                                  </span>
+                                  <span className="upload-text-secondary">
+                                    Supports PDF, DOCX, TXT up to 10MB
+                                  </span>
+                                </>
+                              )}
+                            </div>
+                          </label>
+                        </div>
+                      ) : (
+                        <div className="mb-3" style={{ textAlign: 'left' }}>
+                          <label
+                            htmlFor="resumeUrlInput"
+                            style={{
+                              fontWeight: '600',
+                              display: 'block',
+                              marginBottom: '8px',
+                              color: '#e2e8f0',
+                              fontSize: '0.85rem',
+                            }}
+                          >
+                            Paste Shareable Link (Google Drive / Dropbox / Direct PDF)
+                          </label>
+                          <input
+                            type="url"
+                            id="resumeUrlInput"
+                            value={resumeUrl}
+                            onChange={(e) => {
+                              setResumeUrl(e.target.value)
+                              if (e.target.value.trim() !== '') setUrlError(null)
+                            }}
+                            placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: 'var(--radius-md)',
+                              background: 'rgba(255, 255, 255, 0.04)',
+                              color: '#fff',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              fontSize: '0.9rem',
+                            }}
+                          />
+                          <span
+                            style={{
+                              fontSize: '0.78rem',
+                              color: 'rgba(255,255,255,0.6)',
+                              marginTop: '6px',
+                              display: 'block',
+                            }}
+                          >
+                            ℹ️ Note: Make sure link permissions are set to "Anyone with the link can
+                            view".
+                          </span>
+                        </div>
+                      )}
+                      {file && uploadMode === 'file' && (
+                        <div className="mb-3">
+                          <FilePreview file={file} />
+                        </div>
+                      )}
+                      {fileError && uploadMode === 'file' && (
+                        <div
+                          style={{
+                            color: '#ef4444',
+                            fontSize: '13px',
+                            marginTop: '-4px',
+                            marginBottom: '16px',
+                            fontWeight: '500',
+                            textAlign: 'center',
+                          }}
+                        >
+                          ⚠️ {fileError}
+                        </div>
+                      )}
+
+                      {urlError && uploadMode === 'url' && (
+                        <div
+                          style={{
+                            color: '#ef4444',
+                            fontSize: '13px',
+                            marginTop: '4px',
+                            marginBottom: '16px',
+                            fontWeight: '500',
+                            textAlign: 'center',
+                          }}
+                        >
+                          ⚠️ {urlError}
+                        </div>
+                      )}
+
+                      {/* Optional Job Description */}
+                      <div className="mb-4" style={{ textAlign: 'left' }}>
+                        <label
+                          htmlFor="jobDescription"
+                          style={{
+                            color: 'var(--text-primary)',
                             fontWeight: '600',
                             display: 'block',
                             marginBottom: '8px',
-                            color: '#e2e8f0',
-                            fontSize: '0.85rem',
+                            
                           }}
                         >
-                          Paste Shareable Link (Google Drive / Dropbox / Direct PDF)
+                          Job Description (Optional)
                         </label>
-                        <input
-                          type="url"
-                          id="resumeUrlInput"
-                          value={resumeUrl}
-                          onChange={(e) => {
-                            setResumeUrl(e.target.value)
-                            if (e.target.value.trim() !== '') setUrlError(null)
-                          }}
-                          placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                        <textarea
+                          id="jobDescription"
+                          className="custom-textarea"
+                          value={jobDesc}
+                          onChange={(e) => setJobDesc(e.target.value)}
+                          placeholder="Paste the job description here..."
                           style={{
                             width: '100%',
-                            padding: '12px 16px',
+                            minHeight: '100px',
+                            padding: '12px',
                             borderRadius: 'var(--radius-md)',
-                            background: 'rgba(255, 255, 255, 0.04)',
-                            color: '#fff',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            fontSize: '0.9rem',
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            color: 'inherit',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
                           }}
                         />
-                        <span
+                        <div
                           style={{
-                            fontSize: '0.78rem',
-                            color: 'rgba(255,255,255,0.6)',
-                            marginTop: '6px',
-                            display: 'block',
+                            textAlign: 'right',
+                            color: isOver ? '#ef4444' : isClose ? '#f97316' : 'inherit',
+                            opacity: isOver || isClose ? 1 : 0.7,
+                            fontSize: '0.85rem',
+                            marginTop: '5px',
+                            fontWeight: isOver ? 'bold' : 'normal',
                           }}
                         >
-                          ℹ️ Note: Make sure link permissions are set to "Anyone with the link can
-                          view".
-                        </span>
-                      </div>
-                    )}
-
-                    {fileError && uploadMode === 'file' && (
-                      <div
-                        style={{
-                          color: '#ef4444',
-                          fontSize: '13px',
-                          marginTop: '-4px',
-                          marginBottom: '16px',
-                          fontWeight: '500',
-                          textAlign: 'center',
-                        }}
-                      >
-                        ⚠️ {fileError}
-                      </div>
-                    )}
-
-                    {urlError && uploadMode === 'url' && (
-                      <div
-                        style={{
-                          color: '#ef4444',
-                          fontSize: '13px',
-                          marginTop: '4px',
-                          marginBottom: '16px',
-                          fontWeight: '500',
-                          textAlign: 'center',
-                        }}
-                      >
-                        ⚠️ {urlError}
-                      </div>
-                    )}
-
-                    {/* Optional Job Description */}
-                    <div className="mb-4" style={{ textAlign: 'left' }}>
-                      <label
-                        htmlFor="jobDescription"
-                        style={{
-                          fontWeight: '600',
-                          display: 'block',
-                          marginBottom: '8px',
-                          color: '#e2e8f0',
-                        }}
-                      >
-                        Job Description (Optional)
-                      </label>
-                      <textarea
-                        id="jobDescription"
-                        className="custom-textarea"
-                        value={jobDesc}
-                        onChange={(e) => setJobDesc(e.target.value)}
-                        placeholder="Paste the job description here..."
-                        style={{
-                          width: '100%',
-                          minHeight: '100px',
-                          padding: '12px',
-                          borderRadius: 'var(--radius-md)',
-                          background: 'rgba(255, 255, 255, 0.02)',
-                          color: 'inherit',
-                          border: '1px solid rgba(255, 255, 255, 0.1)',
-                        }}
-                      />
-                      <div
-                        aria-live="polite"
-                        style={{
-                          textAlign: 'right',
-                          color: isOver
-                            ? '#dc2626'
-                            : isClose
-                              ? '#d97706'
-                              : theme === 'dark'
-                                ? '#f3f4f6'
-                                : '#111827',
-                          fontSize: '0.95rem',
-                          marginTop: '8px',
-                          fontWeight: isClose ? 700 : 600,
-                        }}
-                      >
-                        <>
                           {jobDesc.length} / {MAX_CHARS} characters
-                          {isClose && !isOver && ' • Approaching limit'}
-                          {isOver && ' • Limit exceeded'}
-                        </>
+                        </div>
                       </div>
-                    </div>
 
-                    {/* STEP 3: Action Buttons */}
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexWrap: 'wrap',
-                        gap: '12px',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                      }}
-                      className="action-buttons"
-                    >
-                      <button
-                        className="analyze-btn"
-                        onClick={uploadResume}
-                        disabled={loading || retryDisabled}
-                        style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
-                      >
-                        {loading && analysisSource === 'upload'
-                          ? '⏳ Extracting...'
-                          : '🚀 Analyze Resume'}
-                      </button>
-
-                      <button
-                        className="secondary-btn"
-                        onClick={handleSampleResume}
-                        disabled={loading || retryDisabled}
-                        type="button"
-                        style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
-                      >
-                        {loading && analysisSource === 'sample' ? (
-                          <>
-                            <Loader2 size={15} className="spin" /> Loading...
-                          </>
-                        ) : (
-                          'Try Sample Resume'
-                        )}
-                      </button>
-                    </div>
-                    {retryDisabled && retryAfter !== null && (
-                      <p
+                      {/* STEP 3: Action Buttons */}
+                      <div
                         style={{
-                          color: '#ef4444',
-                          marginTop: '10px',
-                          fontWeight: 600,
-                          textAlign: 'center',
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '12px',
+                          justifyContent: 'center',
+                          alignItems: 'center',
                         }}
+                        className="action-buttons"
                       >
-                        Too many requests. Please wait {retryAfter}s before trying again.
-                      </p>
-                    )}
-                  </div>
+                        <button
+                          className="analyze-btn"
+                          onClick={uploadResume}
+                          disabled={loading || retryDisabled}
+                          style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
+                        >
+                          {loading && analysisSource === 'upload'
+                            ? '⏳ Extracting...'
+                            : '🚀 Analyze Resume'}
+                        </button>
+
+                        <button
+                          className="secondary-btn"
+                          onClick={handleSampleResume}
+                          disabled={loading || retryDisabled}
+                          type="button"
+                          style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
+                        >
+                          {loading && analysisSource === 'sample' ? (
+                            <>
+                              <Loader2 size={15} className="spin" /> Loading...
+                            </>
+                          ) : (
+                            'Try Sample Resume'
+                          )}
+                        </button>
+                      </div>
+                      {retryDisabled && retryAfter !== null && (
+                        <p
+                          style={{
+                            color: '#ef4444',
+                            marginTop: '10px',
+                            fontWeight: 600,
+                            textAlign: 'center',
+                          }}
+                        >
+                          Too many requests. Please wait {retryAfter}s before trying again.
+                        </p>
+                      )}
+                    </div>
+                  </section>
                 </div>
               </div>
 
               {/* Loading Skeleton & Determinate Progress Bar */}
               {loading && (
-                <div className="my-4">
+                <section className="my-4" aria-live="polite" aria-label="Analysis Progress">
                   <ProgressBar progress={analysisProgress} stageLabel={analysisStageLabel} />
                   <AnalysisSkeleton />
-                </div>
+                </section>
               )}
 
               {/* Empty State / How It Works */}
               {score === null && !loading && (
-                <div style={{ paddingBottom: '2rem' }}>
+                <section style={{ paddingBottom: '2rem' }} aria-label="About the Resume Analyzer">
                   <EmptyState />
                   <div className="mt-4">
                     <HowItWorks />
                   </div>
-                </div>
+                </section>
               )}
 
               {/* Results Display Panel */}
               {score !== null && !loading && (
-                <>
+                <section aria-label="Analysis Results">
                   {analysisSource === 'sample' && (
                     <div
                       className="sample-notice-banner mb-4"
@@ -1470,9 +1618,64 @@ function App() {
                     </p>
                   )}
 
-                  {/* Skills Section */}
-                  <div className="mt-4">
-                    <h4>Skills Found ({skills.length})</h4>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '16px', marginBottom: '16px', justifyContent: 'center' }}>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab('detailed')}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: 'var(--radius-md)',
+                        fontSize: '0.9rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        background: activeTab === 'detailed' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                        color: '#fff',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      Detailed View
+                    </button>
+                    {trackComparisons && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('matrix')}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          background: activeTab === 'matrix' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                          color: '#fff',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        Compare All Tracks
+                      </button>
+                    )}
+                  </div>
+
+                  {activeTab === 'matrix' && trackComparisons ? (
+                    <TrackMatrix 
+                      trackComparisons={trackComparisons}
+                      activeRole={targetRole}
+                      onRowClick={(role) => {
+                        setTargetRole(role)
+                        const comp = trackComparisons[role]
+                        setScore(comp.score)
+                        setMatchedSkills(comp.matched_skills)
+                        setMissingSkills(comp.missing_skills)
+                        setSuggestions(comp.suggestions)
+                        setActiveTab('detailed')
+                      }}
+                    />
+                  ) : (
+                    <>
+                      {/* Skills Section */}
+                  <section className="mt-4" aria-labelledby="skills-found-heading">
+                    <h4 id="skills-found-heading">Skills Found ({skills.length})</h4>
                     {skills.length === 0 && <p>No skills detected</p>}
                     <div
                       style={{
@@ -1506,17 +1709,19 @@ function App() {
                         )}
                       </button>
                     )}
-                  </div>
+                  </section>
 
                   {/* Word Cloud */}
                   <SkillWordCloud skills={skills} />
 
                   {/* Skill Gap Matrix */}
-                  <div
+                  <section
                     className="mt-4 p-3"
                     style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}
+                    aria-labelledby="skill-gap-heading"
                   >
                     <h4
+                      id="skill-gap-heading"
                       style={{
                         display: 'flex',
                         alignItems: 'center',
@@ -1559,10 +1764,10 @@ function App() {
                         )}
                       </div>
                     </div>
-                  </div>
+                  </section>
 
                   {/* Upgraded Suggestions Section */}
-                  <div
+                  <section
                     className="mt-5 p-4"
                     style={{
                       background: 'rgba(30, 30, 47, 0.4)',
@@ -1570,6 +1775,8 @@ function App() {
                       border: '1px solid rgba(255, 255, 255, 0.04)',
                     }}
                   >
+                    {shareId && <ShareResult shareId={shareId} />}
+
                     <div className="suggestion-box mt-4" style={{ padding: '15px' }}>
                       <div
                         style={{
@@ -1581,7 +1788,9 @@ function App() {
                           marginBottom: '12px',
                         }}
                       >
-                        <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
+                        <h4 id="suggestions-heading" style={{ margin: 0 }}>
+                          💡 Suggestions
+                        </h4>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                           {suggestions.length > 0 && (
                             <button
@@ -1610,8 +1819,8 @@ function App() {
                                   top: '100%',
                                   right: 0,
                                   marginTop: '4px',
-                                  backgroundColor: theme === 'dark' ? '#1f2937' : '#ffffff',
-                                  border: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`,
+                                  backgroundColor: 'var(--card-bg)',
+                                  border: '1px solid var(--surface-border)',
                                   borderRadius: '6px',
                                   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                                   zIndex: 10,
@@ -1628,10 +1837,10 @@ function App() {
                                     padding: '8px 12px',
                                     background: 'transparent',
                                     border: 'none',
-                                    color: theme === 'dark' ? '#f3f4f6' : '#111827',
+                                    color: 'var(--body-text)',
                                     textAlign: 'left',
                                     cursor: 'pointer',
-                                    borderBottom: `1px solid ${theme === 'dark' ? '#374151' : '#e5e7eb'}`,
+                                    borderBottom: '1px solid var(--surface-border)',
                                   }}
                                 >
                                   Export JSON
@@ -1643,7 +1852,7 @@ function App() {
                                     padding: '8px 12px',
                                     background: 'transparent',
                                     border: 'none',
-                                    color: theme === 'dark' ? '#f3f4f6' : '#111827',
+                                    color: 'var(--body-text)',
                                     textAlign: 'left',
                                     cursor: 'pointer',
                                   }}
@@ -1682,6 +1891,8 @@ function App() {
                         </div>
                       )}
 
+                      <CuratedTips targetRole={targetRole} />
+
                       <div style={{ marginTop: '24px', textAlign: 'center' }}>
                         <button
                           type="button"
@@ -1693,8 +1904,10 @@ function App() {
                         </button>
                       </div>
                     </div>
-                  </div>
-                </>
+                  </section>
+                    </>
+                  )}
+                </section>
               )}
             </main>
           }
@@ -1704,7 +1917,7 @@ function App() {
       {/* Floating Back to Top Button */}
       <button
         type="button"
-        className={`fab-btn back-to-top${showBackToTop ? " back-to-top--visible" : ""}`}
+        className={`fab-btn back-to-top${showBackToTop ? ' back-to-top--visible' : ''}`}
         onClick={scrollToTop}
         aria-label="Back to top"
         title="Back to top"
@@ -1724,40 +1937,6 @@ function App() {
       >
         {showShortcutHelp ? <X size={20} /> : <HelpCircle size={20} />}
       </button>
-
-      {showShortcutHelp && (
-        <div className="shortcut-overlay-card">
-          <h5
-            style={{
-              margin: "0 0 12px 0",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-          >
-            ⌨️ Keyboard Quick Actions
-          </h5>
-
-          <div className="shortcut-row">
-            <span style={{ color: "#94a3b8" }}>Upload Resume</span>
-            <span className="shortcut-key-badge">Alt + U</span>
-          </div>
-
-          <div className="shortcut-row">
-            <span style={{ color: "#94a3b8" }}>Reset Analysis</span>
-            <span className="shortcut-key-badge">Alt + R</span>
-          </div>
-
-          <div className="shortcut-row">
-            <span style={{ color: "#94a3b8" }}>Close Modals / Sidebar</span>
-            <span className="shortcut-key-badge">Esc</span>
-          </div>
-        </div>
-      )}
-      
-        ↑
-      
 
       {showShortcutHelp && (
         <div className="shortcut-overlay-card">

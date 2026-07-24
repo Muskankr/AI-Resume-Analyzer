@@ -66,12 +66,11 @@ export const OnboardingTour: React.FC = () => {
   }, [currentStep, isVisible])
 
   useEffect(() => {
-    const handleResize = () => {
-      setWindowSize({
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    updateTargetRect()
 
+    const handleResize = () => {
+      setWindowSize({ width: window.innerWidth, height: window.innerHeight })
       updateTargetRect()
     }
 
@@ -79,20 +78,19 @@ export const OnboardingTour: React.FC = () => {
       updateTargetRect()
     }
 
-    handleResize()
-
     window.addEventListener('resize', handleResize)
-    window.addEventListener('scroll', handleScroll, true)
+    window.addEventListener('scroll', handleScroll, true) // true to capture all scroll events
 
     return () => {
       window.removeEventListener('resize', handleResize)
       window.removeEventListener('scroll', handleScroll, true)
     }
   }, [updateTargetRect])
-  const finishTour = useCallback(() => {
+
+  const finishTour = () => {
     localStorage.setItem('hasSeenOnboarding', 'true')
     setIsVisible(false)
-  }, [])
+  }
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
@@ -121,7 +119,7 @@ export const OnboardingTour: React.FC = () => {
         }
       }
     },
-    [isVisible, finishTour]
+    [isVisible]
   )
 
   useEffect(() => {
@@ -132,12 +130,10 @@ export const OnboardingTour: React.FC = () => {
       }
     }
   }, [isVisible, currentStep])
+
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
-
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown)
-    }
+    return () => window.removeEventListener('keydown', handleKeyDown)
   }, [handleKeyDown])
 
   const nextStep = () => {

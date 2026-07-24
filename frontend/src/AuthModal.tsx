@@ -3,12 +3,13 @@ import { Lock, FileSignature, Loader2 } from 'lucide-react'
 
 interface AuthModalProps {
   onSignup: (username: string, password: string) => Promise<void>
-  onLogin: (username: string, password: string) => Promise<void>
+  onLogin: (username: string, password: string, rememberMe: boolean) => Promise<void>
   onClose: () => void
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose }) => {
   const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [rememberMe, setRememberMe] = useState(true)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -20,7 +21,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
     setLoading(true)
     try {
       if (mode === 'signup') await onSignup(username, password)
-      else await onLogin(username, password)
+      else await onLogin(username, password, rememberMe)
       onClose()
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Authentication failed'
@@ -115,6 +116,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
                 </div>
               )
             })()}
+          {mode === 'login' && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <label htmlFor="rememberMe" style={{ fontSize: '0.9rem', color: '#666' }}>Remember me</label>
+            </div>
+          )}
           {error && <p className="auth-error">{error}</p>}
           <button className="auth-submit-btn" type="submit" disabled={loading}>
             {loading ? (

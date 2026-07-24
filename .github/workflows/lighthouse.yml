@@ -1,0 +1,40 @@
+name: Lighthouse CI
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/lighthouse.yml'
+
+jobs:
+  lighthouse:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Frontend Dependencies & Build
+        run: |
+          cd frontend
+          npm ci
+          npm run build
+
+      - name: Install Lighthouse CI CLI
+        run: npm install -g @lhci/cli@0.13.x
+
+      - name: Run Lighthouse CI
+        run: |
+            lhci autorun \
+              --collect.staticDistDir=frontend/dist \
+              --collect.startServerCommand="npm run preview --prefix frontend" \
+              --collect.url="http://localhost:4173" \
+              --assert.assertions.performance="['warn', {minScore: 0.85}]" \
+              --assert.assertions.accessibility="['error', {minScore: 0.90}]" \
+              --assert.assertions.best-practices="['error', {minScore: 0.90}]" \
+              --assert.assertions.seo="['error', {minScore: 0.90}]"
