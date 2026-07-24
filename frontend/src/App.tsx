@@ -19,6 +19,7 @@ import {
   RefreshCw,
   Target,
   Info,
+  Square,
 } from "lucide-react";
 import { Navbar } from "./components/Navbar";
 import EmptyState from "./components/EmptyState";
@@ -80,35 +81,79 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
 interface SuggestionCardProps {
   text: string;
   index: number;
+  isAddressed: boolean;
+  onToggle: (index: number) => void;
 }
 
-const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index }) => {
+const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, isAddressed, onToggle }) => {
   const [copied, setCopied] = React.useState(false);
 
-  const handleCopy = () => {
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <div className="suggestion-card">
-      <div>
-        <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "10px" }}>
-          <span style={{ fontSize: "16px" }}>💡</span>
-          <span
-            style={{
-              fontSize: "12px",
-              fontWeight: "700",
-              color: "#a5b4fc",
-              textTransform: "uppercase",
-              letterSpacing: "0.5px",
-            }}
-          >
-            Recommendation #{index + 1}
-          </span>
+    <div
+      className={`suggestion-card ${isAddressed ? "suggestion-card--addressed" : ""}`}
+      onClick={() => onToggle(index)}
+      style={{
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+        opacity: isAddressed ? 0.65 : 1,
+        borderLeft: isAddressed ? "4px solid #22c55e" : "4px solid #6366f1",
+        background: isAddressed ? "rgba(34, 197, 94, 0.05)" : undefined,
+      }}
+    >
+      <div style={{ flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ cursor: "pointer", display: "inline-flex", alignItems: "center" }}>
+              {isAddressed ? (
+                <CheckCircle size={18} color="#22c55e" />
+              ) : (
+                <Square size={18} color="#94a3b8" />
+              )}
+            </span>
+            <span
+              style={{
+                fontSize: "12px",
+                fontWeight: "700",
+                color: isAddressed ? "#22c55e" : "#a5b4fc",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+                textDecoration: isAddressed ? "line-through" : "none",
+              }}
+            >
+              Recommendation #{index + 1}
+            </span>
+          </div>
+          {isAddressed && (
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: "600",
+                backgroundColor: "rgba(34, 197, 94, 0.15)",
+                color: "#22c55e",
+                padding: "2px 8px",
+                borderRadius: "12px",
+              }}
+            >
+              ✓ Addressed
+            </span>
+          )}
         </div>
-        <p style={{ margin: 0, fontSize: "var(--font-size-sm)", color: "#e2e8f0", lineHeight: "1.6" }}>
+        <p
+          style={{
+            margin: 0,
+            fontSize: "var(--font-size-sm)",
+            color: isAddressed ? "#94a3b8" : "#e2e8f0",
+            lineHeight: "1.6",
+            textDecoration: isAddressed ? "line-through" : "none",
+          }}
+        >
           {text}
         </p>
       </div>
@@ -117,6 +162,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index }) => {
         onClick={handleCopy}
         className="suggestion-copy-btn"
         aria-label="Copy recommendation text"
+        style={{ alignSelf: "flex-start" }}
       >
         {copied ? "✅ Copied" : "📋 Copy Text"}
       </button>
@@ -131,6 +177,9 @@ function App() {
   const [score, setScore] = useState<number | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  // Interactive Checklist State
+  const [addressedSuggestions, setAddressedSuggestions] = useState<number[]>([]);
 
   // Validation States
   const [fileError, setFileError] = useState<string | null>(null);
@@ -165,6 +214,40 @@ function App() {
   const { entries, addEntry, deleteEntry, clearHistory, setEntries } = useAnalysisHistory();
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000";
+
+  // Persistent localStorage key scoped to current session/file
+  const storageKey = `addressed_suggestions_${activeFileName || 'default'}`;
+
+  // Load addressed suggestions from localStorage when current resume changes
+  useEffect(() => {
+    if (activeFileName || suggestions.length > 0) {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          setAddressedSuggestions(JSON.parse(saved));
+        } else {
+          setAddressedSuggestions([]);
+        }
+      } catch {
+        setAddressedSuggestions([]);
+      }
+    }
+  }, [activeFileName, storageKey, suggestions.length]);
+
+  // Sync state changes to localStorage
+  const toggleSuggestion = (index: number) => {
+    setAddressedSuggestions((prev) => {
+      const updated = prev.includes(index)
+        ? prev.filter((i) => i !== index)
+        : [...prev, index];
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(updated));
+      } catch (e) {
+        console.error("Failed to persist addressed suggestions to localStorage", e);
+      }
+      return updated;
+    });
+  };
 
   const handleDeleteEntry = async (id: string) => {
     if (user) {
@@ -242,6 +325,7 @@ function App() {
     setScore(null);
     setSkills([]);
     setSuggestions([]);
+    setAddressedSuggestions([]);
     setMatchedSkills([]);
     setMissingSkills([]);
     setResumeText("");
@@ -302,6 +386,7 @@ function App() {
     try {
       setLoading(true);
       setAnalysisSource(source);
+      setAddressedSuggestions([]);
       const formData = new FormData();
       formData.append("file", fileToAnalyze);
       formData.append("role", targetRole);
@@ -451,6 +536,10 @@ function App() {
     logout();
     clearHistory();
   };
+
+  const completionPercentage = suggestions.length
+    ? Math.round((addressedSuggestions.length / suggestions.length) * 100)
+    : 0;
 
   return (
     <>
@@ -848,7 +937,7 @@ function App() {
                 </div>
               </div>
 
-              {/* Upgraded Suggestions Section */}
+              {/* Upgraded Interactive Suggestions Checklist Section */}
               <div
                 className="mt-5 p-4"
                 style={{
@@ -868,7 +957,9 @@ function App() {
                       marginBottom: "12px",
                     }}
                   >
-                    <h4 style={{ margin: 0 }}>💡 Suggestions</h4>
+                    <h4 style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
+                      💡 Actionable Recommendations
+                    </h4>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
                       {suggestions.length > 0 && (
                         <button
@@ -943,6 +1034,54 @@ function App() {
                     </div>
                   </div>
 
+                  {/* Checklist Progress Bar Header */}
+                  {suggestions.length > 0 && (
+                    <div
+                      style={{
+                        marginBottom: "16px",
+                        padding: "12px",
+                        background: "rgba(255, 255, 255, 0.03)",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          fontSize: "13px",
+                          fontWeight: "600",
+                          color: "#e2e8f0",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        <span>Interactive Checklist Progress</span>
+                        <span style={{ color: completionPercentage === 100 ? "#22c55e" : "#a5b4fc" }}>
+                          {addressedSuggestions.length} of {suggestions.length} addressed ({completionPercentage}%)
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "6px",
+                          backgroundColor: "rgba(255, 255, 255, 0.1)",
+                          borderRadius: "3px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${completionPercentage}%`,
+                            height: "100%",
+                            backgroundColor: completionPercentage === 100 ? "#22c55e" : "#6366f1",
+                            transition: "width 0.3s ease-in-out, background-color 0.3s ease",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
                   {suggestions.length === 0 ? (
                     <p
                       style={{
@@ -958,7 +1097,13 @@ function App() {
                   ) : (
                     <div className="suggestions-grid">
                       {suggestions.map((suggestion, index) => (
-                        <SuggestionCard key={index} text={suggestion} index={index} />
+                        <SuggestionCard
+                          key={index}
+                          text={suggestion}
+                          index={index}
+                          isAddressed={addressedSuggestions.includes(index)}
+                          onToggle={toggleSuggestion}
+                        />
                       ))}
                     </div>
                   )}
