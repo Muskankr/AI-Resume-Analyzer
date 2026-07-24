@@ -11,6 +11,8 @@ from .views import (
     delete_single_history,
     clear_user_history,
     compare_versions_view,
+    suggestion_feedback,
+    get_shared_result,
 )
 
 urlpatterns = [
@@ -25,4 +27,6 @@ urlpatterns = [
     path("history/<int:pk>/", delete_single_history),
 
     path("compare/", compare_versions_view),
+    path("suggestion-feedback/", suggestion_feedback),
+    path("shared/<uuid:share_id>/", get_shared_result),
 ]

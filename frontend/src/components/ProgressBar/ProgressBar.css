@@ -1,0 +1,100 @@
+.determinate-progress-wrapper {
+  width: 100%;
+  max-width: 600px;
+  margin: 1.5rem auto;
+  padding: 1.25rem;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  backdrop-filter: blur(8px);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.progress-stage-label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.progress-percentage-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #818cf8;
+}
+
+.progress-bar-track {
+  position: relative;
+  width: 100%;
+  height: 10px;
+  background-color: rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  border-radius: 9999px;
+  transition: width 0.4s ease-in-out;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+}
+
+/* Fallback Indeterminate Animation */
+.progress-bar-track.is-indeterminate .progress-bar-fill {
+  width: 40% !important;
+  animation: indeterminate-shimmer 1.5s infinite linear;
+}
+
+@keyframes indeterminate-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+/* Pipeline Stage Stepper Dots */
+.progress-stages-stepper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
+}
+
+.stage-checkpoint {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.checkpoint-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.stage-checkpoint.checkpoint-completed .checkpoint-dot {
+  background-color: #818cf8;
+  box-shadow: 0 0 8px #818cf8;
+}
+
+.checkpoint-label {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.stage-checkpoint.checkpoint-completed .checkpoint-label {
+  color: #e2e8f0;
+  font-weight: 600;
+}

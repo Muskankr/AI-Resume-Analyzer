@@ -11,7 +11,7 @@ from rest_framework.decorators import (
     permission_classes,
     throttle_classes,
 )
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.throttling import SimpleRateThrottle
@@ -24,6 +24,8 @@ from .serializers import (
     VersionComparisonSerializer,
 )
 from .services import analyze_resume
+from .url_fetcher import download_and_validate_url
+from django.shortcuts import get_object_or_404
 
 
 class UploadRateThrottle(SimpleRateThrottle):
@@ -55,33 +57,39 @@ def signup(request):
 
 
 @api_view(["POST"])
-@parser_classes([MultiPartParser, FormParser])
+@parser_classes([MultiPartParser, FormParser, JSONParser])
 @permission_classes([AllowAny])
 @throttle_classes([UploadRateThrottle])
 def upload_resume(request):
 
     file = request.FILES.get("file")
+    url = request.data.get("url") or request.data.get("resume_url")
     target_role = request.data.get("role", "")
-    file_name = file.name if file else "resume.pdf"
     job_desc = request.data.get("job_description", "")[:2000]
 
-    if not file:
+    if not file and not url:
         return Response(
-            {"error": "No file uploaded"},
+            {"error": "Please provide a resume file or shareable link."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     try:
-        temp_dir = os.path.join(settings.BASE_DIR, "tmp")
-        os.makedirs(temp_dir, exist_ok=True)
-
-        storage = FileSystemStorage(location=temp_dir)
-
-        unique_name = f"{uuid.uuid4()}_{file.name}"
-
-        saved_name = storage.save(unique_name, file)
-
-        file_path = storage.path(saved_name)
+        if url:
+            try:
+                file_path, file_name = download_and_validate_url(url)
+            except ValueError as ve:
+                return Response(
+                    {"error": str(ve)},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+        else:
+            file_name = file.name if file else "resume.pdf"
+            temp_dir = os.path.join(settings.BASE_DIR, "tmp")
+            os.makedirs(temp_dir, exist_ok=True)
+            storage = FileSystemStorage(location=temp_dir)
+            unique_name = f"{uuid.uuid4()}_{file.name}"
+            saved_name = storage.save(unique_name, file)
+            file_path = storage.path(saved_name)
 
         user_id = (
             request.user.id
@@ -101,9 +109,7 @@ def upload_resume(request):
 
     except Exception as e:
         import traceback
-
         traceback.print_exc()
-
         return Response(
             {"error": str(e)},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -180,4 +186,34 @@ def compare_versions_view(request):
     comparison = compare_versions(older, newer)
     serializer = VersionComparisonSerializer(comparison.as_dict())
 
+    return Response(serializer.data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def suggestion_feedback(request):
+    """
+    Handle upvote/downvote or comments on a specific suggestion.
+    In a real app, you'd store this in a SuggestionFeedback model.
+    """
+    analysis_id = request.data.get("analysis_id")
+    suggestion_text = request.data.get("suggestion_text")
+    vote = request.data.get("vote")  # 'up' or 'down'
+
+    if not analysis_id or not suggestion_text or not vote:
+        return Response(
+            {"detail": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    return Response({"detail": "Feedback recorded successfully."})
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_shared_result(request, share_id):
+    """
+    Fetch a specific ResumeAnalysis by its unguessable share_id,
+    without requiring authentication.
+    """
+    analysis = get_object_or_404(ResumeAnalysis, share_id=share_id)
+    serializer = ResumeAnalysisSerializer(analysis)
     return Response(serializer.data)

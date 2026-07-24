@@ -1,41 +1,56 @@
 <!doctype html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1e1e2f" />
 
-<head>
-  <meta charset="UTF-8" />
-  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="manifest" href="/manifest.json" />
-  <meta name="theme-color" content="#1e1e2f" />
-  
-  <!-- Primary Meta Tags -->
-  <title>AI Resume Analyzer | Optimize Your Resume with AI</title>
-  <meta name="title" content="AI Resume Analyzer | Optimize Your Resume with AI" />
-  <meta name="description"
-    content="Get intelligent, instant feedback on your resume using advanced AI. Improve your chances of landing your dream job by beating the ATS." />
-  <meta name="keywords"
-    content="AI Resume Analyzer, resume reviewer, AI career coach, resume feedback, ATS scanner, job search, resume optimization" />
-  <meta name="robots" content="index, follow" />
-  <meta name="author" content="AI Resume Analyzer" />
+    <!-- Primary Meta Tags -->
+    <title>AI Resume Analyzer | Optimize Your Resume with AI</title>
+    <meta name="title" content="AI Resume Analyzer | Optimize Your Resume with AI" />
+    <meta
+      name="description"
+      content="Get intelligent, instant feedback on your resume using advanced AI. Improve your chances of landing your dream job by beating the ATS."
+    />
+    <meta
+      name="keywords"
+      content="AI Resume Analyzer, resume reviewer, AI career coach, resume feedback, ATS scanner, job search, resume optimization"
+    />
+    <meta name="robots" content="index, follow" />
+    <meta name="author" content="AI Resume Analyzer" />
 
-  <!-- Open Graph / Facebook -->
-  <meta property="og:type" content="website" />
-  <meta property="og:title" content="AI Resume Analyzer | Optimize Your Resume with AI" />
-  <meta property="og:description"
-    content="Get intelligent, instant feedback on your resume using advanced AI. Improve your chances of landing your dream job by beating the ATS." />
-  <meta property="og:image" content="/favicon.svg" />
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="AI Resume Analyzer | Optimize Your Resume with AI" />
+    <meta
+      property="og:description"
+      content="Get intelligent, instant feedback on your resume using advanced AI. Improve your chances of landing your dream job by beating the ATS."
+    />
+    <meta property="og:image" content="/favicon.svg" />
 
-  <!-- Twitter -->
-  <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="AI Resume Analyzer | Optimize Your Resume with AI" />
-  <meta name="twitter:description"
-    content="Get intelligent, instant feedback on your resume using advanced AI. Improve your chances of landing your dream job by beating the ATS." />
-  <meta name="twitter:image" content="/favicon.svg" />
-</head>
-
-<body>
-  <div id="root"></div>
-  <script type="module" src="/src/main.tsx"></script>
-</body>
-
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="AI Resume Analyzer | Optimize Your Resume with AI" />
+    <meta
+      name="twitter:description"
+      content="Get intelligent, instant feedback on your resume using advanced AI. Improve your chances of landing your dream job by beating the ATS."
+    />
+    <meta name="twitter:image" content="/favicon.svg" />
+    <script>
+      ;(function () {
+        try {
+          const savedTheme = localStorage.getItem('theme')
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const theme = savedTheme || (prefersDark ? 'dark' : 'light')
+          document.documentElement.setAttribute('data-theme', theme)
+        } catch (e) {}
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>
