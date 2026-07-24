@@ -37,6 +37,7 @@ import {
 } from './utils/notification'
 import { ProgressBar } from './components/ProgressBar/ProgressBar'
 import { UndoToast } from './components/UndoToast/UndoToast'
+import CookieConsentBanner from './components/CookieConsentBanner'
 type Theme = 'light' | 'dark'
 
 interface UndoState {
@@ -1548,6 +1549,7 @@ function App() {
       </button>
 
       <Footer />
+      <CookieConsentBanner />
 
       {/* Keyboard Shortcuts Help Button & Overlay */}
       <button
