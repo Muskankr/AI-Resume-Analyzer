@@ -21,6 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Authentication modal enhancements.
 
 ### Changed
+- Compressed static raster images and added WebP optimized assets reducing total image bundle size from ~1.15 MB to ~956 KB (16.8% reduction) with no visible quality loss (#353).
 - Improved onboarding experience and user interface consistency.
 - Enhanced visual styling across the application.
 - Updated landing page layout and overall user experience.
