@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
 import { Lock, FileSignature, Loader2 } from 'lucide-react'
+import axios from 'axios'
 
 interface AuthModalProps {
   onSignup: (username: string, password: string) => Promise<void>
@@ -8,7 +9,7 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose }) => {
-  const [mode, setMode] = useState<'login' | 'signup'>('login')
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot_password'>('login');
   const [rememberMe, setRememberMe] = useState(true)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -20,9 +21,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
     setError('')
     setLoading(true)
     try {
-      if (mode === 'signup') await onSignup(username, password)
-      else await onLogin(username, password, rememberMe)
-      onClose()
+      if (mode === 'signup') {
+        await onSignup(username, password)
+        onClose()
+      } else if (mode === 'login') {
+        await onLogin(username, password, rememberMe)
+        onClose()
+      } else if (mode === 'forgot_password') {
+        await axios.post('http://localhost:8000/api/password-reset/', { username: username })
+        onClose()
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Authentication failed'
       setError(msg)
@@ -46,22 +54,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
           )}
         </h3>
         <form onSubmit={submit}>
-          <input
-            className="auth-input"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            autoFocus
-          />
-          <input
-            className="auth-input"
-            type="password"
-            placeholder="Password (min 6 chars)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          {mode === 'forgot_password' && (
+            <input
+              className="auth-input"
+              type="text"
+              placeholder="Enter your username"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              required
+              autoFocus
+            />
+          )}
+          {mode !== 'forgot_password' && (
+            <>
+              <input
+                className="auth-input"
+                placeholder="Username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                autoFocus
+              />
+              <input
+                className="auth-input"
+                type="password"
+                placeholder="Password (min 6 chars)"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </>
+          )}
           {mode === 'signup' &&
             password &&
             (() => {
@@ -126,13 +149,20 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
               />
               <label htmlFor="rememberMe" style={{ fontSize: '0.9rem', color: '#666' }}>Remember me</label>
             </div>
-          )}
+            )}
+            <div style={{ textAlign: 'right', marginBottom: '16px' }}>
+              <button type="button" onClick={() => { setMode('forgot_password'); setError(''); }} style={{ fontSize: '0.9rem', color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer' }}>
+                Forgot password?
+              </button>
+            </div>
           {error && <p className="auth-error">{error}</p>}
           <button className="auth-submit-btn" type="submit" disabled={loading}>
             {loading ? (
               <>
                 <Loader2 size={15} className="spin" /> Please wait...
               </>
+            ) : mode === 'forgot_password' ? (
+              'Send Reset Link'
             ) : mode === 'login' ? (
               'Login'
             ) : (
