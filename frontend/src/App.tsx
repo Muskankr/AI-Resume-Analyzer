@@ -23,6 +23,20 @@ import {
   RefreshCw,
   Target,
   Info,
+
+  Square,
+} from "lucide-react";
+import { Navbar } from "./components/Navbar";
+import EmptyState from "./components/EmptyState";
+import { StepProgress } from "./components/StepProgress";
+import resultScreenshot from "./assets/screenshots/result.png";
+import { OnboardingTour } from "./components/OnboardingTour";
+import { HowItWorks } from "./components/HowItWorks";
+import { CompareVersions } from "./components/CompareVersions/CompareVersions";
+import { SkillChip } from "./components/SkillChip";
+
+type Theme = "light" | "dark";
+
   HelpCircle,
   X,
 } from 'lucide-react'
@@ -60,6 +74,7 @@ interface UndoState {
 
 const DEFAULT_TITLE = 'AI Resume Analyzer'
 const READY_TITLE = '✅ Analysis Ready — AI Resume Analyzer'
+
 
 function getInitialTheme(): Theme {
   try {
@@ -108,6 +123,73 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
 }
 
 interface SuggestionCardProps {
+
+  text: string;
+  index: number;
+  isAddressed: boolean;
+  onToggle: (index: number) => void;
+}
+
+const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, isAddressed, onToggle }) => {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div
+      className={`suggestion-card ${isAddressed ? "suggestion-card--addressed" : ""}`}
+      onClick={() => onToggle(index)}
+      style={{
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+        opacity: isAddressed ? 0.65 : 1,
+        borderLeft: isAddressed ? "4px solid #22c55e" : "4px solid #6366f1",
+        background: isAddressed ? "rgba(34, 197, 94, 0.05)" : undefined,
+      }}
+    >
+      <div style={{ flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ cursor: "pointer", display: "inline-flex", alignItems: "center" }}>
+              {isAddressed ? (
+                <CheckCircle size={18} color="#22c55e" />
+              ) : (
+                <Square size={18} color="#94a3b8" />
+              )}
+            </span>
+            <span
+              style={{
+                fontSize: "12px",
+                fontWeight: "700",
+                color: isAddressed ? "#22c55e" : "#a5b4fc",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+                textDecoration: isAddressed ? "line-through" : "none",
+              }}
+            >
+              Recommendation #{index + 1}
+            </span>
+          </div>
+          {isAddressed && (
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: "600",
+                backgroundColor: "rgba(34, 197, 94, 0.15)",
+                color: "#22c55e",
+                padding: "2px 8px",
+                borderRadius: "12px",
+              }}
+            >
+              ✓ Addressed
+            </span>
+          )}
+
   text: string
   index: number
   backendUrl?: string
@@ -158,18 +240,33 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
           >
             Recommendation #{index + 1}
           </span>
+
         </div>
         <p
           style={{
             margin: 0,
+
+            fontSize: "var(--font-size-sm)",
+            color: isAddressed ? "#94a3b8" : "#e2e8f0",
+            lineHeight: "1.6",
+            textDecoration: isAddressed ? "line-through" : "none",
+
             fontSize: 'var(--font-size-sm)',
             color: 'var(--body-text)',
             lineHeight: '1.6',
+
           }}
         >
           {text}
         </p>
       </div>
+
+
+      <button
+        onClick={handleCopy}
+        className="suggestion-copy-btn"
+        aria-label="Copy recommendation text"
+        style={{ alignSelf: "flex-start" }}
 
       <div
         style={{
@@ -182,6 +279,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
           gap: '8px',
           flexWrap: 'wrap',
         }}
+
       >
         {/* Feedback Widget */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -276,6 +374,9 @@ function App() {
   const [undoState, setUndoState] = useState<UndoState | null>(null)
   const [showUndoToast, setShowUndoToast] = useState(false)
 
+  // Interactive Checklist State
+  const [addressedSuggestions, setAddressedSuggestions] = useState<number[]>([]);
+
   // Validation States
   const [fileError, setFileError] = useState<string | null>(null)
   const [roleError, setRoleError] = useState<string | null>(null)
@@ -349,6 +450,40 @@ function App() {
   } = useAnalysisHistory()
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
+
+  // Persistent localStorage key scoped to current session/file
+  const storageKey = `addressed_suggestions_${activeFileName || 'default'}`;
+
+  // Load addressed suggestions from localStorage when current resume changes
+  useEffect(() => {
+    if (activeFileName || suggestions.length > 0) {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          setAddressedSuggestions(JSON.parse(saved));
+        } else {
+          setAddressedSuggestions([]);
+        }
+      } catch {
+        setAddressedSuggestions([]);
+      }
+    }
+  }, [activeFileName, storageKey, suggestions.length]);
+
+  // Sync state changes to localStorage
+  const toggleSuggestion = (index: number) => {
+    setAddressedSuggestions((prev) => {
+      const updated = prev.includes(index)
+        ? prev.filter((i) => i !== index)
+        : [...prev, index];
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(updated));
+      } catch (e) {
+        console.error("Failed to persist addressed suggestions to localStorage", e);
+      }
+      return updated;
+    });
+  };
 
   const handleDeleteEntry = async (id: string) => {
     if (user) {
@@ -450,6 +585,24 @@ function App() {
   }, [])
 
   const resetAnalysis = useCallback(() => {
+
+    setFile(null);
+    setScore(null);
+    setSkills([]);
+    setSuggestions([]);
+    setAddressedSuggestions([]);
+    setMatchedSkills([]);
+    setMissingSkills([]);
+    setResumeText("");
+    setShowAllSkills(false);
+    setCopied(false);
+    setAnalysisSource(null);
+    setActiveFileName("");
+    setShowExportDropdown(false);
+    setFileError(null);
+    setRoleError(null);
+  }, []);
+
     if (score !== null || skills.length > 0) {
       setUndoState({
         file,
@@ -511,6 +664,7 @@ function App() {
     }
   }, [undoState])
 
+
   // Global Keyboard Shortcuts
   useEffect(() => {
     const handleGlobalKeyDown = (event: KeyboardEvent) => {
@@ -561,6 +715,28 @@ function App() {
     url?: string
   ) => {
     try {
+
+      setLoading(true);
+      setAnalysisSource(source);
+      setAddressedSuggestions([]);
+      const formData = new FormData();
+      formData.append("file", fileToAnalyze);
+      formData.append("role", targetRole);
+      formData.append("job_description", jobDesc);
+
+      const headers = user ? { Authorization: `Bearer ${user.token}` } : {};
+      const res = await axios.post(`${backendUrl}/api/upload/`, formData, { headers });
+
+      setScore(res.data.score);
+      setSkills(res.data.skills_found || []);
+      setSuggestions(res.data.suggestions || []);
+      setMatchedSkills(res.data.matched_skills || []);
+      setMissingSkills(res.data.missing_skills || []);
+      setResumeText(res.data.resume_text || "");
+      setActiveFileName(fileToAnalyze.name);
+
+      setLoading(false);
+
       setLoading(true)
       setAnalysisSource(source)
       setAnalysisProgress(25)
@@ -615,6 +791,7 @@ function App() {
       }
 
       setLoading(false)
+
 
       if (user) {
         await fetchDbHistory(user.token)
@@ -816,6 +993,10 @@ function App() {
     logout()
     clearHistory()
   }
+
+  const completionPercentage = suggestions.length
+    ? Math.round((addressedSuggestions.length / suggestions.length) * 100)
+    : 0;
 
   return (
     <>
@@ -1430,8 +1611,45 @@ function App() {
                     )}
                   </section>
 
+
+              {/* Upgraded Interactive Suggestions Checklist Section */}
+              <div
+                className="mt-5 p-4"
+                style={{
+                  background: "rgba(30, 30, 47, 0.4)",
+                  borderRadius: "var(--radius-lg)",
+                  border: "1px solid rgba(255, 255, 255, 0.04)",
+                }}
+              >
+                <div className="suggestion-box mt-4" style={{ padding: "15px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "10px",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <h4 style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
+                      💡 Actionable Recommendations
+                    </h4>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                      {suggestions.length > 0 && (
+                        <button
+                          type="button"
+                          className={`app-btn app-btn--accent${copied ? " is-success" : ""}`}
+                          onClick={copySuggestionsToClipboard}
+                          style={{ minHeight: "44px", padding: "8px 16px", fontSize: "13px" }}
+                        >
+                          {copied ? "✅ Copied!" : "📋 Copy All"}
+                        </button>
+                      )}
+
                   {/* Word Cloud */}
                   <SkillWordCloud skills={skills} />
+
 
                   {/* Skill Gap Matrix */}
                   <section
@@ -1584,6 +1802,81 @@ function App() {
                         </div>
                       </div>
 
+
+                  {/* Checklist Progress Bar Header */}
+                  {suggestions.length > 0 && (
+                    <div
+                      style={{
+                        marginBottom: "16px",
+                        padding: "12px",
+                        background: "rgba(255, 255, 255, 0.03)",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          fontSize: "13px",
+                          fontWeight: "600",
+                          color: "#e2e8f0",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        <span>Interactive Checklist Progress</span>
+                        <span style={{ color: completionPercentage === 100 ? "#22c55e" : "#a5b4fc" }}>
+                          {addressedSuggestions.length} of {suggestions.length} addressed ({completionPercentage}%)
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "6px",
+                          backgroundColor: "rgba(255, 255, 255, 0.1)",
+                          borderRadius: "3px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${completionPercentage}%`,
+                            height: "100%",
+                            backgroundColor: completionPercentage === 100 ? "#22c55e" : "#6366f1",
+                            transition: "width 0.3s ease-in-out, background-color 0.3s ease",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {suggestions.length === 0 ? (
+                    <p
+                      style={{
+                        color: "#64748b",
+                        fontStyle: "italic",
+                        fontSize: "var(--font-size-sm)",
+                        textAlign: "left",
+                        margin: "16px 0 0 0",
+                      }}
+                    >
+                      No actionable layout suggestions generated for the current profile structure matrix.
+                    </p>
+                  ) : (
+                    <div className="suggestions-grid">
+                      {suggestions.map((suggestion, index) => (
+                        <SuggestionCard
+                          key={index}
+                          text={suggestion}
+                          index={index}
+                          isAddressed={addressedSuggestions.includes(index)}
+                          onToggle={toggleSuggestion}
+                        />
+                      ))}
+                    </div>
+                  )}
+
                       {suggestions.length === 0 ? (
                         <p
                           style={{
@@ -1609,6 +1902,7 @@ function App() {
                           ))}
                         </div>
                       )}
+
 
                       <CuratedTips targetRole={targetRole} />
 
