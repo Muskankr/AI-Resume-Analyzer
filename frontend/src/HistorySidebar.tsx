@@ -104,9 +104,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       </button>
 
       {/* Sidebar panel */}
-      <div
+      <aside
         className={`history-sidebar ${isOpen ? 'history-sidebar--open' : ''}`}
         aria-hidden={!isOpen}
+        aria-label="Notifications and Analysis History"
       >
         <div className="history-sidebar-header">
           <h3>
@@ -218,7 +219,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             )}
           </>
         )}
-      </div>
+      </aside>
     </>
   )
 }

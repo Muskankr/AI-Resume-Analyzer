@@ -14,6 +14,12 @@ from rest_framework.decorators import (
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from rest_framework.views import APIView
+from django.contrib.auth import get_user_model
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
+from django.core.mail import send_mail
 from rest_framework.throttling import SimpleRateThrottle
 
 from .comparison import compare_versions
@@ -25,6 +31,7 @@ from .serializers import (
 )
 from .services import analyze_resume
 from .url_fetcher import download_and_validate_url
+from django.shortcuts import get_object_or_404
 
 
 class UploadRateThrottle(SimpleRateThrottle):
@@ -189,23 +196,83 @@ def compare_versions_view(request):
 
 
 @api_view(["POST"])
-@permission_classes([AllowAny])
+@permission_classes([IsAuthenticated])
 def suggestion_feedback(request):
-    """Log user feedback (helpful/not helpful) for individual suggestions."""
-    suggestion_text = request.data.get("suggestion", "")
-    vote = request.data.get("vote", "")
-    index = request.data.get("index")
+    """
+    Handle upvote/downvote or comments on a specific suggestion.
+    In a real app, you'd store this in a SuggestionFeedback model.
+    """
+    analysis_id = request.data.get("analysis_id")
+    suggestion_text = request.data.get("suggestion_text")
+    vote = request.data.get("vote")  # 'up' or 'down'
 
-    if vote not in ("up", "down"):
+    if not analysis_id or not suggestion_text or not vote:
         return Response(
-            {"error": "Invalid vote parameter. Expected 'up' or 'down'."},
-            status=status.HTTP_400_BAD_REQUEST,
+            {"detail": "Missing required fields."}, status=status.HTTP_400_BAD_REQUEST
         )
 
-    print(f"[SUGGESTION FEEDBACK] Index: {index} | Vote: {vote} | Suggestion: {suggestion_text[:60]}")
+    return Response({"detail": "Feedback recorded successfully."})
 
-    return Response({
-        "message": "Feedback recorded. Thank you!",
-        "vote": vote,
-        "index": index,
-    }, status=status.HTTP_200_OK)
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_shared_result(request, share_id):
+    """
+    Fetch a specific ResumeAnalysis by its unguessable share_id,
+    without requiring authentication.
+    """
+    analysis = get_object_or_404(ResumeAnalysis, share_id=share_id)
+    serializer = ResumeAnalysisSerializer(analysis)
+    return Response(serializer.data)
+
+User = get_user_model()
+
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        username = request.data.get('username')
+        
+        user = User.objects.filter(username=username).first()
+        if user:
+            uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = default_token_generator.make_token(user)
+            
+            frontend_url = "http://localhost:5173" 
+            reset_link = f"{frontend_url}/reset-password/{uid}/{token}/"
+            
+            print("\n" + "="*50)
+            print(f"PASSWORD RESET LINK FOR USERNAME: {user.username}")
+            print(reset_link)
+            print("="*50 + "\n")
+            
+        return Response(
+            {"message": "If an account exists, a reset link has been generated in the console."}, 
+            status=status.HTTP_200_OK
+        )
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        uidb64 = request.data.get('uid')
+        token = request.data.get('token')
+        new_password = request.data.get('new_password')
+
+        try:
+            uid = force_str(urlsafe_base64_decode(uidb64))
+            user = User.objects.get(pk=uid)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+            user = None
+
+        if user is not None and default_token_generator.check_token(user, token):
+            user.set_password(new_password)
+            user.save()
+            return Response(
+                {"message": "Password has been reset successfully."}, 
+                status=status.HTTP_200_OK
+            )
+        else:
+            return Response(
+                {"error": "Invalid or expired token."}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )

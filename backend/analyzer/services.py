@@ -106,6 +106,24 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf",user_id=None,j
         "stages": PIPELINE_STAGES,
     }
 
+    track_comparisons = {}
+    for role, req_skills in ROLE_SKILLS.items():
+        role_matched = [s for s in req_skills if s in detected]
+        role_missing = [s for s in req_skills if s not in detected]
+        role_score = (
+            int(len(role_matched) / len(req_skills) * 100)
+            if req_skills
+            else min(len(detected) * 10, 100)
+        )
+        role_suggestions = [f"Add projects or experience with {s.title()}" for s in role_missing]
+        
+        track_comparisons[role] = {
+            "score": role_score,
+            "matched_skills": role_matched,
+            "missing_skills": role_missing,
+            "suggestions": role_suggestions,
+        }
+
     return {
         "id": analysis_id,
         "score": score,
@@ -117,4 +135,5 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf",user_id=None,j
         "resume_text": raw_text,
         "progress": progress_info,
         "pipeline_stages": PIPELINE_STAGES,
+        "track_comparisons": track_comparisons,
     }

@@ -19,7 +19,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Skill matching and missing skills visualization enhancements.
 - Resume history tracking improvements.
 - Authentication modal enhancements.
-
+- Resume thumbnail/file preview (name, size, type icon) shown immediately after file selection, before analysis (#140).
 ### Changed
 - Improved onboarding experience and user interface consistency.
 - Enhanced visual styling across the application.
