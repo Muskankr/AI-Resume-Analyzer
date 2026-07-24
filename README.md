@@ -244,6 +244,41 @@ The client application will run at: `http://localhost:5173/`
 | Variable | Description | Default / Placeholder |
 | :--- | :--- | :--- |
 | `VITE_BACKEND_URL` | The URL of the Django backend REST API server | `http://127.0.0.1:8000` |
+| `VITE_SENTRY_DSN` | Sentry DSN for frontend error tracking | *(Empty)* |
+
+---
+
+## Error Tracking (Sentry)
+
+This project uses [Sentry](https://sentry.io) for production error tracking on both the frontend and backend. The integration includes a `before_send` (backend) and `beforeSend` (frontend) hook to actively sanitize request bodies and prevent Personally Identifiable Information (PII) or resume content from being sent to the tracking service.
+
+### Setup
+
+1. Create a free developer account at [Sentry.io](https://sentry.io/signup/).
+2. Create two new projects in Sentry:
+   - One for **Django** (Backend)
+   - One for **React** (Frontend)
+3. Copy the respective **DSN (Data Source Name)** for each project.
+
+### Environment Variables
+
+Add the DSNs to your `.env` files:
+
+**Backend (`server/.env`)**
+```env
+SENTRY_DSN=your-django-sentry-dsn
+```
+
+**Frontend (`client/.env`)**
+```env
+VITE_SENTRY_DSN=your-react-sentry-dsn
+```
+
+### Local Development Behavior
+
+For local development, you do **not** need to set the Sentry DSNs. 
+- If `SENTRY_DSN` and `VITE_SENTRY_DSN` are missing or empty, Sentry remains inactive.
+- The application will initialize normally without any tracking overhead or startup errors.
 
 ---
 
