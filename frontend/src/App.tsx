@@ -1154,9 +1154,13 @@ function App() {
                         disabled={loading || retryDisabled}
                         style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
                       >
-                        {loading && analysisSource === 'upload'
-                          ? '⏳ Extracting...'
-                          : '🚀 Analyze Resume'}
+                        {loading && analysisSource === 'upload' ? (
+                          <>
+                            <Loader2 size={16} className="spin" /> Analyzing Resume...
+                          </>
+                        ) : (
+                          '🚀 Analyze Resume'
+                        )}
                       </button>
 
                       <button

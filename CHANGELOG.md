@@ -28,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Improved frontend performance and usability.
 
 ### Fixed
+- Audited and standardized loading indicators across async operations (upload/analysis, auth modal, history pagination) with spin icon indicators and double-submit button protection (#358).
 - Fixed widespread low-opacity/faded text across stats, How It Works cards, upload zone, and footer (#242).
 - Minor UI and styling fixes across multiple frontend components.
 - Improved responsiveness and consistency across the application.
