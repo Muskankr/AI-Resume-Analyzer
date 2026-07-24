@@ -264,3 +264,71 @@ class CompareVersionsAPITests(TestCase):
             "/api/compare/", {"older": self.older.id, "newer": foreign.id}
         )
         self.assertEqual(resp.status_code, 404)
+
+
+from analyzer.url_fetcher import convert_to_direct_download_url, download_and_validate_url
+
+
+class UrlFetcherTests(TestCase):
+    def test_convert_gdrive_url(self):
+        gdrive_share_url = "https://drive.google.com/file/d/11A2b3C4d5E6f7G8h9I/view?usp=sharing"
+        direct_url, filename = convert_to_direct_download_url(gdrive_share_url)
+        self.assertEqual(direct_url, "https://drive.google.com/uc?export=download&id=11A2b3C4d5E6f7G8h9I")
+        self.assertEqual(filename, "gdrive_11A2b3C4d5E6f7G8h9I.pdf")
+
+    def test_convert_dropbox_url(self):
+        dropbox_url = "https://www.dropbox.com/s/xyz123/my_resume.pdf?dl=0"
+        direct_url, filename = convert_to_direct_download_url(dropbox_url)
+        self.assertIn("dl=1", direct_url)
+        self.assertEqual(filename, "my_resume.pdf")
+
+    def test_invalid_url_scheme_raises_value_error(self):
+        with self.assertRaises(ValueError) as ctx:
+            download_and_validate_url("ftp://example.com/file.pdf")
+        self.assertIn("valid URL starting with http", str(ctx.exception))
+
+
+class SecurityHeadersTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+
+    def test_security_headers_are_present_on_api_responses(self):
+        # Trigger an API request
+        resp = self.client.get("/api/compare/")
+        
+        # Check that Content-Security-Policy is present and configured for APIs
+        self.assertIn("Content-Security-Policy", resp)
+        self.assertEqual(
+            resp["Content-Security-Policy"],
+            "default-src 'none'; frame-ancestors 'none';"
+        )
+        
+        # Check standard secure headers
+        self.assertIn("X-Frame-Options", resp)
+        self.assertEqual(resp["X-Frame-Options"], "DENY")
+        
+        self.assertIn("X-Content-Type-Options", resp)
+        self.assertEqual(resp["X-Content-Type-Options"], "nosniff")
+        
+        self.assertIn("Referrer-Policy", resp)
+        self.assertEqual(resp["Referrer-Policy"], "strict-origin-when-cross-origin")
+
+    def test_security_headers_are_present_on_html_responses(self):
+        # Trigger an HTML view request
+        resp = self.client.get("/admin/login/")
+        
+        # Check that Content-Security-Policy is configured for HTML/Admin
+        self.assertIn("Content-Security-Policy", resp)
+        self.assertIn("default-src 'self'", resp["Content-Security-Policy"])
+        
+        # Check standard secure headers
+        self.assertIn("X-Frame-Options", resp)
+        self.assertEqual(resp["X-Frame-Options"], "DENY")
+        
+        self.assertIn("X-Content-Type-Options", resp)
+        self.assertEqual(resp["X-Content-Type-Options"], "nosniff")
+        
+        self.assertIn("Referrer-Policy", resp)
+        self.assertEqual(resp["Referrer-Policy"], "strict-origin-when-cross-origin")
+
+

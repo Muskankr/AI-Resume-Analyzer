@@ -1,34 +1,34 @@
-import React, { useState } from "react";
-import { X, GitCompare, TrendingUp, TrendingDown, Minus, Download, Loader2 } from "lucide-react";
-import type { AnalysisEntry } from "../../hooks/useAnalysisHistory";
-import { useCompareVersions } from "../../hooks/useCompareVersions";
-import { exportComparisonPdf } from "../../utils/exportComparisonPdf";
-import "./CompareVersions.css";
+import React, { useState } from 'react'
+import { X, GitCompare, TrendingUp, TrendingDown, Minus, Download, Loader2 } from 'lucide-react'
+import type { AnalysisEntry } from '../../hooks/useAnalysisHistory'
+import { useCompareVersions } from '../../hooks/useCompareVersions'
+import { exportComparisonPdf } from '../../utils/exportComparisonPdf'
+import './CompareVersions.css'
 
 interface CompareVersionsProps {
-  entries: AnalysisEntry[];
-  token: string | undefined;
-  onClose: () => void;
+  entries: AnalysisEntry[]
+  token: string | undefined
+  onClose: () => void
 }
 
 /** Only entries that were saved to the backend (numeric DB id) are
  * comparable — locally-only guest entries don't have persisted resume
  * text on the server to diff against. */
 function isComparable(entry: AnalysisEntry) {
-  return /^\d+$/.test(entry.id);
+  return /^\d+$/.test(entry.id)
 }
 
 export const CompareVersions: React.FC<CompareVersionsProps> = ({ entries, token, onClose }) => {
-  const comparable = entries.filter(isComparable);
-  const [olderId, setOlderId] = useState(comparable[1]?.id ?? "");
-  const [newerId, setNewerId] = useState(comparable[0]?.id ?? "");
+  const comparable = entries.filter(isComparable)
+  const [olderId, setOlderId] = useState(comparable[1]?.id ?? '')
+  const [newerId, setNewerId] = useState(comparable[0]?.id ?? '')
 
-  const { comparison, loading, error, compare } = useCompareVersions(token);
+  const { comparison, loading, error, compare } = useCompareVersions(token)
 
   const handleCompare = () => {
-    if (!olderId || !newerId) return;
-    compare(olderId, newerId);
-  };
+    if (!olderId || !newerId) return
+    compare(olderId, newerId)
+  }
 
   const scoreIcon =
     comparison && comparison.score_delta > 0 ? (
@@ -37,7 +37,7 @@ export const CompareVersions: React.FC<CompareVersionsProps> = ({ entries, token
       <TrendingDown size={20} className="compare-delta-icon compare-delta-icon--down" />
     ) : (
       <Minus size={20} className="compare-delta-icon" />
-    );
+    )
 
   return (
     <div className="auth-overlay" onClick={onClose}>
@@ -55,8 +55,8 @@ export const CompareVersions: React.FC<CompareVersionsProps> = ({ entries, token
           <p className="compare-empty">Sign in to compare your saved resume versions.</p>
         ) : comparable.length < 2 ? (
           <p className="compare-empty">
-            You need at least two saved analyses to compare. Upload and analyze another
-            version of your resume first.
+            You need at least two saved analyses to compare. Upload and analyze another version of
+            your resume first.
           </p>
         ) : (
           <>
@@ -70,7 +70,7 @@ export const CompareVersions: React.FC<CompareVersionsProps> = ({ entries, token
                 >
                   {comparable.map((entry) => (
                     <option key={entry.id} value={entry.id}>
-                      {entry.fileName} · {entry.score}% ·{" "}
+                      {entry.fileName} · {entry.score}% ·{' '}
                       {new Date(entry.timestamp).toLocaleDateString()}
                     </option>
                   ))}
@@ -85,7 +85,7 @@ export const CompareVersions: React.FC<CompareVersionsProps> = ({ entries, token
                 >
                   {comparable.map((entry) => (
                     <option key={entry.id} value={entry.id}>
-                      {entry.fileName} · {entry.score}% ·{" "}
+                      {entry.fileName} · {entry.score}% ·{' '}
                       {new Date(entry.timestamp).toLocaleDateString()}
                     </option>
                   ))}
@@ -116,13 +116,13 @@ export const CompareVersions: React.FC<CompareVersionsProps> = ({ entries, token
                   <span
                     className={`compare-score-delta ${
                       comparison.score_delta > 0
-                        ? "is-positive"
+                        ? 'is-positive'
                         : comparison.score_delta < 0
-                        ? "is-negative"
-                        : ""
+                          ? 'is-negative'
+                          : ''
                     }`}
                   >
-                    {comparison.score_delta > 0 ? "+" : ""}
+                    {comparison.score_delta > 0 ? '+' : ''}
                     {comparison.score_delta} pts
                   </span>
                 </div>
@@ -190,7 +190,7 @@ export const CompareVersions: React.FC<CompareVersionsProps> = ({ entries, token
                           key={i}
                           className={`compare-diff-line compare-diff-line--${line.type}`}
                         >
-                          {line.type === "added" ? "+ " : "- "}
+                          {line.type === 'added' ? '+ ' : '- '}
                           {line.text}
                         </div>
                       ))}
@@ -212,7 +212,7 @@ export const CompareVersions: React.FC<CompareVersionsProps> = ({ entries, token
         )}
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default CompareVersions;
+export default CompareVersions
