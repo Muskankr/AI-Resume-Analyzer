@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { CheckCircle2, XCircle, Loader2, Home } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, Home } from 'lucide-react'
 import axios from 'axios'
 
 const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
@@ -29,9 +29,13 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ onVerification
         setTimeout(() => {
           navigate('/')
         }, 3000)
-      } catch (err: any) {
+      } catch (err: unknown) {
         setStatus('error')
-        setErrorMsg(err.response?.data?.error || 'Verification failed. The link may be invalid or expired.')
+        let msg = 'Verification failed. The link may be invalid or expired.'
+        if (axios.isAxiosError(err)) {
+          msg = err.response?.data?.error || msg
+        }
+        setErrorMsg(msg)
       }
     }
 
@@ -76,7 +80,7 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ onVerification
 
         {status === 'success' && (
           <div>
-            <CheckCircle2 size={56} style={{ color: '#10b981', margin: '0 auto 24px' }} />
+            <CheckCircle size={56} style={{ color: '#10b981', margin: '0 auto 24px' }} />
             <h3 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '12px', color: '#fff' }}>
               Email Verified!
             </h3>

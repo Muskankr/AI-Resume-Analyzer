@@ -351,9 +351,13 @@ function App() {
       setResendStatus('success')
       setResendMessage('Verification link sent!')
       setTimeout(() => setResendMessage(''), 5000)
-    } catch (error: any) {
+    } catch (error: unknown) {
       setResendStatus('error')
-      setResendMessage(error.response?.data?.error || 'Failed to send verification email.')
+      let msg = 'Failed to send verification email.'
+      if (axios.isAxiosError(error)) {
+        msg = error.response?.data?.error || msg
+      }
+      setResendMessage(msg)
       setTimeout(() => setResendMessage(''), 5000)
     } finally {
       setResendingEmail(false)
@@ -878,18 +882,19 @@ function App() {
       />
       {user && !user.is_verified && (
         <div className="verification-warning-banner" style={{
-          background: 'linear-gradient(90deg, #b45309, #d97706)',
-          color: '#fff',
+          background: '#fffbeb',
+          borderBottom: '1px solid #fde68a',
+          color: '#78350f',
           padding: '12px 24px',
           textAlign: 'center',
           fontSize: '0.92rem',
-          fontWeight: 500,
+          fontWeight: 600,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexWrap: 'wrap',
           gap: '12px',
-          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)',
           zIndex: 99,
           position: 'relative'
         }}>
@@ -903,9 +908,9 @@ function App() {
               fontSize: '0.82rem',
               borderRadius: 'var(--radius-md, 6px)',
               cursor: 'pointer',
-              background: 'rgba(255,255,255,0.15)',
-              border: '1px solid rgba(255,255,255,0.3)',
-              color: '#fff',
+              background: 'rgba(217, 119, 6, 0.1)',
+              border: '1px solid #d97706',
+              color: '#78350f',
               fontWeight: 600,
               display: 'inline-flex',
               alignItems: 'center',
@@ -924,8 +929,9 @@ function App() {
           {resendMessage && (
             <span style={{
               fontSize: '0.85rem',
-              background: resendStatus === 'success' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)',
+              background: resendStatus === 'success' ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
               border: `1px solid ${resendStatus === 'success' ? '#10b981' : '#ef4444'}`,
+              color: resendStatus === 'success' ? '#065f46' : '#991b1b',
               padding: '4px 10px',
               borderRadius: '4px',
               marginLeft: '8px'
