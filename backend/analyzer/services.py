@@ -1,5 +1,6 @@
 import os
 import pdfplumber
+import textstat
 from django.contrib.auth import get_user_model
 from .models import ResumeAnalysis
 from .skill_matcher import extract_skills
@@ -31,6 +32,15 @@ PIPELINE_STAGES = [
     {"stage": "done", "label": "Analysis complete", "percent": 100},
 ]
 
+def calculate_readability(text):
+    score = textstat.flesch_reading_ease(text)
+    if score >= 60:
+        label = "easy"
+    elif score >= 30:
+        label = "moderate"
+    else:
+        label = "dense"
+    return round(score , 1), label
 
 def analyze_resume(file_path, target_role, file_name="resume.pdf",user_id=None,job_description=None):
 
@@ -48,6 +58,7 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf",user_id=None,j
             os.remove(file_path)
 
     raw_text = text
+    readability_score, readability_label = calculate_readability(raw_text)
     detected = extract_skills(text)
 
     matched = []
@@ -127,6 +138,8 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf",user_id=None,j
     return {
         "id": analysis_id,
         "score": score,
+        "readability_score": readability_score,
+        "readability_label": readability_label,
         "skills_found": detected,
         "suggestions": suggestions,
         "matched_skills": matched,

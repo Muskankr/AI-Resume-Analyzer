@@ -224,16 +224,17 @@ The API server starts on: `http://127.0.0.1:8000/`
 
 ### Client Setup (React)
 
+Create your environment variables by copying the provided examples:
+
 ```bash
-# Open a new terminal instance and navigate to client directory
-cd client
+cd frontend
+cp .env.development.example .env.development
+cp .env.production.example .env.production
+```
 
-# Create local environment configuration from the example
-# Windows:
-copy .env.example .env
-# macOS/Linux:
-cp .env.example .env
+Then install dependencies and start the app:
 
+```bash
 # Install packages
 npm install
 
