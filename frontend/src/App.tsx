@@ -1022,7 +1022,7 @@ function App() {
                     aria-label="Resume Analyzer Form"
                     style={{ position: 'relative' }}
                   >
-                    {user && !user.is_verified && (
+                    {user && !user.is_verified ? (
                       <div className="unverified-form-overlay" style={{
                         position: 'absolute',
                         top: 0,
@@ -1062,7 +1062,7 @@ function App() {
                           Please verify your email address to upload resumes and unlock ATS analyses.
                         </p>
                       </div>
-                    )}
+                    ) : null}
                     {/* STEP 1: Target Career Track */}
                     <div
                       className="mb-4 p-4 role-selector-container"
