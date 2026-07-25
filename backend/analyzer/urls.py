@@ -14,6 +14,9 @@ from .views import (
     compare_versions_view,
     suggestion_feedback,
     get_shared_result,
+    verify_email,
+    resend_verification_email,
+    user_status,
 )
 
 urlpatterns = [
@@ -22,6 +25,9 @@ urlpatterns = [
     path("auth/signup/", signup),
     path("auth/login/", TokenObtainPairView.as_view()),
     path("auth/refresh/", TokenRefreshView.as_view()),
+    path("auth/verify-email/", verify_email),
+    path("auth/resend-verification/", resend_verification_email),
+    path("auth/status/", user_status),
 
     path("history/", analysis_history),
     path("history/clear/", clear_user_history),

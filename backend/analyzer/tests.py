@@ -58,7 +58,7 @@ class AnalyzeResumeTests(TestCase):
 
     @patch("analyzer.services.pdfplumber.open")
     def test_role_match_and_missing(self, mock_open):
-        # The "Frontend Developer" role requires 8 skills; we only supply 3.
+        # The "Frontend Developer" role requires 10 skills; we only supply 3.
         mock_open.return_value = _fake_pdf("HTML CSS JavaScript")
         result = analyze_resume("dummy.pdf", "Frontend Developer")
 
@@ -67,8 +67,8 @@ class AnalyzeResumeTests(TestCase):
         self.assertIn("javascript", result["matched_skills"])
         self.assertIn("react", result["missing_skills"])
         self.assertIn("git", result["missing_skills"])
-        # score = matched / required * 100 -> 3 / 8 * 100 = 37
-        self.assertEqual(result["score"], 3 * 100 // 8)
+        # score = matched / required * 100 -> 3 / 10 * 100 = 30
+        self.assertEqual(result["score"], 30)
 
     @patch("analyzer.services.pdfplumber.open")
     def test_suggestions_generated_for_missing(self, mock_open):
@@ -95,7 +95,7 @@ class AnalyzeResumeTests(TestCase):
         self.assertEqual(result["score"], 0)
         # ...but every role skill is now "missing", so suggestions are generated
         # for all of them (the resume is empty, nothing matches).
-        self.assertEqual(len(result["missing_skills"]), 8)
+        self.assertEqual(len(result["missing_skills"]), 13)
         self.assertEqual(
             result["suggestions"],
             [
@@ -225,6 +225,9 @@ class CompareVersionsEngineTests(TestCase):
 class CompareVersionsAPITests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="bob", password="pw123456")
+        self.user.profile.is_verified = True
+        self.user.profile.save()
+        
         self.other_user = User.objects.create_user(username="eve", password="pw123456")
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
@@ -330,5 +333,80 @@ class SecurityHeadersTests(TestCase):
         
         self.assertIn("Referrer-Policy", resp)
         self.assertEqual(resp["Referrer-Policy"], "strict-origin-when-cross-origin")
+
+
+from django.core.signing import TimestampSigner
+from analyzer.models import UserProfile
+from analyzer.serializers import SignupSerializer
+
+
+class EmailVerificationTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.signup_url = "/api/auth/signup/"
+        self.verify_url = "/api/auth/verify-email/"
+        self.resend_url = "/api/auth/resend-verification/"
+        self.status_url = "/api/auth/status/"
+
+    def test_signup_creates_unverified_profile(self):
+        resp = self.client.post(self.signup_url, {
+            "username": "testuser",
+            "email": "testuser@example.com",
+            "password": "password123"
+        })
+        self.assertEqual(resp.status_code, 201)
+        user = User.objects.get(username="testuser")
+        self.assertEqual(user.email, "testuser@example.com")
+        self.assertFalse(user.profile.is_verified)
+
+    def test_signup_requires_unique_email(self):
+        User.objects.create_user(username="existing", email="test@example.com", password="password123")
+        serializer = SignupSerializer(data={
+            "username": "newuser",
+            "email": "TEST@example.com",
+            "password": "password123"
+        })
+        self.assertFalse(serializer.is_valid())
+        self.assertIn("email", serializer.errors)
+
+    def test_email_verification_success(self):
+        user = User.objects.create_user(username="verify_me", email="verify@example.com", password="password123")
+        signer = TimestampSigner()
+        token = signer.sign(str(user.id))
+
+        resp = self.client.post(self.verify_url, {"token": token})
+        self.assertEqual(resp.status_code, 200)
+        user.profile.refresh_from_db()
+        self.assertTrue(user.profile.is_verified)
+
+    def test_email_verification_invalid_token(self):
+        resp = self.client.post(self.verify_url, {"token": "invalid-token-value"})
+        self.assertEqual(resp.status_code, 400)
+
+    def test_resend_verification_sends_email(self):
+        user = User.objects.create_user(username="resend_me", email="resend@example.com", password="password123")
+        self.client.force_authenticate(user=user)
+
+        resp = self.client.post(self.resend_url)
+        self.assertEqual(resp.status_code, 200)
+
+    def test_unverified_user_cannot_access_protected_views(self):
+        user = User.objects.create_user(username="unverified", email="unverified@example.com", password="password123")
+        self.client.force_authenticate(user=user)
+
+        resp = self.client.get("/api/history/")
+        self.assertEqual(resp.status_code, 403)
+        self.assertIn("verify your email", str(resp.data.get("detail", "")))
+
+        resp = self.client.get(self.status_url)
+        self.assertEqual(resp.status_code, 200)
+        self.assertFalse(resp.data["is_verified"])
+
+    def test_unverified_user_cannot_upload_resume(self):
+        user = User.objects.create_user(username="unverified_uploader", email="unverified_uploader@example.com", password="password123")
+        self.client.force_authenticate(user=user)
+        resp = self.client.post("/api/upload/", {"role": "Frontend Developer", "job_description": "React"})
+        self.assertEqual(resp.status_code, 403)
+        self.assertIn("verify your email", resp.data["error"])
 
 

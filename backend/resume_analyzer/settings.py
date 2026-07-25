@@ -133,6 +133,10 @@ REST_FRAMEWORK = {
     ),
 }
 
+SIMPLE_JWT = {
+    'TOKEN_OBTAIN_SERIALIZER': 'analyzer.serializers.CustomTokenObtainPairSerializer',
+}
+
 # Rate limiting: resume upload endpoint
 RESUME_UPLOAD_RATE = os.environ.get('RESUME_UPLOAD_RATE', '10/hour')
 

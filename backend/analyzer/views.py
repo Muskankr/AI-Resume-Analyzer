@@ -12,7 +12,7 @@ from rest_framework.decorators import (
     throttle_classes,
 )
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, BasePermission
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.contrib.auth import get_user_model
@@ -21,9 +21,10 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from rest_framework.throttling import SimpleRateThrottle
+from django.core.signing import TimestampSigner, SignatureExpired, BadSignature
 
 from .comparison import compare_versions
-from .models import ResumeAnalysis
+from .models import ResumeAnalysis, UserProfile
 from .serializers import (
     SignupSerializer,
     ResumeAnalysisSerializer,
@@ -47,15 +48,51 @@ class UploadRateThrottle(SimpleRateThrottle):
         }
 
 
+class IsEmailVerified(BasePermission):
+    message = "Please verify your email address to access this feature."
+
+    def has_permission(self, request, view):
+        if not request.user or not request.user.is_authenticated:
+            return True
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        return profile.is_verified
+
+
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def signup(request):
     serializer = SignupSerializer(data=request.data)
 
     if serializer.is_valid():
-        serializer.save()
+        user = serializer.save()
+        
+        # Send email verification
+        signer = TimestampSigner()
+        token = signer.sign(str(user.id))
+        
+        frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+        verification_link = f"{frontend_url}/verify-email/{token}/"
+        
+        email_body = f"Hello {user.username},\n\nPlease verify your email address by clicking the link below:\n{verification_link}\n\nThis link is valid for 24 hours.\n\nIf you did not request this, please ignore this email."
+
+        print("\n" + "="*50)
+        print(f"VERIFICATION LINK FOR USERNAME: {user.username}")
+        print(verification_link)
+        print("="*50 + "\n")
+
+        try:
+            send_mail(
+                subject="Verify your email - AI Resume Analyzer",
+                message=email_body,
+                from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "webmaster@localhost"),
+                recipient_list=[user.email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            print(f"Failed to send email: {e}")
+
         return Response(
-            {"detail": "Account created successfully."},
+            {"detail": "Account created successfully. Please verify your email."},
             status=status.HTTP_201_CREATED,
         )
 
@@ -67,6 +104,14 @@ def signup(request):
 @permission_classes([AllowAny])
 @throttle_classes([UploadRateThrottle])
 def upload_resume(request):
+
+    if request.user.is_authenticated:
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        if not profile.is_verified:
+            return Response(
+                {"error": "Please verify your email address to access full features."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
     file = request.FILES.get("file")
     url = request.data.get("url") or request.data.get("resume_url")
@@ -123,7 +168,7 @@ def upload_resume(request):
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsEmailVerified])
 def analysis_history(request):
 
     analyses = ResumeAnalysis.objects.filter(
@@ -137,7 +182,7 @@ def analysis_history(request):
 
     return Response(serializer.data)
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsEmailVerified])
 def delete_single_history(request, pk):
     try:
         entry = ResumeAnalysis.objects.get(pk=pk, user=request.user)
@@ -147,14 +192,14 @@ def delete_single_history(request, pk):
         return Response(status=status.HTTP_404_NOT_FOUND)
 
 @api_view(['DELETE'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsEmailVerified])
 def clear_user_history(request):
     ResumeAnalysis.objects.filter(user=request.user).delete()
     return Response({"message": "All history cleared"}, status=status.HTTP_204_NO_CONTENT)
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsEmailVerified])
 def compare_versions_view(request):
     """Compare two of the current user's resume versions.
 
@@ -196,7 +241,7 @@ def compare_versions_view(request):
 
 
 @api_view(["POST"])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsEmailVerified])
 def suggestion_feedback(request):
     """
     Handle upvote/downvote or comments on a specific suggestion.
@@ -276,3 +321,73 @@ class PasswordResetConfirmView(APIView):
                 {"error": "Invalid or expired token."}, 
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def verify_email(request):
+    token = request.data.get("token")
+    if not token:
+        return Response({"error": "Verification token is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+    signer = TimestampSigner()
+    try:
+        user_id = signer.unsign(token, max_age=86400)  # 24 hours expiry
+        user = User.objects.get(pk=user_id)
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        profile.is_verified = True
+        profile.save()
+        return Response({"message": "Email verified successfully."}, status=status.HTTP_200_OK)
+    except SignatureExpired:
+        return Response({"error": "Verification token has expired."}, status=status.HTTP_400_BAD_REQUEST)
+    except (BadSignature, User.DoesNotExist, ValueError, TypeError):
+        return Response({"error": "Invalid verification token."}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def resend_verification_email(request):
+    user = request.user
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    if profile.is_verified:
+        return Response({"message": "Email is already verified."}, status=status.HTTP_400_BAD_REQUEST)
+
+    if not user.email:
+        return Response({"error": "User has no email address configured."}, status=status.HTTP_400_BAD_REQUEST)
+
+    signer = TimestampSigner()
+    token = signer.sign(str(user.id))
+
+    frontend_url = os.environ.get("FRONTEND_URL", "http://localhost:5173")
+    verification_link = f"{frontend_url}/verify-email/{token}/"
+
+    email_body = f"Hello {user.username},\n\nPlease verify your email address by clicking the link below:\n{verification_link}\n\nThis link is valid for 24 hours.\n\nIf you did not request this, please ignore this email."
+
+    print("\n" + "="*50)
+    print(f"VERIFICATION LINK FOR USERNAME: {user.username}")
+    print(verification_link)
+    print("="*50 + "\n")
+
+    try:
+        send_mail(
+            subject="Verify your email - AI Resume Analyzer",
+            message=email_body,
+            from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "webmaster@localhost"),
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        return Response({"error": f"Failed to send email: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    return Response({"message": "Verification link sent to your email."}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def user_status(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    return Response({
+        "username": request.user.username,
+        "email": request.user.email,
+        "is_verified": profile.is_verified,
+    }, status=status.HTTP_200_OK)
