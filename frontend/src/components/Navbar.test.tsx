@@ -50,7 +50,7 @@ describe('Navbar Component right-side cluster (#244)', () => {
   })
 
   it('renders user profile when user is authenticated', () => {
-    const user = { username: 'testuser', token: 'fake-token' }
+    const user = { username: 'testuser', token: 'fake-token', is_verified: true }
     render(
       <Navbar
         theme="dark"
