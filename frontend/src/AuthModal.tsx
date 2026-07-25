@@ -3,7 +3,7 @@ import { Lock, FileSignature, Loader2 } from 'lucide-react'
 import axios from 'axios'
 
 interface AuthModalProps {
-  onSignup: (username: string, password: string) => Promise<void>
+  onSignup: (username: string, email: string, password: string) => Promise<void>
   onLogin: (username: string, password: string, rememberMe: boolean) => Promise<void>
   onClose: () => void
 }
@@ -12,6 +12,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
   const [mode, setMode] = useState<'login' | 'signup' | 'forgot_password'>('login');
   const [rememberMe, setRememberMe] = useState(true)
   const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
@@ -22,7 +23,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
     setLoading(true)
     try {
       if (mode === 'signup') {
-        await onSignup(username, password)
+        await onSignup(username, email, password)
         onClose()
       } else if (mode === 'login') {
         await onLogin(username, password, rememberMe)
@@ -75,6 +76,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
                 required
                 autoFocus
               />
+              {mode === 'signup' && (
+                <input
+                  className="auth-input"
+                  type="email"
+                  placeholder="Email Address"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              )}
               <input
                 className="auth-input"
                 type="password"

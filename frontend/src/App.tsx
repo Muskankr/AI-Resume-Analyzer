@@ -15,6 +15,7 @@ import { SkillWordCloud } from './components/SkillWordCloud'
 import { TrackMatrix } from './components/TrackMatrix'
 import { ResetPasswordConfirmPage } from './components/ResetPasswordConfirmPage'
 import type { TrackComparisons } from './components/TrackMatrix'
+import { VerifyEmailPage } from './components/VerifyEmailPage'
 import {
   FileText,
   Loader2,
@@ -335,8 +336,29 @@ function App() {
     currentStep = 3
   }
 
-  const { user, signup, login, logout } = useAuth()
+  const { user, signup, login, logout, resendVerification, refreshUserStatus } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
+  const [resendingEmail, setResendingEmail] = useState(false)
+  const [resendStatus, setResendStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [resendMessage, setResendMessage] = useState('')
+
+  const handleResendVerification = async () => {
+    setResendingEmail(true)
+    setResendStatus('idle')
+    setResendMessage('')
+    try {
+      await resendVerification()
+      setResendStatus('success')
+      setResendMessage('Verification link sent!')
+      setTimeout(() => setResendMessage(''), 5000)
+    } catch (error: any) {
+      setResendStatus('error')
+      setResendMessage(error.response?.data?.error || 'Failed to send verification email.')
+      setTimeout(() => setResendMessage(''), 5000)
+    } finally {
+      setResendingEmail(false)
+    }
+  }
 
   const {
     entries,
@@ -854,9 +876,69 @@ function App() {
         onLogout={handleLogout}
         onHistoryClick={() => setHistoryOpen(true)}
       />
+      {user && !user.is_verified && (
+        <div className="verification-warning-banner" style={{
+          background: 'linear-gradient(90deg, #b45309, #d97706)',
+          color: '#fff',
+          padding: '12px 24px',
+          textAlign: 'center',
+          fontSize: '0.92rem',
+          fontWeight: 500,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexWrap: 'wrap',
+          gap: '12px',
+          boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)',
+          zIndex: 99,
+          position: 'relative'
+        }}>
+          <span>✉️ Please verify your email address to unlock full account access.</span>
+          <button
+            onClick={handleResendVerification}
+            disabled={resendingEmail}
+            className="app-btn app-btn--secondary"
+            style={{
+              padding: '6px 14px',
+              fontSize: '0.82rem',
+              borderRadius: 'var(--radius-md, 6px)',
+              cursor: 'pointer',
+              background: 'rgba(255,255,255,0.15)',
+              border: '1px solid rgba(255,255,255,0.3)',
+              color: '#fff',
+              fontWeight: 600,
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s',
+            }}
+          >
+            {resendingEmail ? (
+              <>
+                <Loader2 size={13} className="spin" /> Resending...
+              </>
+            ) : (
+              'Resend Verification Link'
+            )}
+          </button>
+          {resendMessage && (
+            <span style={{
+              fontSize: '0.85rem',
+              background: resendStatus === 'success' ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)',
+              border: `1px solid ${resendStatus === 'success' ? '#10b981' : '#ef4444'}`,
+              padding: '4px 10px',
+              borderRadius: '4px',
+              marginLeft: '8px'
+            }}>
+              {resendStatus === 'success' ? '✓' : '✗'} {resendMessage}
+            </span>
+          )}
+        </div>
+      )}
       <Routes>
         <Route path="/shared/:shareId" element={<SharedResultView />} />
         <Route path="/reset-password/:uid/:token" element={<ResetPasswordConfirmPage />} />
+        <Route path="/verify-email/:token" element={<VerifyEmailPage onVerificationSuccess={refreshUserStatus} />} />
         <Route
           path="/"
           element={
@@ -924,7 +1006,52 @@ function App() {
 
                   {(loading || score !== null) && <StepProgress currentStep={currentStep} />}
 
-                  <section className="analyzer-form-section" aria-label="Resume Analyzer Form">
+                  <section 
+                    className="analyzer-form-section" 
+                    aria-label="Resume Analyzer Form"
+                    style={{ position: 'relative' }}
+                  >
+                    {user && !user.is_verified && (
+                      <div className="unverified-form-overlay" style={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'rgba(15, 23, 42, 0.75)',
+                        backdropFilter: 'blur(8px)',
+                        borderRadius: 'var(--radius-lg)',
+                        zIndex: 10,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '32px',
+                        textAlign: 'center',
+                        border: '1px solid rgba(255,255,255,0.06)'
+                      }}>
+                        <div style={{
+                          background: 'rgba(217, 119, 6, 0.1)',
+                          border: '1px solid rgba(217, 119, 6, 0.3)',
+                          borderRadius: '50%',
+                          padding: '16px',
+                          marginBottom: '20px',
+                          display: 'inline-flex',
+                          color: '#d97706'
+                        }}>
+                          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                          </svg>
+                        </div>
+                        <h4 style={{ fontSize: '1.25rem', fontWeight: 700, marginBottom: '8px', color: '#fff' }}>
+                          Verification Required
+                        </h4>
+                        <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.92rem', maxWidth: '340px', lineHeight: '1.4' }}>
+                          Please verify your email address to upload resumes and unlock ATS analyses.
+                        </p>
+                      </div>
+                    )}
                     {/* STEP 1: Target Career Track */}
                     <div
                       className="mb-4 p-4 role-selector-container"
