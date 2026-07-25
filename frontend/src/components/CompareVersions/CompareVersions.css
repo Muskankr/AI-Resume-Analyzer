@@ -47,7 +47,7 @@
 
 .compare-empty {
   font-size: 14px;
-  color: var(--text-readable);
+  opacity: 0.8;
   text-align: center;
   padding: 24px 0;
 }
@@ -71,7 +71,7 @@
 .compare-picker label {
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-readable);
+  opacity: 0.75;
 }
 
 .compare-picker select {
@@ -142,7 +142,7 @@
   font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: var(--text-readable);
+  opacity: 0.8;
   margin: 0 0 10px;
 }
 
@@ -167,7 +167,7 @@
   text-transform: uppercase;
   letter-spacing: 0.03em;
   margin: 0 0 8px;
-  color: var(--text-readable);
+  opacity: 0.85;
 }
 .compare-skill-grid h5.is-positive {
   color: #16a34a;
@@ -178,7 +178,7 @@
 
 .compare-none {
   font-size: 12px;
-  color: var(--text-readable);
+  opacity: 0.6;
   margin: 0;
 }
 

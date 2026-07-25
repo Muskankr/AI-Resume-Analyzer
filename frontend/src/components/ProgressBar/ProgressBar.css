@@ -20,7 +20,7 @@
 .progress-stage-label {
   font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text-readable);
+  color: #e2e8f0;
 }
 
 .progress-percentage-text {
@@ -91,10 +91,10 @@
 
 .checkpoint-label {
   font-size: 0.75rem;
-  color: var(--text-readable);
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .stage-checkpoint.checkpoint-completed .checkpoint-label {
-  color: var(--text-readable);
+  color: #e2e8f0;
   font-weight: 600;
 }

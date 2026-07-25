@@ -80,7 +80,7 @@ export const Footer: React.FC = () => {
               <a
                 href="#"
                 style={{
-                  color: 'var(--footer-link)',
+                  color: '#94a3b8',
                   fontSize: 'var(--font-size-sm)',
                   textDecoration: 'none',
                   transition: 'color 0.2s',
@@ -94,7 +94,7 @@ export const Footer: React.FC = () => {
               <a
                 href="#roleSelect"
                 style={{
-                  color: 'var(--footer-link)',
+                  color: '#94a3b8',
                   fontSize: 'var(--font-size-sm)',
                   textDecoration: 'none',
                   transition: 'color 0.2s',
@@ -136,7 +136,7 @@ export const Footer: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  color: 'var(--footer-link)',
+                  color: '#94a3b8',
                   fontSize: 'var(--font-size-sm)',
                   textDecoration: 'none',
                 }}
@@ -151,7 +151,7 @@ export const Footer: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  color: 'var(--footer-link)',
+                  color: '#94a3b8',
                   fontSize: 'var(--font-size-sm)',
                   textDecoration: 'none',
                 }}
@@ -184,7 +184,7 @@ export const Footer: React.FC = () => {
               aria-label="GitHub Repository"
               style={{
                 fontSize: '20px',
-                color: 'var(--footer-link)',
+                color: '#94a3b8',
                 textDecoration: 'none',
                 transition: 'color 0.2s',
               }}
@@ -199,7 +199,7 @@ export const Footer: React.FC = () => {
               aria-label="LinkedIn Profile"
               style={{
                 fontSize: '20px',
-                color: 'var(--footer-link)',
+                color: '#94a3b8',
                 textDecoration: 'none',
                 transition: 'color 0.2s',
               }}
@@ -225,10 +225,10 @@ export const Footer: React.FC = () => {
           gap: '12px',
         }}
       >
-        <p style={{ fontSize: '12px', color: 'var(--text-muted-inverse)', margin: 0 }}>
+        <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
           &copy; {currentYear} AI Resume Analyzer. All architectural systems operational.
         </p>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted-inverse)', margin: 0 }}>
+        <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0 }}>
           Built with React & TypeScript
         </p>
       </div>

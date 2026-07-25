@@ -166,7 +166,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
           style={{
             margin: 0,
             fontSize: 'var(--font-size-sm)',
-            color: '#e2e8f0',
+            color: 'var(--body-text)',
             lineHeight: '1.6',
           }}
         >
@@ -193,7 +193,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
               <span
                 style={{
                   fontSize: '0.78rem',
-                  color: 'rgba(255, 255, 255, 0.6)',
+                  color: 'var(--muted-text)',
                   fontWeight: '500',
                 }}
               >
@@ -276,7 +276,7 @@ function App() {
   const [score, setScore] = useState<number | null>(null)
   const [skills, setSkills] = useState<string[]>([])
   const [suggestions, setSuggestions] = useState<string[]>([])
- 
+
   const [readabilityLabel, setReadabilityLabel] = useState<string | null>(null)
   const [undoState, setUndoState] = useState<UndoState | null>(null)
   const [showUndoToast, setShowUndoToast] = useState(false)
@@ -633,7 +633,7 @@ function App() {
       setMatchedSkills(res.data.matched_skills || [])
       setMissingSkills(res.data.missing_skills || [])
       setResumeText(res.data.resume_text || '')
- 
+
       setReadabilityLabel(res.data.readability_label ?? null)
       if (res.data.share_id) setShareId(res.data.share_id)
       setTrackComparisons(res.data.track_comparisons || null)
@@ -1063,9 +1063,18 @@ function App() {
                         </p>
                       </div>
                     ) : null}
-                    {/* STEP 1: Target Career Track */}
-                    <div
-                      className="mb-4 p-4 role-selector-container"
+
+                  {/* STEP 1: Target Career Track */}
+                  <div
+                    className="mb-4 p-4 role-selector-container"
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      borderRadius: 'var(--radius-lg)',
+                      border: '1px solid rgba(255,255,255,0.04)',
+                    }}
+                  >
+                    <label
+                      htmlFor="roleSelect"
                       style={{
                         display: 'block',
                         marginBottom: '12px',
@@ -1106,65 +1115,68 @@ function App() {
                     )}
                   </div>
 
-                    {/* STEP 2: Upload File / Link & Job Description */}
-                    <div className="mb-5">
-                      {/* Mode Switcher Tabs */}
-                      <div
+                  {/* STEP 2: Upload File / Link & Job Description */}
+                  <div className="mb-5">
+                    {/* Mode Switcher Tabs */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        gap: '8px',
+                        justifyContent: 'center',
+                        marginBottom: '16px',
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUploadMode('file')
+                          setUrlError(null)
+                        }}
                         style={{
-                          display: 'flex',
-                          gap: '8px',
-                          justifyContent: 'center',
-                          marginBottom: '16px',
+                          padding: '8px 16px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.85rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          background:
+                            uploadMode === 'file' ? '#6366f1' : 'rgba(255, 255, 255, 0.05)',
+                          color: '#fff',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          transition: 'all 0.2s ease',
                         }}
                       >
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setUploadMode('file')
-                            setUrlError(null)
-                          }}
-                          style={{
-                            padding: '8px 16px',
-                            borderRadius: 'var(--radius-md)',
-                            fontSize: '0.85rem',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            background:
-                              uploadMode === 'file' ? '#6366f1' : 'rgba(255, 255, 255, 0.05)',
-                            color: '#fff',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            transition: 'all 0.2s ease',
-                          }}
-                        >
-                          📄 Local File Upload
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setUploadMode('url')
-                            setFileError(null)
-                          }}
-                          style={{
-                            padding: '8px 16px',
-                            borderRadius: 'var(--radius-md)',
-                            fontSize: '0.85rem',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            background:
-                              uploadMode === 'file' ? '#6366f1' : 'rgba(255, 255, 255, 0.05)',
-                            color: '#fff',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
-                            transition: 'all 0.2s ease',
-                          }}
-                        >
-                          🔗 Import via Link
-                        </button>
-                      </div>
+                        📄 Local File Upload
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setUploadMode('url')
+                          setFileError(null)
+                        }}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.85rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          background:
+                            uploadMode === 'file' ? '#6366f1' : 'rgba(255, 255, 255, 0.05)',
+                          color: '#fff',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        🔗 Import via Link
+                      </button>
+                    </div>
 
                     {uploadMode === 'file' ? (
                       <div
-                        className="upload-box mb-3"
-                        style={{ width: '100%', maxWidth: '100%', padding: '32px 20px' }}
+                        className={`upload-box mb-3 ${isDragging ? 'dragging' : ''}`}
+                        style={{ width: '100%', maxWidth: '100%' }}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
                       >
                         <input
                           type="file"
@@ -1177,22 +1189,55 @@ function App() {
                             }
                           }}
                         />
-                        <label
-                          htmlFor="fileUpload"
-                          className="upload-label"
-                          style={{
-                            cursor: 'pointer',
-                            display: 'block',
-                            wordBreak: 'break-all',
-                            fontSize: 'var(--font-size-base)',
-                          }}
-                        >
-                          📄{' '}
-                          {file ? (
-                            <strong style={{ color: '#a5b4fc' }}>{file.name}</strong>
-                          ) : (
-                            'Drag & Drop Resume or Click to Browse'
-                          )}
+                        <label htmlFor="fileUpload" className="upload-label">
+                          <div className="upload-icon-wrapper" aria-hidden="true">
+                            {file ? (
+                              <svg
+                                width="28"
+                                height="28"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <path d="M9 15l2 2 4-4" />
+                              </svg>
+                            ) : (
+                              <svg
+                                width="28"
+                                height="28"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
+                              </svg>
+                            )}
+                          </div>
+                          <div style={{ textAlign: 'center' }}>
+                            {file ? (
+                              <strong className="upload-file-name">{file.name}</strong>
+                            ) : (
+                              <>
+                                <span className="upload-text-primary">
+                                  Drag &amp; Drop Resume or{' '}
+                                  <span className="upload-text-browse">Click to Browse</span>
+                                </span>
+                                <span className="upload-text-secondary">
+                                  Supports PDF, DOCX, TXT up to 10MB
+                                </span>
+                              </>
+                            )}
+                          </div>
                         </label>
                       </div>
                     ) : (
@@ -1241,7 +1286,11 @@ function App() {
                         </span>
                       </div>
                     )}
-
+                    {file && uploadMode === 'file' && (
+                      <div className="mb-3">
+                        <FilePreview file={file} />
+                      </div>
+                    )}
                     {fileError && uploadMode === 'file' && (
                       <div
                         style={{
@@ -1257,30 +1306,31 @@ function App() {
                       </div>
                     )}
 
-                      {urlError && uploadMode === 'url' && (
-                        <div
-                          style={{
-                            color: '#ef4444',
-                            fontSize: '13px',
-                            marginTop: '4px',
-                            marginBottom: '16px',
-                            fontWeight: '500',
-                            textAlign: 'center',
-                          }}
-                        >
-                          ⚠️ {urlError}
-                        </div>
-                      )}
+                    {urlError && uploadMode === 'url' && (
+                      <div
+                        style={{
+                          color: '#ef4444',
+                          fontSize: '13px',
+                          marginTop: '4px',
+                          marginBottom: '16px',
+                          fontWeight: '500',
+                          textAlign: 'center',
+                        }}
+                      >
+                        ⚠️ {urlError}
+                      </div>
+                    )}
 
                     {/* Optional Job Description */}
                     <div className="mb-4" style={{ textAlign: 'left' }}>
                       <label
                         htmlFor="jobDescription"
                         style={{
+                          color: 'var(--text-primary)',
                           fontWeight: '600',
                           display: 'block',
                           marginBottom: '8px',
-                          color: '#e2e8f0',
+
                         }}
                       >
                         Job Description (Optional)
@@ -1302,388 +1352,381 @@ function App() {
                         }}
                       />
                       <div
-                        aria-live="polite"
                         style={{
                           textAlign: 'right',
-                          color: isOver
-                            ? '#dc2626'
-                            : isClose
-                              ? '#d97706'
-                              : theme === 'dark'
-                                ? '#f3f4f6'
-                                : '#111827',
-                          fontSize: '0.95rem',
-                          marginTop: '8px',
-                          fontWeight: isClose ? 700 : 600,
+                          color: isOver ? '#ef4444' : isClose ? '#f97316' : 'inherit',
+                          opacity: isOver || isClose ? 1 : 0.7,
+                          fontSize: '0.85rem',
+                          marginTop: '5px',
+                          fontWeight: isOver ? 'bold' : 'normal',
                         }}
                       >
-                        <>
-                          {jobDesc.length} / {MAX_CHARS} characters
-                        </div>
+                        {jobDesc.length} / {MAX_CHARS} characters
                       </div>
-
-                      {/* STEP 3: Action Buttons */}
-                      <div
-                        style={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          gap: '12px',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                        }}
-                        className="action-buttons"
-                      >
-                        <button
-                          className="analyze-btn"
-                          onClick={uploadResume}
-                          disabled={loading || retryDisabled}
-                          style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
-                        >
-                          {loading && analysisSource === 'upload'
-                            ? '⏳ Extracting...'
-                            : '🚀 Analyze Resume'}
-                        </button>
-
-                        <button
-                          className="secondary-btn"
-                          onClick={handleSampleResume}
-                          disabled={loading || retryDisabled}
-                          type="button"
-                          style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
-                        >
-                          {loading && analysisSource === 'sample' ? (
-                            <>
-                              <Loader2 size={15} className="spin" /> Loading...
-                            </>
-                          ) : (
-                            'Try Sample Resume'
-                          )}
-                        </button>
-                      </div>
-                      {retryDisabled && retryAfter !== null && (
-                        <p
-                          style={{
-                            color: '#ef4444',
-                            marginTop: '10px',
-                            fontWeight: 600,
-                            textAlign: 'center',
-                          }}
-                        >
-                          Too many requests. Please wait {retryAfter}s before trying again.
-                        </p>
-                      )}
                     </div>
-                  </section>
-                </div>
-              </div>
 
-              {/* Loading Skeleton & Determinate Progress Bar */}
-              {loading && (
-                <section className="my-4" aria-live="polite" aria-label="Analysis Progress">
-                  <ProgressBar progress={analysisProgress} stageLabel={analysisStageLabel} />
-                  <AnalysisSkeleton />
-                </section>
-              )}
-
-              {/* Empty State / How It Works */}
-              {score === null && !loading && (
-                <section style={{ paddingBottom: '2rem' }} aria-label="About the Resume Analyzer">
-                  <EmptyState />
-                  <div className="mt-4">
-                    <HowItWorks />
-                  </div>
-                </section>
-              )}
-
-              {/* Results Display Panel */}
-              {score !== null && !loading && (
-                <section aria-label="Analysis Results">
-                  {analysisSource === 'sample' && (
+                    {/* STEP 3: Action Buttons */}
                     <div
-                      className="sample-notice-banner mb-4"
-                      style={{ padding: '10px', wordBreak: 'break-word' }}
-                    >
-                      <span>
-                        <Info size={15} /> Viewing Sample Resume Analysis
-                      </span>
-                      <span style={{ fontWeight: 'normal', fontSize: '13px', display: 'block' }}>
-                        — This analysis is based on a bundled sample resume.
-                      </span>
-                    </div>
-                  )}
-
-                  <div id="ats-score">
-                    <AtsScore
-                      score={score}
-                      
-                      readabilityLabel={readabilityLabel}
-                    />
-                  </div>
-
-                  <ResumePreview text={resumeText} skills={skills} />
-
-                  <h5 className="analysis-done mt-3">
-                    <CheckCircle size={18} /> Resume Analysis Complete
-                  </h5>
-                  {activeFileName && (
-                    <p
                       style={{
-                        fontSize: '13px',
-                        color: 'var(--text-muted)',
-                        marginTop: '-8px',
-                        wordBreak: 'break-all',
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '12px',
+                        justifyContent: 'center',
+                        alignItems: 'center',
                       }}
+                      className="action-buttons"
                     >
-                      <FileText size={13} /> {activeFileName}
-                    </p>
-                  )}
-
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '16px', marginBottom: '16px', justifyContent: 'center' }}>
-                    <button
-                      type="button"
-                      onClick={() => setActiveTab('detailed')}
-                      style={{
-                        padding: '8px 16px',
-                        borderRadius: 'var(--radius-md)',
-                        fontSize: '0.9rem',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        background: activeTab === 'detailed' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
-                        color: '#fff',
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        transition: 'all 0.2s ease',
-                      }}
-                    >
-                      Detailed View
-                    </button>
-                    {trackComparisons && (
                       <button
+                        className="analyze-btn"
+                        onClick={uploadResume}
+                        disabled={loading || retryDisabled}
+                        style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
+                      >
+                        {loading && analysisSource === 'upload'
+                          ? '⏳ Extracting...'
+                          : '🚀 Analyze Resume'}
+                      </button>
+
+                      <button
+                        className="secondary-btn"
+                        onClick={handleSampleResume}
+                        disabled={loading || retryDisabled}
                         type="button"
-                        onClick={() => setActiveTab('matrix')}
+                        style={{ minHeight: '44px', flex: '1 1 200px', maxWidth: '100%' }}
+                      >
+                        {loading && analysisSource === 'sample' ? (
+                          <>
+                            <Loader2 size={15} className="spin" /> Loading...
+                          </>
+                        ) : (
+                          'Try Sample Resume'
+                        )}
+                      </button>
+                    </div>
+                    {retryDisabled && retryAfter !== null && (
+                      <p
                         style={{
-                          padding: '8px 16px',
-                          borderRadius: 'var(--radius-md)',
-                          fontSize: '0.9rem',
-                          fontWeight: '600',
-                          cursor: 'pointer',
-                          background: activeTab === 'matrix' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
-                          color: '#fff',
-                          border: '1px solid rgba(255, 255, 255, 0.15)',
-                          transition: 'all 0.2s ease',
+                          color: '#ef4444',
+                          marginTop: '10px',
+                          fontWeight: 600,
+                          textAlign: 'center',
                         }}
                       >
-                        Compare All Tracks
-                      </button>
+                        Too many requests. Please wait {retryAfter}s before trying again.
+                      </p>
                     )}
                   </div>
+                </section>
+              </div>
+            </div>
 
-                  {activeTab === 'matrix' && trackComparisons ? (
-                    <TrackMatrix
-                      trackComparisons={trackComparisons}
-                      activeRole={targetRole}
-                      onRowClick={(role) => {
-                        setTargetRole(role)
-                        const comp = trackComparisons[role]
-                        setScore(comp.score)
-                        setMatchedSkills(comp.matched_skills)
-                        setMissingSkills(comp.missing_skills)
-                        setSuggestions(comp.suggestions)
-                        setActiveTab('detailed')
+              {/* Loading Skeleton & Determinate Progress Bar */}
+          {loading && (
+            <section className="my-4" aria-live="polite" aria-label="Analysis Progress">
+              <ProgressBar progress={analysisProgress} stageLabel={analysisStageLabel} />
+              <AnalysisSkeleton />
+            </section>
+          )}
+
+          {/* Empty State / How It Works */}
+          {score === null && !loading && (
+            <section style={{ paddingBottom: '2rem' }} aria-label="About the Resume Analyzer">
+              <EmptyState />
+              <div className="mt-4">
+                <HowItWorks />
+              </div>
+            </section>
+          )}
+
+          {/* Results Display Panel */}
+          {score !== null && !loading && (
+            <section aria-label="Analysis Results">
+              {analysisSource === 'sample' && (
+                <div
+                  className="sample-notice-banner mb-4"
+                  style={{ padding: '10px', wordBreak: 'break-word' }}
+                >
+                  <span>
+                    <Info size={15} /> Viewing Sample Resume Analysis
+                  </span>
+                  <span style={{ fontWeight: 'normal', fontSize: '13px', display: 'block' }}>
+                    — This analysis is based on a bundled sample resume.
+                  </span>
+                </div>
+              )}
+
+              <div id="ats-score">
+                <AtsScore
+                  score={score}
+
+                  readabilityLabel={readabilityLabel}
+                />
+              </div>
+
+              <ResumePreview text={resumeText} skills={skills} />
+
+              <h5 className="analysis-done mt-3">
+                <CheckCircle size={18} /> Resume Analysis Complete
+              </h5>
+              {activeFileName && (
+                <p
+                  style={{
+                    fontSize: '13px',
+                    opacity: 0.7,
+                    marginTop: '-8px',
+                    wordBreak: 'break-all',
+                  }}
+                >
+                  <FileText size={13} /> {activeFileName}
+                </p>
+              )}
+
+              <div style={{ display: 'flex', gap: '8px', marginTop: '16px', marginBottom: '16px', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab('detailed')}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: 'var(--radius-md)',
+                    fontSize: '0.9rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    background: activeTab === 'detailed' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                    color: '#fff',
+                    border: '1px solid rgba(255, 255, 255, 0.15)',
+                    transition: 'all 0.2s ease',
+                  }}
+                >
+                  Detailed View
+                </button>
+                {trackComparisons && (
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('matrix')}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: 'var(--radius-md)',
+                      fontSize: '0.9rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      background: activeTab === 'matrix' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                      color: '#fff',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      transition: 'all 0.2s ease',
+                    }}
+                  >
+                    Compare All Tracks
+                  </button>
+                )}
+              </div>
+
+              {activeTab === 'matrix' && trackComparisons ? (
+                <TrackMatrix
+                  trackComparisons={trackComparisons}
+                  activeRole={targetRole}
+                  onRowClick={(role) => {
+                    setTargetRole(role)
+                    const comp = trackComparisons[role]
+                    setScore(comp.score)
+                    setMatchedSkills(comp.matched_skills)
+                    setMissingSkills(comp.missing_skills)
+                    setSuggestions(comp.suggestions)
+                    setActiveTab('detailed')
+                  }}
+                />
+              ) : (
+                <>
+                  {/* Skills Section */}
+                  <section className="mt-4" aria-labelledby="skills-found-heading">
+                    <h4 id="skills-found-heading">Skills Found ({skills.length})</h4>
+                    {skills.length === 0 && <p>No skills detected</p>}
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '8px',
+                        justifyContent: 'center',
                       }}
-                    />
-                  ) : (
-                    <>
-                      {/* Skills Section */}
-                      <section className="mt-4" aria-labelledby="skills-found-heading">
-                        <h4 id="skills-found-heading">Skills Found ({skills.length})</h4>
-                        {skills.length === 0 && <p>No skills detected</p>}
-                        <div
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '8px',
-                            justifyContent: 'center',
-                          }}
-                        >
-                          {(showAllSkills ? skills : skills.slice(0, 15)).map(
-                            (skill: string, i: number) => (
-                              <SkillChip key={i} skill={skill} type="detected" />
-                            )
-                          )}
-                        </div>
-                        {skills.length > 15 && (
-                          <button
-                            type="button"
-                            className="app-btn app-btn--secondary"
-                            style={{ marginTop: '16px', minHeight: '44px' }}
-                            onClick={() => setShowAllSkills(!showAllSkills)}
-                          >
-                            {showAllSkills ? (
-                              <>
-                                <ChevronUp size={15} /> Show Less
-                              </>
-                            ) : (
-                              <>
-                                <ChevronDown size={15} /> Show More ({skills.length - 15} more)
-                              </>
-                            )}
-                          </button>
+                    >
+                      {(showAllSkills ? skills : skills.slice(0, 15)).map(
+                        (skill: string, i: number) => (
+                          <SkillChip key={i} skill={skill} type="detected" />
+                        )
+                      )}
+                    </div>
+                    {skills.length > 15 && (
+                      <button
+                        type="button"
+                        className="app-btn app-btn--secondary"
+                        style={{ marginTop: '16px', minHeight: '44px' }}
+                        onClick={() => setShowAllSkills(!showAllSkills)}
+                      >
+                        {showAllSkills ? (
+                          <>
+                            <ChevronUp size={15} /> Show Less
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown size={15} /> Show More ({skills.length - 15} more)
+                          </>
                         )}
-                      </section>
+                      </button>
+                    )}
+                  </section>
 
-                      {/* Word Cloud */}
-                      <SkillWordCloud skills={skills} />
+                  {/* Word Cloud */}
+                  <SkillWordCloud skills={skills} />
 
-                      {/* Skill Gap Matrix */}
-                      <section
-                        className="mt-4 p-3"
-                        style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}
-                        aria-labelledby="skill-gap-heading"
-                      >
-                        <h4
-                          id="skill-gap-heading"
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexWrap: 'wrap',
-                            textAlign: 'center',
-                            gap: '6px',
-                          }}
-                        >
-                          <Target size={18} /> Skill Gap Matrix ({targetRole})
-                          <InfoTooltip content="Shows which required skills are already in your resume and which important skills are missing." />
-                        </h4>
-                        <div
-                          className="skill-gap-layout"
-                          style={{
-                            display: 'flex',
-                            flexWrap: 'wrap',
-                            gap: '20px',
-                            justifyContent: 'space-around',
-                            marginTop: '12px',
-                          }}
-                        >
-                          <div style={{ flex: '1 1 140px', minWidth: '140px' }}>
-                            <h6 style={{ color: '#22c55e' }}>Matched Skills</h6>
-                            {matchedSkills.length === 0 ? (
-                              <p style={{ fontSize: '12px' }}>None</p>
-                            ) : (
-                              <div
-                                style={{
-                                  display: 'flex',
-                                  flexWrap: 'wrap',
-                                  gap: '4px',
-                                  justifyContent: 'center',
-                                }}
-                              >
-                                {matchedSkills.map((s, i) => (
-                                  <SkillChip key={i} skill={s} type="matched" targetRole={targetRole} />
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      </section>
-
-                      {/* Upgraded Suggestions Section */}
-                      <section
-                        className="mt-5 p-4"
-                        style={{
-                          background: 'rgba(30, 30, 47, 0.4)',
-                          borderRadius: 'var(--radius-lg)',
-                          border: '1px solid rgba(255, 255, 255, 0.04)',
-                        }}
-                      >
-                        {shareId && <ShareResult shareId={shareId} />}
-
-                        <div className="suggestion-box mt-4" style={{ padding: '15px' }}>
+                  {/* Skill Gap Matrix */}
+                  <section
+                    className="mt-4 p-3"
+                    style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}
+                    aria-labelledby="skill-gap-heading"
+                  >
+                    <h4
+                      id="skill-gap-heading"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexWrap: 'wrap',
+                        textAlign: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <Target size={18} /> Skill Gap Matrix ({targetRole})
+                      <InfoTooltip content="Shows which required skills are already in your resume and which important skills are missing." />
+                    </h4>
+                    <div
+                      className="skill-gap-layout"
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '20px',
+                        justifyContent: 'space-around',
+                        marginTop: '12px',
+                      }}
+                    >
+                      <div style={{ flex: '1 1 140px', minWidth: '140px' }}>
+                        <h6 style={{ color: '#22c55e' }}>Matched Skills</h6>
+                        {matchedSkills.length === 0 ? (
+                          <p style={{ fontSize: '12px' }}>None</p>
+                        ) : (
                           <div
                             style={{
                               display: 'flex',
                               flexWrap: 'wrap',
-                              gap: '10px',
-                              justifyContent: 'space-between',
-                              alignItems: 'center',
-                              marginBottom: '12px',
+                              gap: '4px',
+                              justifyContent: 'center',
                             }}
                           >
-                            <h4 id="suggestions-heading" style={{ margin: 0 }}>
-                              💡 Suggestions
-                            </h4>
-                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
-                              {suggestions.length > 0 && (
-                                <button
-                                  type="button"
-                                  className={`app-btn app-btn--accent${copied ? ' is-success' : ''}`}
-                                  onClick={copySuggestionsToClipboard}
-                                  style={{ minHeight: '44px', padding: '8px 16px', fontSize: '13px' }}
-                                >
-                                  {copied ? '✅ Copied!' : '📋 Copy All'}
-                                </button>
-                              )}
-
-                              <div style={{ position: 'relative', display: 'inline-block' }}>
-                                <button
-                                  type="button"
-                                  className="app-btn app-btn--secondary"
-                                  onClick={() => setShowExportDropdown(!showExportDropdown)}
-                                  style={{ minHeight: '44px' }}
-                                >
-                                  Export ▼
-                                </button>
-                                {showExportDropdown && (
-                                  <div
-                                    style={{
-                                      position: 'absolute',
-                                      top: '100%',
-                                      right: 0,
-                                      marginTop: '4px',
-                                      backgroundColor: 'var(--card-bg)',
-                                      border: '1px solid var(--surface-border)',
-                                      borderRadius: '6px',
-                                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                                      zIndex: 10,
-                                      display: 'flex',
-                                      flexDirection: 'column',
-                                      minWidth: '120px',
-                                      overflow: 'hidden',
-                                    }}
-                                  >
-                                    <button
-                                      type="button"
-                                      onClick={exportJSON}
-                                      style={{
-                                        padding: '8px 12px',
-                                        background: 'transparent',
-                                        border: 'none',
-                                        color: 'var(--body-text)',
-                                        textAlign: 'left',
-                                        cursor: 'pointer',
-                                        borderBottom: '1px solid var(--surface-border)',
-                                      }}
-                                    >
-                                      Export JSON
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={exportCSV}
-                                      style={{
-                                        padding: '8px 12px',
-                                        background: 'transparent',
-                                        border: 'none',
-                                        color: 'var(--body-text)',
-                                        textAlign: 'left',
-                                        cursor: 'pointer',
-                                      }}
-                                    >
-                                      Export CSV
-                                    </button>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
+                            {matchedSkills.map((s, i) => (
+                              <SkillChip key={i} skill={s} type="matched" targetRole={targetRole} />
+                            ))}
                           </div>
+                        )}
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Upgraded Suggestions Section */}
+                  <section
+                    className="mt-5 p-4"
+                    style={{
+                      background: 'rgba(30, 30, 47, 0.4)',
+                      borderRadius: 'var(--radius-lg)',
+                      border: '1px solid rgba(255, 255, 255, 0.04)',
+                    }}
+                  >
+                    {shareId && <ShareResult shareId={shareId} />}
+
+                    <div className="suggestion-box mt-4" style={{ padding: '15px' }}>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '10px',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                          marginBottom: '12px',
+                        }}
+                      >
+                        <h4 id="suggestions-heading" style={{ margin: 0 }}>
+                          💡 Suggestions
+                        </h4>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                          {suggestions.length > 0 && (
+                            <button
+                              type="button"
+                              className={`app-btn app-btn--accent${copied ? ' is-success' : ''}`}
+                              onClick={copySuggestionsToClipboard}
+                              style={{ minHeight: '44px', padding: '8px 16px', fontSize: '13px' }}
+                            >
+                              {copied ? '✅ Copied!' : '📋 Copy All'}
+                            </button>
+                          )}
+
+                          <div style={{ position: 'relative', display: 'inline-block' }}>
+                            <button
+                              type="button"
+                              className="app-btn app-btn--secondary"
+                              onClick={() => setShowExportDropdown(!showExportDropdown)}
+                              style={{ minHeight: '44px' }}
+                            >
+                              Export ▼
+                            </button>
+                            {showExportDropdown && (
+                              <div
+                                style={{
+                                  position: 'absolute',
+                                  top: '100%',
+                                  right: 0,
+                                  marginTop: '4px',
+                                  backgroundColor: 'var(--card-bg)',
+                                  border: '1px solid var(--surface-border)',
+                                  borderRadius: '6px',
+                                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                  zIndex: 10,
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  minWidth: '120px',
+                                  overflow: 'hidden',
+                                }}
+                              >
+                                <button
+                                  type="button"
+                                  onClick={exportJSON}
+                                  style={{
+                                    padding: '8px 12px',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: 'var(--body-text)',
+                                    textAlign: 'left',
+                                    cursor: 'pointer',
+                                    borderBottom: '1px solid var(--surface-border)',
+                                  }}
+                                >
+                                  Export JSON
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={exportCSV}
+                                  style={{
+                                    padding: '8px 12px',
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: 'var(--body-text)',
+                                    textAlign: 'left',
+                                    cursor: 'pointer',
+                                  }}
+                                >
+                                  Export CSV
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
 
                       {suggestions.length === 0 ? (
                         <p
@@ -1711,27 +1754,29 @@ function App() {
                         </div>
                       )}
 
-                          <div style={{ marginTop: '24px', textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              className="app-btn app-btn--secondary"
-                              onClick={resetAnalysis}
-                              style={{ minHeight: '44px', width: '100%', maxWidth: '250px' }}
-                            >
-                              <RefreshCw size={15} /> Start New Analysis
-                            </button>
-                          </div>
-                        </div>
-                      </section>
-                    </>
-                  )}
-                </section>
+                      <CuratedTips targetRole={targetRole} />
+
+                      <div style={{ marginTop: '24px', textAlign: 'center' }}>
+                        <button
+                          type="button"
+                          className="app-btn app-btn--secondary"
+                          onClick={resetAnalysis}
+                          style={{ minHeight: '44px', width: '100%', maxWidth: '250px' }}
+                        >
+                          <RefreshCw size={15} /> Start New Analysis
+                        </button>
+                      </div>
+                    </div>
+                  </section>
+                </>
               )}
+            </section>
+          )}
             </main>
           }
         />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Route path="*" element={<NotFound />} />
+    </Routes>
       {/* Floating Back to Top Button */}
       <button
         type="button"
@@ -1746,101 +1791,71 @@ function App() {
       <Footer />
       <CookieConsentBanner />
 
-      {/* Keyboard Shortcuts Help Button & Overlay */}
-      <button
-        className="fab-btn shortcut-help-trigger"
-        onClick={() => setShowShortcutHelp(!showShortcutHelp)}
-        title="Toggle Keyboard Shortcuts Help"
-        aria-label="Toggle keyboard shortcuts help menu"
-        aria-expanded={showShortcutHelp}
+{/* Keyboard Shortcuts Help Button & Overlay */ }
+<button
+  className="fab-btn shortcut-help-trigger"
+  onClick={() => setShowShortcutHelp(!showShortcutHelp)}
+  title="Toggle Keyboard Shortcuts Help"
+  aria-label="Toggle keyboard shortcuts help menu"
+  aria-expanded={showShortcutHelp}
+>
+  {showShortcutHelp ? <X size={20} /> : <HelpCircle size={20} />}
+</button>
+
+{
+  showShortcutHelp && (
+    <div className="shortcut-overlay-card">
+      <h5
+        style={{
+          margin: '0 0 12px 0',
+          color: '#fff',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '6px',
+        }}
       >
-        {showShortcutHelp ? <X size={20} /> : <HelpCircle size={20} />}
-      </button>
+        ⌨️ Keyboard Quick Actions
+      </h5>
+      <div className="shortcut-row">
+        <span style={{ color: '#94a3b8' }}>Upload Resume</span>
+        <span className="shortcut-key-badge">Alt + U</span>
+      </div>
+      <div className="shortcut-row">
+        <span style={{ color: '#94a3b8' }}>Reset Analysis</span>
+        <span className="shortcut-key-badge">Alt + R</span>
+      </div>
+      <div className="shortcut-row">
+        <span style={{ color: '#94a3b8' }}>Close Modals / Sidebar</span>
+        <span className="shortcut-key-badge">Esc</span>
+      </div>
+      <p
+        style={{
+          margin: '12px 0 0 0',
+          fontSize: '11px',
+          color: '#64748b',
+          fontStyle: 'italic',
+        }}
+      >
+        Press <kbd style={{ color: '#a5b4fc' }}>Esc</kbd> at any point to clear this helper
+        overlay panel.
+      </p>
+    </div>
+  )
+}
 
-      {showShortcutHelp && (
-        <div className="shortcut-overlay-card">
-          <h5
-            style={{
-              margin: "0 0 12px 0",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              gap: "6px",
-            }}
-          >
-            ⌨️ Keyboard Quick Actions
-          </h5>
-
-          <div className="shortcut-row">
-            <span style={{ color: "#94a3b8" }}>Upload Resume</span>
-            <span className="shortcut-key-badge">Alt + U</span>
-          </div>
-
-          <div className="shortcut-row">
-            <span style={{ color: "#94a3b8" }}>Reset Analysis</span>
-            <span className="shortcut-key-badge">Alt + R</span>
-          </div>
-
-          <div className="shortcut-row">
-            <span style={{ color: "#94a3b8" }}>Close Modals / Sidebar</span>
-            <span className="shortcut-key-badge">Esc</span>
-          </div>
-        </div>
-      )}
-      
-        ↑
-      
-
-      {showShortcutHelp && (
-        <div className="shortcut-overlay-card">
-          <h5
-            style={{
-              margin: '0 0 12px 0',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            ⌨️ Keyboard Quick Actions
-          </h5>
-          <div className="shortcut-row">
-            <span style={{ color: 'var(--text-readable-inverse)' }}>Upload Resume</span>
-            <span className="shortcut-key-badge">Alt + U</span>
-          </div>
-          <div className="shortcut-row">
-            <span style={{ color: 'var(--text-readable-inverse)' }}>Reset Analysis</span>
-            <span className="shortcut-key-badge">Alt + R</span>
-          </div>
-          <div className="shortcut-row">
-            <span style={{ color: 'var(--text-readable-inverse)' }}>Close Modals / Sidebar</span>
-            <span className="shortcut-key-badge">Esc</span>
-          </div>
-          <p
-            style={{
-              margin: '12px 0 0 0',
-              fontSize: '11px',
-              color: 'var(--text-muted-inverse)',
-              fontStyle: 'italic',
-            }}
-          >
-            Press <kbd style={{ color: '#a5b4fc' }}>Esc</kbd> at any point to clear this helper
-            overlay panel.
-          </p>
-        </div>
-      )}
-
-      {showUndoToast && (
-        <UndoToast
-          message="Analysis reset."
-          durationSeconds={5}
-          onUndo={handleUndoReset}
-          onClose={() => {
-            setShowUndoToast(false)
-            setUndoState(null)
-          }}
-        />
-      )}
+{
+  showUndoToast && (
+    <UndoToast
+      message="Analysis reset."
+      durationSeconds={5}
+      onUndo={handleUndoReset}
+      onClose={() => {
+        setShowUndoToast(false)
+        setUndoState(null)
+      }}
+    />
+  )
+}
     </>
   )
 }
