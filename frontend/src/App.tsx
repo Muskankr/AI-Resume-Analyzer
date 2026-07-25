@@ -166,7 +166,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
           style={{
             margin: 0,
             fontSize: 'var(--font-size-sm)',
-            color: 'var(--body-text)',
+            color: '#e2e8f0',
             lineHeight: '1.6',
           }}
         >
@@ -193,7 +193,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
               <span
                 style={{
                   fontSize: '0.78rem',
-                  color: 'var(--muted-text)',
+                  color: 'rgba(255, 255, 255, 0.6)',
                   fontWeight: '500',
                 }}
               >
@@ -1067,53 +1067,44 @@ function App() {
                     <div
                       className="mb-4 p-4 role-selector-container"
                       style={{
-                        background: 'rgba(255, 255, 255, 0.02)',
-                        borderRadius: 'var(--radius-lg)',
-                        border: '1px solid rgba(255,255,255,0.04)',
+                        display: 'block',
+                        marginBottom: '12px',
+                        fontWeight: '600',
+                        color: '#e2e8f0',
+                        fontSize: 'var(--font-size-sm)',
                       }}
                     >
-                      <label
-                        htmlFor="roleSelect"
+                      🎯 Target Career Track
+                    </label>
+                    <div className="custom-select-container">
+                      <select
+                        id="roleSelect"
+                        value={targetRole}
+                        onChange={(e) => {
+                          setTargetRole(e.target.value)
+                          if (e.target.value.trim() !== '') setRoleError(null)
+                        }}
+                        className="custom-select-element"
+                      >
+                        <option value="Frontend Developer">Frontend Developer</option>
+                        <option value="Backend Developer">Backend Developer</option>
+                        <option value="Data Analyst">Data Analyst</option>
+                      </select>
+                    </div>
+                    {roleError && (
+                      <div
                         style={{
-                          color: theme === 'light' ? '#000000' : '#ffffff',
-                          display: 'block',
-                          marginBottom: '12px',
-                          fontWeight: '600',
+                          color: '#ef4444',
+                          fontSize: '13px',
+                          marginTop: '8px',
+                          fontWeight: '500',
                           textAlign: 'center',
-                          fontSize: 'var(--font-size-sm)',
                         }}
                       >
-                        🎯 Target Career Track
-                      </label>
-                      <div className="custom-select-container">
-                        <select
-                          id="roleSelect"
-                          value={targetRole}
-                          onChange={(e) => {
-                            setTargetRole(e.target.value)
-                            if (e.target.value.trim() !== '') setRoleError(null)
-                          }}
-                          className="custom-select-element"
-                        >
-                          <option value="Frontend Developer">Frontend Developer</option>
-                          <option value="Backend Developer">Backend Developer</option>
-                          <option value="Data Analyst">Data Analyst</option>
-                        </select>
+                        ⚠️ {roleError}
                       </div>
-                      {roleError && (
-                        <div
-                          style={{
-                            color: '#ef4444',
-                            fontSize: '13px',
-                            marginTop: '8px',
-                            fontWeight: '500',
-                            textAlign: 'center',
-                          }}
-                        >
-                          ⚠️ {roleError}
-                        </div>
-                      )}
-                    </div>
+                    )}
+                  </div>
 
                     {/* STEP 2: Upload File / Link & Job Description */}
                     <div className="mb-5">
@@ -1170,141 +1161,101 @@ function App() {
                         </button>
                       </div>
 
-                      {uploadMode === 'file' ? (
-                        <div
-                          className={`upload-box mb-3 ${isDragging ? 'dragging' : ''}`}
-                          style={{ width: '100%', maxWidth: '100%' }}
-                          onDragOver={handleDragOver}
-                          onDragLeave={handleDragLeave}
-                          onDrop={handleDrop}
-                        >
-                          <input
-                            type="file"
-                            id="fileUpload"
-                            hidden
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                              if (e.target.files && e.target.files[0]) {
-                                setFile(e.target.files[0])
-                                setFileError(null)
-                              }
-                            }}
-                          />
-                          <label htmlFor="fileUpload" className="upload-label">
-                            <div className="upload-icon-wrapper" aria-hidden="true">
-                              {file ? (
-                                <svg
-                                  width="28"
-                                  height="28"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-                                  <polyline points="14 2 14 8 20 8" />
-                                  <path d="M9 15l2 2 4-4" />
-                                </svg>
-                              ) : (
-                                <svg
-                                  width="28"
-                                  height="28"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                                  <polyline points="17 8 12 3 7 8" />
-                                  <line x1="12" y1="3" x2="12" y2="15" />
-                                </svg>
-                              )}
-                            </div>
-                            <div style={{ textAlign: 'center' }}>
-                              {file ? (
-                                <strong className="upload-file-name">{file.name}</strong>
-                              ) : (
-                                <>
-                                  <span className="upload-text-primary">
-                                    Drag &amp; Drop Resume or{' '}
-                                    <span className="upload-text-browse">Click to Browse</span>
-                                  </span>
-                                  <span className="upload-text-secondary">
-                                    Supports PDF, DOCX, TXT up to 10MB
-                                  </span>
-                                </>
-                              )}
-                            </div>
-                          </label>
-                        </div>
-                      ) : (
-                        <div className="mb-3" style={{ textAlign: 'left' }}>
-                          <label
-                            htmlFor="resumeUrlInput"
-                            style={{
-                              fontWeight: '600',
-                              display: 'block',
-                              marginBottom: '8px',
-                              color: '#e2e8f0',
-                              fontSize: '0.85rem',
-                            }}
-                          >
-                            Paste Shareable Link (Google Drive / Dropbox / Direct PDF)
-                          </label>
-                          <input
-                            type="url"
-                            id="resumeUrlInput"
-                            value={resumeUrl}
-                            onChange={(e) => {
-                              setResumeUrl(e.target.value)
-                              if (e.target.value.trim() !== '') setUrlError(null)
-                            }}
-                            placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
-                            style={{
-                              width: '100%',
-                              padding: '12px 16px',
-                              borderRadius: 'var(--radius-md)',
-                              background: 'rgba(255, 255, 255, 0.04)',
-                              color: '#fff',
-                              border: '1px solid rgba(255, 255, 255, 0.15)',
-                              fontSize: '0.9rem',
-                            }}
-                          />
-                          <span
-                            style={{
-                              fontSize: '0.78rem',
-                              color: 'rgba(255,255,255,0.6)',
-                              marginTop: '6px',
-                              display: 'block',
-                            }}
-                          >
-                            ℹ️ Note: Make sure link permissions are set to "Anyone with the link can
-                            view".
-                          </span>
-                        </div>
-                      )}
-                      {file && uploadMode === 'file' && (
-                        <div className="mb-3">
-                          <FilePreview file={file} />
-                        </div>
-                      )}
-                      {fileError && uploadMode === 'file' && (
-                        <div
+                    {uploadMode === 'file' ? (
+                      <div
+                        className="upload-box mb-3"
+                        style={{ width: '100%', maxWidth: '100%', padding: '32px 20px' }}
+                      >
+                        <input
+                          type="file"
+                          id="fileUpload"
+                          hidden
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                            if (e.target.files && e.target.files[0]) {
+                              setFile(e.target.files[0])
+                              setFileError(null)
+                            }
+                          }}
+                        />
+                        <label
+                          htmlFor="fileUpload"
+                          className="upload-label"
                           style={{
-                            color: '#ef4444',
-                            fontSize: '13px',
-                            marginTop: '-4px',
-                            marginBottom: '16px',
-                            fontWeight: '500',
-                            textAlign: 'center',
+                            cursor: 'pointer',
+                            display: 'block',
+                            wordBreak: 'break-all',
+                            fontSize: 'var(--font-size-base)',
                           }}
                         >
-                          ⚠️ {fileError}
-                        </div>
-                      )}
+                          📄{' '}
+                          {file ? (
+                            <strong style={{ color: '#a5b4fc' }}>{file.name}</strong>
+                          ) : (
+                            'Drag & Drop Resume or Click to Browse'
+                          )}
+                        </label>
+                      </div>
+                    ) : (
+                      <div className="mb-3" style={{ textAlign: 'left' }}>
+                        <label
+                          htmlFor="resumeUrlInput"
+                          style={{
+                            fontWeight: '600',
+                            display: 'block',
+                            marginBottom: '8px',
+                            color: '#e2e8f0',
+                            fontSize: '0.85rem',
+                          }}
+                        >
+                          Paste Shareable Link (Google Drive / Dropbox / Direct PDF)
+                        </label>
+                        <input
+                          type="url"
+                          id="resumeUrlInput"
+                          value={resumeUrl}
+                          onChange={(e) => {
+                            setResumeUrl(e.target.value)
+                            if (e.target.value.trim() !== '') setUrlError(null)
+                          }}
+                          placeholder="https://drive.google.com/file/d/.../view?usp=sharing"
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: 'var(--radius-md)',
+                            background: 'rgba(255, 255, 255, 0.04)',
+                            color: '#fff',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            fontSize: '0.9rem',
+                          }}
+                        />
+                        <span
+                          style={{
+                            fontSize: '0.78rem',
+                            color: 'rgba(255,255,255,0.6)',
+                            marginTop: '6px',
+                            display: 'block',
+                          }}
+                        >
+                          ℹ️ Note: Make sure link permissions are set to "Anyone with the link can
+                          view".
+                        </span>
+                      </div>
+                    )}
+
+                    {fileError && uploadMode === 'file' && (
+                      <div
+                        style={{
+                          color: '#ef4444',
+                          fontSize: '13px',
+                          marginTop: '-4px',
+                          marginBottom: '16px',
+                          fontWeight: '500',
+                          textAlign: 'center',
+                        }}
+                      >
+                        ⚠️ {fileError}
+                      </div>
+                    )}
 
                       {urlError && uploadMode === 'url' && (
                         <div
@@ -1321,46 +1272,52 @@ function App() {
                         </div>
                       )}
 
-                      {/* Optional Job Description */}
-                      <div className="mb-4" style={{ textAlign: 'left' }}>
-                        <label
-                          htmlFor="jobDescription"
-                          style={{
-                            color: 'var(--text-primary)',
-                            fontWeight: '600',
-                            display: 'block',
-                            marginBottom: '8px',
-
-                          }}
-                        >
-                          Job Description (Optional)
-                        </label>
-                        <textarea
-                          id="jobDescription"
-                          className="custom-textarea"
-                          value={jobDesc}
-                          onChange={(e) => setJobDesc(e.target.value)}
-                          placeholder="Paste the job description here..."
-                          style={{
-                            width: '100%',
-                            minHeight: '100px',
-                            padding: '12px',
-                            borderRadius: 'var(--radius-md)',
-                            background: 'rgba(255, 255, 255, 0.02)',
-                            color: 'inherit',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
-                          }}
-                        />
-                        <div
-                          style={{
-                            textAlign: 'right',
-                            color: isOver ? '#ef4444' : isClose ? '#f97316' : 'inherit',
-                            opacity: isOver || isClose ? 1 : 0.7,
-                            fontSize: '0.85rem',
-                            marginTop: '5px',
-                            fontWeight: isOver ? 'bold' : 'normal',
-                          }}
-                        >
+                    {/* Optional Job Description */}
+                    <div className="mb-4" style={{ textAlign: 'left' }}>
+                      <label
+                        htmlFor="jobDescription"
+                        style={{
+                          fontWeight: '600',
+                          display: 'block',
+                          marginBottom: '8px',
+                          color: '#e2e8f0',
+                        }}
+                      >
+                        Job Description (Optional)
+                      </label>
+                      <textarea
+                        id="jobDescription"
+                        className="custom-textarea"
+                        value={jobDesc}
+                        onChange={(e) => setJobDesc(e.target.value)}
+                        placeholder="Paste the job description here..."
+                        style={{
+                          width: '100%',
+                          minHeight: '100px',
+                          padding: '12px',
+                          borderRadius: 'var(--radius-md)',
+                          background: 'rgba(255, 255, 255, 0.02)',
+                          color: 'inherit',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                        }}
+                      />
+                      <div
+                        aria-live="polite"
+                        style={{
+                          textAlign: 'right',
+                          color: isOver
+                            ? '#dc2626'
+                            : isClose
+                              ? '#d97706'
+                              : theme === 'dark'
+                                ? '#f3f4f6'
+                                : '#111827',
+                          fontSize: '0.95rem',
+                          marginTop: '8px',
+                          fontWeight: isClose ? 700 : 600,
+                        }}
+                      >
+                        <>
                           {jobDesc.length} / {MAX_CHARS} characters
                         </div>
                       </div>
@@ -1472,7 +1429,7 @@ function App() {
                     <p
                       style={{
                         fontSize: '13px',
-                        opacity: 0.7,
+                        color: 'var(--text-muted)',
                         marginTop: '-8px',
                         wordBreak: 'break-all',
                       }}
@@ -1728,33 +1685,31 @@ function App() {
                             </div>
                           </div>
 
-                          {suggestions.length === 0 ? (
-                            <p
-                              style={{
-                                color: '#64748b',
-                                fontStyle: 'italic',
-                                fontSize: 'var(--font-size-sm)',
-                                textAlign: 'left',
-                                margin: '16px 0 0 0',
-                              }}
-                            >
-                              No actionable layout suggestions generated for the current profile
-                              structure matrix.
-                            </p>
-                          ) : (
-                            <div className="suggestions-grid">
-                              {suggestions.map((suggestion, index) => (
-                                <SuggestionCard
-                                  key={index}
-                                  text={suggestion}
-                                  index={index}
-                                  backendUrl={backendUrl}
-                                />
-                              ))}
-                            </div>
-                          )}
-
-                          <CuratedTips targetRole={targetRole} />
+                      {suggestions.length === 0 ? (
+                        <p
+                          style={{
+                            color: '#64748b',
+                            fontStyle: 'italic',
+                            fontSize: 'var(--font-size-sm)',
+                            textAlign: 'left',
+                            margin: '16px 0 0 0',
+                          }}
+                        >
+                          No actionable layout suggestions generated for the current profile
+                          structure matrix.
+                        </p>
+                      ) : (
+                        <div className="suggestions-grid">
+                          {suggestions.map((suggestion, index) => (
+                            <SuggestionCard
+                              key={index}
+                              text={suggestion}
+                              index={index}
+                              backendUrl={backendUrl}
+                            />
+                          ))}
+                        </div>
+                      )}
 
                           <div style={{ marginTop: '24px', textAlign: 'center' }}>
                             <button
@@ -1806,6 +1761,40 @@ function App() {
         <div className="shortcut-overlay-card">
           <h5
             style={{
+              margin: "0 0 12px 0",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+            }}
+          >
+            ⌨️ Keyboard Quick Actions
+          </h5>
+
+          <div className="shortcut-row">
+            <span style={{ color: "#94a3b8" }}>Upload Resume</span>
+            <span className="shortcut-key-badge">Alt + U</span>
+          </div>
+
+          <div className="shortcut-row">
+            <span style={{ color: "#94a3b8" }}>Reset Analysis</span>
+            <span className="shortcut-key-badge">Alt + R</span>
+          </div>
+
+          <div className="shortcut-row">
+            <span style={{ color: "#94a3b8" }}>Close Modals / Sidebar</span>
+            <span className="shortcut-key-badge">Esc</span>
+          </div>
+        </div>
+      )}
+      
+        ↑
+      
+
+      {showShortcutHelp && (
+        <div className="shortcut-overlay-card">
+          <h5
+            style={{
               margin: '0 0 12px 0',
               color: '#fff',
               display: 'flex',
@@ -1816,22 +1805,22 @@ function App() {
             ⌨️ Keyboard Quick Actions
           </h5>
           <div className="shortcut-row">
-            <span style={{ color: '#94a3b8' }}>Upload Resume</span>
+            <span style={{ color: 'var(--text-readable-inverse)' }}>Upload Resume</span>
             <span className="shortcut-key-badge">Alt + U</span>
           </div>
           <div className="shortcut-row">
-            <span style={{ color: '#94a3b8' }}>Reset Analysis</span>
+            <span style={{ color: 'var(--text-readable-inverse)' }}>Reset Analysis</span>
             <span className="shortcut-key-badge">Alt + R</span>
           </div>
           <div className="shortcut-row">
-            <span style={{ color: '#94a3b8' }}>Close Modals / Sidebar</span>
+            <span style={{ color: 'var(--text-readable-inverse)' }}>Close Modals / Sidebar</span>
             <span className="shortcut-key-badge">Esc</span>
           </div>
           <p
             style={{
               margin: '12px 0 0 0',
               fontSize: '11px',
-              color: '#64748b',
+              color: 'var(--text-muted-inverse)',
               fontStyle: 'italic',
             }}
           >
