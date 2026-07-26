@@ -157,7 +157,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
           style={{
             margin: 0,
             fontSize: 'var(--font-size-sm)',
-            color: '#e2e8f0',
+            color: 'var(--card-text)',
             lineHeight: '1.6',
           }}
         >
@@ -172,7 +172,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
           justifyContent: 'space-between',
           marginTop: '16px',
           paddingTop: '12px',
-          borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+          borderTop: '1px solid var(--step-card-border)',
           gap: '8px',
           flexWrap: 'wrap',
         }}
@@ -184,7 +184,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
               <span
                 style={{
                   fontSize: '0.78rem',
-                  color: 'rgba(255, 255, 255, 0.6)',
+                  color: 'var(--text-muted)',
                   fontWeight: '500',
                 }}
               >
@@ -197,12 +197,12 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
                 title="Helpful"
                 aria-label="Vote helpful"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  background: 'var(--btn-secondary-bg)',
+                  border: '1px solid var(--btn-secondary-border)',
                   borderRadius: 'var(--radius-sm)',
                   padding: '4px 8px',
                   cursor: 'pointer',
-                  color: '#fff',
+                  color: 'var(--card-text)',
                   fontSize: '0.85rem',
                   transition: 'all 0.2s ease',
                 }}
@@ -216,12 +216,12 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
                 title="Not helpful"
                 aria-label="Vote not helpful"
                 style={{
-                  background: 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  background: 'var(--btn-secondary-bg)',
+                  border: '1px solid var(--btn-secondary-border)',
                   borderRadius: 'var(--radius-sm)',
                   padding: '4px 8px',
                   cursor: 'pointer',
-                  color: '#fff',
+                  color: 'var(--card-text)',
                   fontSize: '0.85rem',
                   transition: 'all 0.2s ease',
                 }}
@@ -1131,7 +1131,7 @@ function App() {
                           <span
                             style={{
                               fontSize: '0.78rem',
-                              color: 'rgba(255,255,255,0.6)',
+                              color: 'var(--text-muted)',
                               marginTop: '6px',
                               display: 'block',
                             }}

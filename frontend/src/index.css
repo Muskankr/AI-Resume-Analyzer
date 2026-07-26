@@ -1276,11 +1276,21 @@ input {
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+[data-theme='light'] .suggestion-card {
+  background: rgba(0, 0, 0, 0.02);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
 .suggestion-card:hover {
   transform: translateY(-2px);
   background: rgba(255, 255, 255, 0.04);
   border-color: rgba(20, 184, 166, 0.3);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='light'] .suggestion-card:hover {
+  background: rgba(0, 0, 0, 0.04);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
 }
 
 .suggestion-copy-btn {
@@ -1297,6 +1307,13 @@ input {
   align-self: flex-end;
   margin-top: 14px;
   transition: all 0.2s;
+}
+
+[data-theme='light'] .suggestion-copy-btn {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #475569;
+}
 }
 
 .suggestion-copy-btn:hover {
@@ -1768,6 +1785,11 @@ input {
   border-radius: 20px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+[data-theme='light'] .wordcloud-fallback-word {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: rgba(0, 0, 0, 0.1);
 }
 /* ── Skill Chip Popover Context (#184) ────────────────────── */
 .skill-chip-wrapper {
