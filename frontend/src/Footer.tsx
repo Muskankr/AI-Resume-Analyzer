@@ -79,6 +79,10 @@ export const Footer: React.FC = () => {
             <li>
               <a
                 href="#"
+                onClick={(e) => {
+                  e.preventDefault()
+                  window.scrollTo({ top: 0, behavior: 'smooth' })
+                }}
                 style={{
                   color: 'var(--footer-link)',
                   opacity: 0.75,
