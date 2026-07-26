@@ -85,7 +85,6 @@ export const Footer: React.FC = () => {
                 }}
                 style={{
                   color: 'var(--footer-link)',
-                  opacity: 0.75,
                   fontSize: 'var(--font-size-sm)',
                   textDecoration: 'none',
                   transition: 'all 0.2s',
@@ -100,7 +99,6 @@ export const Footer: React.FC = () => {
                 href="#roleSelect"
                 style={{
                   color: 'var(--footer-link)',
-                  opacity: 0.75,
                   fontSize: 'var(--font-size-sm)',
                   textDecoration: 'none',
                   transition: 'all 0.2s',
@@ -143,7 +141,6 @@ export const Footer: React.FC = () => {
                 rel="noopener noreferrer"
                 style={{
                   color: 'var(--footer-link)',
-                  opacity: 0.75,
                   fontSize: 'var(--font-size-sm)',
                   textDecoration: 'none',
                   transition: 'all 0.2s',
@@ -160,7 +157,6 @@ export const Footer: React.FC = () => {
                 rel="noopener noreferrer"
                 style={{
                   color: 'var(--footer-link)',
-                  opacity: 0.75,
                   fontSize: 'var(--font-size-sm)',
                   textDecoration: 'none',
                   transition: 'all 0.2s',
@@ -195,7 +191,6 @@ export const Footer: React.FC = () => {
               style={{
                 fontSize: '20px',
                 color: 'var(--footer-link)',
-                opacity: 0.75,
                 textDecoration: 'none',
                 transition: 'all 0.2s',
               }}
@@ -211,7 +206,6 @@ export const Footer: React.FC = () => {
               style={{
                 fontSize: '20px',
                 color: 'var(--footer-link)',
-                opacity: 0.75,
                 textDecoration: 'none',
                 transition: 'all 0.2s',
               }}

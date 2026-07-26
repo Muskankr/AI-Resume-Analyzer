@@ -950,7 +950,7 @@ function App() {
                           display: 'block',
                           marginBottom: '12px',
                           fontWeight: '600',
-                          color: 'var(--card-text)',
+                          color: 'var(--input-text)',
                           fontSize: 'var(--font-size-sm)',
                         }}
                       >
@@ -1180,7 +1180,7 @@ function App() {
                             fontWeight: '600',
                             display: 'block',
                             marginBottom: '8px',
-                            color: 'var(--card-text)',
+                            color: 'var(--input-text)',
                           }}
                         >
                           Job Description (Optional)

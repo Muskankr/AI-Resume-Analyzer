@@ -56,7 +56,7 @@
   --btn-success-bg: var(--color-accent);
   --btn-accent-text: #ffffff;
   --footer-text: rgba(226, 232, 240, 0.85);
-  --footer-link: #cbd5e1;
+  --footer-link: #5eead4;
 
   --text-muted: #64748b;
   --input-bg: rgba(255, 255, 255, 0.9);
@@ -1864,6 +1864,14 @@ input {
 .custom-select-container {
   position: relative;
   width: 100%;
+}
+
+.analyzer-form-section label {
+  color: var(--input-text);
+}
+
+[data-theme='light'] .analyzer-form-section label {
+  color: #1e293b;
 }
 
 .custom-select-element {
