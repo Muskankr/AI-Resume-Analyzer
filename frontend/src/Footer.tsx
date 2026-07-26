@@ -11,8 +11,8 @@ export const Footer: React.FC = () => {
       className="app-footer"
       style={{
         marginTop: '80px',
-        borderTop: '1px solid rgba(255, 255, 255, 0.05)',
-        background: 'rgba(30, 30, 47, 0.8)',
+        borderTop: '1px solid rgba(20, 184, 166, 0.08)',
+        background: 'rgba(6, 6, 24, 0.85)',
         padding: '40px 20px 20px',
       }}
     >
@@ -59,7 +59,7 @@ export const Footer: React.FC = () => {
             style={{
               margin: '0 0 16px 0',
               fontSize: 'var(--font-size-sm)',
-              color: '#a5b4fc',
+              color: '#5eead4',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
             }}
@@ -80,24 +80,26 @@ export const Footer: React.FC = () => {
               <a
                 href="#"
                 style={{
-                  color: '#94a3b8',
+                  color: 'var(--footer-link)',
+                  opacity: 0.75,
                   fontSize: 'var(--font-size-sm)',
                   textDecoration: 'none',
-                  transition: 'color 0.2s',
+                  transition: 'all 0.2s',
                 }}
                 className="footer-link"
               >
-                Workspace Top
+                Back to Top
               </a>
             </li>
             <li>
               <a
                 href="#roleSelect"
                 style={{
-                  color: '#94a3b8',
+                  color: 'var(--footer-link)',
+                  opacity: 0.75,
                   fontSize: 'var(--font-size-sm)',
                   textDecoration: 'none',
-                  transition: 'color 0.2s',
+                  transition: 'all 0.2s',
                 }}
                 className="footer-link"
               >
@@ -113,7 +115,7 @@ export const Footer: React.FC = () => {
             style={{
               margin: '0 0 16px 0',
               fontSize: 'var(--font-size-sm)',
-              color: '#a5b4fc',
+              color: '#5eead4',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
             }}
@@ -136,9 +138,11 @@ export const Footer: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  color: '#94a3b8',
+                  color: 'var(--footer-link)',
+                  opacity: 0.75,
                   fontSize: 'var(--font-size-sm)',
                   textDecoration: 'none',
+                  transition: 'all 0.2s',
                 }}
                 className="footer-link"
               >
@@ -151,9 +155,11 @@ export const Footer: React.FC = () => {
                 target="_blank"
                 rel="noopener noreferrer"
                 style={{
-                  color: '#94a3b8',
+                  color: 'var(--footer-link)',
+                  opacity: 0.75,
                   fontSize: 'var(--font-size-sm)',
                   textDecoration: 'none',
+                  transition: 'all 0.2s',
                 }}
                 className="footer-link"
               >
@@ -169,7 +175,7 @@ export const Footer: React.FC = () => {
             style={{
               margin: '0 0 16px 0',
               fontSize: 'var(--font-size-sm)',
-              color: '#a5b4fc',
+              color: '#5eead4',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
             }}
@@ -184,9 +190,10 @@ export const Footer: React.FC = () => {
               aria-label="GitHub Repository"
               style={{
                 fontSize: '20px',
-                color: '#94a3b8',
+                color: 'var(--footer-link)',
+                opacity: 0.75,
                 textDecoration: 'none',
-                transition: 'color 0.2s',
+                transition: 'all 0.2s',
               }}
               className="footer-icon-link"
             >
@@ -199,9 +206,10 @@ export const Footer: React.FC = () => {
               aria-label="LinkedIn Profile"
               style={{
                 fontSize: '20px',
-                color: '#94a3b8',
+                color: 'var(--footer-link)',
+                opacity: 0.75,
                 textDecoration: 'none',
-                transition: 'color 0.2s',
+                transition: 'all 0.2s',
               }}
               className="footer-icon-link"
             >

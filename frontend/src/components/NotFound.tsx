@@ -17,7 +17,7 @@ export function NotFound() {
         style={{ width: '100%', maxWidth: '600px' }}
       >
         <div style={{ fontSize: '4rem', marginBottom: '16px' }}>
-          <Target size={64} style={{ color: '#6366f1' }} />
+          <Target size={64} style={{ color: '#14b8a6' }} />
         </div>
 
         <h1
@@ -45,7 +45,7 @@ export function NotFound() {
               padding: '12px 32px',
               fontSize: 'var(--font-size-base)',
               fontWeight: '700',
-              backgroundColor: '#6366f1',
+              backgroundColor: '#14b8a6',
               color: '#fff',
               textDecoration: 'none',
               borderRadius: 'var(--radius-md)',

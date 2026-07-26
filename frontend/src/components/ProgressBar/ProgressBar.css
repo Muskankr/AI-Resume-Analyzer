@@ -26,7 +26,7 @@
 .progress-percentage-text {
   font-size: 0.95rem;
   font-weight: 700;
-  color: #818cf8;
+  color: #2dd4bf;
 }
 
 .progress-bar-track {
@@ -40,10 +40,10 @@
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+  background: linear-gradient(90deg, #14b8a6 0%, #2dd4bf 50%, #60a5fa 100%);
   border-radius: 9999px;
   transition: width 0.4s ease-in-out;
-  box-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 10px rgba(20, 184, 166, 0.5);
 }
 
 /* Fallback Indeterminate Animation */
@@ -85,8 +85,8 @@
 }
 
 .stage-checkpoint.checkpoint-completed .checkpoint-dot {
-  background-color: #818cf8;
-  box-shadow: 0 0 8px #818cf8;
+  background-color: #2dd4bf;
+  box-shadow: 0 0 8px #2dd4bf;
 }
 
 .checkpoint-label {

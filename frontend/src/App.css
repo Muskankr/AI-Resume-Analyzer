@@ -199,8 +199,8 @@
 }
 .custom-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+  border-color: #14b8a6;
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.2);
 }
 [data-theme='dark'] .custom-textarea {
   background-color: rgba(255, 255, 255, 0.05);

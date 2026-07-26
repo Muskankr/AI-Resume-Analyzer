@@ -30,16 +30,16 @@ function computeWeights(skills: string[]): WordCloudWord[] {
  * Deterministic color palette that works on both light and dark themes.
  */
 const PALETTE = [
-  '#00ffae',
-  '#22d3ee',
+  '#2dd4bf',
   '#60a5fa',
-  '#a78bfa',
   '#f472b6',
   '#34d399',
   '#fbbf24',
   '#fb923c',
-  '#f87171',
-  '#e879f9',
+  '#c084fc',
+  '#2dd4bf',
+  '#f43f5e',
+  '#14b8a6',
 ]
 
 function getColor(index: number): string {

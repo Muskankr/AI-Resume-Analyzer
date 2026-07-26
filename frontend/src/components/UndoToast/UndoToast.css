@@ -4,8 +4,8 @@
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
-  background: #1e1e2f;
-  border: 1px solid rgba(99, 102, 241, 0.4);
+  background: #080d1a;
+  border: 1px solid rgba(20, 184, 166, 0.4);
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
   border-radius: var(--radius-md, 8px);
   padding: 12px 20px;
@@ -43,7 +43,7 @@
 }
 
 .undo-toast-btn {
-  background: #6366f1;
+  background: #14b8a6;
   color: #ffffff;
   border: none;
   border-radius: var(--radius-sm, 6px);
@@ -58,7 +58,7 @@
 }
 
 .undo-toast-btn:hover {
-  background: #4f46e5;
+  background: #0d9488;
   transform: scale(1.03);
 }
 
@@ -68,7 +68,7 @@
 
 .undo-toast-progress {
   height: 3px;
-  background: #6366f1;
+  background: #2dd4bf;
   border-radius: 2px;
   width: 100%;
   animation: undoToastShrink linear forwards;

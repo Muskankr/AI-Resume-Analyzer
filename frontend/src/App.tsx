@@ -145,7 +145,7 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
             style={{
               fontSize: '12px',
               fontWeight: '700',
-              color: '#a5b4fc',
+              color: '#5eead4',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
             }}
@@ -288,6 +288,7 @@ function App() {
   const [resumeText, setResumeText] = useState<string>('')
   const [activeFileName, setActiveFileName] = useState('')
   const [historyOpen, setHistoryOpen] = useState(false)
+  const [sidebarTab, setSidebarTab] = useState<'history' | 'notifications'>('history')
   const [compareOpen, setCompareOpen] = useState(false)
   const [analysisProgress, setAnalysisProgress] = useState<number>(0)
   const [analysisStageLabel, setAnalysisStageLabel] = useState<string>('')
@@ -764,8 +765,41 @@ function App() {
     clearHistory()
   }
 
+  const [heroWords] = useState(['ATS Filters.', 'Recruiters.', 'The Competition.'])
+  const [currentWordIdx, setCurrentWordIdx] = useState(0)
+  const [charCount, setCharCount] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  useEffect(() => {
+    const currentWord = heroWords[currentWordIdx]
+    let timeout: ReturnType<typeof setTimeout>
+
+    if (!isDeleting && charCount < currentWord.length) {
+      timeout = setTimeout(() => setCharCount(c => c + 1), 80)
+    } else if (!isDeleting && charCount === currentWord.length) {
+      timeout = setTimeout(() => setIsDeleting(true), 2000)
+    } else if (isDeleting && charCount > 0) {
+      timeout = setTimeout(() => setCharCount(c => c - 1), 40)
+    } else if (isDeleting && charCount === 0) {
+      setIsDeleting(false)
+      setCurrentWordIdx((idx) => (idx + 1) % heroWords.length)
+    }
+
+    return () => clearTimeout(timeout)
+  }, [charCount, isDeleting, currentWordIdx, heroWords])
+
   return (
     <>
+      {/* Floating Background Orbs */}
+      <div className="floating-orb floating-orb--1" />
+      <div className="floating-orb floating-orb--2" />
+      <div className="floating-orb floating-orb--3" />
+      <div className="floating-shape floating-shape--cube" />
+      <div className="floating-shape floating-shape--circle" />
+      <div className="floating-shape floating-shape--triangle" />
+      <div className="floating-shape floating-shape--diamond" />
+      <div className="gradient-mesh" />
+
       <a href="#main-content" className="skip-to-content">
         Skip to main content
       </a>
@@ -782,6 +816,8 @@ function App() {
         isOpen={historyOpen}
         onToggle={() => setHistoryOpen((v) => !v)}
         onCompare={() => setCompareOpen(true)}
+        activeTab={sidebarTab}
+        onTabChange={setSidebarTab}
       />
 
       {compareOpen && (
@@ -798,13 +834,25 @@ function App() {
         user={user}
         onLogin={() => setShowAuthModal(true)}
         onLogout={handleLogout}
-        onHistoryClick={() => setHistoryOpen(true)}
+        onHistoryClick={() => {
+          setSidebarTab('history')
+          setHistoryOpen(true)
+        }}
+        onNotificationsClick={() => {
+          setSidebarTab('notifications')
+          setHistoryOpen(true)
+          if (markAllAsViewed) {
+            markAllAsViewed()
+          }
+        }}
+        unreadCount={unreadCount}
       />
       <Routes>
         <Route
           path="/"
           element={
             <main id="main-content" className="landing-page">
+              <div className="grid-overlay" />
               {showAuthModal && (
                 <AuthModal
                   onSignup={signup}
@@ -813,23 +861,42 @@ function App() {
                 />
               )}
 
-              <div className={score === null && !loading ? 'hero-container' : ''}>
+              <div className={score === null && !loading ? 'hero-container' : 'app-container'}>
                 <div className={score === null && !loading ? 'hero-left' : ''}>
                   {score === null && !loading && (
                     <section className="hero-intro" aria-label="Introduction">
-                      <span className="hero-badge">⭐ AI Powered Resume Optimization</span>
+                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}>
+                        <span className="hero-badge" style={{ marginBottom: 0 }}>
+                          ⭐ AI Powered Resume Optimization
+                        </span>
+                      </div>
 
                       <h1
-                        className="app-main-title"
+                        className="app-main-title gradient-text-animated"
                         style={{
                           fontSize: 'clamp(2.8rem, 6vw, 4.8rem)',
                           lineHeight: '1.1',
                           fontWeight: 800,
                           marginTop: '18px',
-                          marginBottom: '24px',
+                          marginBottom: '16px',
                         }}
                       >
-                        Beat ATS Filters.
+                        Beat{' '}
+                        <span style={{ position: 'relative' }}>
+                          {heroWords[currentWordIdx].substring(0, charCount)}
+                          <span
+                            style={{
+                              display: 'inline-block',
+                              width: '3px',
+                              height: '0.8em',
+                              background: '#2dd4bf',
+                              marginLeft: '2px',
+                              animation: 'none',
+                              verticalAlign: 'text-top',
+                              opacity: isDeleting ? 0.5 : 1,
+                            }}
+                          />
+                        </span>
                         <br />
                         Land More Interviews.
                       </h1>
@@ -848,17 +915,17 @@ function App() {
                       </p>
 
                       <div className="hero-stats">
-                        <div>
+                        <div className="bounce-in bounce-in-delay-1">
                           <h2>50K+</h2>
                           <span>Resumes Reviewed</span>
                         </div>
 
-                        <div>
+                        <div className="bounce-in bounce-in-delay-2">
                           <h2>95%</h2>
                           <span>ATS Accuracy</span>
                         </div>
 
-                        <div>
+                        <div className="bounce-in bounce-in-delay-3">
                           <h2>24/7</h2>
                           <span>AI Available</span>
                         </div>
@@ -868,14 +935,13 @@ function App() {
 
                   {(loading || score !== null) && <StepProgress currentStep={currentStep} />}
 
-                  <section className="analyzer-form-section" aria-label="Resume Analyzer Form">
+                  <section className="analyzer-card analyzer-form-section glass-card-premium bounce-in" aria-label="Resume Analyzer Form">
                     {/* STEP 1: Target Career Track */}
                     <div
-                      className="mb-4 p-4 role-selector-container"
+                      className="mb-4 p-0 role-selector-container"
                       style={{
-                        background: 'rgba(255, 255, 255, 0.02)',
-                        borderRadius: 'var(--radius-lg)',
-                        border: '1px solid rgba(255,255,255,0.04)',
+                        background: 'transparent',
+                        border: 'none',
                       }}
                     >
                       <label
@@ -884,7 +950,7 @@ function App() {
                           display: 'block',
                           marginBottom: '12px',
                           fontWeight: '600',
-                          color: '#e2e8f0',
+                          color: 'var(--card-text)',
                           fontSize: 'var(--font-size-sm)',
                         }}
                       >
@@ -908,7 +974,7 @@ function App() {
                       {roleError && (
                         <div
                           style={{
-                            color: '#ef4444',
+                            color: '#f43f5e',
                             fontSize: '13px',
                             marginTop: '8px',
                             fontWeight: '500',
@@ -944,9 +1010,9 @@ function App() {
                             fontWeight: '600',
                             cursor: 'pointer',
                             background:
-                              uploadMode === 'file' ? '#6366f1' : 'rgba(255, 255, 255, 0.05)',
-                            color: '#fff',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                              uploadMode === 'file' ? '#14b8a6' : 'var(--btn-secondary-bg)',
+                            color: uploadMode === 'file' ? '#fff' : 'var(--btn-secondary-text)',
+                            border: uploadMode === 'file' ? '1px solid transparent' : '1px solid var(--btn-secondary-border)',
                             transition: 'all 0.2s ease',
                           }}
                         >
@@ -965,9 +1031,9 @@ function App() {
                             fontWeight: '600',
                             cursor: 'pointer',
                             background:
-                              uploadMode === 'url' ? '#6366f1' : 'rgba(255, 255, 255, 0.05)',
-                            color: '#fff',
-                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                              uploadMode === 'url' ? '#14b8a6' : 'var(--btn-secondary-bg)',
+                            color: uploadMode === 'url' ? '#fff' : 'var(--btn-secondary-text)',
+                            border: uploadMode === 'url' ? '1px solid transparent' : '1px solid var(--btn-secondary-border)',
                             transition: 'all 0.2s ease',
                           }}
                         >
@@ -978,12 +1044,13 @@ function App() {
                       {uploadMode === 'file' ? (
                         <div
                           className="upload-box mb-3"
-                          style={{ width: '100%', maxWidth: '100%', padding: '32px 20px' }}
+                          style={{ width: '100%', maxWidth: '100%' }}
                         >
                           <input
                             type="file"
                             id="fileUpload"
                             hidden
+                            accept=".pdf,.docx"
                             onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                               if (e.target.files && e.target.files[0]) {
                                 setFile(e.target.files[0])
@@ -993,19 +1060,38 @@ function App() {
                           />
                           <label
                             htmlFor="fileUpload"
-                            className="upload-label"
                             style={{
                               cursor: 'pointer',
-                              display: 'block',
-                              wordBreak: 'break-all',
-                              fontSize: 'var(--font-size-base)',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              width: '100%',
                             }}
                           >
-                            📄{' '}
                             {file ? (
-                              <strong style={{ color: '#a5b4fc' }}>{file.name}</strong>
+                              <>
+                                <div className="upload-icon-container" style={{ color: 'var(--color-primary)' }}>
+                                  <CheckCircle size={36} />
+                                </div>
+                                <div className="upload-title" style={{ wordBreak: 'break-all', padding: '0 10px' }}>
+                                  {file.name}
+                                </div>
+                                <div className="upload-subtitle">
+                                  {(file.size / (1024 * 1024)).toFixed(2)} MB • Click to change file
+                                </div>
+                              </>
                             ) : (
-                              'Drag & Drop Resume or Click to Browse'
+                              <>
+                                <div className="upload-icon-container">
+                                  <FileText size={36} />
+                                </div>
+                                <div className="upload-title">
+                                  Drag & Drop Resume or Click to Browse
+                                </div>
+                                <div className="upload-subtitle">
+                                  Supports PDF and DOCX formats (Max 5MB)
+                                </div>
+                              </>
                             )}
                           </label>
                         </div>
@@ -1017,7 +1103,7 @@ function App() {
                               fontWeight: '600',
                               display: 'block',
                               marginBottom: '8px',
-                              color: '#e2e8f0',
+                              color: 'var(--card-text)',
                               fontSize: '0.85rem',
                             }}
                           >
@@ -1036,9 +1122,9 @@ function App() {
                               width: '100%',
                               padding: '12px 16px',
                               borderRadius: 'var(--radius-md)',
-                              background: 'rgba(255, 255, 255, 0.04)',
-                              color: '#fff',
-                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              background: 'var(--input-bg)',
+                              color: 'var(--input-text)',
+                              border: '1px solid var(--input-border)',
                               fontSize: '0.9rem',
                             }}
                           />
@@ -1059,7 +1145,7 @@ function App() {
                       {fileError && uploadMode === 'file' && (
                         <div
                           style={{
-                            color: '#ef4444',
+                            color: '#f43f5e',
                             fontSize: '13px',
                             marginTop: '-4px',
                             marginBottom: '16px',
@@ -1074,7 +1160,7 @@ function App() {
                       {urlError && uploadMode === 'url' && (
                         <div
                           style={{
-                            color: '#ef4444',
+                            color: '#f43f5e',
                             fontSize: '13px',
                             marginTop: '4px',
                             marginBottom: '16px',
@@ -1094,7 +1180,7 @@ function App() {
                             fontWeight: '600',
                             display: 'block',
                             marginBottom: '8px',
-                            color: '#e2e8f0',
+                            color: 'var(--card-text)',
                           }}
                         >
                           Job Description (Optional)
@@ -1110,15 +1196,15 @@ function App() {
                             minHeight: '100px',
                             padding: '12px',
                             borderRadius: 'var(--radius-md)',
-                            background: 'rgba(255, 255, 255, 0.02)',
-                            color: 'inherit',
-                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            background: 'var(--input-bg)',
+                            color: 'var(--input-text)',
+                            border: '1px solid var(--input-border)',
                           }}
                         />
                         <div
                           style={{
                             textAlign: 'right',
-                            color: isOver ? '#ef4444' : isClose ? '#f97316' : 'inherit',
+                            color: isOver ? '#f43f5e' : isClose ? '#f59e0b' : 'inherit',
                             opacity: isOver || isClose ? 1 : 0.7,
                             fontSize: '0.85rem',
                             marginTop: '5px',
@@ -1170,7 +1256,7 @@ function App() {
                       {retryDisabled && retryAfter !== null && (
                         <p
                           style={{
-                            color: '#ef4444',
+                            color: '#f43f5e',
                             marginTop: '10px',
                             fontWeight: 600,
                             textAlign: 'center',
@@ -1242,9 +1328,9 @@ function App() {
                   )}
 
                   {/* Skills Section */}
-                  <section className="mt-4" aria-labelledby="skills-found-heading">
-                    <h4 id="skills-found-heading">Skills Found ({skills.length})</h4>
-                    {skills.length === 0 && <p>No skills detected</p>}
+                  <section className="results-subcard mt-4 glass-card-premium results-enter" aria-labelledby="skills-found-heading">
+                    <h4 id="skills-found-heading" style={{ textAlign: 'center', marginBottom: '16px' }}>Skills Found ({skills.length})</h4>
+                    {skills.length === 0 && <p style={{ textAlign: 'center', color: 'var(--text-muted)' }}>No skills detected</p>}
                     <div
                       style={{
                         display: 'flex',
@@ -1284,8 +1370,8 @@ function App() {
 
                   {/* Skill Gap Matrix */}
                   <section
-                    className="mt-4 p-3"
-                    style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}
+                    className="results-subcard mt-4 glass-card-premium results-enter"
+                    style={{ animationDelay: '0.15s' }}
                     aria-labelledby="skill-gap-heading"
                   >
                     <h4
@@ -1297,6 +1383,7 @@ function App() {
                         flexWrap: 'wrap',
                         textAlign: 'center',
                         gap: '6px',
+                        marginBottom: '20px',
                       }}
                     >
                       <Target size={18} /> Skill Gap Matrix ({targetRole})
@@ -1307,21 +1394,21 @@ function App() {
                       style={{
                         display: 'flex',
                         flexWrap: 'wrap',
-                        gap: '20px',
+                        gap: '30px',
                         justifyContent: 'space-around',
                         marginTop: '12px',
                       }}
                     >
-                      <div style={{ flex: '1 1 140px', minWidth: '140px' }}>
-                        <h6 style={{ color: '#22c55e' }}>Matched Skills</h6>
+                      <div style={{ flex: '1 1 200px', minWidth: '200px', textAlign: 'center' }}>
+                            <h6 style={{ color: '#10b981', fontSize: '1rem', fontWeight: '600', marginBottom: '12px' }}>Matched Skills</h6>
                         {matchedSkills.length === 0 ? (
-                          <p style={{ fontSize: '12px' }}>None</p>
+                          <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>None</p>
                         ) : (
                           <div
                             style={{
                               display: 'flex',
                               flexWrap: 'wrap',
-                              gap: '4px',
+                              gap: '6px',
                               justifyContent: 'center',
                             }}
                           >
@@ -1331,18 +1418,31 @@ function App() {
                           </div>
                         )}
                       </div>
+
+                      <div style={{ flex: '1 1 200px', minWidth: '200px', textAlign: 'center' }}>
+                        <h6 style={{ color: '#f43f5e', fontSize: '1rem', fontWeight: '600', marginBottom: '12px' }}>Missing Skills</h6>
+                        {missingSkills.length === 0 ? (
+                          <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>None</p>
+                        ) : (
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '6px',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {missingSkills.map((s, i) => (
+                              <SkillChip key={i} skill={s} type="missing" targetRole={targetRole} />
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </section>
 
                   {/* Upgraded Suggestions Section */}
-                  <section
-                    className="mt-5 p-4"
-                    style={{
-                      background: 'rgba(30, 30, 47, 0.4)',
-                      borderRadius: 'var(--radius-lg)',
-                      border: '1px solid rgba(255, 255, 255, 0.04)',
-                    }}
-                  >
+                  <section className="results-subcard mt-5 glass-card-premium results-enter" style={{ animationDelay: '0.3s' }}>
                     <div className="suggestion-box mt-4" style={{ padding: '15px' }}>
                       <div
                         style={{
@@ -1533,7 +1633,7 @@ function App() {
               fontStyle: 'italic',
             }}
           >
-            Press <kbd style={{ color: '#a5b4fc' }}>Esc</kbd> at any point to clear this helper
+            Press <kbd style={{ color: '#5eead4' }}>Esc</kbd> at any point to clear this helper
             overlay panel.
           </p>
         </div>

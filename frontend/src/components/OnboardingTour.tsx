@@ -97,11 +97,6 @@ export const OnboardingTour: React.FC = () => {
     setIsVisible(false)
   }, [])
 
-  function finishTour() {
-    localStorage.setItem('hasSeenOnboarding', 'true')
-    setIsVisible(false)
-  }
-
   const handleKeyDown = useCallback(
     (e: KeyboardEvent) => {
       if (!isVisible) return
@@ -142,6 +137,10 @@ export const OnboardingTour: React.FC = () => {
   }, [isVisible, currentStep])
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [handleKeyDown])
 
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -307,7 +306,7 @@ export const OnboardingTour: React.FC = () => {
               onClick={nextStep}
               style={{
                 padding: '6px 12px',
-                background: '#6366f1',
+                background: '#14b8a6',
                 border: 'none',
                 color: '#fff',
                 borderRadius: '6px',

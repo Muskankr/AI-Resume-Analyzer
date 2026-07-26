@@ -42,8 +42,8 @@ export const SkillChip: React.FC<SkillChipProps> = ({ skill, type, targetRole })
   }
 
   const getBadgeClass = () => {
-    if (type === 'matched') return 'badge bg-success m-1 skill-chip--interactive'
-    if (type === 'missing') return 'badge bg-danger m-1 skill-chip--interactive'
+    if (type === 'matched') return 'badge m-1 skill-chip--interactive skill-chip--matched'
+    if (type === 'missing') return 'badge m-1 skill-chip--interactive skill-chip--missing'
     return 'skill-badge skill-chip--interactive'
   }
 

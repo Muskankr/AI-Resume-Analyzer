@@ -84,7 +84,7 @@
 }
 
 .compare-warning {
-  color: #ef4444;
+  color: #f43f5e;
   font-size: 13px;
   margin: 8px 0 0;
 }
@@ -120,12 +120,12 @@
   background: rgba(148, 163, 184, 0.2);
 }
 .compare-score-delta.is-positive {
-  color: #16a34a;
-  background: rgba(34, 197, 94, 0.15);
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.15);
 }
 .compare-score-delta.is-negative {
-  color: #dc2626;
-  background: rgba(239, 68, 68, 0.15);
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.15);
 }
 
 .compare-delta-icon--up {
