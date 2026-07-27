@@ -119,7 +119,7 @@ export const OnboardingTour: React.FC = () => {
         }
       }
     },
-    [isVisible]
+    [isVisible, finishTour]
   )
 
   useEffect(() => {

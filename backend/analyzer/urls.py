@@ -7,6 +7,7 @@ from rest_framework_simplejwt.views import (
 
 from .views import (
     upload_resume,
+    compare_uploads,
     signup,
     analysis_history,
     delete_single_history,
@@ -17,10 +18,12 @@ from .views import (
     verify_email,
     resend_verification_email,
     user_status,
+    admin_stats_view,
 )
 
 urlpatterns = [
     path("upload/", upload_resume),
+    path("compare-uploads/", compare_uploads),
 
     path("auth/signup/", signup),
     path("auth/login/", TokenObtainPairView.as_view()),
@@ -38,4 +41,5 @@ urlpatterns = [
     path("shared/<uuid:share_id>/", get_shared_result),
     path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path("admin/stats/", admin_stats_view, name="admin_stats"),
 ]

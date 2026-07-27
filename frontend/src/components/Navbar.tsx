@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import type { AuthUser } from '../hooks/useAuth'
+import { Link } from 'react-router-dom'
 
 interface NavbarProps {
   theme: 'light' | 'dark'
@@ -77,6 +78,9 @@ export const Navbar: React.FC<NavbarProps> = ({
           >
             Home
           </a>
+          <Link to="/analyze" onClick={() => setMobileOpen(false)}>
+            Analyze Resume
+          </Link>
           <a
             href="#ats-score"
             onClick={(e) => {
@@ -85,7 +89,12 @@ export const Navbar: React.FC<NavbarProps> = ({
               if (atsSection) {
                 atsSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
               } else {
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+                const atsSection = document.getElementById('ats-score')
+                if (atsSection) {
+                  atsSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                } else {
+                  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+                }
               }
               closeMenu()
             }}

@@ -1,5 +1,6 @@
 import os
 import pdfplumber
+import docx
 import textstat
 from django.contrib.auth import get_user_model
 from .models import ResumeAnalysis
@@ -47,11 +48,16 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf",user_id=None,j
     text = ""
 
     try:
-        with pdfplumber.open(file_path) as pdf:
-            for page in pdf.pages:
-                extracted = page.extract_text()
-                if extracted:
-                    text += extracted
+        if file_name.lower().endswith('.docx'):
+            doc = docx.Document(file_path)
+            for paragraph in doc.paragraphs:
+                text += paragraph.text + "\n"
+        else:
+            with pdfplumber.open(file_path) as pdf:
+                for page in pdf.pages:
+                    extracted = page.extract_text()
+                    if extracted:
+                        text += extracted
 
     finally:
         if os.path.exists(file_path):

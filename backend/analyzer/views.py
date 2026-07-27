@@ -166,6 +166,71 @@ def upload_resume(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+@api_view(["POST"])
+@parser_classes([MultiPartParser, FormParser])
+@permission_classes([AllowAny])
+@throttle_classes([UploadRateThrottle])
+def compare_uploads(request):
+    file1 = request.FILES.get("file1")
+    file2 = request.FILES.get("file2")
+    target_role = request.data.get("role", "")
+    job_desc = request.data.get("job_description", "")[:2000]
+
+    if not file1 or not file2:
+        return Response({"error": "Please provide two resume files."}, status=status.HTTP_400_BAD_REQUEST)
+
+    def process_file(f):
+        temp_dir = os.path.join(settings.BASE_DIR, "tmp")
+        os.makedirs(temp_dir, exist_ok=True)
+        storage = FileSystemStorage(location=temp_dir)
+        unique_name = f"{uuid.uuid4()}_{f.name}"
+        saved_name = storage.save(unique_name, f)
+        file_path = storage.path(saved_name)
+        
+        user_id = request.user.id if request.user.is_authenticated else None
+        
+        return analyze_resume(
+            file_path=file_path,
+            target_role=target_role,
+            file_name=f.name,
+            user_id=user_id,
+            job_description=job_desc,
+        )
+
+    try:
+        res1 = process_file(file1)
+        res2 = process_file(file2)
+
+        from collections import namedtuple
+        from datetime import datetime
+
+        MockResume = namedtuple('MockResume', [
+            'id', 'file_name', 'created_at', 'score', 
+            'skills_found', 'matched_skills', 'missing_skills', 'resume_text'
+        ])
+
+        older = MockResume(
+            id=1, file_name=file1.name, created_at=datetime.now(),
+            score=res1['score'], skills_found=res1['skills_found'],
+            matched_skills=res1['matched_skills'], missing_skills=res1['missing_skills'],
+            resume_text=res1['resume_text']
+        )
+        newer = MockResume(
+            id=2, file_name=file2.name, created_at=datetime.now(),
+            score=res2['score'], skills_found=res2['skills_found'],
+            matched_skills=res2['matched_skills'], missing_skills=res2['missing_skills'],
+            resume_text=res2['resume_text']
+        )
+
+        comparison = compare_versions(older, newer)
+        serializer = VersionComparisonSerializer(comparison.as_dict())
+        return Response(serializer.data)
+
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated, IsEmailVerified])
@@ -322,7 +387,6 @@ class PasswordResetConfirmView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def verify_email(request):
@@ -391,3 +455,33 @@ def user_status(request):
         "email": request.user.email,
         "is_verified": profile.is_verified,
     }, status=status.HTTP_200_OK)
+
+
+from collections import Counter
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def admin_stats_view(request):
+    if not request.user.is_staff and not request.user.is_superuser:
+        return Response({"error": "Forbidden"}, status=status.HTTP_403_FORBIDDEN)
+        
+    total_analyses = ResumeAnalysis.objects.count()
+    
+    # Most popular career tracks
+    roles = ResumeAnalysis.objects.values_list('target_role', flat=True)
+    popular_roles = Counter(roles).most_common(5)
+    
+    # Most commonly missing skills
+    all_missing_skills = ResumeAnalysis.objects.values_list('missing_skills', flat=True)
+    missing_skills_counter = Counter()
+    for skills_list in all_missing_skills:
+        if isinstance(skills_list, list):
+            missing_skills_counter.update(skills_list)
+            
+    top_missing_skills = missing_skills_counter.most_common(10)
+    
+    return Response({
+        "total_analyses": total_analyses,
+        "popular_roles": [{"role": r[0], "count": r[1]} for r in popular_roles if r[0]],
+        "top_missing_skills": [{"skill": s[0], "count": s[1]} for s in top_missing_skills if s[0]]
+    })
