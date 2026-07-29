@@ -20,11 +20,30 @@ class SignupSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from .models import UserProfile
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        profile, _ = UserProfile.objects.get_or_create(user=self.user)
+        request = self.context.get("request")
+        if profile.avatar:
+            if request:
+                data["avatar_url"] = request.build_absolute_uri(profile.avatar.url)
+            else:
+                data["avatar_url"] = profile.avatar.url
+        else:
+            data["avatar_url"] = None
+        return data
+
+
 class ResumeAnalysisSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResumeAnalysis
         fields = ("id", "share_id", "file_name", "score", "skills_found", "suggestions",
-                  "matched_skills", "missing_skills", "target_role", "created_at", "resume_text")
+                  "matched_skills", "missing_skills", "target_role", "created_at", "resume_text",
+                  "cover_letter_text", "cover_letter_feedback", "interview_questions")
 
 
 class VersionComparisonSerializer(serializers.Serializer):

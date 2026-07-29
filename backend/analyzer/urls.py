@@ -1,4 +1,5 @@
 from django.urls import path
+from .views import PasswordResetRequestView, PasswordResetConfirmView
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -6,6 +7,7 @@ from rest_framework_simplejwt.views import (
 
 from .views import (
     upload_resume,
+    compare_uploads,
     signup,
     analysis_history,
     delete_single_history,
@@ -13,13 +15,22 @@ from .views import (
     compare_versions_view,
     suggestion_feedback,
     get_shared_result,
+    admin_stats_view,
+    analyze_jd_view,
+    skills_leaderboard_view,
+    CustomTokenObtainPairView,
+    profile_avatar_view,
 )
 
 urlpatterns = [
     path("upload/", upload_resume),
+    path("compare-uploads/", compare_uploads),
+    path("analyze-jd/", analyze_jd_view),
+    path("skills-leaderboard/", skills_leaderboard_view),
+    path("profile/avatar/", profile_avatar_view),
 
     path("auth/signup/", signup),
-    path("auth/login/", TokenObtainPairView.as_view()),
+    path("auth/login/", CustomTokenObtainPairView.as_view()),
     path("auth/refresh/", TokenRefreshView.as_view()),
 
     path("history/", analysis_history),
@@ -29,4 +40,7 @@ urlpatterns = [
     path("compare/", compare_versions_view),
     path("suggestion-feedback/", suggestion_feedback),
     path("shared/<uuid:share_id>/", get_shared_result),
+    path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
+    path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
+    path("admin/stats/", admin_stats_view, name="admin_stats"),
 ]

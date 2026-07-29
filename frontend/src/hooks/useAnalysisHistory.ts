@@ -12,6 +12,9 @@ export interface AnalysisEntry {
   fileName: string
   source?: 'sample' | 'upload'
   share_id?: string
+  coverLetterText?: string
+  coverLetterFeedback?: any
+  interviewQuestions?: string[]
 }
 
 const STORAGE_KEY = 'resume_analysis_history'
