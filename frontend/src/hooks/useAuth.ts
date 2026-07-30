@@ -6,6 +6,7 @@ const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
 export interface AuthUser {
   username: string
   token: string
+  avatarUrl?: string
 }
 
 function loadUser(): AuthUser | null {
@@ -20,7 +21,7 @@ function loadUser(): AuthUser | null {
 export function useAuth() {
   const [user, setUser] = useState<AuthUser | null>(loadUser)
 
-    const persist = (u: AuthUser | null, remember: boolean = true) => {
+  const persist = (u: AuthUser | null, remember: boolean = true) => {
     setUser(u)
     try {
       if (u) {
@@ -43,14 +44,34 @@ export function useAuth() {
   const signup = useCallback(async (username: string, password: string) => {
     await axios.post(`${BACKEND}/api/auth/signup/`, { username, password })
     const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password })
-    persist({ username, token: res.data.access }, true)
+    persist({ username, token: res.data.access, avatarUrl: res.data.avatar_url }, true)
   }, [])
 
-  const login = useCallback(async (username: string, password: string, rememberMe: boolean = true) => {
-    const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password })
-    persist({ username, token: res.data.access }, rememberMe)
-  }, [])
+  const login = useCallback(
+    async (username: string, password: string, rememberMe: boolean = true) => {
+      const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password })
+      persist({ username, token: res.data.access, avatarUrl: res.data.avatar_url }, rememberMe)
+    },
+    []
+  )
 
   const logout = useCallback(() => persist(null), [])
-  return { user, signup, login, logout }
+
+  const updateProfileSession = useCallback((newUsername: string) => {
+    if (user) {
+      const isLocalStorage = localStorage.getItem('auth_user') !== null
+      const updatedUser = { ...user, username: newUsername }
+      persist(updatedUser, isLocalStorage)
+    }
+  }, [user])
+
+  const updateUserAvatar = useCallback((avatarUrl: string | null) => {
+    if (user) {
+      const isLocalStorage = localStorage.getItem('auth_user') !== null
+      const updatedUser = { ...user, avatarUrl: avatarUrl || undefined }
+      persist(updatedUser, isLocalStorage)
+    }
+  }, [user])
+
+  return { user, signup, login, logout, updateProfileSession, updateUserAvatar }
 }

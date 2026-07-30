@@ -24,9 +24,20 @@ class ResumeAnalysis(models.Model):
     job_description = models.TextField(blank=True, null=True)
     resume_text = models.TextField(blank=True, null=True)
     share_id = models.UUIDField(default=uuid.uuid4, unique=True)
+    cover_letter_text = models.TextField(blank=True, null=True)
+    cover_letter_feedback = models.JSONField(blank=True, null=True)
+    interview_questions = models.JSONField(blank=True, null=True)
 
     class Meta:
         ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.user.username} — {self.file_name} ({self.score}%)"
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    avatar = models.FileField(upload_to="avatars/", blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s Profile"

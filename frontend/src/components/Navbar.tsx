@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import type { AuthUser } from '../hooks/useAuth'
+import { Link, useLocation } from 'react-router-dom'
 
 interface NavbarProps {
   theme: 'light' | 'dark'
@@ -7,7 +8,7 @@ interface NavbarProps {
   user: AuthUser | null
   onLogin: () => void
   onLogout: () => void
-  onHistoryClick: () => void
+  onProfileClick?: () => void
 }
 
 const MOBILE_BREAKPOINT = 1024
@@ -18,11 +19,17 @@ export const Navbar: React.FC<NavbarProps> = ({
   user,
   onLogin,
   onLogout,
-  onHistoryClick,
+  onProfileClick,
 }) => {
   const [mobileOpen, setMobileOpen] = useState(false)
+  const location = useLocation()
+  const [activeSection, setActiveSection] = useState<'home' | 'ats'>('home')
 
   const closeMenu = useCallback(() => setMobileOpen(false), [])
+
+  const isHomeActive = location.pathname === '/' && activeSection === 'home'
+  const isAnalyzeActive = location.pathname === '/analyze'
+  const isAtsActive = location.pathname === '/' && activeSection === 'ats'
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -44,8 +51,13 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="navbar">
-      <div style={{ color: theme === 'light' ? '#000000' : '#ffffff' }}>🚀 AI Resume Analyzer</div>
-
+      <Link
+        to="/"
+        className={`navbar-brand ${theme}`}
+        onClick={closeMenu}
+      >
+        🚀 AI Resume Analyzer
+      </Link>
       <button
         className="navbar-toggle"
         onClick={() => setMobileOpen((prev) => !prev)}
@@ -69,39 +81,50 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="navbar-links">
           <a
             href="#"
+            className={isHomeActive ? 'active' : ''}
+            aria-current={isHomeActive ? 'page' : undefined}
             onClick={(e) => {
               e.preventDefault()
+              setActiveSection('home')
               window.scrollTo({ top: 0, behavior: 'smooth' })
               closeMenu()
             }}
           >
             Home
           </a>
+          <Link
+            to="/analyze"
+            className={isAnalyzeActive ? 'active' : ''}
+            aria-current={isAnalyzeActive ? 'page' : undefined}
+            onClick={() => setMobileOpen(false)}
+          >
+            Analyze Resume
+          </Link>
+          <Link to="/leaderboard" onClick={() => setMobileOpen(false)}>
+            📊 Leaderboard
+          </Link>
           <a
             href="#ats-score"
+            className={isAtsActive ? 'active' : ''}
+            aria-current={isAtsActive ? 'true' : undefined}
             onClick={(e) => {
               e.preventDefault()
+              setActiveSection('ats')
               const atsSection = document.getElementById('ats-score')
               if (atsSection) {
                 atsSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
               } else {
-                window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+                const atsSection = document.getElementById('ats-score')
+                if (atsSection) {
+                  atsSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                } else {
+                  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })
+                }
               }
               closeMenu()
             }}
           >
             ATS Score
-          </a>
-          <a
-            href="#"
-            data-tour="history-link"
-            onClick={(e) => {
-              e.preventDefault()
-              onHistoryClick()
-              closeMenu()
-            }}
-          >
-            History
           </a>
         </div>
 
@@ -120,8 +143,58 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {user ? (
-            <div className="navbar-user">
-              <span className="auth-username">👤 {user.username}</span>
+            <div className="navbar-user" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => onProfileClick?.()}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                }}
+                title="Edit profile avatar"
+              >
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt="Profile Avatar"
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      background: 'var(--color-primary, #3b82f6)',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.85rem',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {user.username ? user.username.slice(0, 2).toUpperCase() : 'U'}
+                  </div>
+                )}
+              </button>
+              <Link
+                to="/profile"
+                className="auth-username"
+                onClick={closeMenu}
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                {user.username}
+              </Link>
               <button
                 className="auth-bar-btn"
                 onClick={() => {

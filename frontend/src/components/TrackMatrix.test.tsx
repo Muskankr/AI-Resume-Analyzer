@@ -89,11 +89,7 @@ describe('TrackMatrix Component', () => {
 
   it('renders an empty state when no comparisons are provided', () => {
     render(
-      <TrackMatrix
-        trackComparisons={{}}
-        activeRole="Frontend Developer"
-        onRowClick={vi.fn()}
-      />
+      <TrackMatrix trackComparisons={{}} activeRole="Frontend Developer" onRowClick={vi.fn()} />
     )
 
     expect(screen.getByText(/No track comparison data available/i)).toBeInTheDocument()

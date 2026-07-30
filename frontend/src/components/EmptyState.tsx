@@ -3,11 +3,12 @@ import { FileText } from 'lucide-react'
 export default function EmptyState() {
   return (
     <div className="empty-state-container">
-      <div style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>
+      <div className="empty-state-icon-wrapper" aria-hidden="true" style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>
         <FileText size={30} />
       </div>
 
       <h3
+        className="empty-state-title"
         style={{
           color: 'var(--text-primary)',
           margin: '0 0 12px 0',
