@@ -2146,10 +2146,79 @@ input {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' stroke='%234f46e5' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' viewBox='0 0 24 24'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
 }
 
+/* Responsive Grid for Skill Gap Matrix */
+.matrix-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 20px;
+}
+
+/* Custom Individual Columns treated as inner cards */
+.matrix-column-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: var(--radius-md);
+  padding: 20px;
+  text-align: left;
+  transition: transform 0.2s ease;
+}
+
+.matrix-column-card:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Modern Pill Badges for the Grid */
+.matrix-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 9999px; /* Fluid capsule styling */
+  margin: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.matrix-badge--matched {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  color: #4ade80 !important;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.matrix-badge--missing {
+  background-color: rgba(239, 68, 68, 0.15) !important;
+  color: #f87171 !important;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Smooth placeholder texts for empty column arrays */
+.matrix-empty-text {
+  font-size: var(--font-size-sm);
+  color: #64748b;
+  font-style: italic;
+  margin: 8px 0;
+}
+
+/* Responsive breakpoint to stack layouts vertically on mobile screens */
+@media (max-width: 768px) {
+  .matrix-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+
+
 /* Option styling inside dropdown menu */
 .custom-select-element option {
   background: var(--surface-bg);
   color: var(--body-text);
+}
+
+
+[data-theme="light"] .custom-select-element option {
+  background: #ffffff;
+  color: #0f172a;
+
 }
 
 /* Accessibility: Skip-to-content link styling */
@@ -2188,144 +2257,3 @@ input {
   outline: 2px solid #2563eb;
 }
 
-@media print {
-  .navbar,
-  header,
-  nav,
-  footer,
-  .footer,
-  .history-sidebar,
-  .history-sidebar__overlay,
-  .fab-btn,
-  .back-to-top,
-  .shortcut-help-trigger,
-  .shortcut-overlay-card,
-  .cookie-consent-banner,
-  .undo-toast,
-  .auth-modal,
-  .auth-modal-overlay,
-  .onboarding-tour-overlay,
-  .onboarding-tour-card,
-  .skip-to-content,
-  .hero-intro,
-  .hero-container,
-  .upload-box,
-  .upload-zone,
-  .template-gallery-section,
-  .how-it-works-section,
-  .step-progress-container,
-  .share-result-container,
-  button,
-  input,
-  select,
-  textarea,
-  .custom-select-container,
-  .file-preview-actions,
-  .suggestion-card-actions,
-  .suggestion-card__copy-btn,
-  .suggestion-card-vote {
-    display: none !important;
-  }
-
-  html,
-  body,
-  #root,
-  main,
-  .landing-page {
-    background: white !important;
-    color: black !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    overflow: visible !important;
-  }
-
-  .analyzer-form-section {
-    display: none !important;
-  }
-
-  * {
-    overflow: visible !important;
-  }
-
-  .resume-preview,
-  .resume-preview__body,
-  .suggestion-box,
-  .suggestions-grid {
-    max-height: none !important;
-  }
-
-  .score-section,
-  .suggestion-box,
-  .suggestion-card,
-  .skill-gap-layout,
-  .resume-preview,
-  .curated-tips-container {
-    background: white !important;
-    color: black !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  .suggestion-card,
-  .score-section,
-  .skill-gap-layout,
-  .curated-tips-container {
-    break-inside: avoid !important;
-    page-break-inside: avoid !important;
-  }
-
-  .score-circle {
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6,
-  p,
-  span {
-    color: black !important;
-  }
-
-  .skill-chip,
-  .skill-badge,
-  .badge {
-    background: #f1f5f9 !important;
-    color: #111827 !important;
-    border: 1px solid #94a3b8 !important;
-  }
-
-  .suggestions-grid {
-    display: block !important;
-  }
-
-  .suggestion-card {
-    margin-bottom: 15px !important;
-    padding: 12px !important;
-  }
-
-  .resume-preview,
-  .resume-preview__body,
-  .suggestion-box,
-  .suggestions-grid {
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-  }
-
-  .resume-preview,
-  .skill-gap-layout,
-  .curated-tips-container {
-    max-height: none !important;
-    height: auto !important;
-    overflow: visible !important;
-  }
-
-  @page {
-    margin: 15mm;
-  }
-}
