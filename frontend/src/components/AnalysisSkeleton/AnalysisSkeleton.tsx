@@ -1,13 +1,9 @@
-import React from "react";
-import "./AnalysisSkeleton.css";
+import React from 'react'
+import './AnalysisSkeleton.css'
 
 const AnalysisSkeleton: React.FC = () => {
   return (
-    <div
-      className="analysis-skeleton"
-      role="status"
-      aria-live="polite"
-    >
+    <div className="analysis-skeleton" role="status" aria-live="polite">
       {/* Reusable screen-reader notification */}
       <span className="sr-only">Analyzing resume and generating insights, please wait...</span>
 
@@ -22,10 +18,10 @@ const AnalysisSkeleton: React.FC = () => {
         {/* Resume Preview Placeholder */}
         <div className="skeleton-resume-preview">
           <div className="skeleton-preview-header skeleton-shimmer" />
-          <div className="skeleton-line skeleton-shimmer" style={{ width: "95%" }} />
-          <div className="skeleton-line skeleton-shimmer" style={{ width: "88%" }} />
-          <div className="skeleton-line skeleton-shimmer" style={{ width: "92%" }} />
-          <div className="skeleton-line skeleton-shimmer" style={{ width: "75%" }} />
+          <div className="skeleton-line skeleton-shimmer" style={{ width: '95%' }} />
+          <div className="skeleton-line skeleton-shimmer" style={{ width: '88%' }} />
+          <div className="skeleton-line skeleton-shimmer" style={{ width: '92%' }} />
+          <div className="skeleton-line skeleton-shimmer" style={{ width: '75%' }} />
         </div>
 
         {/* Status Completed Banner Placeholder */}
@@ -36,14 +32,14 @@ const AnalysisSkeleton: React.FC = () => {
         <div className="skeleton-skills-section">
           <div className="skeleton-section-title skeleton-shimmer" />
           <div className="skeleton-badge-container">
-            <div className="skeleton-badge skeleton-shimmer" style={{ width: "80px" }} />
-            <div className="skeleton-badge skeleton-shimmer" style={{ width: "110px" }} />
-            <div className="skeleton-badge skeleton-shimmer" style={{ width: "95px" }} />
-            <div className="skeleton-badge skeleton-shimmer" style={{ width: "70px" }} />
-            <div className="skeleton-badge skeleton-shimmer" style={{ width: "120px" }} />
-            <div className="skeleton-badge skeleton-shimmer" style={{ width: "85px" }} />
-            <div className="skeleton-badge skeleton-shimmer" style={{ width: "90px" }} />
-            <div className="skeleton-badge skeleton-shimmer" style={{ width: "65px" }} />
+            <div className="skeleton-badge skeleton-shimmer" style={{ width: '80px' }} />
+            <div className="skeleton-badge skeleton-shimmer" style={{ width: '110px' }} />
+            <div className="skeleton-badge skeleton-shimmer" style={{ width: '95px' }} />
+            <div className="skeleton-badge skeleton-shimmer" style={{ width: '70px' }} />
+            <div className="skeleton-badge skeleton-shimmer" style={{ width: '120px' }} />
+            <div className="skeleton-badge skeleton-shimmer" style={{ width: '85px' }} />
+            <div className="skeleton-badge skeleton-shimmer" style={{ width: '90px' }} />
+            <div className="skeleton-badge skeleton-shimmer" style={{ width: '65px' }} />
           </div>
         </div>
 
@@ -54,17 +50,17 @@ const AnalysisSkeleton: React.FC = () => {
             <div className="skeleton-matrix-col">
               <div className="skeleton-matrix-header skeleton-shimmer" />
               <div className="skeleton-badge-container">
-                <div className="skeleton-badge skeleton-shimmer" style={{ width: "75px" }} />
-                <div className="skeleton-badge skeleton-shimmer" style={{ width: "90px" }} />
-                <div className="skeleton-badge skeleton-shimmer" style={{ width: "80px" }} />
+                <div className="skeleton-badge skeleton-shimmer" style={{ width: '75px' }} />
+                <div className="skeleton-badge skeleton-shimmer" style={{ width: '90px' }} />
+                <div className="skeleton-badge skeleton-shimmer" style={{ width: '80px' }} />
               </div>
             </div>
             <div className="skeleton-matrix-col">
               <div className="skeleton-matrix-header skeleton-shimmer" />
               <div className="skeleton-badge-container">
-                <div className="skeleton-badge skeleton-shimmer" style={{ width: "85px" }} />
-                <div className="skeleton-badge skeleton-shimmer" style={{ width: "70px" }} />
-                <div className="skeleton-badge skeleton-shimmer" style={{ width: "95px" }} />
+                <div className="skeleton-badge skeleton-shimmer" style={{ width: '85px' }} />
+                <div className="skeleton-badge skeleton-shimmer" style={{ width: '70px' }} />
+                <div className="skeleton-badge skeleton-shimmer" style={{ width: '95px' }} />
               </div>
             </div>
           </div>
@@ -82,7 +78,7 @@ const AnalysisSkeleton: React.FC = () => {
         </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default AnalysisSkeleton;
+export default AnalysisSkeleton

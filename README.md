@@ -3,8 +3,10 @@
 [![GitHub license](https://img.shields.io/github/license/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=34d399)](https://github.com/Muskankr/AI-Resume-Analyzer/blob/main/LICENSE)
 [![GitHub issues](https://img.shields.io/github/issues/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=f43f5e)](https://github.com/Muskankr/AI-Resume-Analyzer/issues)
 [![Last Commit](https://img.shields.io/github/last-commit/Muskankr/AI-Resume-Analyzer?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer/commits/main)
-[![Build](https://img.shields.io/github/actions/workflow/status/Muskankr/AI-Resume-Analyzer/ci.yml?style=for-the-badge)](...)
-[![GitHub stars](https://img.shields.io/github/stars/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=fbbf24)](https://github.com/Muskankr/AI-Resume-Analyzer/stargazers)
+[![Build](https://img.shields.io/github/actions/workflow/status/Muskankr/AI-Resume-Analyzer/ci.yml?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer/actions)
+[![Backend Coverage](https://img.shields.io/badge/Backend%20Coverage-94%25-brightgreen?style=for-the-badge&logo=python)](https://github.com/Muskankr/AI-Resume-Analyzer)
+[![Frontend Coverage](https://img.shields.io/badge/Frontend%20Coverage-80%25-brightgreen?style=for-the-badge&logo=vitest)](https://github.com/Muskankr/AI-Resume-Analyzer)
+[![GitHub stars](https://img.shields.io/badge/stars-ECSoC'26-fbbf24?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer/stargazers)
 [![GitHub forks](https://img.shields.io/github/forks/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=34d399)](https://github.com/Muskankr/AI-Resume-Analyzer/network/members)
 [![GitHub contributors](https://img.shields.io/github/contributors/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=818cf8)](https://github.com/Muskankr/AI-Resume-Analyzer/graphs/contributors)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge&color=38bdf8)](https://github.com/Muskankr/AI-Resume-Analyzer/pulls)
@@ -222,16 +224,17 @@ The API server starts on: `http://127.0.0.1:8000/`
 
 ### Client Setup (React)
 
+Create your environment variables by copying the provided examples:
+
 ```bash
-# Open a new terminal instance and navigate to client directory
-cd client
+cd frontend
+cp .env.development.example .env.development
+cp .env.production.example .env.production
+```
 
-# Create local environment configuration from the example
-# Windows:
-copy .env.example .env
-# macOS/Linux:
-cp .env.example .env
+Then install dependencies and start the app:
 
+```bash
 # Install packages
 npm install
 
@@ -244,6 +247,81 @@ The client application will run at: `http://localhost:5173/`
 | Variable | Description | Default / Placeholder |
 | :--- | :--- | :--- |
 | `VITE_BACKEND_URL` | The URL of the Django backend REST API server | `http://127.0.0.1:8000` |
+| `VITE_SENTRY_DSN` | Sentry DSN for frontend error tracking | *(Empty)* |
+
+---
+
+## Error Tracking (Sentry)
+
+This project uses [Sentry](https://sentry.io) for production error tracking on both the frontend and backend. The integration includes a `before_send` (backend) and `beforeSend` (frontend) hook to actively sanitize request bodies and prevent Personally Identifiable Information (PII) or resume content from being sent to the tracking service.
+
+### Setup
+
+1. Create a free developer account at [Sentry.io](https://sentry.io/signup/).
+2. Create two new projects in Sentry:
+   - One for **Django** (Backend)
+   - One for **React** (Frontend)
+3. Copy the respective **DSN (Data Source Name)** for each project.
+
+### Environment Variables
+
+Add the DSNs to your `.env` files:
+
+**Backend (`server/.env`)**
+```env
+SENTRY_DSN=your-django-sentry-dsn
+```
+
+**Frontend (`client/.env`)**
+```env
+VITE_SENTRY_DSN=your-react-sentry-dsn
+```
+
+### Local Development Behavior
+
+For local development, you do **not** need to set the Sentry DSNs. 
+- If `SENTRY_DSN` and `VITE_SENTRY_DSN` are missing or empty, Sentry remains inactive.
+- The application will initialize normally without any tracking overhead or startup errors.
+
+---
+
+### Testing & Coverage Setup
+
+Test suites and coverage reports are wired into the project setup for both backend and frontend submodules.
+
+#### Root Workspace Commands
+
+```bash
+# Run test coverage for both Frontend and Backend
+npm run test:coverage
+
+# Run Frontend tests with Vitest coverage
+npm run test:coverage:frontend
+
+# Run Backend tests with Coverage.py
+npm run test:coverage:backend
+```
+
+#### Backend Coverage (Django + Coverage.py)
+
+```bash
+cd backend
+coverage run manage.py test analyzer
+coverage report
+```
+
+* **Coverage Configuration**: Configured in [`backend/.coveragerc`](backend/.coveragerc)
+* **Minimum Threshold**: **60%** line coverage.
+
+#### Frontend Coverage (React + Vitest)
+
+```bash
+cd frontend
+npm run test:coverage
+```
+
+* **Coverage Configuration**: Configured in [`frontend/vite.config.ts`](frontend/vite.config.ts)
+* **Minimum Threshold**: **50%** across lines, functions, branches, and statements.
 
 ---
 
@@ -302,6 +380,28 @@ When the limit is exceeded, the API returns:
 // Retry-After: <seconds>
 { "detail": "Request was throttled. Expected available in <N> seconds." }
 ```
+
+---
+
+## Security Configuration & Headers
+
+Standard security headers are configured for both the frontend (client) and backend (server) environments to mitigate common vulnerabilities:
+
+### Configured Headers
+
+1. **Content-Security-Policy (CSP):** Limits the resources (scripts, styles, connections) the browser is allowed to load.
+   - *Client:* Allows `'self'` resources, inline scripts/styles for React/Bootstrap, and local/production backend API connections.
+   - *Server (API):* Uses a strict `default-src 'none';` for JSON API responses, and standard self-hosting for Django admin.
+2. **X-Frame-Options (`DENY`):** Prevents the app from being embedded in `<iframe>` tags, mitigating Clickjacking attacks.
+3. **X-Content-Type-Options (`nosniff`):** Disables MIME-type sniffing to prevent MIME-based attacks.
+4. **Referrer-Policy (`strict-origin-when-cross-origin`):** Protects privacy by stripping referrer paths when making cross-origin requests.
+
+### Local Development Parity
+
+To ensure parity between local development and production environments, the headers are applied in both locations:
+- **Production (Vercel):** Configured via [vercel.json](file:///e:/ECSOC-26/AI-Resume-Analyzer/frontend/vercel.json) files in the root and frontend directories.
+- **Local Development (Vite):** Preconfigured in [vite.config.ts](file:///e:/ECSOC-26/AI-Resume-Analyzer/frontend/vite.config.ts) to send headers when running the local dev server (`npm run dev`).
+- **Django Backend:** Applied dynamically in all environments via Django settings and a custom middleware in [middleware.py](file:///e:/ECSOC-26/AI-Resume-Analyzer/backend/resume_analyzer/middleware.py).
 
 ---
 

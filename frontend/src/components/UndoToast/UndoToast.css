@@ -1,0 +1,84 @@
+.undo-toast-container {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 9999;
+  background: var(--surface-bg);
+  border: 1px solid var(--surface-border);
+  box-shadow: var(--shadow-modal);
+  border-radius: var(--radius-md, 8px);
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 300px;
+  max-width: 90vw;
+  overflow: hidden;
+  animation: undoToastSlideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes undoToastSlideUp {
+  from {
+    transform: translate(-50%, 40px);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, 0);
+    opacity: 1;
+  }
+}
+
+.undo-toast-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.undo-toast-message {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--body-text);
+}
+
+.undo-toast-btn {
+  background: var(--color-primary);
+  color: #ffffff;
+  border: none;
+  border-radius: var(--radius-sm, 6px);
+  padding: 6px 14px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    transform 0.1s ease;
+  white-space: nowrap;
+}
+
+.undo-toast-btn:hover {
+  background: var(--btn-accent-hover-bg);
+  transform: scale(1.03);
+}
+
+.undo-toast-btn:active {
+  transform: scale(0.97);
+}
+
+.undo-toast-progress {
+  height: 3px;
+  background: var(--color-primary);
+  border-radius: 2px;
+  width: 100%;
+  animation: undoToastShrink linear forwards;
+}
+
+@keyframes undoToastShrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}

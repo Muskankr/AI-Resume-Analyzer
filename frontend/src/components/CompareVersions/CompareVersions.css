@@ -1,20 +1,20 @@
 .compare-modal {
-  background: rgba(255, 255, 255, 0.97);
+  background: var(--surface-bg);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid var(--surface-border);
   border-radius: var(--radius-lg, 12px);
   padding: 24px;
   width: 720px;
   max-width: 94vw;
   max-height: 88vh;
   overflow-y: auto;
-  color: #1e293b;
-  box-shadow: 0 20px 45px rgba(0, 0, 0, 0.45);
+  color: var(--body-text);
+  box-shadow: var(--shadow-modal);
 }
 
-[data-theme="dark"] .compare-modal {
-  background: rgba(15, 23, 42, 0.97);
-  border-color: rgba(255, 255, 255, 0.1);
+[data-theme='dark'] .compare-modal {
+  background: var(--surface-bg);
+  border-color: var(--surface-border);
   color: var(--card-text, #e2e8f0);
 }
 

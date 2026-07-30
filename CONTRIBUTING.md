@@ -120,6 +120,21 @@ AI-Resume-Analyzer
 
 ---
 
+# Project Board
+
+Track development progress using our GitHub Project:
+
+<Project URL>
+
+_Project Columns to create:_
+
+- _To Do_
+- _In Progress_
+- _In Review_
+- _Done_
+
+---
+
 # Branch Naming Convention
 
 Use meaningful branch names.
@@ -224,7 +239,6 @@ When your pull request includes a notable change:
 - Keep entries concise and user-focused.
 - When a new release is created, move entries from **Unreleased** into a versioned release section.
 
-
 Example:
 
 ```
@@ -244,6 +258,24 @@ Before submitting your Pull Request, ensure that:
 - Issue is linked.
 - Merge conflicts are resolved.
 - Commit messages are meaningful.
+
+## Before submitting a Pull Request
+
+Run the following commands before opening a PR:
+
+```bash
+# Run linters and formatters
+cd frontend
+npm run lint
+npm run format
+
+# Run test suites with coverage check
+npm run test:coverage
+```
+
+Make sure all commands complete successfully and coverage meets defined thresholds (Backend: 60%, Frontend: 50%).
+
+- Ensure any UI changes have been verified against the [Theme QA Checklist](docs/THEME_QA_CHECKLIST.md).
 
 ---
 

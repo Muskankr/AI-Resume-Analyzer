@@ -1,50 +1,45 @@
-const CACHE_NAME = "resume-analyzer-v1";
-const ASSETS_TO_CACHE = [
-  "/",
-  "/index.html",
-  "/manifest.json",
-  "/favicon.ico"
-];
+const CACHE_NAME = 'resume-analyzer-v1'
+const ASSETS_TO_CACHE = ['/', '/index.html', '/manifest.json', '/favicon.ico']
 
 // Install Event - Caching the app shell
-self.addEventListener("install", (event) => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE);
+      return cache.addAll(ASSETS_TO_CACHE)
     })
-  );
-  self.skipWaiting();
-});
+  )
+  self.skipWaiting()
+})
 
 // Activate Event - Clean old caches
-self.addEventListener("activate", (event) => {
+self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => {
       return Promise.all(
         keys.map((key) => {
           if (key !== CACHE_NAME) {
-            return caches.delete(key);
+            return caches.delete(key)
           }
         })
-      );
+      )
     })
-  );
-  self.clients.claim();
-});
+  )
+  self.clients.claim()
+})
 
 // Fetch Event - Network first fallback to cache, then offline notice
-self.addEventListener("fetch", (event) => {
+self.addEventListener('fetch', (event) => {
   // Only handle standard same-origin navigation/assets requests
-  if (event.request.mode === "navigate" || event.request.method === "GET") {
+  if (event.request.mode === 'navigate' || event.request.method === 'GET') {
     event.respondWith(
       fetch(event.request).catch(() => {
         return caches.match(event.request).then((cachedResponse) => {
           if (cachedResponse) {
-            return cachedResponse;
+            return cachedResponse
           }
-          
+
           // Custom beautiful offline message fallback shell
-          if (event.request.mode === "navigate") {
+          if (event.request.mode === 'navigate') {
             return new Response(
               `
               <!DOCTYPE html>
@@ -68,11 +63,11 @@ self.addEventListener("fetch", (event) => {
               </body>
               </html>
               `,
-              { headers: { "Content-Type": "text/html" } }
-            );
+              { headers: { 'Content-Type': 'text/html' } }
+            )
           }
-        });
+        })
       })
-    );
+    )
   }
-});
+})

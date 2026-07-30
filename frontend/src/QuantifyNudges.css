@@ -1,0 +1,19 @@
+.quantify-nudges { margin: 1.5rem 0; padding: 1.25rem 1.5rem; background: #1e2a3a; border: 1px solid #2d4060; border-left: 4px solid #f59e0b; border-radius: 10px; }
+.quantify-nudges--empty { display: flex; align-items: center; gap: 0.6rem; color: #4ade80; font-size: 0.95rem; }
+.quantify-nudges__header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
+.quantify-nudges__title { font-size: 1.05rem; font-weight: 700; color: #f59e0b; margin: 0; }
+.quantify-nudges__count { font-size: 0.78rem; font-weight: 600; background: #f59e0b22; color: #f59e0b; border: 1px solid #f59e0b55; border-radius: 999px; padding: 2px 10px; }
+.quantify-nudges__desc { font-size: 0.85rem; color: #94a3b8; margin: 0 0 1rem 0; line-height: 1.5; }
+.nudge-card { background: #16202e; border: 1px solid #2d4060; border-radius: 8px; margin-bottom: 0.75rem; overflow: hidden; }
+.nudge-card:hover { border-color: #f59e0b66; }
+.nudge-header { display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 1rem; cursor: pointer; background: #1a2840; }
+.nudge-badge { display: flex; align-items: center; gap: 0.4rem; }
+.nudge-label { font-size: 0.82rem; font-weight: 600; color: #cbd5e1; }
+.nudge-original { padding: 0.6rem 1rem; border-top: 1px solid #2d4060; }
+.nudge-quote { margin: 0.3rem 0 0 0; padding-left: 0.8rem; border-left: 3px solid #f59e0b66; font-size: 0.88rem; color: #e2e8f0; font-style: italic; }
+.nudge-details { padding: 0.6rem 1rem 0.9rem; border-top: 1px dashed #2d4060; background: #111b27; }
+.nudge-suggestion { font-size: 0.85rem; color: #94a3b8; margin: 0 0 0.6rem 0; }
+.nudge-hint-box { background: #f59e0b11; border: 1px solid #f59e0b33; border-radius: 6px; padding: 0.5rem 0.75rem; }
+.nudge-hint-text { font-size: 0.83rem; color: #fbbf24; margin: 0.25rem 0 0 0; font-style: italic; }
+.nudge-tag { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; color: #64748b; background: #1e2a3a; border: 1px solid #2d4060; border-radius: 4px; padding: 1px 6px; display: inline-block; }
+.nudge-tag--hint { color: #f59e0b; background: #f59e0b11; border-color: #f59e0b44; }

@@ -1,0 +1,56 @@
+name: Mark and close stale issues and pull requests
+
+on:
+  schedule:
+    # Runs every day at 1:00 UTC
+    - cron: "0 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/stale@v9
+        with:
+          # Issues
+          days-before-issue-stale: 21
+          days-before-issue-close: 7
+
+          # Pull Requests
+          days-before-pr-stale: 21
+          days-before-pr-close: 7
+
+          stale-issue-label: stale
+          stale-pr-label: stale
+
+          stale-issue-message: >
+            This issue has been automatically marked as stale because it has had
+            no activity for 21 days. If this is still relevant, simply leave a
+            comment or push an update to keep it active.
+
+          stale-pr-message: >
+            This pull request has been automatically marked as stale because it
+            has had no activity for 21 days. If you're still working on it,
+            please leave a comment or push new commits.
+
+          close-issue-message: >
+            Closing this issue due to prolonged inactivity. Feel free to reopen
+            it if more work is needed.
+
+          close-pr-message: >
+            Closing this pull request due to prolonged inactivity. It can be
+            reopened if work resumes.
+
+          exempt-issue-labels: >
+            pinned,priority,high-priority,security,good first issue,help wanted
+
+          exempt-pr-labels: >
+            pinned,priority,high-priority,work-in-progress
+
+          remove-stale-when-updated: true
+          operations-per-run: 100
