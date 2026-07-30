@@ -10,6 +10,8 @@ import { Footer } from "./Footer";
 import AnalysisSkeleton from "./components/AnalysisSkeleton/AnalysisSkeleton";
 import { InfoTooltip } from "./components/InfoTooltip";
 import { SkillWordCloud } from "./components/SkillWordCloud";
+import { useTheme } from "./hooks/useTheme";
+import { useAddressedSuggestions } from "./hooks/useAddressedSuggestions";
 import {
   FileText,
   Loader2,
@@ -34,21 +36,6 @@ import {
   deleteHistoryEntry,
   clearAnalysisHistory,
 } from "./services/api";
-
-type Theme = "light" | "dark";
-
-function getInitialTheme(): Theme {
-  try {
-    const saved = localStorage.getItem("theme");
-    if (saved === "light" || saved === "dark") return saved;
-    if (typeof window !== "undefined" && window.matchMedia) {
-      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-    }
-  } catch {
-    // localStorage / matchMedia can throw in restricted privacy modes
-  }
-  return "light";
-}
 
 function highlightSkills(text: string, skills: string[]): React.ReactNode[] {
   if (!text) return [];
@@ -84,15 +71,12 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
 }
 
 function App() {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
+  const { theme, toggleTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [score, setScore] = useState<number | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
-
-  // Interactive Checklist State
-  const [addressedSuggestions, setAddressedSuggestions] = useState<number[]>([]);
 
   // Validation States
   const [fileError, setFileError] = useState<string | null>(null);
@@ -112,6 +96,10 @@ function App() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [compareOpen, setCompareOpen] = useState(false);
 
+  // Custom Hook for Interactive Checklist Suggestions
+  const { addressedSuggestions, setAddressedSuggestions, toggleSuggestion } =
+    useAddressedSuggestions(activeFileName, suggestions.length);
+
   let currentStep: 1 | 2 | 3 = 1;
   if (loading) {
     currentStep = 2;
@@ -123,40 +111,6 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const { entries, addEntry, deleteEntry, clearHistory, setEntries } = useAnalysisHistory();
-
-  // Persistent localStorage key scoped to current session/file
-  const storageKey = `addressed_suggestions_${activeFileName || 'default'}`;
-
-  // Load addressed suggestions from localStorage when current resume changes
-  useEffect(() => {
-    if (activeFileName || suggestions.length > 0) {
-      try {
-        const saved = localStorage.getItem(storageKey);
-        if (saved) {
-          setAddressedSuggestions(JSON.parse(saved));
-        } else {
-          setAddressedSuggestions([]);
-        }
-      } catch {
-        setAddressedSuggestions([]);
-      }
-    }
-  }, [activeFileName, storageKey, suggestions.length]);
-
-  // Sync state changes to localStorage
-  const toggleSuggestion = (index: number) => {
-    setAddressedSuggestions((prev) => {
-      const updated = prev.includes(index)
-        ? prev.filter((i) => i !== index)
-        : [...prev, index];
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(updated));
-      } catch (e) {
-        console.error("Failed to persist addressed suggestions to localStorage", e);
-      }
-      return updated;
-    });
-  };
 
   const handleDeleteEntry = async (id: string) => {
     if (user) {
@@ -215,13 +169,6 @@ function App() {
     if (user) fetchDbHistory(user.token);
   }, [user, fetchDbHistory]);
 
-  useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-    try {
-      localStorage.setItem("theme", theme);
-    } catch { }
-  }, [theme]);
-
   // Reset analysis helper
   const resetAnalysis = useCallback(() => {
     setFile(null);
@@ -237,7 +184,7 @@ function App() {
     setActiveFileName("");
     setFileError(null);
     setRoleError(null);
-  }, []);
+  }, [setAddressedSuggestions]);
 
   // Global Keyboard Shortcuts
   useEffect(() => {
@@ -271,10 +218,6 @@ function App() {
     onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "light" ? "dark" : "light"));
-  };
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -813,7 +756,7 @@ function App() {
                 </div>
               </div>
 
-              {/* Refactored Suggestions Checklist Section */}
+              {/* Suggestions Checklist Section */}
               <SuggestionsSection
                 suggestions={suggestions}
                 addressedSuggestions={addressedSuggestions}
