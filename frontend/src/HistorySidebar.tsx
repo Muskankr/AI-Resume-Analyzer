@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { X, ClipboardList, BookOpen, Trash2, GitCompare } from 'lucide-react'
 import type { AnalysisEntry } from './hooks/useAnalysisHistory'
+import { ScoreHistoryChart } from './components/ScoreHistoryChart'
 const PAGE_SIZE = 10
 
 interface HistorySidebarProps {
@@ -143,9 +144,16 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         </div>
 
         {entries.length === 0 ? (
-          <p className="history-empty">No notifications or past analyses yet.</p>
+          <div className="history-empty">
+            <ClipboardList size={32} style={{ marginBottom: '12px', opacity: 0.45 }} />
+            <p style={{ margin: '0 0 6px', fontWeight: 600, opacity: 0.75 }}>No analyses yet</p>
+            <p style={{ margin: 0, fontSize: 'var(--text-sm)', opacity: 0.5 }}>
+              Upload a resume to see your history here.
+            </p>
+          </div>
         ) : (
           <>
+            <ScoreHistoryChart entries={entries} />
             <ul className="history-list">
               {entries.slice(0, visibleCount).map((entry) => {
                 const isNew = entry.timestamp > lastViewedTimestamp

@@ -7,6 +7,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Exportable prioritized Action Plan checklist ranked by estimated ATS score impact in clean Markdown (.md) and PDF (.pdf) formats (#379).
+- Created basic SEO crawlability files `sitemap.xml` and `robots.txt` in frontend public directory for search engine indexing (#354).
 - Responsive hamburger navigation menu below 1024px with slide-in animation, backdrop overlay, Escape key dismiss, and auto-close on resize (#245).
 - Custom-styled career track dropdown arrow conforming to design theme (#261).
 - Automatic issue keyword auto-labeler GitHub Action workflow (#210).
@@ -21,6 +23,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Authentication modal enhancements.
 - Resume thumbnail/file preview (name, size, type icon) shown immediately after file selection, before analysis (#140).
 ### Changed
+- Compressed static raster images and added WebP optimized assets reducing total image bundle size from ~1.15 MB to ~956 KB (16.8% reduction) with no visible quality loss (#353).
 - Improved onboarding experience and user interface consistency.
 - Enhanced visual styling across the application.
 - Updated landing page layout and overall user experience.
