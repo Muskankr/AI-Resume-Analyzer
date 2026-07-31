@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 
+export interface CoverLetterFeedback {
+  length?: { status?: string; feedback?: string }
+  tone?: { suggestions?: string[] }
+  relevance?: { suggestions?: string[] }
+}
+
 export interface AnalysisEntry {
   id: string
   timestamp: number
@@ -13,7 +19,7 @@ export interface AnalysisEntry {
   source?: 'sample' | 'upload'
   share_id?: string
   coverLetterText?: string
-  coverLetterFeedback?: any
+  coverLetterFeedback?: CoverLetterFeedback
   interviewQuestions?: string[]
 }
 
@@ -79,11 +85,15 @@ export function useAnalysisHistory() {
   const addEntry = useCallback((entry: Omit<AnalysisEntry, 'id' | 'timestamp'>) => {
     setEntries((prev) => {
       const filteredEntries = prev.filter((e) => e.fileName !== entry.fileName)
+      const generatedId =
+        typeof crypto !== 'undefined' && crypto.randomUUID
+          ? crypto.randomUUID()
+          : `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
 
       const updated: AnalysisEntry[] = [
         {
           ...entry,
-          id: Date.now().toString(),
+          id: generatedId,
           timestamp: Date.now(),
         },
         ...filteredEntries,
@@ -92,13 +102,13 @@ export function useAnalysisHistory() {
     })
   }, [])
 
-  const deleteEntry = (id: string) => {
+  const deleteEntry = useCallback((id: string) => {
     setEntries((prev) => prev.filter((e) => e.id !== id))
-  }
+  }, [])
 
-  const clearHistory = () => {
+  const clearHistory = useCallback(() => {
     setEntries([])
-  }
+  }, [])
 
   return {
     entries,

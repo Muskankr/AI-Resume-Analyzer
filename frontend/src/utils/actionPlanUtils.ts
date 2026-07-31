@@ -100,9 +100,8 @@ export function generateActionPlan(params: ActionPlanParams): ActionPlanData {
 
   // 3. Additional generic suggestions not covered by missing skills
   suggestions.forEach((sug) => {
-    // Avoid duplicate skill suggestions
-    const isSkillSug = missingSkills.some(
-      (m) => sug.toLowerCase().includes(m.toLowerCase())
+    const isSkillSug = missingSkills.some((m) =>
+      sug.toLowerCase().includes(m.toLowerCase())
     )
     if (!isSkillSug) {
       items.push({
@@ -146,7 +145,7 @@ export function generateActionPlan(params: ActionPlanParams): ActionPlanData {
     })
   }
 
-  // Rank items by estimated impact descending (highest impact first)
+  // Rank items by estimated impact descending
   items.sort((a, b) => b.estimatedImpact - a.estimatedImpact)
 
   const sumImpact = items.reduce((acc, item) => acc + item.estimatedImpact, 0)
@@ -238,7 +237,12 @@ export function exportActionPlanPdf(data: ActionPlanData): void {
     y += size * 0.4 + 4
   }
 
-  const addText = (text: string, size = 10, isBold = false, color = [51, 65, 85]) => {
+  const addText = (
+    text: string,
+    size = 10,
+    isBold = false,
+    color: [number, number, number] = [51, 65, 85]
+  ) => {
     doc.setFontSize(size)
     doc.setFont('helvetica', isBold ? 'bold' : 'normal')
     doc.setTextColor(color[0], color[1], color[2])
@@ -254,7 +258,7 @@ export function exportActionPlanPdf(data: ActionPlanData): void {
   }
 
   // Header Banner
-  doc.setFillColor(99, 102, 241) // primary purple/indigo
+  doc.setFillColor(99, 102, 241)
   doc.rect(MARGIN, y, MAX_WIDTH, 14, 'F')
   doc.setFontSize(12)
   doc.setFont('helvetica', 'bold')
@@ -294,24 +298,21 @@ export function exportActionPlanPdf(data: ActionPlanData): void {
       y = 18
     }
 
-    // Checkbox square
     doc.setLineWidth(0.4)
     doc.setDrawColor(100, 116, 139)
     doc.rect(MARGIN, y, 4, 4)
 
-    // Priority badge text
     doc.setFontSize(9)
     doc.setFont('helvetica', 'bold')
 
-    let priorityColor = [225, 29, 72] // Red for High
-    if (item.priority === 'Medium') priorityColor = [217, 119, 6] // Amber
-    if (item.priority === 'Low') priorityColor = [79, 70, 229] // Blue
+    let priorityColor: [number, number, number] = [225, 29, 72]
+    if (item.priority === 'Medium') priorityColor = [217, 119, 6]
+    if (item.priority === 'Low') priorityColor = [79, 70, 229]
 
     doc.setTextColor(priorityColor[0], priorityColor[1], priorityColor[2])
     const priorityTag = `[${item.priority.toUpperCase()} | +${item.estimatedImpact}% ATS]`
     doc.text(priorityTag, MARGIN + 6, y + 3.2)
 
-    // Item main text
     doc.setFont('helvetica', 'normal')
     doc.setTextColor(15, 23, 42)
     const tagWidth = doc.getTextWidth(priorityTag) + 2
@@ -328,7 +329,6 @@ export function exportActionPlanPdf(data: ActionPlanData): void {
     })
     y += 5.5
 
-    // Reason subtext
     doc.setFontSize(8)
     doc.setFont('helvetica', 'italic')
     doc.setTextColor(100, 116, 139)
