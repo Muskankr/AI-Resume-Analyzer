@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
-import { HistorySidebar } from './HistorySidebar'
+import { HistorySidebar } from './components/HistorySidebar'
 import type { AnalysisEntry } from './hooks/useAnalysisHistory'
 
 const mockEntries: AnalysisEntry[] = [

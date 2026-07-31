@@ -1,10 +1,25 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-export const updateLocalHistory = (newEntry: any) => {
-  const STORAGE_KEY = 'anonymous_resume_history'
-  const existingHistory = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
+export interface HistoryEntry {
+  id?: string
+  fileName: string
+  score: number
+  skills?: string[]
+  suggestions?: string[]
+  matchedSkills?: string[]
+  missingSkills?: string[]
+  targetRole?: string
+  timestamp?: string
+}
+
+const STORAGE_KEY = 'anonymous_resume_history'
+
+export const updateLocalHistory = (newEntry: HistoryEntry): HistoryEntry[] => {
+  const existingHistoryRaw = localStorage.getItem(STORAGE_KEY)
+  const existingHistory: HistoryEntry[] = existingHistoryRaw
+    ? JSON.parse(existingHistoryRaw)
+    : []
 
   const isDuplicate = existingHistory.some(
-    (item: any) => item.fileName === newEntry.fileName && item.score === newEntry.score
+    (item) => item.fileName === newEntry.fileName && item.score === newEntry.score
   )
 
   if (!isDuplicate) {

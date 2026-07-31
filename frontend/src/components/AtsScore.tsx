@@ -1,5 +1,5 @@
 import React from 'react'
-import { InfoTooltip } from './components/InfoTooltip'
+import { InfoTooltip } from './InfoTooltip' 
 
 interface AtsScoreProps {
   score: number

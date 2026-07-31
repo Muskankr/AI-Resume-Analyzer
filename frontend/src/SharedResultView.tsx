@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import axios from 'axios'
-import { AtsScore } from './AtsScore'
+import { AtsScore } from './components/AtsScore'
 import { CheckCircle, Info, Loader2 } from 'lucide-react'
 
 const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'

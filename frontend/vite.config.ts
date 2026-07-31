@@ -28,3 +28,4 @@ export default defineConfig({
     setupFiles: './src/setupTests.ts',
   },
 })
+/// <reference types="vite/client" />
