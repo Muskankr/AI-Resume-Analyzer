@@ -28,7 +28,6 @@ import { StepProgress } from "./components/StepProgress";
 import resultScreenshot from "./assets/screenshots/result.png";
 import { OnboardingTour } from "./components/OnboardingTour";
 import { HowItWorks } from "./components/HowItWorks";
-import { CompareVersions } from "./components/CompareVersions/CompareVersions";
 import { SkillChip } from "./components/SkillChip";
 import { ActionPlanChecklist } from "./components/ActionPlanChecklist";
 
@@ -36,10 +35,10 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
   if (!text) return null;
   return (
     <div className="resume-preview mt-4">
-      <h4>
-        <FileText size={16} /> Resume Text Preview
-      </h4>
-      <pre className="resume-preview__body">{highlightSkills(text, skills)}</pre>
+      <h4>📄 Resume Text Preview</h4>
+      <pre className="resume-preview__body">
+        {highlightSkills(text, skills)}
+      </pre>
     </div>
   );
 }
@@ -68,7 +67,6 @@ function App() {
   const [resumeText, setResumeText] = useState<string>("");
   const [activeFileName, setActiveFileName] = useState("");
   const [historyOpen, setHistoryOpen] = useState(false);
-  const [compareOpen, setCompareOpen] = useState(false);
 
   // Custom Hook for Interactive Checklist Suggestions
   const { setAddressedSuggestions } = useAddressedSuggestions(
@@ -88,17 +86,9 @@ function App() {
 
   const { entries, addEntry, deleteEntry, clearHistory } = useAnalysisHistory();
 
-  const handleDeleteEntry = async (id: string) => {
-    deleteEntry(id);
-  };
-
   const MAX_CHARS = 2000;
   const isClose = jobDesc.length >= MAX_CHARS * 0.9;
   const isOver = jobDesc.length > MAX_CHARS;
-
-  const handleClearAll = async () => {
-    clearHistory();
-  };
 
   // Reset analysis helper
   const resetAnalysis = useCallback(() => {
@@ -274,20 +264,11 @@ function App() {
         entries={entries}
         activeFileName={activeFileName}
         onSelect={selectHistoryEntry}
-        onDelete={handleDeleteEntry}
-        onClear={handleClearAll}
+        onDelete={deleteEntry}
+        onClear={clearHistory}
         isOpen={historyOpen}
         onToggle={() => setHistoryOpen((v) => !v)}
-        onCompare={() => setCompareOpen(true)}
       />
-
-      {compareOpen && (
-        <CompareVersions
-          entries={entries}
-          token={user?.token}
-          onClose={() => setCompareOpen(false)}
-        />
-      )}
 
       <Navbar
         theme={theme}
