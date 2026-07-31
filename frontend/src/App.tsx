@@ -1,3 +1,102 @@
+
+import React, { useState, useEffect, useCallback } from 'react'
+import { Routes, Route, useNavigate } from 'react-router-dom'
+import NotFound from './components/NotFound'
+import axios from 'axios'
+import './index.css'
+import { AtsScore } from './AtsScore'
+import { useAnalysisHistory, type AnalysisEntry } from './hooks/useAnalysisHistory'
+import { HistorySidebar } from './HistorySidebar'
+import { useAuth } from './hooks/useAuth'
+import { AuthModal } from './AuthModal'
+import { Footer } from './Footer'
+import AnalysisSkeleton from './components/AnalysisSkeleton/AnalysisSkeleton'
+import { InfoTooltip } from './components/InfoTooltip'
+import { SkillWordCloud } from './components/SkillWordCloud'
+import { TrackMatrix } from './components/TrackMatrix'
+import { CoverLetterFeedbackPanel } from './components/CoverLetterFeedbackPanel'
+import { SkillsLeaderboard } from './components/SkillsLeaderboard'
+import { InterviewQuestionsPanel } from './components/InterviewQuestionsPanel'
+import { ProfileModal } from './components/ProfileModal'
+import { JdVisualizerPanel } from './components/JdVisualizerPanel'
+import { ResetPasswordConfirmPage } from './components/ResetPasswordConfirmPage'
+import type { TrackComparisons } from './components/TrackMatrix'
+import {
+  FileText,
+  Loader2,
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  RefreshCw,
+  Target,
+  Info,
+
+  Square,
+} from "lucide-react";
+import { Navbar } from "./components/Navbar";
+import EmptyState from "./components/EmptyState";
+import { StepProgress } from "./components/StepProgress";
+import resultScreenshot from "./assets/screenshots/result.png";
+import { OnboardingTour } from "./components/OnboardingTour";
+import { HowItWorks } from "./components/HowItWorks";
+import { CompareVersions } from "./components/CompareVersions/CompareVersions";
+import { SkillChip } from "./components/SkillChip";
+
+type Theme = "light" | "dark";
+
+  HelpCircle,
+  GitCompare,
+  X,
+} from 'lucide-react'
+import { Navbar } from './components/Navbar'
+import { TemplateGallery } from './components/TemplateGallery'
+import EmptyState from './components/EmptyState'
+import { CuratedTips } from './components/CuratedTips'
+import { StepProgress } from './components/StepProgress'
+import { OnboardingTour } from './components/OnboardingTour'
+import { HowItWorks } from './components/HowItWorks'
+import { CompareVersions } from './components/CompareVersions/CompareVersions'
+import { CompareUploads } from './components/CompareVersions/CompareUploads'
+import { SkillChip } from './components/SkillChip'
+import {
+  requestNotificationPermission,
+  sendAnalysisCompleteNotification,
+} from './utils/notification'
+import { ProgressBar } from './components/ProgressBar/ProgressBar'
+import { UndoToast } from './components/UndoToast/UndoToast'
+import { FilePreview } from './components/FilePreview/FilePreview'
+import { ShareResult } from './components/ShareResult'
+import { SharedResultView } from './SharedResultView'
+import CookieConsentBanner from './components/CookieConsentBanner'
+import QuantifyNudges, { type QuantifyNudge } from './QuantifyNudges'
+import AdminDashboard from './components/AdminDashboard'
+import { ActionPlanChecklist } from './components/ActionPlanChecklist'
+import {
+  exportActionPlanMarkdown,
+  exportActionPlanPdf,
+  generateActionPlan,
+} from './utils/actionPlanUtils'
+type Theme = 'light' | 'dark'
+
+interface UndoState {
+  file: File | null
+  score: number | null
+  skills: string[]
+  suggestions: string[]
+  matchedSkills: string[]
+  missingSkills: string[]
+  resumeText: string
+  analysisSource: 'sample' | 'upload' | null
+  activeFileName: string
+  targetRole: string
+  coverLetterText?: string
+  coverLetterFeedback?: any
+  interviewQuestions?: string[]
+}
+
+const DEFAULT_TITLE = 'AI Resume Analyzer'
+const READY_TITLE = '✅ Analysis Ready — AI Resume Analyzer'
+
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import "./index.css";
@@ -9,6 +108,8 @@ import { AuthModal } from "./AuthModal";
 import { Footer } from "./Footer";
 
 type Theme = "light" | "dark";
+
+
 
 function getInitialTheme(): Theme {
   try {
@@ -46,15 +147,332 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
   if (!text) return null;
   return (
     <div className="resume-preview mt-4">
+
+      <h4>
+        <FileText size={16} /> Resume Text Preview
+      </h4>
+      <pre className="resume-preview__body">{highlightSkills(text, skills)}</pre>
+    </div>
+  )
+}
+
+interface SuggestionCardProps {
+
+  text: string;
+  index: number;
+  isAddressed: boolean;
+  onToggle: (index: number) => void;
+}
+
+const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, isAddressed, onToggle }) => {
+  const [copied, setCopied] = React.useState(false);
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <div
+      className={`suggestion-card ${isAddressed ? "suggestion-card--addressed" : ""}`}
+      onClick={() => onToggle(index)}
+      style={{
+        cursor: "pointer",
+        transition: "all 0.2s ease",
+        opacity: isAddressed ? 0.65 : 1,
+        borderLeft: isAddressed ? "4px solid #22c55e" : "4px solid #6366f1",
+        background: isAddressed ? "rgba(34, 197, 94, 0.05)" : undefined,
+      }}
+    >
+      <div style={{ flex: 1 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "10px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+            <span style={{ cursor: "pointer", display: "inline-flex", alignItems: "center" }}>
+              {isAddressed ? (
+                <CheckCircle size={18} color="#22c55e" />
+              ) : (
+                <Square size={18} color="#94a3b8" />
+              )}
+            </span>
+            <span
+              style={{
+                fontSize: "12px",
+                fontWeight: "700",
+                color: isAddressed ? "#22c55e" : "#a5b4fc",
+                textTransform: "uppercase",
+                letterSpacing: "0.5px",
+                textDecoration: isAddressed ? "line-through" : "none",
+              }}
+            >
+              Recommendation #{index + 1}
+            </span>
+          </div>
+          {isAddressed && (
+            <span
+              style={{
+                fontSize: "11px",
+                fontWeight: "600",
+                backgroundColor: "rgba(34, 197, 94, 0.15)",
+                color: "#22c55e",
+                padding: "2px 8px",
+                borderRadius: "12px",
+              }}
+            >
+              ✓ Addressed
+            </span>
+          )}
+
+  text: string
+  index: number
+  backendUrl?: string
+}
+
+const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl = '' }) => {
+  const [copied, setCopied] = React.useState(false)
+  const [voted, setVoted] = React.useState<'up' | 'down' | null>(null)
+  const [isVoting, setIsVoting] = React.useState(false)
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 2000)
+  }
+
+  const handleVote = async (vote: 'up' | 'down') => {
+    if (voted !== null || isVoting) return
+    setIsVoting(true)
+    try {
+      await axios.post(`${backendUrl}/api/suggestion-feedback/`, {
+        suggestion: text,
+        vote,
+        index,
+      })
+      setVoted(vote)
+    } catch (err) {
+      console.error('Failed to send suggestion feedback:', err)
+      setVoted(vote)
+    } finally {
+      setIsVoting(false)
+    }
+  }
+
+  const isQuantify = text.startsWith('QUANTIFY:')
+  const displayText = isQuantify ? text.replace('QUANTIFY:', '').trim() : text
+
+  return (
+    <div className="suggestion-card" style={isQuantify ? { borderLeft: '4px solid #3b82f6' } : {}}>
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+          <span style={{ fontSize: '16px' }}>{isQuantify ? '📊' : '💡'}</span>
+          <span
+            style={{
+              fontSize: '12px',
+              fontWeight: '700',
+              color: isQuantify ? '#3b82f6' : 'var(--color-primary)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px',
+            }}
+          >
+            {isQuantify ? 'Quantify Achievement' : `Recommendation #${index + 1}`}
+          </span>
+
+        </div>
+        <p
+          style={{
+            margin: 0,
+
+            fontSize: "var(--font-size-sm)",
+            color: isAddressed ? "#94a3b8" : "#e2e8f0",
+            lineHeight: "1.6",
+            textDecoration: isAddressed ? "line-through" : "none",
+
+            fontSize: 'var(--font-size-sm)',
+            color: 'var(--body-text)',
+            lineHeight: '1.6',
+
+          }}
+        >
+          {displayText}
+        </p>
+      </div>
+
+
+      <button
+        onClick={handleCopy}
+        className="suggestion-copy-btn"
+        aria-label="Copy recommendation text"
+        style={{ alignSelf: "flex-start" }}
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          marginTop: '16px',
+          paddingTop: '12px',
+          borderTop: '1px solid var(--surface-border)',
+          gap: '8px',
+          flexWrap: 'wrap',
+        }}
+
+      >
+        {/* Feedback Widget */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          {voted === null ? (
+            <>
+              <span
+                style={{
+                  fontSize: '0.78rem',
+                  color: 'var(--muted-text)',
+                  fontWeight: '500',
+                }}
+              >
+                Was this helpful?
+              </span>
+              <button
+                type="button"
+                onClick={() => handleVote('up')}
+                disabled={isVoting}
+                title="Helpful"
+                aria-label="Vote helpful"
+                style={{
+                  background: 'var(--surface-soft-bg)',
+                  border: '1px solid var(--surface-border)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  color: 'var(--body-text)',
+                  fontSize: '0.85rem',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                👍
+              </button>
+              <button
+                type="button"
+                onClick={() => handleVote('down')}
+                disabled={isVoting}
+                title="Not helpful"
+                aria-label="Vote not helpful"
+                style={{
+                  background: 'var(--surface-soft-bg)',
+                  border: '1px solid var(--surface-border)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '4px 8px',
+                  cursor: 'pointer',
+                  color: 'var(--body-text)',
+                  fontSize: '0.85rem',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                👎
+              </button>
+            </>
+          ) : (
+            <span
+              style={{
+                fontSize: '0.78rem',
+                color: voted === 'up' ? '#4ade80' : '#f87171',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+              }}
+            >
+              {voted === 'up' ? 'Thanks for your feedback! 👍' : 'Thanks for your feedback! 👎'}
+            </span>
+          )}
+        </div>
+
+        {/* Copy Button */}
+        <button
+          onClick={handleCopy}
+          className="suggestion-copy-btn"
+          aria-label="Copy recommendation text"
+        >
+          {copied ? '✅ Copied' : '📋 Copy Text'}
+        </button>
+      </div>
+
       <h4>📄 Resume Text Preview</h4>
       <pre className="resume-preview__body">
         {highlightSkills(text, skills)}
       </pre>
+
     </div>
   );
 }
 
 function App() {
+
+  const navigate = useNavigate()
+  const [theme, setTheme] = useState<Theme>(getInitialTheme)
+  const [loading, setLoading] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const [useDefaultResume, setUseDefaultResume] = useState(false)
+  const [defaultResumeName, setDefaultResumeName] = useState<string | null>(null)
+  const [retryAfter, setRetryAfter] = useState<number | null>(null)
+  const [retryDisabled, setRetryDisabled] = useState(false)
+  const [score, setScore] = useState<number | null>(null)
+  const [skills, setSkills] = useState<string[]>([])
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [quantifyNudges, setQuantifyNudges] = useState<QuantifyNudge[]>([])
+  const [readabilityLabel, setReadabilityLabel] = useState<string | null>(null)
+  const [undoState, setUndoState] = useState<UndoState | null>(null)
+  const [showUndoToast, setShowUndoToast] = useState(false)
+
+  // Interactive Checklist State
+  const [addressedSuggestions, setAddressedSuggestions] = useState<number[]>([]);
+
+  // Validation States
+  const [fileError, setFileError] = useState<string | null>(null)
+  const [roleError, setRoleError] = useState<string | null>(null)
+
+  const [showShortcutHelp, setShowShortcutHelp] = useState(false)
+  const [showBackToTop, setShowBackToTop] = useState(false)
+  const [showExportDropdown, setShowExportDropdown] = useState(false)
+
+  const [targetRole, setTargetRole] = useState('Frontend Developer')
+  const [matchedSkills, setMatchedSkills] = useState<string[]>([])
+  const [missingSkills, setMissingSkills] = useState<string[]>([])
+  const [showAllSkills, setShowAllSkills] = useState(false)
+  const [showGallery, setShowGallery] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [analysisSource, setAnalysisSource] = useState<'sample' | 'upload' | null>(null)
+  const [shareId, setShareId] = useState<string | null>(null)
+  const [jobDesc, setJobDesc] = useState('')
+  const [resumeText, setResumeText] = useState<string>('')
+  const [activeFileName, setActiveFileName] = useState('')
+  const [historyOpen, setHistoryOpen] = useState(false)
+  const [compareOpen, setCompareOpen] = useState(false)
+  const [compareUploadsOpen, setCompareUploadsOpen] = useState(false)
+  const [analysisProgress, setAnalysisProgress] = useState<number>(0)
+  const [analysisStageLabel, setAnalysisStageLabel] = useState<string>('')
+  const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file')
+  const [trackComparisons, setTrackComparisons] = useState<TrackComparisons | null>(null)
+  const [activeTab, setActiveTab] = useState<'detailed' | 'matrix' | 'cover_letter' | 'interview_questions'>('detailed')
+  const [resumeUrl, setResumeUrl] = useState<string>('')
+  const [urlError, setUrlError] = useState<string | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
+
+  // Cover Letter States
+  const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null)
+  const [coverLetterError, setCoverLetterError] = useState<string | null>(null)
+  const [coverLetterText, setCoverLetterText] = useState<string>('')
+  const [coverLetterFeedback, setCoverLetterFeedback] = useState<any>(null)
+
+  // Interview Questions States
+  const [interviewQuestions, setInterviewQuestions] = useState<string[]>([])
+
+  // Standalone Job Description States
+  const [activeFlow, setActiveFlow] = useState<'resume' | 'jd'>('resume')
+  const [jdInputText, setJdInputText] = useState('')
+  const [jdKeywords, setJdKeywords] = useState<any[]>([])
+  const [jdLoading, setJdLoading] = useState(false)
+  const [jdError, setJdError] = useState<string | null>(null)
+
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
@@ -79,6 +497,7 @@ function App() {
   const { user, signup, login, logout } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
 
+
   // History
   const { entries, deleteEntry, clearHistory, setEntries } = useAnalysisHistory();
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -86,7 +505,127 @@ function App() {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL || "http://127.0.0.1:8000";
 
+
+  // Persistent localStorage key scoped to current session/file
+  const storageKey = `addressed_suggestions_${activeFileName || 'default'}`;
+
+  // Load addressed suggestions from localStorage when current resume changes
+  useEffect(() => {
+    if (activeFileName || suggestions.length > 0) {
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          setAddressedSuggestions(JSON.parse(saved));
+        } else {
+          setAddressedSuggestions([]);
+        }
+      } catch {
+        setAddressedSuggestions([]);
+      }
+    }
+  }, [activeFileName, storageKey, suggestions.length]);
+
+  // Sync state changes to localStorage
+  const toggleSuggestion = (index: number) => {
+    setAddressedSuggestions((prev) => {
+      const updated = prev.includes(index)
+        ? prev.filter((i) => i !== index)
+        : [...prev, index];
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(updated));
+      } catch (e) {
+        console.error("Failed to persist addressed suggestions to localStorage", e);
+      }
+      return updated;
+    });
+  };
+
+  const handleDeleteEntry = async (id: string) => {
+    if (user) {
+      try {
+        await axios.delete(`${backendUrl}/api/history/${id}/`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        })
+      } catch (error) {
+        console.error('Failed to delete from database', error)
+      }
+    }
+    deleteEntry(id)
+  }
+
+  const MAX_CHARS = 2000
+  const isClose = jobDesc.length >= MAX_CHARS * 0.9
+  const isOver = jobDesc.length > MAX_CHARS
+
+  const handleClearAll = async () => {
+    if (user) {
+      try {
+        await axios.delete(`${backendUrl}/api/history/clear/`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        })
+      } catch (error) {
+        console.error('Failed to clear database history', error)
+      }
+    }
+    clearHistory()
+  }
+
+  const fetchDbHistory = useCallback(
+    async (token: string) => {
+      try {
+        const res = await axios.get(`${backendUrl}/api/history/`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        const dbEntries: AnalysisEntry[] = res.data.map(
+          (item: {
+            id: string | number
+            created_at: string | number
+            score: number
+            skills_found: string[]
+            suggestions: string[]
+            matched_skills: string[]
+            missing_skills: string[]
+            target_role: string
+            file_name: string
+            cover_letter_text?: string
+            cover_letter_feedback?: any
+            interview_questions?: string[]
+          }) => ({
+            id: String(item.id),
+            timestamp: new Date(item.created_at).getTime(),
+            score: item.score,
+            skills: item.skills_found,
+            suggestions: item.suggestions,
+            matchedSkills: item.matched_skills,
+            missingSkills: item.missing_skills,
+            targetRole: item.target_role,
+            fileName: item.file_name,
+            coverLetterText: item.cover_letter_text,
+            coverLetterFeedback: item.cover_letter_feedback,
+            interviewQuestions: item.interview_questions,
+          })
+        )
+        const uniqueDbEntries = dbEntries.filter(
+          (entry, index, self) =>
+            index ===
+            self.findIndex((t) => t.fileName === entry.fileName && t.score === entry.score)
+        )
+        setEntries(uniqueDbEntries)
+      } catch {
+        /* silently ignore */
+      }
+    },
+    [backendUrl, setEntries]
+  )
+
+  useEffect(() => {
+    if (user) fetchDbHistory(user.token)
+  }, [user, fetchDbHistory])
+
+  useEffect(() => {
+
   const fetchDbHistory = useCallback(async (token: string) => {
+
     try {
       const res = await axios.get(`${backendUrl}/api/history/`, {
         headers: { Authorization: `Bearer ${token}` },
@@ -125,11 +664,142 @@ function App() {
 
   // Cooldown timer effect
   useEffect(() => {
+
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        document.title = DEFAULT_TITLE
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+    }
+  }, [])
+
+  const resetAnalysis = useCallback(() => {
+
+    setFile(null);
+    setScore(null);
+    setSkills([]);
+    setSuggestions([]);
+    setAddressedSuggestions([]);
+    setMatchedSkills([]);
+    setMissingSkills([]);
+    setResumeText("");
+    setShowAllSkills(false);
+    setCopied(false);
+    setAnalysisSource(null);
+    setActiveFileName("");
+    setShowExportDropdown(false);
+    setFileError(null);
+    setRoleError(null);
+  }, []);
+
+    if (score !== null || skills.length > 0) {
+      setUndoState({
+        file,
+        score,
+        skills,
+        suggestions,
+        matchedSkills,
+        missingSkills,
+        resumeText,
+        analysisSource,
+        activeFileName,
+        targetRole,
+        coverLetterText,
+        coverLetterFeedback,
+        interviewQuestions,
+      })
+      setShowUndoToast(true)
+    }
+
+    setFile(null)
+    setScore(null)
+    setSkills([])
+    setSuggestions([])
+    setMatchedSkills([])
+    setMissingSkills([])
+    setResumeText('')
+    setShowAllSkills(false)
+    setCopied(false)
+    setAnalysisSource(null)
+    setShareId(null)
+    setActiveFileName('')
+    setShowExportDropdown(false)
+    setFileError(null)
+    setRoleError(null)
+    setCoverLetterFile(null)
+    setCoverLetterError(null)
+    setCoverLetterText('')
+    setCoverLetterFeedback(null)
+    setInterviewQuestions([])
+  }, [
+    file,
+    score,
+    skills,
+    suggestions,
+    matchedSkills,
+    missingSkills,
+    resumeText,
+    analysisSource,
+    activeFileName,
+    targetRole,
+    coverLetterText,
+    coverLetterFeedback,
+    interviewQuestions,
+  ])
+
+  const handleUndoReset = useCallback(() => {
+    if (undoState) {
+      setFile(undoState.file)
+      setScore(undoState.score)
+      setSkills(undoState.skills)
+      setSuggestions(undoState.suggestions)
+      setMatchedSkills(undoState.matchedSkills)
+      setMissingSkills(undoState.missingSkills)
+      setResumeText(undoState.resumeText)
+      setAnalysisSource(undoState.analysisSource)
+      setActiveFileName(undoState.activeFileName)
+      setTargetRole(undoState.targetRole)
+      setCoverLetterText(undoState.coverLetterText || '')
+      setCoverLetterFeedback(undoState.coverLetterFeedback || null)
+      setInterviewQuestions(undoState.interviewQuestions || [])
+      setUndoState(null)
+      setShowUndoToast(false)
+    }
+  }, [undoState])
+
+
+  // Global Keyboard Shortcuts
+  useEffect(() => {
+    const handleGlobalKeyDown = (event: KeyboardEvent) => {
+      const modifier = event.altKey
+
+      if (modifier && event.key.toLowerCase() === 'u') {
+        event.preventDefault()
+        document.getElementById('fileUpload')?.click()
+      }
+
+      if (modifier && event.key.toLowerCase() === 'r') {
+        event.preventDefault()
+        resetAnalysis()
+      }
+
+      if (event.key === 'Escape') {
+        setShowAuthModal(false)
+        setHistoryOpen(false)
+        setShowShortcutHelp(false)
+      }
+
     if (cooldownRemaining > 0) {
       const timer = setTimeout(() => {
         setCooldownRemaining((prev) => prev - 1);
       }, 1000);
       return () => clearTimeout(timer);
+
     }
   }, [cooldownRemaining]);
 
@@ -142,6 +812,97 @@ function App() {
     const delay = Math.pow(2, attemptNumber);
     return Math.min(delay, 30);
   };
+
+
+  const runAnalysis = async (
+    fileToAnalyze: File | null,
+    source: 'sample' | 'upload',
+    url?: string
+  ) => {
+    try {
+
+      setLoading(true);
+      setAnalysisSource(source);
+      setAddressedSuggestions([]);
+      const formData = new FormData();
+      formData.append("file", fileToAnalyze);
+      formData.append("role", targetRole);
+      formData.append("job_description", jobDesc);
+
+      const headers = user ? { Authorization: `Bearer ${user.token}` } : {};
+      const res = await axios.post(`${backendUrl}/api/upload/`, formData, { headers });
+
+      setScore(res.data.score);
+      setSkills(res.data.skills_found || []);
+      setSuggestions(res.data.suggestions || []);
+      setMatchedSkills(res.data.matched_skills || []);
+      setMissingSkills(res.data.missing_skills || []);
+      setResumeText(res.data.resume_text || "");
+      setActiveFileName(fileToAnalyze.name);
+
+      setLoading(false);
+
+      setLoading(true)
+      setAnalysisSource(source)
+      setAnalysisProgress(25)
+      setAnalysisStageLabel(
+        url ? 'Fetching document from URL...' : 'Stage 1/3: Extracting text from document...'
+      )
+
+      const formData = new FormData()
+      if (fileToAnalyze) {
+        formData.append('file', fileToAnalyze)
+      }
+      if (url) {
+        formData.append('url', url)
+      }
+      formData.append('role', targetRole)
+      formData.append('job_description', jobDesc)
+      if (coverLetterFile) {
+        formData.append('cover_letter', coverLetterFile)
+      }
+
+      const stageTimer1 = setTimeout(() => {
+        setAnalysisProgress(60)
+        setAnalysisStageLabel('Stage 2/3: Detecting & matching skills...')
+      }, 500)
+
+      const stageTimer2 = setTimeout(() => {
+        setAnalysisProgress(90)
+        setAnalysisStageLabel('Stage 3/3: Generating ATS score & recommendations...')
+      }, 1000)
+
+      const headers = user ? { Authorization: `Bearer ${user.token}` } : {}
+      const res = await axios.post(`${backendUrl}/api/upload/`, formData, { headers })
+
+      clearTimeout(stageTimer1)
+      clearTimeout(stageTimer2)
+
+      setAnalysisProgress(100)
+      setAnalysisStageLabel('Analysis complete!')
+
+      setScore(res.data.score)
+      setSkills(res.data.skills_found || [])
+      setSuggestions(res.data.suggestions || [])
+      setQuantifyNudges(res.data.quantify_nudges || [])
+      setMatchedSkills(res.data.matched_skills || [])
+      setMissingSkills(res.data.missing_skills || [])
+      setResumeText(res.data.resume_text || '')
+      setCoverLetterText(res.data.cover_letter_text || '')
+      setCoverLetterFeedback(res.data.cover_letter_feedback || null)
+      setInterviewQuestions(res.data.interview_questions || [])
+
+      setReadabilityLabel(res.data.readability_label ?? null)
+      if (res.data.share_id) setShareId(res.data.share_id)
+      setTrackComparisons(res.data.track_comparisons || null)
+      setActiveTab('detailed')
+      const fileName = fileToAnalyze ? fileToAnalyze.name : url ? 'Imported Resume' : 'Resume'
+      setActiveFileName(fileName)
+
+      // Change the browser tab title only if the user is on another tab
+      if (document.hidden) {
+        document.title = READY_TITLE
+      }
 
 
   const runAnalysis = async (fileToAnalyze: File, source: "sample" | "upload") => {
@@ -169,6 +930,7 @@ function App() {
       // Reset retry state on success
       setRetryCount(0);
       setCooldownRemaining(0);
+
 
       if (user) {
         await fetchDbHistory(user.token);
@@ -284,6 +1046,10 @@ function App() {
     setCopied(false);
     setHistoryOpen(false);
   };
+
+  const completionPercentage = suggestions.length
+    ? Math.round((addressedSuggestions.length / suggestions.length) * 100)
+    : 0;
 
   return (
     <>
@@ -470,6 +1236,587 @@ function App() {
                     >
                       {copied ? "✅ Copied!" : "📋 Copy Suggestions"}
                     </button>
+
+                    {trackComparisons && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('matrix')}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          background:
+                            activeTab === 'matrix'
+                              ? 'var(--color-primary, #6366f1)'
+                              : 'rgba(255, 255, 255, 0.05)',
+                          color: '#fff',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        Compare All Tracks
+                      </button>
+                    )}
+                    {coverLetterFeedback && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('cover_letter')}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          background: activeTab === 'cover_letter' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                          color: '#fff',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        ✉️ Cover Letter
+                      </button>
+                    )}
+                    {interviewQuestions && interviewQuestions.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('interview_questions')}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          background: activeTab === 'interview_questions' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                          color: '#fff',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        💬 Interview Prep
+                      </button>
+                    )}
+                  </div>
+
+                  {activeTab === 'matrix' && trackComparisons ? (
+                    <TrackMatrix
+                      trackComparisons={trackComparisons}
+                      activeRole={targetRole}
+                      onRowClick={(role) => {
+                        setTargetRole(role)
+                        const comp = trackComparisons[role]
+                        setScore(comp.score)
+                        setMatchedSkills(comp.matched_skills)
+                        setMissingSkills(comp.missing_skills)
+                        setSuggestions(comp.suggestions)
+                        setActiveTab('detailed')
+                      }}
+                    />
+                  ) : activeTab === 'cover_letter' && coverLetterFeedback ? (
+                    <CoverLetterFeedbackPanel feedback={coverLetterFeedback} />
+                  ) : activeTab === 'interview_questions' && interviewQuestions && interviewQuestions.length > 0 ? (
+                    <InterviewQuestionsPanel questions={interviewQuestions} />
+                  ) : (
+                    <>
+                      {/* Skills Section */}
+
+                  <section className="mt-4" aria-labelledby="skills-found-heading">
+                    <h4 id="skills-found-heading">Skills Found ({skills.length})</h4>
+                    {skills.length === 0 && <p>No skills detected</p>}
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '8px',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      {(showAllSkills ? skills : skills.slice(0, 15)).map(
+                        (skill: string, i: number) => (
+                          <SkillChip key={i} skill={skill} type="detected" />
+                        )
+                      )}
+                    </div>
+                    {skills.length > 15 && (
+                      <button
+                        type="button"
+                        className="app-btn app-btn--secondary"
+                        style={{ marginTop: '16px', minHeight: '44px' }}
+                        onClick={() => setShowAllSkills(!showAllSkills)}
+                      >
+                        {showAllSkills ? (
+                          <>
+                            <ChevronUp size={15} /> Show Less
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDown size={15} /> Show More ({skills.length - 15} more)
+                          </>
+                        )}
+                      </button>
+                    )}
+                  </section>
+
+
+              {/* Upgraded Interactive Suggestions Checklist Section */}
+              <div
+                className="mt-5 p-4"
+                style={{
+                  background: "rgba(30, 30, 47, 0.4)",
+                  borderRadius: "var(--radius-lg)",
+                  border: "1px solid rgba(255, 255, 255, 0.04)",
+                }}
+              >
+                <div className="suggestion-box mt-4" style={{ padding: "15px" }}>
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "10px",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      marginBottom: "12px",
+                    }}
+                  >
+                    <h4 style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
+                      💡 Actionable Recommendations
+                    </h4>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                      {suggestions.length > 0 && (
+                        <button
+                          type="button"
+                          className={`app-btn app-btn--accent${copied ? " is-success" : ""}`}
+                          onClick={copySuggestionsToClipboard}
+                          style={{ minHeight: "44px", padding: "8px 16px", fontSize: "13px" }}
+                        >
+                          {copied ? "✅ Copied!" : "📋 Copy All"}
+                        </button>
+                      )}
+
+                  {/* Word Cloud */}
+                  <SkillWordCloud skills={skills} />
+
+
+                  {/* Skill Gap Matrix */}
+                  <section
+                    className="mt-4 p-3"
+                    style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}
+                    aria-labelledby="skill-gap-heading"
+                  >
+                    <h4
+                      id="skill-gap-heading"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexWrap: 'wrap',
+                        textAlign: 'center',
+                        gap: '6px',
+                      }}
+                    >
+                      <Target size={18} /> Skill Gap Matrix ({targetRole})
+                      <InfoTooltip content="Shows which required skills are already in your resume and which important skills are missing." />
+                    </h4>
+                    <div
+                      className="skill-gap-layout"
+                      style={{
+                        display: 'flex',
+                        flexWrap: 'wrap',
+                        gap: '20px',
+                        justifyContent: 'space-around',
+                        marginTop: '12px',
+                      }}
+                    >
+                      <div style={{ flex: '1 1 140px', minWidth: '140px' }}>
+                        <h6 style={{ color: '#22c55e' }}>Matched Skills</h6>
+                        {matchedSkills.length === 0 ? (
+                          <p style={{ fontSize: '12px' }}>None</p>
+                        ) : (
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '4px',
+                              justifyContent: 'center',
+                            }}
+
+                      <section className="mt-4" aria-labelledby="skills-found-heading">
+                        <h4 id="skills-found-heading">Skills Found ({skills.length})</h4>
+                        {skills.length === 0 && <p>No skills detected</p>}
+                        <div
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '8px',
+                            justifyContent: 'center',
+                          }}
+                        >
+                          {(showAllSkills ? skills : skills.slice(0, 15)).map(
+                            (skill: string, i: number) => (
+                              <SkillChip key={i} skill={skill} type="detected" />
+                            )
+                          )}
+                        </div>
+                        {skills.length > 15 && (
+                          <button
+                            type="button"
+                            className="app-btn app-btn--secondary"
+                            style={{ marginTop: '16px', minHeight: '44px' }}
+                            onClick={() => setShowAllSkills(!showAllSkills)}
+
+                          >
+                            {showAllSkills ? (
+                              <>
+                                <ChevronUp size={15} /> Show Less
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown size={15} /> Show More ({skills.length - 15} more)
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </section>
+
+                      {/* Word Cloud */}
+                      <SkillWordCloud skills={skills} />
+
+                      {/* Skill Gap Matrix */}
+                      <section
+                        className="mt-4 p-3"
+                        style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}
+                        aria-labelledby="skill-gap-heading"
+                      >
+                        <h4
+                          id="skill-gap-heading"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexWrap: 'wrap',
+                            textAlign: 'center',
+                            gap: '6px',
+                          }}
+                        >
+                          <Target size={18} /> Skill Gap Matrix ({targetRole})
+                          <InfoTooltip content="Shows which required skills are already in your resume and which important skills are missing." />
+                        </h4>
+                        <div
+                          className="skill-gap-layout"
+                          style={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: '20px',
+                            justifyContent: 'space-around',
+                            marginTop: '12px',
+                          }}
+                        >
+                          <div style={{ flex: '1 1 140px', minWidth: '140px' }}>
+                            <h6 style={{ color: '#22c55e' }}>Matched Skills</h6>
+                            {matchedSkills.length === 0 ? (
+                              <p style={{ fontSize: '12px' }}>None</p>
+                            ) : (
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  flexWrap: 'wrap',
+                                  gap: '4px',
+                                  justifyContent: 'center',
+                                }}
+                              >
+                                {matchedSkills.map((s, i) => (
+                                  <SkillChip
+                                    key={i}
+                                    skill={s}
+                                    type="matched"
+                                    targetRole={targetRole}
+                                  />
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </section>
+
+                      {/* Upgraded Suggestions Section */}
+                      <section
+                        className="mt-5 p-4"
+                        style={{
+                          background: 'rgba(30, 30, 47, 0.4)',
+                          borderRadius: 'var(--radius-lg)',
+                          border: '1px solid rgba(255, 255, 255, 0.04)',
+                        }}
+                      >
+                        {shareId && <ShareResult shareId={shareId} />}
+
+                        <div className="suggestion-box mt-4" style={{ padding: '15px' }}>
+                          <div
+                            style={{
+                              display: 'flex',
+                              flexWrap: 'wrap',
+                              gap: '10px',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              marginBottom: '12px',
+                            }}
+                          >
+                            <h4 id="suggestions-heading" style={{ margin: 0 }}>
+                              💡 Suggestions
+                            </h4>
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                              {suggestions.length > 0 && (
+                                <button
+                                  type="button"
+                                  className={`app-btn app-btn--accent${copied ? ' is-success' : ''}`}
+                                  onClick={copySuggestionsToClipboard}
+                                  style={{
+                                    minHeight: '44px',
+                                    padding: '8px 16px',
+                                    fontSize: '13px',
+                                  }}
+                                >
+                                  {copied ? '✅ Copied!' : '📋 Copy All'}
+                                </button>
+                              )}
+
+                              <div style={{ position: 'relative', display: 'inline-block' }}>
+                                <button
+                                  type="button"
+                                  className="app-btn app-btn--secondary"
+                                  onClick={() => setShowExportDropdown(!showExportDropdown)}
+                                  style={{ minHeight: '44px' }}
+                                >
+                                  Export ▼
+                                </button>
+                                {showExportDropdown && (
+                                  <div
+                                    style={{
+                                      position: 'absolute',
+                                      top: '100%',
+                                      right: 0,
+                                      marginTop: '4px',
+                                      backgroundColor: 'var(--card-bg)',
+                                      border: '1px solid var(--surface-border)',
+                                      borderRadius: '6px',
+                                      boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                                      zIndex: 10,
+                                      display: 'flex',
+                                      flexDirection: 'column',
+                                      minWidth: '120px',
+                                      overflow: 'hidden',
+                                    }}
+                                  >
+                                    <button
+                                      type="button"
+                                      onClick={exportJSON}
+                                      style={{
+                                        padding: '8px 12px',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: 'var(--body-text)',
+                                        textAlign: 'left',
+                                        cursor: 'pointer',
+                                        borderBottom: '1px solid var(--surface-border)',
+                                      }}
+                                    >
+                                      Export JSON
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={exportCSV}
+                                      style={{
+                                        padding: '8px 12px',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: 'var(--body-text)',
+                                        textAlign: 'left',
+                                        cursor: 'pointer',
+                                        borderBottom: '1px solid var(--surface-border)',
+                                      }}
+                                    >
+                                      Export CSV
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const plan = generateActionPlan({
+                                          score: score || 0,
+                                          targetRole,
+                                          suggestions,
+                                          missingSkills,
+                                          readabilityLabel,
+                                          coverLetterFeedback,
+                                          fileName: activeFileName,
+                                        })
+                                        exportActionPlanMarkdown(plan)
+                                        setShowExportDropdown(false)
+                                      }}
+                                      style={{
+                                        padding: '8px 12px',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: 'var(--body-text)',
+                                        textAlign: 'left',
+                                        cursor: 'pointer',
+                                        borderBottom: '1px solid var(--surface-border)',
+                                      }}
+                                    >
+                                      Action Plan (.md)
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const plan = generateActionPlan({
+                                          score: score || 0,
+                                          targetRole,
+                                          suggestions,
+                                          missingSkills,
+                                          readabilityLabel,
+                                          coverLetterFeedback,
+                                          fileName: activeFileName,
+                                        })
+                                        exportActionPlanPdf(plan)
+                                        setShowExportDropdown(false)
+                                      }}
+                                      style={{
+                                        padding: '8px 12px',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: 'var(--body-text)',
+                                        textAlign: 'left',
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      Action Plan (.pdf)
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+
+                  {/* Checklist Progress Bar Header */}
+                  {suggestions.length > 0 && (
+                    <div
+                      style={{
+                        marginBottom: "16px",
+                        padding: "12px",
+                        background: "rgba(255, 255, 255, 0.03)",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(255, 255, 255, 0.06)",
+                      }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          fontSize: "13px",
+                          fontWeight: "600",
+                          color: "#e2e8f0",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        <span>Interactive Checklist Progress</span>
+                        <span style={{ color: completionPercentage === 100 ? "#22c55e" : "#a5b4fc" }}>
+                          {addressedSuggestions.length} of {suggestions.length} addressed ({completionPercentage}%)
+                        </span>
+                      </div>
+                      <div
+                        style={{
+                          width: "100%",
+                          height: "6px",
+                          backgroundColor: "rgba(255, 255, 255, 0.1)",
+                          borderRadius: "3px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <div
+                          style={{
+                            width: `${completionPercentage}%`,
+                            height: "100%",
+                            backgroundColor: completionPercentage === 100 ? "#22c55e" : "#6366f1",
+                            transition: "width 0.3s ease-in-out, background-color 0.3s ease",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {suggestions.length === 0 ? (
+                    <p
+                      style={{
+                        color: "#64748b",
+                        fontStyle: "italic",
+                        fontSize: "var(--font-size-sm)",
+                        textAlign: "left",
+                        margin: "16px 0 0 0",
+                      }}
+                    >
+                      No actionable layout suggestions generated for the current profile structure matrix.
+                    </p>
+                  ) : (
+                    <div className="suggestions-grid">
+                      {suggestions.map((suggestion, index) => (
+                        <SuggestionCard
+                          key={index}
+                          text={suggestion}
+                          index={index}
+                          isAddressed={addressedSuggestions.includes(index)}
+                          onToggle={toggleSuggestion}
+                        />
+                      ))}
+                    </div>
+                  )}
+
+                      {suggestions.length === 0 ? (
+                        <p
+                          style={{
+                            color: '#64748b',
+                            fontStyle: 'italic',
+                            fontSize: 'var(--font-size-sm)',
+                            textAlign: 'left',
+                            margin: '16px 0 0 0',
+                          }}
+                        >
+                          No actionable layout suggestions generated for the current profile
+                          structure matrix.
+                        </p>
+                      ) : (
+                        <div className="suggestions-grid">
+                          {suggestions.map((suggestion, index) => (
+                            <SuggestionCard
+                              key={index}
+                              text={suggestion}
+                              index={index}
+                              backendUrl={backendUrl}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+
+                      <CuratedTips targetRole={targetRole} />
+
+                          <QuantifyNudges nudges={quantifyNudges} />
+                          <CuratedTips targetRole={targetRole} />
+
+                          <div style={{ marginTop: '24px', textAlign: 'center' }}>
+                            <button
+                              type="button"
+                              className="app-btn app-btn--secondary"
+                              onClick={resetAnalysis}
+                              style={{ minHeight: '44px', width: '100%', maxWidth: '250px' }}
+                            >
+                              <RefreshCw size={15} /> Start New Analysis
+                            </button>
+                          </div>
+                        </div>
+                      </section>
+                    </>
+
                   )}
                 </div>
 
