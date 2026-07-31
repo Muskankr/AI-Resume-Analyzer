@@ -61,3 +61,34 @@ class VersionComparisonSerializer(serializers.Serializer):
     still_missing_skills = serializers.ListField(child=serializers.CharField())
     text_diff = serializers.ListField(child=serializers.DictField())
     insights = serializers.ListField(child=serializers.CharField())
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=True, allow_blank=False)
+
+    class Meta:
+        model = User
+        fields = ("username", "email")
+
+    def validate_email(self, value):
+        user = None
+        if "request" in self.context and self.context["request"].user:
+            user = self.context["request"].user
+        qs = User.objects.filter(email__iexact=value)
+        if user:
+            qs = qs.exclude(pk=user.pk)
+        if qs.exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
+
+    def validate_username(self, value):
+        user = None
+        if "request" in self.context and self.context["request"].user:
+            user = self.context["request"].user
+        qs = User.objects.filter(username__iexact=value)
+        if user:
+            qs = qs.exclude(pk=user.pk)
+        if qs.exists():
+            raise serializers.ValidationError("A user with this username already exists.")
+        return value
+

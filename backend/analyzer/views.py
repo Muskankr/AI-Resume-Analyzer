@@ -28,6 +28,7 @@ from .serializers import (
     SignupSerializer,
     ResumeAnalysisSerializer,
     VersionComparisonSerializer,
+    UserProfileSerializer,
 )
 from .services import analyze_resume
 from .url_fetcher import download_and_validate_url
@@ -447,6 +448,7 @@ def analyze_jd_view(request):
 @permission_classes([AllowAny])
 def skills_leaderboard_view(request):
     from django.core.cache import cache
+    from django.utils.timezone import now
     
     track = request.query_params.get("track", "")
     
@@ -492,7 +494,8 @@ def skills_leaderboard_view(request):
     response_data = {
         "total_analyses": total_count,
         "matched_skills": top_matched,
-        "missing_skills": top_missing
+        "missing_skills": top_missing,
+        "last_updated": now().isoformat()
     }
     
     cache.set(cache_key, response_data, 300)
@@ -507,45 +510,17 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
 
 @api_view(["POST", "DELETE"])
+@api_view(["GET", "PUT"])
 @permission_classes([IsAuthenticated])
-@parser_classes([MultiPartParser, FormParser])
-def profile_avatar_view(request):
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
-    
-    if request.method == "POST":
-        file_obj = request.FILES.get("avatar")
-        if not file_obj:
-            return Response({"error": "No avatar file provided."}, status=status.HTTP_400_BAD_REQUEST)
-            
-        ext = os.path.splitext(file_obj.name)[1].lower()
-        if ext not in [".png", ".jpg", ".jpeg", ".webp"]:
-            return Response({"error": "Only PNG, JPG, JPEG, and WEBP images are allowed."}, status=status.HTTP_400_BAD_REQUEST)
-            
-        max_size = 2 * 1024 * 1024
-        if file_obj.size > max_size:
-            return Response({"error": "Image size must be under 2MB."}, status=status.HTTP_400_BAD_REQUEST)
-            
-        if profile.avatar:
-            try:
-                if os.path.exists(profile.avatar.path):
-                    os.remove(profile.avatar.path)
-            except Exception:
-                pass
-                
-        profile.avatar = file_obj
-        profile.save()
-        
-        avatar_url = request.build_absolute_uri(profile.avatar.url)
-        return Response({"avatar_url": avatar_url}, status=status.HTTP_200_OK)
-        
-    elif request.method == "DELETE":
-        if profile.avatar:
-            try:
-                if os.path.exists(profile.avatar.path):
-                    os.remove(profile.avatar.path)
-            except Exception:
-                pass
-            profile.avatar = None
-            profile.save()
-            
-        return Response({"message": "Avatar removed successfully."}, status=status.HTTP_200_OK)
+def user_profile_view(request):
+    user = request.user
+    if request.method == "GET":
+        serializer = UserProfileSerializer(user, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    elif request.method == "PUT":
+        serializer = UserProfileSerializer(user, data=request.data, context={"request": request}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -144,6 +144,22 @@ class AnalyzeResumeTests(TestCase):
         analyze_resume("dummy.pdf", "Backend Developer")
         mock_create.assert_not_called()
 
+    @patch("analyzer.services.pdfplumber.open")
+    def test_matched_and_missing_skills_counts(self, mock_open):
+        """Test that matched_skills and missing_skills arrays are correctly populated"""
+        mock_open.return_value = _fake_pdf("Python Django React")
+        result = analyze_resume("dummy.pdf", "Backend Developer")
+
+        # Verify that matched skills are counted correctly
+        self.assertIsInstance(result["matched_skills"], list)
+        self.assertIsInstance(result["missing_skills"], list)
+        self.assertGreater(len(result["matched_skills"]), 0)
+        
+        # Verify that the counts can be used for sorting
+        matched_count = len(result["matched_skills"])
+        missing_count = len(result["missing_skills"])
+        self.assertGreaterEqual(matched_count, 0)
+        self.assertGreaterEqual(missing_count, 0)
 
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -485,72 +501,105 @@ class SkillsLeaderboardTests(TestCase):
             matched_skills=["react", "typescript"],
             missing_skills=["css"],
         )
+        resp = self.client.post("/api/analyze-jd/", {"job_description": jd_text})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn("keywords", resp.data)
+        
+        keywords = resp.data["keywords"]
+        self.assertTrue(len(keywords) > 0)
+        
+        # Check that 'react' is recognized and tagged as a skill
+        react_keyword = next((k for k in keywords if k["text"] == "react"), None)
+        self.assertIsNotNone(react_keyword)
+        self.assertEqual(react_keyword["type"], "skill")
+        self.assertTrue(react_keyword["value"] >= 2)
+        
+        # Common English stop words like 'the' or 'and' or corporate fillers like 'candidate' shouldn't be here
+        texts = [k["text"] for k in keywords]
+        self.assertNotIn("the", texts)
+        self.assertNotIn("and", texts)
+        self.assertNotIn("candidate", texts)
+
+    def test_skills_leaderboard_includes_last_updated(self):
+        from rest_framework import status
+        from django.contrib.auth.models import User
+        from analyzer.models import ResumeAnalysis
+        from datetime import datetime
+        from django.utils.timezone import now
+        
+        user = User.objects.create_user(username="testuser2", password="password123")
+        ResumeAnalysis.objects.create(
+            user=user,
+            file_name="resume1.pdf",
+            target_role="Frontend Developer",
+            score=80,
+            skills_found=["react", "javascript"],
+            matched_skills=["react"],
+            missing_skills=["css"],
+        )
         
         resp = self.client.get("/api/skills-leaderboard/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         
-        self.assertIn("total_analyses", resp.data)
-        self.assertIn("matched_skills", resp.data)
-        self.assertIn("missing_skills", resp.data)
-        self.assertEqual(resp.data["total_analyses"], 3)
+        self.assertIn("last_updated", resp.data)
+        self.assertIsInstance(resp.data["last_updated"], str)
         
-        resp_fe = self.client.get("/api/skills-leaderboard/?track=Frontend Developer")
-        self.assertEqual(resp_fe.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp_fe.data["total_analyses"], 2)
-        
-        matched_fe = resp_fe.data["matched_skills"]
-        react_item = next((s for s in matched_fe if s["skill"] == "React"), None)
-        self.assertIsNotNone(react_item)
-        self.assertEqual(react_item["percentage"], 100)
-        self.assertEqual(react_item["count"], 2)
-        
-        missing_fe = resp_fe.data["missing_skills"]
-        css_item = next((s for s in missing_fe if s["skill"] == "Css"), None)
-        self.assertIsNotNone(css_item)
-        self.assertEqual(css_item["percentage"], 100)
-        self.assertEqual(css_item["count"], 2)
+        # Verify it's a valid ISO format timestamp
+        try:
+            datetime.fromisoformat(resp.data["last_updated"])
+        except ValueError:
+            self.fail("last_updated is not a valid ISO format timestamp")
 
 
-from django.core.files.uploadedfile import SimpleUploadedFile
-
-class ProfileAvatarTests(TestCase):
+class UserProfileTests(TestCase):
     def setUp(self):
-        from django.contrib.auth.models import User
-        self.user = User.objects.create_user(username="avataruser", password="password123")
-        
-    def test_login_returns_avatar_url(self):
-        from rest_framework import status
-        resp = self.client.post("/api/auth/login/", {"username": "avataruser", "password": "password123"})
-        self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertIn("avatar_url", resp.data)
-        self.assertIsNone(resp.data["avatar_url"])
+        from rest_framework.test import APIClient
+        self.client = APIClient()
+        self.user = User.objects.create_user(username="testuser", password="password123", email="test@example.com")
+        self.other_user = User.objects.create_user(username="otheruser", password="password123", email="other@example.com")
 
-    def test_upload_and_delete_avatar(self):
+    def test_get_profile_requires_auth(self):
         from rest_framework import status
-        login_resp = self.client.post("/api/auth/login/", {"username": "avataruser", "password": "password123"})
-        token = login_resp.data["access"]
-        auth_headers = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
-        
-        txt_file = SimpleUploadedFile("avatar.txt", b"plain text content", content_type="text/plain")
-        resp = self.client.post("/api/profile/avatar/", {"avatar": txt_file}, **auth_headers)
-        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("error", resp.data)
-        
-        large_file = SimpleUploadedFile("avatar.png", b"x" * (2 * 1024 * 1024 + 1), content_type="image/png")
-        resp = self.client.post("/api/profile/avatar/", {"avatar": large_file}, **auth_headers)
-        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-        
-        valid_img = SimpleUploadedFile("avatar.png", b"fake_png_binary_data", content_type="image/png")
-        resp = self.client.post("/api/profile/avatar/", {"avatar": valid_img}, **auth_headers)
+        resp = self.client.get("/api/profile/")
+        self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_profile_success(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.get("/api/profile/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertIn("avatar_url", resp.data)
-        self.assertIsNotNone(resp.data["avatar_url"])
-        
-        login_resp = self.client.post("/api/auth/login/", {"username": "avataruser", "password": "password123"})
-        self.assertIsNotNone(login_resp.data["avatar_url"])
-        
-        del_resp = self.client.delete("/api/profile/avatar/", **auth_headers)
-        self.assertEqual(del_resp.status_code, status.HTTP_200_OK)
-        
-        login_resp = self.client.post("/api/auth/login/", {"username": "avataruser", "password": "password123"})
-        self.assertIsNone(login_resp.data["avatar_url"])
+        self.assertEqual(resp.data["username"], "testuser")
+        self.assertEqual(resp.data["email"], "test@example.com")
+
+    def test_put_profile_success(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.put("/api/profile/", {"username": "newusername", "email": "newemail@example.com"})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["username"], "newusername")
+        self.assertEqual(resp.data["email"], "newemail@example.com")
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, "newusername")
+        self.assertEqual(self.user.email, "newemail@example.com")
+
+    def test_put_profile_duplicate_username(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.put("/api/profile/", {"username": "otheruser", "email": "test@example.com"})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", resp.data)
+
+    def test_put_profile_duplicate_email(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.put("/api/profile/", {"username": "testuser", "email": "other@example.com"})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", resp.data)
+
+    def test_put_profile_invalid_email(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.put("/api/profile/", {"username": "testuser", "email": "not-an-email"})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", resp.data)

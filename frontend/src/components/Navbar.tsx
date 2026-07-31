@@ -101,7 +101,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             Analyze Resume
           </Link>
           <Link to="/leaderboard" onClick={() => setMobileOpen(false)}>
-            📊 Leaderboard
+            🏆 Leaderboard
           </Link>
           <a
             href="#ats-score"
@@ -143,50 +143,58 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {user ? (
-            <div className="navbar-user">
-              <span
-                className="auth-username"
-                onClick={() => {
-                  onProfileClick?.()
-                  closeMenu()
-                }}
+            <div className="navbar-user" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={() => onProfileClick?.()}
                 style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
                   cursor: 'pointer',
-                  fontWeight: '600',
-                  color: '#fff',
+                  display: 'flex',
+                  alignItems: 'center',
                 }}
+                title="Edit profile avatar"
               >
-                <div
-                  style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '50%',
-                    background: '#6366f1',
-                    display: 'flex',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    overflow: 'hidden',
-                    fontSize: '0.82rem',
-                    fontWeight: '700',
-                    color: '#fff',
-                    border: '1.5px solid rgba(255,255,255,0.1)'
-                  }}
-                >
-                  {user.avatarUrl ? (
-                    <img
-                      src={user.avatarUrl}
-                      alt={user.username}
-                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                    />
-                  ) : (
-                    user.username.slice(0, 2).toUpperCase()
-                  )}
-                </div>
-                <span>{user.username}</span>
-              </span>
+                {user.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt="Profile Avatar"
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                    }}
+                  />
+                ) : (
+                  <div
+                    style={{
+                      width: '28px',
+                      height: '28px',
+                      borderRadius: '50%',
+                      background: 'var(--color-primary, #3b82f6)',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '0.85rem',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    {user.username ? user.username.slice(0, 2).toUpperCase() : 'U'}
+                  </div>
+                )}
+              </button>
+              <Link
+                to="/profile"
+                className="auth-username"
+                onClick={closeMenu}
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                {user.username}
+              </Link>
               <button
                 className="auth-bar-btn"
                 onClick={() => {

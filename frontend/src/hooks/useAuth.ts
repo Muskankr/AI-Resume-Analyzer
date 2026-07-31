@@ -57,12 +57,21 @@ export function useAuth() {
 
   const logout = useCallback(() => persist(null), [])
 
-  const updateUserAvatar = useCallback((newAvatarUrl: string | null) => {
+  const updateProfileSession = useCallback((newUsername: string) => {
     if (user) {
-      const remember = !!localStorage.getItem('auth_user')
-      persist({ ...user, avatarUrl: newAvatarUrl || undefined }, remember)
+      const isLocalStorage = localStorage.getItem('auth_user') !== null
+      const updatedUser = { ...user, username: newUsername }
+      persist(updatedUser, isLocalStorage)
     }
   }, [user])
 
-  return { user, signup, login, logout, updateUserAvatar }
+  const updateUserAvatar = useCallback((avatarUrl: string | null) => {
+    if (user) {
+      const isLocalStorage = localStorage.getItem('auth_user') !== null
+      const updatedUser = { ...user, avatarUrl: avatarUrl || undefined }
+      persist(updatedUser, isLocalStorage)
+    }
+  }, [user])
+
+  return { user, signup, login, logout, updateProfileSession, updateUserAvatar }
 }
