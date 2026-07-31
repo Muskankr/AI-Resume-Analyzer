@@ -274,11 +274,10 @@ function App() {
         entries={entries}
         activeFileName={activeFileName}
         onSelect={selectHistoryEntry}
-        onDelete={handleDeleteEntry}
-        onClear={handleClearAll}
+        onDelete={deleteEntry}
+        onClear={clearHistory}
         isOpen={historyOpen}
         onToggle={() => setHistoryOpen((v) => !v)}
-        onCompare={() => setCompareOpen(true)}
       />
 
       {compareOpen && (

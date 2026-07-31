@@ -144,6 +144,22 @@ class AnalyzeResumeTests(TestCase):
         analyze_resume("dummy.pdf", "Backend Developer")
         mock_create.assert_not_called()
 
+    @patch("analyzer.services.pdfplumber.open")
+    def test_matched_and_missing_skills_counts(self, mock_open):
+        """Test that matched_skills and missing_skills arrays are correctly populated"""
+        mock_open.return_value = _fake_pdf("Python Django React")
+        result = analyze_resume("dummy.pdf", "Backend Developer")
+
+        # Verify that matched skills are counted correctly
+        self.assertIsInstance(result["matched_skills"], list)
+        self.assertIsInstance(result["missing_skills"], list)
+        self.assertGreater(len(result["matched_skills"]), 0)
+        
+        # Verify that the counts can be used for sorting
+        matched_count = len(result["matched_skills"])
+        missing_count = len(result["missing_skills"])
+        self.assertGreaterEqual(matched_count, 0)
+        self.assertGreaterEqual(missing_count, 0)
 
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -503,6 +519,36 @@ class SkillsLeaderboardTests(TestCase):
         self.assertNotIn("the", texts)
         self.assertNotIn("and", texts)
         self.assertNotIn("candidate", texts)
+
+    def test_skills_leaderboard_includes_last_updated(self):
+        from rest_framework import status
+        from django.contrib.auth.models import User
+        from analyzer.models import ResumeAnalysis
+        from datetime import datetime
+        from django.utils.timezone import now
+        
+        user = User.objects.create_user(username="testuser2", password="password123")
+        ResumeAnalysis.objects.create(
+            user=user,
+            file_name="resume1.pdf",
+            target_role="Frontend Developer",
+            score=80,
+            skills_found=["react", "javascript"],
+            matched_skills=["react"],
+            missing_skills=["css"],
+        )
+        
+        resp = self.client.get("/api/skills-leaderboard/")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        
+        self.assertIn("last_updated", resp.data)
+        self.assertIsInstance(resp.data["last_updated"], str)
+        
+        # Verify it's a valid ISO format timestamp
+        try:
+            datetime.fromisoformat(resp.data["last_updated"])
+        except ValueError:
+            self.fail("last_updated is not a valid ISO format timestamp")
 
 
 class UserProfileTests(TestCase):

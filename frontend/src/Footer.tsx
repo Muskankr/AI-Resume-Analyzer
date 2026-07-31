@@ -78,7 +78,7 @@ export const Footer: React.FC = () => {
           >
             <li>
               <a
-                href="#"
+                href="#main-content"
                 style={{
                   color: '#94a3b8',
                   fontSize: 'var(--font-size-sm)',

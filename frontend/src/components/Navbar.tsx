@@ -101,7 +101,7 @@ export const Navbar: React.FC<NavbarProps> = ({
             Analyze Resume
           </Link>
           <Link to="/leaderboard" onClick={() => setMobileOpen(false)}>
-            📊 Leaderboard
+            🏆 Leaderboard
           </Link>
           <a
             href="#ats-score"
