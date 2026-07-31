@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import "./index.css";
-import { AtsScore } from "./AtsScore";
 import { useAnalysisHistory, type AnalysisEntry } from "./hooks/useAnalysisHistory";
-import { HistorySidebar } from "./HistorySidebar";
 import { useAuth } from "./hooks/useAuth";
-import { AuthModal } from "./AuthModal";
+import { AtsScore } from "./components/AtsScore";
+import { HistorySidebar } from "./components/HistorySidebar";
+import { AuthModal } from "./components/AuthModal";
 import { Footer } from "./Footer";
 import AnalysisSkeleton from "./components/AnalysisSkeleton/AnalysisSkeleton";
 import { InfoTooltip } from "./components/InfoTooltip";
