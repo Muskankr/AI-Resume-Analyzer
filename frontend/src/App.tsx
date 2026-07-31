@@ -316,7 +316,9 @@ function App() {
   const [analysisStageLabel, setAnalysisStageLabel] = useState<string>('')
   const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file')
   const [trackComparisons, setTrackComparisons] = useState<TrackComparisons | null>(null)
-  const [activeTab, setActiveTab] = useState<'detailed' | 'matrix' | 'cover_letter' | 'interview_questions'>('detailed')
+  const [activeTab, setActiveTab] = useState<
+    'detailed' | 'matrix' | 'cover_letter' | 'interview_questions'
+  >('detailed')
   const [resumeUrl, setResumeUrl] = useState<string>('')
   const [urlError, setUrlError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
@@ -1252,11 +1254,15 @@ function App() {
                               ) : (
                                 <>
                                   <span className="upload-text-primary">
-                                    Drag &amp; Drop Resume or{' '}
-                                    <span className="upload-text-browse">Click to Browse</span>
+                                    Upload Your Resume
                                   </span>
+
                                   <span className="upload-text-secondary">
-                                    Supports PDF, DOCX, TXT up to 10MB
+                                    Drag & drop your resume here or click to browse
+                                  </span>
+
+                                  <span className="upload-text-helper">
+                                    Supports PDF, DOCX and TXT files (Max 10 MB)
                                   </span>
                                 </>
                               )}
@@ -1381,12 +1387,16 @@ function App() {
                               if (e.target.files && e.target.files[0]) {
                                 const clFile = e.target.files[0]
                                 const validTypes = ['.pdf', '.docx', '.txt']
-                                const isValid = validTypes.some(ext => clFile.name.toLowerCase().endsWith(ext))
+                                const isValid = validTypes.some((ext) =>
+                                  clFile.name.toLowerCase().endsWith(ext)
+                                )
                                 if (isValid) {
                                   setCoverLetterFile(clFile)
                                   setCoverLetterError(null)
                                 } else {
-                                  setCoverLetterError('Only PDF, DOCX, and TXT files are supported.')
+                                  setCoverLetterError(
+                                    'Only PDF, DOCX, and TXT files are supported.'
+                                  )
                                 }
                               }
                             }}
@@ -1402,12 +1412,30 @@ function App() {
                               margin: 0,
                             }}
                           >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
-                              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                              <polyline points="22,6 12,13 2,6"/>
+                            <svg
+                              width="20"
+                              height="20"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              style={{ opacity: 0.7 }}
+                            >
+                              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                              <polyline points="22,6 12,13 2,6" />
                             </svg>
-                            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', userSelect: 'none' }}>
-                              {coverLetterFile ? coverLetterFile.name : 'Upload optional Cover Letter (PDF, DOCX, TXT)'}
+                            <span
+                              style={{
+                                fontSize: '0.85rem',
+                                color: 'rgba(255,255,255,0.7)',
+                                userSelect: 'none',
+                              }}
+                            >
+                              {coverLetterFile
+                                ? coverLetterFile.name
+                                : 'Upload optional Cover Letter (PDF, DOCX, TXT)'}
                             </span>
                           </label>
                           {coverLetterFile && (
@@ -1427,7 +1455,16 @@ function App() {
                                 display: 'inline-flex',
                               }}
                             >
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <svg
+                                width="16"
+                                height="16"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              >
                                 <line x1="18" y1="6" x2="6" y2="18" />
                                 <line x1="6" y1="6" x2="18" y2="18" />
                               </svg>
@@ -1435,7 +1472,14 @@ function App() {
                           )}
                         </div>
                         {coverLetterError && (
-                          <div style={{ color: '#ef4444', fontSize: '13px', marginTop: '6px', fontWeight: '500' }}>
+                          <div
+                            style={{
+                              color: '#ef4444',
+                              fontSize: '13px',
+                              marginTop: '6px',
+                              fontWeight: '500',
+                            }}
+                          >
                             ⚠️ {coverLetterError}
                           </div>
                         )}
@@ -1661,7 +1705,10 @@ function App() {
                           fontSize: '0.9rem',
                           fontWeight: '600',
                           cursor: 'pointer',
-                          background: activeTab === 'cover_letter' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                          background:
+                            activeTab === 'cover_letter'
+                              ? 'var(--color-primary, #6366f1)'
+                              : 'rgba(255, 255, 255, 0.05)',
                           color: '#fff',
                           border: '1px solid rgba(255, 255, 255, 0.15)',
                           transition: 'all 0.2s ease',
@@ -1680,7 +1727,10 @@ function App() {
                           fontSize: '0.9rem',
                           fontWeight: '600',
                           cursor: 'pointer',
-                          background: activeTab === 'interview_questions' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                          background:
+                            activeTab === 'interview_questions'
+                              ? 'var(--color-primary, #6366f1)'
+                              : 'rgba(255, 255, 255, 0.05)',
                           color: '#fff',
                           border: '1px solid rgba(255, 255, 255, 0.15)',
                           transition: 'all 0.2s ease',
@@ -1707,7 +1757,9 @@ function App() {
                     />
                   ) : activeTab === 'cover_letter' && coverLetterFeedback ? (
                     <CoverLetterFeedbackPanel feedback={coverLetterFeedback} />
-                  ) : activeTab === 'interview_questions' && interviewQuestions && interviewQuestions.length > 0 ? (
+                  ) : activeTab === 'interview_questions' &&
+                    interviewQuestions &&
+                    interviewQuestions.length > 0 ? (
                     <InterviewQuestionsPanel questions={interviewQuestions} />
                   ) : (
                     <>
