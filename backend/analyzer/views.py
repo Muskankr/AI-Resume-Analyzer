@@ -28,6 +28,7 @@ from .serializers import (
     SignupSerializer,
     ResumeAnalysisSerializer,
     VersionComparisonSerializer,
+    UserProfileSerializer,
 )
 from .services import analyze_resume
 from .url_fetcher import download_and_validate_url
@@ -378,9 +379,148 @@ def admin_stats_view(request):
             missing_skills_counter.update(skills_list)
             
     top_missing_skills = missing_skills_counter.most_common(10)
-    
     return Response({
         "total_analyses": total_analyses,
         "popular_roles": [{"role": r[0], "count": r[1]} for r in popular_roles if r[0]],
         "top_missing_skills": [{"skill": s[0], "count": s[1]} for s in top_missing_skills if s[0]]
     })
+
+
+import re
+from collections import Counter
+
+STOP_WORDS = {
+    "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at",
+    "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can't", "cannot", "could",
+    "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for",
+    "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's",
+    "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm",
+    "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't",
+    "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours",
+    "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't",
+    "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there",
+    "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too",
+    "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't",
+    "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's",
+    "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself",
+    "yourselves", "job", "description", "experience", "role", "team", "work", "responsibilities", "skills", "required",
+    "looking", "ability", "using", "candidate", "development", "knowledge", "working", "strong", "position", "years"
+}
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def analyze_jd_view(request):
+    job_description = request.data.get("job_description", "")
+    if not job_description or not job_description.strip():
+        return Response({"error": "Job description cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
+        
+    words = re.findall(r"\b[a-zA-Z0-9\-\.\#\+\-]+\b", job_description.lower())
+    filtered_words = [w for w in words if w not in STOP_WORDS and len(w) >= 2]
+    
+    counter = Counter(filtered_words)
+    top_items = counter.most_common(30)
+    
+    from analyzer.services import ROLE_SKILLS
+    all_skills = set()
+    for skills_list in ROLE_SKILLS.values():
+        for s in skills_list:
+            all_skills.add(s.lower())
+            
+    results = []
+    for word, count in top_items:
+        is_skill = (word in all_skills) or (word.title() in all_skills) or (word.upper() in all_skills)
+        if not is_skill:
+            for s in all_skills:
+                if s == word or (len(word) > 3 and word in s):
+                    is_skill = True
+                    break
+                    
+        results.append({
+            "text": word,
+            "value": count,
+            "type": "skill" if is_skill else "general"
+        })
+        
+    return Response({"keywords": results}, status=status.HTTP_200_OK)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def skills_leaderboard_view(request):
+    from django.core.cache import cache
+    from django.utils.timezone import now
+    
+    track = request.query_params.get("track", "")
+    
+    cache_key = f"skills_leaderboard_{track}"
+    cached_data = cache.get(cache_key)
+    if cached_data is not None:
+        return Response(cached_data, status=status.HTTP_200_OK)
+        
+    analyses = ResumeAnalysis.objects.all()
+    if track:
+        analyses = analyses.filter(target_role=track)
+        
+    data_list = list(analyses.values_list("matched_skills", "missing_skills"))
+    total_count = len(data_list)
+    
+    matched_counter = Counter()
+    missing_counter = Counter()
+    
+    for matched, missing in data_list:
+        if isinstance(matched, list):
+            matched_counter.update(matched)
+        if isinstance(missing, list):
+            missing_counter.update(missing)
+            
+    top_matched = [
+        {
+            "skill": skill.title(),
+            "count": count,
+            "percentage": int(count / total_count * 100) if total_count > 0 else 0
+        }
+        for skill, count in matched_counter.most_common(10)
+    ]
+    
+    top_missing = [
+        {
+            "skill": skill.title(),
+            "count": count,
+            "percentage": int(count / total_count * 100) if total_count > 0 else 0
+        }
+        for skill, count in missing_counter.most_common(10)
+    ]
+    
+    response_data = {
+        "total_analyses": total_count,
+        "matched_skills": top_matched,
+        "missing_skills": top_missing,
+        "last_updated": now().isoformat()
+    }
+    
+    cache.set(cache_key, response_data, 300)
+    return Response(response_data, status=status.HTTP_200_OK)
+
+
+from rest_framework_simplejwt.views import TokenObtainPairView
+from .serializers import CustomTokenObtainPairSerializer
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
+
+
+@api_view(["POST", "DELETE"])
+@api_view(["GET", "PUT"])
+@permission_classes([IsAuthenticated])
+def user_profile_view(request):
+    user = request.user
+    if request.method == "GET":
+        serializer = UserProfileSerializer(user, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    elif request.method == "PUT":
+        serializer = UserProfileSerializer(user, data=request.data, context={"request": request}, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

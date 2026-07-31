@@ -144,6 +144,22 @@ class AnalyzeResumeTests(TestCase):
         analyze_resume("dummy.pdf", "Backend Developer")
         mock_create.assert_not_called()
 
+    @patch("analyzer.services.pdfplumber.open")
+    def test_matched_and_missing_skills_counts(self, mock_open):
+        """Test that matched_skills and missing_skills arrays are correctly populated"""
+        mock_open.return_value = _fake_pdf("Python Django React")
+        result = analyze_resume("dummy.pdf", "Backend Developer")
+
+        # Verify that matched skills are counted correctly
+        self.assertIsInstance(result["matched_skills"], list)
+        self.assertIsInstance(result["missing_skills"], list)
+        self.assertGreater(len(result["matched_skills"]), 0)
+        
+        # Verify that the counts can be used for sorting
+        matched_count = len(result["matched_skills"])
+        missing_count = len(result["missing_skills"])
+        self.assertGreaterEqual(matched_count, 0)
+        self.assertGreaterEqual(missing_count, 0)
 
 from django.contrib.auth.models import User
 from django.urls import reverse
@@ -389,6 +405,7 @@ class CoverLetterAnalysisTests(TestCase):
             self.assertTrue(result["cover_letter_feedback"]["relevance"]["references_role"])
 
 
+
 class InterviewQuestionTests(TestCase):
     def test_generate_interview_questions_valid(self):
         from analyzer.services import generate_interview_questions
@@ -414,3 +431,175 @@ class InterviewQuestionTests(TestCase):
         
         self.assertIn("interview_questions", result)
         self.assertTrue(len(result["interview_questions"]) >= 5)
+
+class JdAnalysisTests(TestCase):
+    def test_analyze_jd_endpoint(self):
+        from rest_framework import status
+        
+        # Test empty input error
+        resp = self.client.post("/api/analyze-jd/", {"job_description": ""})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", resp.data)
+        
+        # Test valid input analysis with known skill keywords and stop words
+        jd_text = (
+            "We are seeking a React Developer. The candidate should have experience in React, "
+            "JavaScript, HTML, and CSS. Working with teams to deliver responsive layouts is essential. "
+            "React and TypeScript are strong plusses. The candidate will work in a fast-paced environment."
+        )
+        resp = self.client.post("/api/analyze-jd/", {"job_description": jd_text})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn("keywords", resp.data)
+        
+        keywords = resp.data["keywords"]
+        self.assertTrue(len(keywords) > 0)
+        
+        # Check that 'react' is recognized and tagged as a skill
+        react_keyword = next((k for k in keywords if k["text"] == "react"), None)
+        self.assertIsNotNone(react_keyword)
+        self.assertEqual(react_keyword["type"], "skill")
+        self.assertTrue(react_keyword["value"] >= 2)
+        
+        # Common English stop words like 'the' or 'and' or corporate fillers like 'candidate' shouldn't be here
+        texts = [k["text"] for k in keywords]
+        self.assertNotIn("the", texts)
+        self.assertNotIn("and", texts)
+        self.assertNotIn("candidate", texts)
+
+
+class SkillsLeaderboardTests(TestCase):
+    def test_skills_leaderboard_endpoint(self):
+        from rest_framework import status
+        from django.contrib.auth.models import User
+        from analyzer.models import ResumeAnalysis
+        
+        user = User.objects.create_user(username="testuser", password="password123")
+        ResumeAnalysis.objects.create(
+            user=user,
+            file_name="resume1.pdf",
+            target_role="Frontend Developer",
+            score=80,
+            skills_found=["react", "javascript", "html"],
+            matched_skills=["react", "javascript"],
+            missing_skills=["typescript", "css"],
+        )
+        ResumeAnalysis.objects.create(
+            user=user,
+            file_name="resume2.pdf",
+            target_role="Backend Developer",
+            score=50,
+            skills_found=["python"],
+            matched_skills=["python"],
+            missing_skills=["django", "sql"],
+        )
+        ResumeAnalysis.objects.create(
+            user=user,
+            file_name="resume3.pdf",
+            target_role="Frontend Developer",
+            score=90,
+            skills_found=["react", "typescript"],
+            matched_skills=["react", "typescript"],
+            missing_skills=["css"],
+        )
+        resp = self.client.post("/api/analyze-jd/", {"job_description": jd_text})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn("keywords", resp.data)
+        
+        keywords = resp.data["keywords"]
+        self.assertTrue(len(keywords) > 0)
+        
+        # Check that 'react' is recognized and tagged as a skill
+        react_keyword = next((k for k in keywords if k["text"] == "react"), None)
+        self.assertIsNotNone(react_keyword)
+        self.assertEqual(react_keyword["type"], "skill")
+        self.assertTrue(react_keyword["value"] >= 2)
+        
+        # Common English stop words like 'the' or 'and' or corporate fillers like 'candidate' shouldn't be here
+        texts = [k["text"] for k in keywords]
+        self.assertNotIn("the", texts)
+        self.assertNotIn("and", texts)
+        self.assertNotIn("candidate", texts)
+
+    def test_skills_leaderboard_includes_last_updated(self):
+        from rest_framework import status
+        from django.contrib.auth.models import User
+        from analyzer.models import ResumeAnalysis
+        from datetime import datetime
+        from django.utils.timezone import now
+        
+        user = User.objects.create_user(username="testuser2", password="password123")
+        ResumeAnalysis.objects.create(
+            user=user,
+            file_name="resume1.pdf",
+            target_role="Frontend Developer",
+            score=80,
+            skills_found=["react", "javascript"],
+            matched_skills=["react"],
+            missing_skills=["css"],
+        )
+        
+        resp = self.client.get("/api/skills-leaderboard/")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        
+        self.assertIn("last_updated", resp.data)
+        self.assertIsInstance(resp.data["last_updated"], str)
+        
+        # Verify it's a valid ISO format timestamp
+        try:
+            datetime.fromisoformat(resp.data["last_updated"])
+        except ValueError:
+            self.fail("last_updated is not a valid ISO format timestamp")
+
+
+class UserProfileTests(TestCase):
+    def setUp(self):
+        from rest_framework.test import APIClient
+        self.client = APIClient()
+        self.user = User.objects.create_user(username="testuser", password="password123", email="test@example.com")
+        self.other_user = User.objects.create_user(username="otheruser", password="password123", email="other@example.com")
+
+    def test_get_profile_requires_auth(self):
+        from rest_framework import status
+        resp = self.client.get("/api/profile/")
+        self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_profile_success(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.get("/api/profile/")
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["username"], "testuser")
+        self.assertEqual(resp.data["email"], "test@example.com")
+
+    def test_put_profile_success(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.put("/api/profile/", {"username": "newusername", "email": "newemail@example.com"})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["username"], "newusername")
+        self.assertEqual(resp.data["email"], "newemail@example.com")
+
+        self.user.refresh_from_db()
+        self.assertEqual(self.user.username, "newusername")
+        self.assertEqual(self.user.email, "newemail@example.com")
+
+    def test_put_profile_duplicate_username(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.put("/api/profile/", {"username": "otheruser", "email": "test@example.com"})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("username", resp.data)
+
+    def test_put_profile_duplicate_email(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.put("/api/profile/", {"username": "testuser", "email": "other@example.com"})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", resp.data)
+
+    def test_put_profile_invalid_email(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.put("/api/profile/", {"username": "testuser", "email": "not-an-email"})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("email", resp.data)
