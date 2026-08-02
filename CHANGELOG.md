@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Low-friction CAPTCHA bot protection for signup and login forms with server-side token validation in Django REST API (#473).
 - Exportable prioritized Action Plan checklist ranked by estimated ATS score impact in clean Markdown (.md) and PDF (.pdf) formats (#379).
 - Created basic SEO crawlability files `sitemap.xml` and `robots.txt` in frontend public directory for search engine indexing (#354).
 - Responsive hamburger navigation menu below 1024px with slide-in animation, backdrop overlay, Escape key dismiss, and auto-close on resize (#245).

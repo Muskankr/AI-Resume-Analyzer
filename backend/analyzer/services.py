@@ -158,9 +158,11 @@ def analyze_cover_letter(text, target_role="", job_description=""):
             "references_role": references_role,
             "references_company": references_company,
             "feedback": relevance_feedback,
-            "suggestions": relevance_suggestions
         }
-    }SKILL_QUESTIONS = {
+    }
+
+
+SKILL_QUESTIONS = {
     "html": [
         "What is semantic HTML, and how does it improve SEO and accessibility for assistive technologies?",
         "Explain the purpose of HTML5 data-* attributes and how they are accessed in JavaScript and CSS."

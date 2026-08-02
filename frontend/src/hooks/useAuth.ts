@@ -41,15 +41,15 @@ export function useAuth() {
     }
   }
 
-  const signup = useCallback(async (username: string, password: string) => {
-    await axios.post(`${BACKEND}/api/auth/signup/`, { username, password })
-    const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password })
+  const signup = useCallback(async (username: string, password: string, captchaToken?: string) => {
+    await axios.post(`${BACKEND}/api/auth/signup/`, { username, password, captcha_token: captchaToken })
+    const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password, captcha_token: captchaToken })
     persist({ username, token: res.data.access, avatarUrl: res.data.avatar_url }, true)
   }, [])
 
   const login = useCallback(
-    async (username: string, password: string, rememberMe: boolean = true) => {
-      const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password })
+    async (username: string, password: string, rememberMe: boolean = true, captchaToken?: string) => {
+      const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password, captcha_token: captchaToken })
       persist({ username, token: res.data.access, avatarUrl: res.data.avatar_url }, rememberMe)
     },
     []

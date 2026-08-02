@@ -25,9 +25,17 @@ from .models import UserProfile
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
+        request = self.context.get("request")
+        if request and hasattr(request, "data"):
+            captcha_token = request.data.get("captcha_token") or request.data.get("captcha")
+            from .views import verify_captcha_token
+            if not verify_captcha_token(captcha_token):
+                raise serializers.ValidationError(
+                    {"captcha_token": ["CAPTCHA verification failed. Please complete the security challenge."]}
+                )
+
         data = super().validate(attrs)
         profile, _ = UserProfile.objects.get_or_create(user=self.user)
-        request = self.context.get("request")
         if profile.avatar:
             if request:
                 data["avatar_url"] = request.build_absolute_uri(profile.avatar.url)

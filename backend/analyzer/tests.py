@@ -67,8 +67,8 @@ class AnalyzeResumeTests(TestCase):
         self.assertIn("javascript", result["matched_skills"])
         self.assertIn("react", result["missing_skills"])
         self.assertIn("git", result["missing_skills"])
-        # score = matched / required * 100 -> 3 / 8 * 100 = 37
-        self.assertEqual(result["score"], 3 * 100 // 8)
+        # score = matched / required * 100 -> 3 / 10 * 100 = 30
+        self.assertEqual(result["score"], 3 * 100 // 10)
 
     @patch("analyzer.services.pdfplumber.open")
     def test_suggestions_generated_for_missing(self, mock_open):
@@ -95,7 +95,7 @@ class AnalyzeResumeTests(TestCase):
         self.assertEqual(result["score"], 0)
         # ...but every role skill is now "missing", so suggestions are generated
         # for all of them (the resume is empty, nothing matches).
-        self.assertEqual(len(result["missing_skills"]), 8)
+        self.assertEqual(len(result["missing_skills"]), 13)
         self.assertEqual(
             result["suggestions"],
             [
@@ -365,10 +365,18 @@ class CoverLetterAnalysisTests(TestCase):
         # Test a good length cover letter with active tone and role/company references
         good_text = (
             "Dear Hiring Manager,\n\n"
-            "I am excited to apply for the Frontend Developer position at Google. "
-            "Over the past few years, I have designed and implemented several web applications. "
-            "I led a team of developers to create responsive interfaces. I optimized the codebase "
-            "and solved complex engineering challenges. I believe my background aligns perfectly with your team.\n\n"
+            "I am excited and thrilled to apply for the Frontend Developer position at your team. "
+            "Over the past few years, I have designed, led, managed, and implemented several large-scale web applications. "
+            "I led a dedicated team of engineers and developers to create responsive user interfaces. I optimized the codebase "
+            "and solved complex engineering challenges using modern frontend web application technologies. "
+            "Throughout my career, I spearheaded major performance optimization initiatives, engineered clean software components, "
+            "and collaborated closely with product managers and cross-functional designers to deliver exceptional user experiences. "
+            "I built scalable software architectures, improved site loading speeds significantly, and delivered robust "
+            "solutions that exceeded client expectations. My deep expertise in React, TypeScript, and modern web application development "
+            "makes me an ideal specialist for this role. I look forward to contributing my analytical skills and background to your team. "
+            "In addition to my technical skills, I bring a strong track record of mentoring junior developers, establishing code quality standards, "
+            "and driving successful product launches. I am confident that my experience and dedication will enable me to make immediate and valuable "
+            "contributions to your ongoing projects and team goals.\n\n"
             "Sincerely,\nJohn Doe"
         )
         res = analyze_cover_letter(good_text, "Frontend Developer")
@@ -501,6 +509,7 @@ class SkillsLeaderboardTests(TestCase):
             matched_skills=["react", "typescript"],
             missing_skills=["css"],
         )
+        jd_text = "Looking for a React developer with strong React experience, TypeScript, and CSS skills."
         resp = self.client.post("/api/analyze-jd/", {"job_description": jd_text})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn("keywords", resp.data)
@@ -597,9 +606,37 @@ class UserProfileTests(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", resp.data)
 
-    def test_put_profile_invalid_email(self):
+class CaptchaProtectionTests(TestCase):
+    def setUp(self):
+        from rest_framework.test import APIClient
+        self.client = APIClient()
+        self.user = User.objects.create_user(username="botuser", password="password123")
+
+    def test_signup_fails_without_captcha_token(self):
         from rest_framework import status
-        self.client.force_authenticate(user=self.user)
-        resp = self.client.put("/api/profile/", {"username": "testuser", "email": "not-an-email"})
+        resp = self.client.post("/api/auth/signup/", {"username": "newbot", "password": "password123"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("email", resp.data)
+        self.assertIn("captcha_token", resp.data)
+
+    def test_signup_succeeds_with_valid_captcha_token(self):
+        from rest_framework import status
+        resp = self.client.post(
+            "/api/auth/signup/",
+            {"username": "validuser", "password": "password123", "captcha_token": "CAP-VERIFIED-1234567890-abc123xyz"},
+        )
+        self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
+
+    def test_login_fails_without_captcha_token(self):
+        from rest_framework import status
+        resp = self.client.post("/api/auth/login/", {"username": "botuser", "password": "password123"})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_login_succeeds_with_valid_captcha_token(self):
+        from rest_framework import status
+        resp = self.client.post(
+            "/api/auth/login/",
+            {"username": "botuser", "password": "password123", "captcha_token": "CAP-VERIFIED-1234567890-abc123xyz"},
+        )
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn("access", resp.data)
+

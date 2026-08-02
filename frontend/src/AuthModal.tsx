@@ -1,10 +1,11 @@
 import React, { useState } from 'react'
 import { Lock, FileSignature, Loader2 } from 'lucide-react'
 import axios from 'axios'
+import { CaptchaChallenge } from './components/CaptchaChallenge'
 
 interface AuthModalProps {
-  onSignup: (username: string, password: string) => Promise<void>
-  onLogin: (username: string, password: string, rememberMe: boolean) => Promise<void>
+  onSignup: (username: string, password: string, captchaToken?: string) => Promise<void>
+  onLogin: (username: string, password: string, rememberMe: boolean, captchaToken?: string) => Promise<void>
   onClose: () => void
 }
 
@@ -13,19 +14,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
   const [rememberMe, setRememberMe] = useState(true)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [captchaToken, setCaptchaToken] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+
+    if (mode !== 'forgot_password' && !captchaToken) {
+      setError('Please complete the security check before submitting.')
+      return
+    }
+
     setLoading(true)
     try {
       if (mode === 'signup') {
-        await onSignup(username, password)
+        await onSignup(username, password, captchaToken)
         onClose()
       } else if (mode === 'login') {
-        await onLogin(username, password, rememberMe)
+        await onLogin(username, password, rememberMe, captchaToken)
         onClose()
       } else if (mode === 'forgot_password') {
         await axios.post('http://localhost:8000/api/password-reset/', { username: username })
@@ -153,6 +161,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
                 Remember me
               </label>
             </div>
+          )}
+          {mode !== 'forgot_password' && (
+            <CaptchaChallenge onVerify={(token) => setCaptchaToken(token)} />
           )}
           <div style={{ textAlign: 'right', marginBottom: '16px' }}>
             <button

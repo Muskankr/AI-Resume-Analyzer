@@ -48,6 +48,7 @@ function App() {
   const { theme, toggleTheme } = useTheme();
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [score, setScore] = useState<number | null>(null);
   const [skills, setSkills] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<string[]>([]);
