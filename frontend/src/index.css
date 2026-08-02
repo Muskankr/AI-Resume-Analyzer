@@ -1,15 +1,10 @@
 :root {
   /* ── Design Tokens: Color Palette ───────── */
-  --color-primary: #3b82f6;
-  /* blue — main interactive/accent color */
-  --color-secondary: #764ba2;
-  /* purple — brand gradient color */
-  --color-accent: #22c55e;
-  /* green — success / positive states */
-  --color-neutral: #64748b;
-  /* slate gray — neutral text/borders */
-  --color-danger: #ef4444;
-  /* red — errors, destructive actions */
+  --color-primary: #3b82f6; /* blue — main interactive/accent color */
+  --color-secondary: #764ba2; /* purple — brand gradient color */
+  --color-accent: #22c55e; /* green — success / positive states */
+  --color-neutral: #64748b; /* slate gray — neutral text/borders */
+  --color-danger: #ef4444; /* red — errors, destructive actions */
 
   /* ── Design Tokens: Spacing Scale ───────── */
   --space-1: 4px;

@@ -137,6 +137,10 @@ REST_FRAMEWORK = {
     ),
 }
 
+SIMPLE_JWT = {
+    'TOKEN_OBTAIN_SERIALIZER': 'analyzer.serializers.CustomTokenObtainPairSerializer',
+}
+
 # Rate limiting: resume upload endpoint
 RESUME_UPLOAD_RATE = os.environ.get('RESUME_UPLOAD_RATE', '10/hour')
 
@@ -175,3 +179,32 @@ SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 X_FRAME_OPTIONS = 'DENY'
 
+SENTRY_DSN = os.environ.get('SENTRY_DSN')
+
+if SENTRY_DSN:
+    def sentry_before_send(event, hint):
+        # Redact sensitive request bodies (resume text, uploaded PDFs, auth tokens)
+        if 'request' in event:
+            request = event['request']
+            
+            # Redact data (request body/form parameters)
+            if 'data' in request and isinstance(request['data'], dict):
+                redact_keys = ['file', 'resume', 'target_role', 'email', 'phone', 'address']
+                for key in redact_keys:
+                    if key in request['data']:
+                        request['data'][key] = '[Filtered]'
+            
+            # Redact auth headers
+            if 'headers' in request and isinstance(request['headers'], dict):
+                for header_name in list(request['headers'].keys()):
+                    if header_name.lower() in ('authorization', 'cookie'):
+                        request['headers'][header_name] = '[Filtered]'
+                        
+        return event
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        traces_sample_rate=1.0,
+        profiles_sample_rate=1.0,
+        before_send=sentry_before_send,
+    )
