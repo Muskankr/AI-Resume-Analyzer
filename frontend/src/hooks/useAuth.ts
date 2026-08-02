@@ -7,6 +7,7 @@ export interface AuthUser {
   username: string
   token: string
   is_verified: boolean
+  avatarUrl?: string
 }
 
 function loadUser(): AuthUser | null {
@@ -41,17 +42,17 @@ export function useAuth() {
     }
   }
 
-  const signup = useCallback(async (username: string, email: string, password: string) => {
-    await axios.post(`${BACKEND}/api/auth/signup/`, { username, email, password })
-    const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password })
-    persist({ username, token: res.data.access, is_verified: res.data.is_verified || false }, true)
+  const signup = useCallback(async (username: string, email: string, password: string, captchaToken?: string) => {
+    await axios.post(`${BACKEND}/api/auth/signup/`, { username, email, password, captcha_token: captchaToken })
+    const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password, captcha_token: captchaToken })
+    persist({ username, token: res.data.access, is_verified: res.data.is_verified || false, avatarUrl: res.data.avatar_url }, true)
   }, [])
 
   const login = useCallback(
-    async (username: string, password: string, rememberMe: boolean = true) => {
-      const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password })
+    async (username: string, password: string, rememberMe: boolean = true, captchaToken?: string) => {
+      const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password, captcha_token: captchaToken })
       persist(
-        { username, token: res.data.access, is_verified: res.data.is_verified || false },
+        { username, token: res.data.access, is_verified: res.data.is_verified || false, avatarUrl: res.data.avatar_url },
         rememberMe
       )
     },
@@ -107,5 +108,21 @@ export function useAuth() {
     }
   }, [user, refreshUserStatus])
 
-  return { user, signup, login, logout, verifyEmail, resendVerification, refreshUserStatus }
+  const updateProfileSession = useCallback((newUsername: string) => {
+    if (user) {
+      const isLocalStorage = localStorage.getItem('auth_user') !== null
+      const updatedUser = { ...user, username: newUsername }
+      persist(updatedUser, isLocalStorage)
+    }
+  }, [user])
+
+  const updateUserAvatar = useCallback((avatarUrl: string | null) => {
+    if (user) {
+      const isLocalStorage = localStorage.getItem('auth_user') !== null
+      const updatedUser = { ...user, avatarUrl: avatarUrl || undefined }
+      persist(updatedUser, isLocalStorage)
+    }
+  }, [user])
+
+  return { user, signup, login, logout, verifyEmail, resendVerification, refreshUserStatus, updateProfileSession, updateUserAvatar }
 }

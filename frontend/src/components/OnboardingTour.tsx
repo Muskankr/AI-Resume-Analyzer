@@ -23,9 +23,9 @@ const steps: TourStep[] = [
     content: 'Drag & drop or click to upload your resume here.',
   },
   {
-    target: "[data-tour='history-link']",
-    title: 'History',
-    content: 'View your previous resume analyses here.',
+    target: '.history-toggle-btn',
+    title: 'Notifications & History',
+    content: 'View your previous resume analyses and notifications here.',
   },
 ]
 
