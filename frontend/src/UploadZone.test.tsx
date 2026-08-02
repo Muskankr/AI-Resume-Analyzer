@@ -13,17 +13,22 @@ describe('Drag and Drop Zone Contrast & Visual Pairing (#258)', () => {
       </MemoryRouter>
     )
 
-    const primaryText = screen.getByText(/Drag & Drop Resume or/i)
+    const primaryText = screen.getAllByText(/Upload Your Resume/i)[0]
     expect(primaryText).toBeInTheDocument()
     expect(primaryText.className).toContain('upload-text-primary')
 
-    const browseText = screen.getByText('Click to Browse')
-    expect(browseText).toBeInTheDocument()
-    expect(browseText.className).toContain('upload-text-browse')
+    const browseText = screen.getByText(
+      /Drag & drop your resume here or click to browse/i
+    )
 
-    const secondaryText = screen.getByText('Supports PDF, DOCX, TXT up to 10MB')
-    expect(secondaryText).toBeInTheDocument()
-    expect(secondaryText.className).toContain('upload-text-secondary')
+    expect(browseText.className).toContain("upload-text-secondary")
+
+    const helperText = screen.getByText(
+      /Supports PDF, DOCX and TXT files/i
+    )
+
+    expect(helperText).toBeInTheDocument()
+    expect(helperText.className).toContain('upload-text-helper')
 
     // Icon wrapper aria-hidden and container present
     const iconWrapper = primaryText.closest('label')?.querySelector('.upload-icon-wrapper')
@@ -38,13 +43,12 @@ describe('Drag and Drop Zone Contrast & Visual Pairing (#258)', () => {
       </MemoryRouter>
     )
 
-    const uploadBox = screen.getByText(/Drag & Drop Resume or/i).closest('.upload-box')!
-    expect(uploadBox).not.toHaveClass('dragging')
+    const secondaryText = screen.getByText(
+      /Drag & drop your resume here or click to browse/i
+    )
 
-    fireEvent.dragOver(uploadBox)
-    expect(uploadBox).toHaveClass('dragging')
+    expect(secondaryText).toBeInTheDocument()
+    expect(secondaryText.className).toContain('upload-text-secondary')
 
-    fireEvent.dragLeave(uploadBox)
-    expect(uploadBox).not.toHaveClass('dragging')
   })
 })

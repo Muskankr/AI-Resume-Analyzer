@@ -416,25 +416,28 @@ h3 {
 
 .upload-text-primary {
   display: block;
-  font-size: var(--text-base);
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: var(--upload-text);
-  line-height: 1.4;
+  margin-bottom: 0.5rem;
 }
 
 .upload-text-browse {
-  color: var(--upload-icon-color);
-  text-decoration: underline;
-  text-underline-offset: 3px;
   font-weight: 700;
+  cursor: pointer;
 }
 
 .upload-text-secondary {
   display: block;
-  font-size: var(--text-xs);
-  font-weight: 400;
-  color: var(--upload-text-secondary);
-  margin-top: 4px;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+  color: var(--upload-text);
+}
+
+.upload-text-helper {
+  display: block;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
 }
 
 .upload-file-name {
