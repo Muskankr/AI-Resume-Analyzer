@@ -16,7 +16,6 @@ import { TrackMatrix } from './components/TrackMatrix'
 import { CoverLetterFeedbackPanel } from './components/CoverLetterFeedbackPanel'
 import { InterviewQuestionsPanel } from './components/InterviewQuestionsPanel'
 import { JdVisualizerPanel } from './components/JdVisualizerPanel'
-import { ProfilePage } from './components/ProfilePage'
 import { ResetPasswordConfirmPage } from './components/ResetPasswordConfirmPage'
 import { VerifyEmailPage } from './components/VerifyEmailPage'
 import type { TrackComparisons } from './components/TrackMatrix'
@@ -2320,6 +2319,13 @@ function App() {
                             </button>
                           </div>
                         </div>
+                      </section>
+                    </>
+                  )}
+                </section>
+              )}
+            </main>
+          }
         />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
