@@ -59,10 +59,10 @@
   --banner-bg: rgba(59, 130, 246, 0.1);
   --banner-border: rgba(59, 130, 246, 0.3);
   --banner-text: #1e40af;
-  --btn-secondary-bg: rgba(255, 255, 255, 0.15);
-  --btn-secondary-text: #ffffff;
-  --btn-secondary-border: rgba(255, 255, 255, 0.3);
-  --btn-secondary-hover-bg: rgba(255, 255, 255, 0.25);
+  --btn-secondary-bg: var(--btn-bg);
+  --btn-secondary-text: var(--btn-text);
+  --btn-secondary-border: var(--surface-border);
+  --btn-secondary-hover-bg: var(--btn-bg);
   --btn-accent-bg: var(--color-primary);
   --btn-accent-hover-bg: #2563eb;
   --btn-success-bg: var(--color-accent);
@@ -1420,20 +1420,36 @@ input {
     color 0.3s ease;
 }
 
-.navbar-brand [data-theme='light'] {
-  font-size: var(--text-md);
-  font-weight: 700;
+.navbar-brand {
   display: flex;
   align-items: center;
-  color: #000000;
+  gap: 8px;
+  text-decoration: none;
+  font-size: 1.25rem;
+  font-weight: 700;
 }
 
-.navbar-brand [data-theme='dark'] {
-  font-size: var(--text-md);
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  color: #ffffff;
+.navbar-brand.light {
+  color: #000;
+}
+
+.navbar-brand.dark {
+  color: #fff;
+}
+
+.navbar-brand:hover {
+  opacity: 0.9;
+}
+
+.navbar-brand:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 4px;
+}
+
+@media (max-width: 480px) {
+  .navbar-brand .emoji {
+    display: none;
+  }
 }
 
 .navbar-toggle {
@@ -1469,6 +1485,29 @@ input {
 
 .navbar-links a:hover {
   opacity: 1;
+}
+
+.navbar-links a.active {
+  opacity: 1;
+  position: relative;
+}
+
+.navbar-links a.active::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--color-primary);
+  border-radius: 1px;
+}
+
+.navbar-links a:focus-visible {
+  opacity: 1;
+  outline: 2px solid var(--color-primary);
+  outline-offset: 4px;
+  border-radius: var(--radius-sm);
 }
 
 .navbar-actions {
@@ -1694,7 +1733,8 @@ input {
 }
 
 /* Ensure container grid alignment wraps beautifully on tight mobile layouts */
-@media (max-width: 600px) {}
+@media (max-width: 600px) {
+}
 
 .app-footer {
   padding: 30px 16px 16px !important;
@@ -2139,7 +2179,6 @@ input {
 }
 
 @media print {
-
   .navbar,
   header,
   nav,
@@ -2275,7 +2314,6 @@ input {
     height: auto !important;
     overflow: visible !important;
   }
-
 
   @page {
     margin: 15mm;

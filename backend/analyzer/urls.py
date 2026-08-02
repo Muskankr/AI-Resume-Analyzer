@@ -19,11 +19,13 @@ from .views import (
     resend_verification_email,
     user_status,
     admin_stats_view,
+    analyze_jd_view,
 )
 
 urlpatterns = [
     path("upload/", upload_resume),
     path("compare-uploads/", compare_uploads),
+    path("analyze-jd/", analyze_jd_view),
 
     path("auth/signup/", signup),
     path("auth/login/", TokenObtainPairView.as_view()),

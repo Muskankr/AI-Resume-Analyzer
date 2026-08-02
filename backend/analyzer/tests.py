@@ -410,3 +410,118 @@ class EmailVerificationTests(TestCase):
         self.assertIn("verify your email", resp.data["error"])
 
 
+
+class CoverLetterAnalysisTests(TestCase):
+    def test_analyze_cover_letter_tone_and_length(self):
+        from analyzer.services import analyze_cover_letter
+        
+        # Test a short cover letter
+        short_text = "I am interested in the Frontend Developer position. I have React skills."
+        res = analyze_cover_letter(short_text, "Frontend Developer")
+        self.assertEqual(res["length"]["status"], "Too short")
+        self.assertTrue(res["relevance"]["references_role"])
+        self.assertFalse(res["relevance"]["references_company"])
+
+        # Test a good length cover letter with active tone and role/company references
+        good_text = (
+            "Dear Hiring Manager,\n\n"
+            "I am excited to apply for the Frontend Developer position at Google. "
+            "Over the past few years, I have designed and implemented several web applications. "
+            "I led a team of developers to create responsive interfaces. I optimized the codebase "
+            "and solved complex engineering challenges. I believe my background aligns perfectly with your team.\n\n"
+            "Sincerely,\nJohn Doe"
+        )
+        res = analyze_cover_letter(good_text, "Frontend Developer")
+        self.assertEqual(res["length"]["status"], "Good")
+        self.assertIn("Confident", res["tone"]["label"])
+        self.assertIn("Enthusiastic", res["tone"]["label"])
+        self.assertTrue(res["relevance"]["references_role"])
+        self.assertTrue(res["relevance"]["references_company"])
+
+    @patch("analyzer.services.pdfplumber.open")
+    def test_analyze_resume_with_cover_letter(self, mock_open):
+        mock_open.return_value = _fake_pdf("Python Django developer")
+        
+        # We patch open to mock text extraction for the cover letter as well.
+        # But analyze_resume calls extract_text_from_file twice. So let's mock extract_text_from_file.
+        with patch("analyzer.services.extract_text_from_file") as mock_extract:
+            mock_extract.side_effect = [
+                "Python Django developer",  # Resume text
+                "I am applying for Backend Developer role. I designed and implemented backend systems.",  # Cover letter text
+            ]
+            
+            result = analyze_resume(
+                file_path="dummy_resume.pdf",
+                target_role="Backend Developer",
+                file_name="resume.pdf",
+                cover_letter_path="dummy_cl.pdf",
+                cover_letter_name="cover_letter.pdf",
+            )
+            
+            self.assertEqual(result["resume_text"], "Python Django developer")
+            self.assertIsNotNone(result["cover_letter_text"])
+            self.assertIsNotNone(result["cover_letter_feedback"])
+            self.assertEqual(result["cover_letter_feedback"]["length"]["status"], "Too short")
+            self.assertTrue(result["cover_letter_feedback"]["relevance"]["references_role"])
+
+
+class InterviewQuestionTests(TestCase):
+    def test_generate_interview_questions_valid(self):
+        from analyzer.services import generate_interview_questions
+        
+        # Test generation with React skill and Frontend Developer target role
+        questions = generate_interview_questions(["React", "TypeScript"], "Frontend Developer")
+        self.assertTrue(len(questions) >= 5)
+        self.assertTrue(len(questions) <= 8)
+        
+        # At least one question should be from React or TS
+        has_tech = any("React" in q or "TypeScript" in q or "virtual DOM" in q or "generics" in q for q in questions)
+        self.assertTrue(has_tech)
+
+    @patch("analyzer.services.pdfplumber.open")
+    def test_analyze_resume_generates_interview_questions(self, mock_open):
+        mock_open.return_value = _fake_pdf("Expert in Python and SQL.")
+        
+        result = analyze_resume(
+            file_path="dummy_resume.pdf",
+            target_role="Backend Developer",
+            file_name="resume.pdf",
+        )
+        
+        self.assertIn("interview_questions", result)
+        self.assertTrue(len(result["interview_questions"]) >= 5)
+
+
+class JdAnalysisTests(TestCase):
+    def test_analyze_jd_endpoint(self):
+        from rest_framework import status
+        
+        # Test empty input error
+        resp = self.client.post("/api/analyze-jd/", {"job_description": ""})
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("error", resp.data)
+        
+        # Test valid input analysis with known skill keywords and stop words
+        jd_text = (
+            "We are seeking a React Developer. The candidate should have experience in React, "
+            "JavaScript, HTML, and CSS. Working with teams to deliver responsive layouts is essential. "
+            "React and TypeScript are strong plusses. The candidate will work in a fast-paced environment."
+        )
+        resp = self.client.post("/api/analyze-jd/", {"job_description": jd_text})
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertIn("keywords", resp.data)
+        
+        keywords = resp.data["keywords"]
+        self.assertTrue(len(keywords) > 0)
+        
+        # Check that 'react' is recognized and tagged as a skill
+        react_keyword = next((k for k in keywords if k["text"] == "react"), None)
+        self.assertIsNotNone(react_keyword)
+        self.assertEqual(react_keyword["type"], "skill")
+        self.assertTrue(react_keyword["value"] >= 2)
+        
+        # Common English stop words like 'the' or 'and' or corporate fillers like 'candidate' shouldn't be here
+        texts = [k["text"] for k in keywords]
+        self.assertNotIn("the", texts)
+        self.assertNotIn("and", texts)
+        self.assertNotIn("candidate", texts)

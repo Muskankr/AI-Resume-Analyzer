@@ -57,7 +57,11 @@ export const CompareUploads: React.FC<CompareUploadsProps> = ({ onClose, targetR
 
   return (
     <div className="auth-overlay" onClick={onClose}>
-      <div className="compare-modal" onClick={(e) => e.stopPropagation()} style={{ maxHeight: '90vh', overflowY: 'auto' }}>
+      <div
+        className="compare-modal"
+        onClick={(e) => e.stopPropagation()}
+        style={{ maxHeight: '90vh', overflowY: 'auto' }}
+      >
         <div className="compare-modal__header">
           <h3>
             <GitCompare size={18} /> Compare Resumes (Side-by-Side)
@@ -69,26 +73,40 @@ export const CompareUploads: React.FC<CompareUploadsProps> = ({ onClose, targetR
 
         {!comparison ? (
           <>
-            <div className="compare-picker-row" style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'stretch' }}>
-              <div className="compare-picker" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            <div
+              className="compare-picker-row"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem',
+                alignItems: 'stretch',
+              }}
+            >
+              <div
+                className="compare-picker"
+                style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
+              >
                 <label>Older Version (File 1)</label>
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   accept=".pdf,.doc,.docx"
                   onChange={(e) => setFile1(e.target.files ? e.target.files[0] : null)}
                   style={{ padding: '0.5rem', border: '1px dashed #ccc', borderRadius: '4px' }}
                 />
               </div>
-              <div className="compare-picker" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div
+                className="compare-picker"
+                style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
+              >
                 <label>Newer Version (File 2)</label>
-                <input 
-                  type="file" 
+                <input
+                  type="file"
                   accept=".pdf,.doc,.docx"
                   onChange={(e) => setFile2(e.target.files ? e.target.files[0] : null)}
                   style={{ padding: '0.5rem', border: '1px dashed #ccc', borderRadius: '4px' }}
                 />
               </div>
-              
+
               <button
                 className="app-btn app-btn--accent"
                 onClick={handleCompare}
@@ -139,7 +157,9 @@ export const CompareUploads: React.FC<CompareUploadsProps> = ({ onClose, targetR
                 ) : (
                   <div className="compare-badges">
                     {comparison.added_skills.map((s) => (
-                      <span key={s} className="badge bg-success">{s}</span>
+                      <span key={s} className="badge bg-success">
+                        {s}
+                      </span>
                     ))}
                   </div>
                 )}
@@ -151,7 +171,9 @@ export const CompareUploads: React.FC<CompareUploadsProps> = ({ onClose, targetR
                 ) : (
                   <div className="compare-badges">
                     {comparison.removed_skills.map((s) => (
-                      <span key={s} className="badge bg-danger">{s}</span>
+                      <span key={s} className="badge bg-danger">
+                        {s}
+                      </span>
                     ))}
                   </div>
                 )}
@@ -163,7 +185,9 @@ export const CompareUploads: React.FC<CompareUploadsProps> = ({ onClose, targetR
                 ) : (
                   <div className="compare-badges">
                     {comparison.still_missing_skills.map((s) => (
-                      <span key={s} className="badge bg-secondary">{s}</span>
+                      <span key={s} className="badge bg-secondary">
+                        {s}
+                      </span>
                     ))}
                   </div>
                 )}
@@ -175,10 +199,7 @@ export const CompareUploads: React.FC<CompareUploadsProps> = ({ onClose, targetR
                 <h4>Content Changes</h4>
                 <div className="compare-text-diff">
                   {comparison.text_diff.map((line, i) => (
-                    <div
-                      key={i}
-                      className={`compare-diff-line compare-diff-line--${line.type}`}
-                    >
+                    <div key={i} className={`compare-diff-line compare-diff-line--${line.type}`}>
                       {line.type === 'added' ? '+ ' : '- '}
                       {line.text}
                     </div>
@@ -188,10 +209,7 @@ export const CompareUploads: React.FC<CompareUploadsProps> = ({ onClose, targetR
             )}
 
             <div className="compare-actions">
-              <button
-                className="app-btn app-btn--secondary"
-                onClick={() => setComparison(null)}
-              >
+              <button className="app-btn app-btn--secondary" onClick={() => setComparison(null)}>
                 Compare Another Pair
               </button>
               <button

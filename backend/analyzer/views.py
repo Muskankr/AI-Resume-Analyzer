@@ -142,6 +142,18 @@ def upload_resume(request):
             saved_name = storage.save(unique_name, file)
             file_path = storage.path(saved_name)
 
+        cover_letter = request.FILES.get("cover_letter")
+        cover_letter_path = None
+        cover_letter_name = None
+        if cover_letter:
+            cover_letter_name = cover_letter.name
+            temp_dir = os.path.join(settings.BASE_DIR, "tmp")
+            os.makedirs(temp_dir, exist_ok=True)
+            storage = FileSystemStorage(location=temp_dir)
+            cl_unique_name = f"{uuid.uuid4()}_{cover_letter.name}"
+            cl_saved_name = storage.save(cl_unique_name, cover_letter)
+            cover_letter_path = storage.path(cl_saved_name)
+
         user_id = (
             request.user.id
             if request.user.is_authenticated
@@ -154,6 +166,8 @@ def upload_resume(request):
             file_name=file_name,
             user_id=user_id,
             job_description=job_desc,
+            cover_letter_path=cover_letter_path,
+            cover_letter_name=cover_letter_name,
         )
 
         return Response(result)
@@ -485,3 +499,59 @@ def admin_stats_view(request):
         "popular_roles": [{"role": r[0], "count": r[1]} for r in popular_roles if r[0]],
         "top_missing_skills": [{"skill": s[0], "count": s[1]} for s in top_missing_skills if s[0]]
     })
+import re
+from collections import Counter
+
+STOP_WORDS = {
+    "a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at",
+    "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can't", "cannot", "could",
+    "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for",
+    "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's",
+    "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm",
+    "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't",
+    "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours",
+    "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't",
+    "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there",
+    "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too",
+    "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't",
+    "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's",
+    "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself",
+    "yourselves", "job", "description", "experience", "role", "team", "work", "responsibilities", "skills", "required",
+    "looking", "ability", "using", "candidate", "development", "knowledge", "working", "strong", "position", "years"
+}
+
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def analyze_jd_view(request):
+    job_description = request.data.get("job_description", "")
+    if not job_description or not job_description.strip():
+        return Response({"error": "Job description cannot be empty."}, status=status.HTTP_400_BAD_REQUEST)
+        
+    words = re.findall(r"\b[a-zA-Z0-9\-\.\#\+\-]+\b", job_description.lower())
+    filtered_words = [w for w in words if w not in STOP_WORDS and len(w) >= 2]
+    
+    counter = Counter(filtered_words)
+    top_items = counter.most_common(30)
+    
+    from analyzer.services import ROLE_SKILLS
+    all_skills = set()
+    for skills_list in ROLE_SKILLS.values():
+        for s in skills_list:
+            all_skills.add(s.lower())
+            
+    results = []
+    for word, count in top_items:
+        is_skill = (word in all_skills) or (word.title() in all_skills) or (word.upper() in all_skills)
+        if not is_skill:
+            for s in all_skills:
+                if s == word or (len(word) > 3 and word in s):
+                    is_skill = True
+                    break
+                    
+        results.append({
+            "text": word,
+            "value": count,
+            "type": "skill" if is_skill else "general"
+        })
+        
+    return Response({"keywords": results}, status=status.HTTP_200_OK)

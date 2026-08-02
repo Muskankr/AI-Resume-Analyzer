@@ -9,7 +9,7 @@ interface AuthModalProps {
 }
 
 export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose }) => {
-  const [mode, setMode] = useState<'login' | 'signup' | 'forgot_password'>('login');
+  const [mode, setMode] = useState<'login' | 'signup' | 'forgot_password'>('login')
   const [rememberMe, setRememberMe] = useState(true)
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
@@ -151,21 +151,38 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
               )
             })()}
           {mode === 'login' && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <div
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}
+            >
               <input
                 type="checkbox"
                 id="rememberMe"
                 checked={rememberMe}
                 onChange={(e) => setRememberMe(e.target.checked)}
               />
-              <label htmlFor="rememberMe" style={{ fontSize: '0.9rem', color: '#666' }}>Remember me</label>
+              <label htmlFor="rememberMe" style={{ fontSize: '0.9rem', color: '#666' }}>
+                Remember me
+              </label>
             </div>
-            )}
-            <div style={{ textAlign: 'right', marginBottom: '16px' }}>
-              <button type="button" onClick={() => { setMode('forgot_password'); setError(''); }} style={{ fontSize: '0.9rem', color: '#3b82f6', background: 'none', border: 'none', cursor: 'pointer' }}>
-                Forgot password?
-              </button>
-            </div>
+          )}
+          <div style={{ textAlign: 'right', marginBottom: '16px' }}>
+            <button
+              type="button"
+              onClick={() => {
+                setMode('forgot_password')
+                setError('')
+              }}
+              style={{
+                fontSize: '0.9rem',
+                color: '#3b82f6',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
+              Forgot password?
+            </button>
+          </div>
           {error && <p className="auth-error">{error}</p>}
           <button className="auth-submit-btn" type="submit" disabled={loading}>
             {loading ? (

@@ -47,10 +47,16 @@ export function useAuth() {
     persist({ username, token: res.data.access, is_verified: res.data.is_verified || false }, true)
   }, [])
 
-  const login = useCallback(async (username: string, password: string, rememberMe: boolean = true) => {
-    const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password })
-    persist({ username, token: res.data.access, is_verified: res.data.is_verified || false }, rememberMe)
-  }, [])
+  const login = useCallback(
+    async (username: string, password: string, rememberMe: boolean = true) => {
+      const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password })
+      persist(
+        { username, token: res.data.access, is_verified: res.data.is_verified || false },
+        rememberMe
+      )
+    },
+    []
+  )
 
   const logout = useCallback(() => persist(null), [])
 

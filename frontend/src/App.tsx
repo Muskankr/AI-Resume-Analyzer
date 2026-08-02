@@ -13,9 +13,13 @@ import AnalysisSkeleton from './components/AnalysisSkeleton/AnalysisSkeleton'
 import { InfoTooltip } from './components/InfoTooltip'
 import { SkillWordCloud } from './components/SkillWordCloud'
 import { TrackMatrix } from './components/TrackMatrix'
+import { CoverLetterFeedbackPanel } from './components/CoverLetterFeedbackPanel'
+import { InterviewQuestionsPanel } from './components/InterviewQuestionsPanel'
+import { JdVisualizerPanel } from './components/JdVisualizerPanel'
+import { ProfilePage } from './components/ProfilePage'
 import { ResetPasswordConfirmPage } from './components/ResetPasswordConfirmPage'
-import type { TrackComparisons } from './components/TrackMatrix'
 import { VerifyEmailPage } from './components/VerifyEmailPage'
+import type { TrackComparisons } from './components/TrackMatrix'
 import {
   FileText,
   Loader2,
@@ -50,6 +54,12 @@ import { ShareResult } from './components/ShareResult'
 import { SharedResultView } from './SharedResultView'
 import CookieConsentBanner from './components/CookieConsentBanner'
 import AdminDashboard from './components/AdminDashboard'
+import { ActionPlanChecklist } from './components/ActionPlanChecklist'
+import {
+  exportActionPlanMarkdown,
+  exportActionPlanPdf,
+  generateActionPlan,
+} from './utils/actionPlanUtils'
 
 type Theme = 'light' | 'dark'
 
@@ -64,6 +74,9 @@ interface UndoState {
   analysisSource: 'sample' | 'upload' | null
   activeFileName: string
   targetRole: string
+  coverLetterText?: string
+  coverLetterFeedback?: any
+  interviewQuestions?: string[]
 }
 
 const DEFAULT_TITLE = 'AI Resume Analyzer'
@@ -114,7 +127,6 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
     </div>
   )
 }
-
 
 interface SuggestionCardProps {
   text: string
@@ -280,6 +292,20 @@ function App() {
   const [score, setScore] = useState<number | null>(null)
   const [skills, setSkills] = useState<string[]>([])
   const [suggestions, setSuggestions] = useState<string[]>([])
+  // Validation States
+  const [fileError, setFileError] = useState<string | null>(null)
+  const [roleError, setRoleError] = useState<string | null>(null)
+
+  const [showShortcutHelp, setShowShortcutHelp] = useState(false)
+  const [showBackToTop, setShowBackToTop] = useState(false)
+  const [showExportDropdown, setShowExportDropdown] = useState(false)
+
+  const [retryAfter, setRetryAfter] = useState<number | null>(null)
+  const [retryDisabled, setRetryDisabled] = useState(false)
+
+  const [readabilityLabel, setReadabilityLabel] = useState<string | null>(null)
+  const [undoState, setUndoState] = useState<UndoState | null>(null)
+  const [showUndoToast, setShowUndoToast] = useState(false)
 
   // Component States
   const [targetRole, setTargetRole] = useState('Frontend Developer')
@@ -300,25 +326,26 @@ function App() {
   const [analysisStageLabel, setAnalysisStageLabel] = useState<string>('')
   const [uploadMode, setUploadMode] = useState<'file' | 'url'>('file')
   const [trackComparisons, setTrackComparisons] = useState<TrackComparisons | null>(null)
-  const [activeTab, setActiveTab] = useState<'detailed' | 'matrix'>('detailed')
+  const [activeTab, setActiveTab] = useState<'detailed' | 'matrix' | 'cover_letter' | 'interview_questions'>('detailed')
   const [resumeUrl, setResumeUrl] = useState<string>('')
   const [urlError, setUrlError] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
 
-  // Validation States
-  const [fileError, setFileError] = useState<string | null>(null)
-  const [roleError, setRoleError] = useState<string | null>(null)
+  // Cover Letter States
+  const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null)
+  const [coverLetterError, setCoverLetterError] = useState<string | null>(null)
+  const [coverLetterText, setCoverLetterText] = useState<string>('')
+  const [coverLetterFeedback, setCoverLetterFeedback] = useState<any>(null)
 
-  const [showShortcutHelp, setShowShortcutHelp] = useState(false)
-  const [showBackToTop, setShowBackToTop] = useState(false)
-  const [showExportDropdown, setShowExportDropdown] = useState(false)
+  // Interview Questions States
+  const [interviewQuestions, setInterviewQuestions] = useState<string[]>([])
 
-  const [retryAfter, setRetryAfter] = useState<number | null>(null)
-  const [retryDisabled, setRetryDisabled] = useState(false)
-
-  const [readabilityLabel, setReadabilityLabel] = useState<string | null>(null)
-  const [undoState, setUndoState] = useState<UndoState | null>(null)
-  const [showUndoToast, setShowUndoToast] = useState(false)
+  // Standalone Job Description States
+  const [activeFlow, setActiveFlow] = useState<'resume' | 'jd'>('resume')
+  const [jdInputText, setJdInputText] = useState('')
+  const [jdKeywords, setJdKeywords] = useState<any[]>([])
+  const [jdLoading, setJdLoading] = useState(false)
+  const [jdError, setJdError] = useState<string | null>(null)
 
   // Auth
   const { user, signup, login, logout, resendVerification, refreshUserStatus } = useAuth()
@@ -380,8 +407,8 @@ function App() {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const droppedFile = e.dataTransfer.files[0]
       const validTypes = ['.pdf', '.docx']
-      const isValid = validTypes.some(ext => droppedFile.name.toLowerCase().endsWith(ext))
-      
+      const isValid = validTypes.some((ext) => droppedFile.name.toLowerCase().endsWith(ext))
+
       if (isValid) {
         setFile(droppedFile)
         setFileError(null)
@@ -397,7 +424,6 @@ function App() {
   } else if (!loading && score !== null) {
     currentStep = 3
   }
-
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
 
   const handleDeleteEntry = async (id: string) => {
@@ -447,6 +473,9 @@ function App() {
             missing_skills: string[]
             target_role: string
             file_name: string
+            cover_letter_text?: string
+            cover_letter_feedback?: any
+            interview_questions?: string[]
           }) => ({
             id: String(item.id),
             timestamp: new Date(item.created_at).getTime(),
@@ -457,6 +486,9 @@ function App() {
             missingSkills: item.missing_skills,
             targetRole: item.target_role,
             fileName: item.file_name,
+            coverLetterText: item.cover_letter_text,
+            coverLetterFeedback: item.cover_letter_feedback,
+            interviewQuestions: item.interview_questions,
           })
         )
         const uniqueDbEntries = dbEntries.filter(
@@ -512,6 +544,9 @@ function App() {
         analysisSource,
         activeFileName,
         targetRole,
+        coverLetterText,
+        coverLetterFeedback,
+        interviewQuestions,
       })
       setShowUndoToast(true)
     }
@@ -531,6 +566,11 @@ function App() {
     setShowExportDropdown(false)
     setFileError(null)
     setRoleError(null)
+    setCoverLetterFile(null)
+    setCoverLetterError(null)
+    setCoverLetterText('')
+    setCoverLetterFeedback(null)
+    setInterviewQuestions([])
   }, [
     file,
     score,
@@ -542,6 +582,9 @@ function App() {
     analysisSource,
     activeFileName,
     targetRole,
+    coverLetterText,
+    coverLetterFeedback,
+    interviewQuestions,
   ])
 
   const handleUndoReset = useCallback(() => {
@@ -556,6 +599,9 @@ function App() {
       setAnalysisSource(undoState.analysisSource)
       setActiveFileName(undoState.activeFileName)
       setTargetRole(undoState.targetRole)
+      setCoverLetterText(undoState.coverLetterText || '')
+      setCoverLetterFeedback(undoState.coverLetterFeedback || null)
+      setInterviewQuestions(undoState.interviewQuestions || [])
       setUndoState(null)
       setShowUndoToast(false)
     }
@@ -627,6 +673,9 @@ function App() {
       }
       formData.append('role', targetRole)
       formData.append('job_description', jobDesc)
+      if (coverLetterFile) {
+        formData.append('cover_letter', coverLetterFile)
+      }
 
       const stageTimer1 = setTimeout(() => {
         setAnalysisProgress(60)
@@ -653,6 +702,9 @@ function App() {
       setMatchedSkills(res.data.matched_skills || [])
       setMissingSkills(res.data.missing_skills || [])
       setResumeText(res.data.resume_text || '')
+      setCoverLetterText(res.data.cover_letter_text || '')
+      setCoverLetterFeedback(res.data.cover_letter_feedback || null)
+      setInterviewQuestions(res.data.interview_questions || [])
 
       setReadabilityLabel(res.data.readability_label ?? null)
       if (res.data.share_id) setShareId(res.data.share_id)
@@ -679,6 +731,9 @@ function App() {
           missingSkills: res.data.missing_skills || [],
           targetRole: targetRole,
           fileName: fileName,
+          coverLetterText: res.data.cover_letter_text,
+          coverLetterFeedback: res.data.cover_letter_feedback,
+          interviewQuestions: res.data.interview_questions,
         })
       }
 
@@ -733,6 +788,27 @@ function App() {
       }
 
       setLoading(false)
+    }
+  }
+
+  const runJdAnalysis = async () => {
+    if (!jdInputText || !jdInputText.trim()) {
+      setJdError('Job description cannot be empty.')
+      return
+    }
+    setJdLoading(true)
+    setJdError(null)
+    setJdKeywords([])
+    try {
+      const res = await axios.post(`${backendUrl}/api/analyze-jd/`, {
+        job_description: jdInputText,
+      })
+      setJdKeywords(res.data.keywords || [])
+    } catch (err: any) {
+      console.error(err)
+      setJdError(err.response?.data?.error || 'Failed to analyze job description.')
+    } finally {
+      setJdLoading(false)
     }
   }
 
@@ -858,6 +934,9 @@ function App() {
     setMissingSkills(entry.missingSkills)
     setTargetRole(entry.targetRole)
     setActiveFileName(entry.fileName)
+    setCoverLetterText(entry.coverLetterText || '')
+    setCoverLetterFeedback(entry.coverLetterFeedback || null)
+    setInterviewQuestions(entry.interviewQuestions || [])
     setShowAllSkills(false)
     setCopied(false)
     setHistoryOpen(false)
@@ -1012,42 +1091,78 @@ function App() {
                         Land More Interviews.
                       </h1>
 
-          <div style={{ display: "flex", gap: "12px", justifyContent: "center", alignItems: "center" }} className="mb-3">
-            <button
-              className="analyze-btn"
-              onClick={uploadResume}
-              disabled={loading}
-            >
-              {loading && analysisSource === "upload" ? "⏳ Extracting and analyzing resume text..." : "🚀 Analyze Resume"}
-            </button>
-            <button
-              className="app-btn"
-              onClick={() => setShowGallery(true)}
-            >
-              📂 Template Gallery
-            </button>
-                    <button
-                      className="app-btn app-btn--secondary"
-                      onClick={() => setCompareUploadsOpen(true)}
-                    >
-                      <GitCompare size={15} /> Compare 2 Resumes
-                    </button>
-            <button
-              className="app-btn app-btn--secondary"
-              onClick={handleSampleResume}
-              disabled={loading}
-            >         {loading && analysisSource === "sample" ? "⏳ Loading Sample..." : "Try Sample Resume"}
-            </button>
-          </div>
-          {showGallery && (
-            <div className="mt-4" style={{ textAlign: "left", background: "var(--card-bg, #fff)", padding: "20px", borderRadius: "8px" }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                <h3 style={{ margin: 0 }}>ATS Resume Templates</h3>
-                <button onClick={() => setShowGallery(false)} style={{ cursor: 'pointer', background: 'transparent', border: 'none', fontSize: '16px' }}>❌</button>
-              </div>
-              <TemplateGallery />
-            </div>
-          )}
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '12px',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        }}
+                        className="mb-3"
+                      >
+                        <button className="analyze-btn" onClick={uploadResume} disabled={loading}>
+                          {loading && analysisSource === 'upload'
+                            ? '⏳ Extracting and analyzing resume text...'
+                            : '🚀 Analyze Resume'}
+                        </button>
+                        <button
+                          className="app-btn"
+                          onClick={() => setShowGallery(true)}
+                          title="Browse ATS-friendly resume templates"
+                        >
+                          📂 Template Gallery
+                        </button>
+                        <button
+                          className="app-btn app-btn--secondary"
+                          onClick={() => setCompareUploadsOpen(true)}
+                        >
+                          <GitCompare size={15} /> Compare 2 Resumes
+                        </button>
+                        <button
+                          className="app-btn app-btn--secondary"
+                          onClick={handleSampleResume}
+                          disabled={loading}
+                        >
+                          {' '}
+                          {loading && analysisSource === 'sample'
+                            ? '⏳ Loading Sample...'
+                            : 'Try Sample Resume'}
+                        </button>
+                      </div>
+                      {showGallery && (
+                        <div
+                          className="mt-4"
+                          style={{
+                            textAlign: 'left',
+                            background: 'var(--card-bg, #fff)',
+                            padding: '20px',
+                            borderRadius: '8px',
+                          }}
+                        >
+                          <div
+                            style={{
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              marginBottom: '16px',
+                            }}
+                          >
+                            <h3 style={{ margin: 0 }}>ATS Resume Templates</h3>
+                            <button
+                              onClick={() => setShowGallery(false)}
+                              style={{
+                                cursor: 'pointer',
+                                background: 'transparent',
+                                border: 'none',
+                                fontSize: '16px',
+                              }}
+                            >
+                              ❌
+                            </button>
+                          </div>
+                          <TemplateGallery />
+                        </div>
+                      )}
                       <p
                         className="hero-description"
                         style={{
@@ -1061,7 +1176,10 @@ function App() {
                         compatibility and receive personalized recommendations in seconds.
                       </p>
 
-                      <div className="hero-stats" style={{ color: theme === 'light' ? '#000000' : '#ffffff' }}>
+                      <div
+                        className="hero-stats"
+                        style={{ color: theme === 'light' ? '#000000' : '#ffffff' }}
+                      >
                         <div>
                           <h2>50K+</h2>
                           <span>Resumes Reviewed</span>
@@ -1128,7 +1246,140 @@ function App() {
                         </p>
                       </div>
                     ) : null}
-                    {/* STEP 1: Target Career Track */}
+
+                    {/* Active Flow Switcher Tabs */}
+                    {score === null && !loading && (
+                      <div
+                        style={{
+                          display: 'flex',
+                          gap: '12px',
+                          justifyContent: 'center',
+                          marginBottom: '24px',
+                          borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                          paddingBottom: '12px',
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveFlow('resume')
+                            setJdKeywords([])
+                          }}
+                          style={{
+                            padding: '8px 20px',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: '0.95rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            background:
+                              activeFlow === 'resume'
+                                ? 'var(--color-primary, #6366f1)'
+                                : 'rgba(255, 255, 255, 0.05)',
+                            color: '#fff',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          📄 Optimize Resume
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setActiveFlow('jd')
+                          }}
+                          style={{
+                            padding: '8px 20px',
+                            borderRadius: 'var(--radius-md)',
+                            fontSize: '0.95rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            background:
+                              activeFlow === 'jd'
+                                ? 'var(--color-primary, #6366f1)'
+                                : 'rgba(255, 255, 255, 0.05)',
+                            color: '#fff',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            transition: 'all 0.2s ease',
+                          }}
+                        >
+                          💼 Analyze Job Description
+                        </button>
+                      </div>
+                    )}
+
+                    {activeFlow === 'jd' && jdKeywords.length > 0 ? (
+                      <JdVisualizerPanel
+                        keywords={jdKeywords}
+                        onBack={() => {
+                          setJdKeywords([])
+                          setJdInputText('')
+                        }}
+                      />
+                    ) : activeFlow === 'jd' ? (
+                      <div className="animate-fade-in">
+                        <div
+                          className="mb-4 p-4"
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            borderRadius: 'var(--radius-lg)',
+                            border: '1px solid rgba(255,255,255,0.04)',
+                            textAlign: 'left'
+                          }}
+                        >
+                          <label
+                            htmlFor="jdTextInput"
+                            style={{
+                              color: theme === 'light' ? '#000000' : '#ffffff',
+                              display: 'block',
+                              marginBottom: '12px',
+                              fontWeight: '600',
+                              fontSize: 'var(--font-size-sm)',
+                            }}
+                          >
+                            📝 Paste the Job Description to extract and visualize key terms:
+                          </label>
+                          <textarea
+                            id="jdTextInput"
+                            rows={8}
+                            value={jdInputText}
+                            onChange={(e) => {
+                              setJdInputText(e.target.value)
+                              if (e.target.value.trim() !== '') setJdError(null)
+                            }}
+                            placeholder="Paste job description here..."
+                            style={{
+                              width: '100%',
+                              padding: '12px',
+                              borderRadius: 'var(--radius-md)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              background: 'rgba(0,0,0,0.2)',
+                              color: '#fff',
+                              outline: 'none',
+                              fontSize: '0.92rem',
+                              lineHeight: '1.5',
+                              resize: 'vertical'
+                            }}
+                          />
+                          {jdError && (
+                            <div style={{ color: '#ef4444', fontSize: '13px', marginTop: '8px', fontWeight: '500' }}>
+                              ⚠️ {jdError}
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', justifyContent: 'center', marginTop: '16px' }}>
+                            <button
+                              type="button"
+                              className="analyze-btn"
+                              onClick={runJdAnalysis}
+                              disabled={jdLoading}
+                              style={{ width: 'auto', minWidth: '200px' }}
+                            >
+                              {jdLoading ? '⏳ Analyzing Keywords...' : '🔍 Analyze JD Keywords'}
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <>
                     <div
                       className="mb-4 p-4 role-selector-container"
                       style={{
@@ -1252,8 +1503,10 @@ function App() {
                               if (e.target.files && e.target.files[0]) {
                                 const selectedFile = e.target.files[0]
                                 const validTypes = ['.pdf', '.docx']
-                                const isValid = validTypes.some(ext => selectedFile.name.toLowerCase().endsWith(ext))
-                                
+                                const isValid = validTypes.some((ext) =>
+                                  selectedFile.name.toLowerCase().endsWith(ext)
+                                )
+
                                 if (isValid) {
                                   setFile(selectedFile)
                                   setFileError(null)
@@ -1394,6 +1647,103 @@ function App() {
                         </div>
                       )}
 
+                      {/* Optional Cover Letter Upload Slot */}
+                      <div className="mb-4" style={{ textAlign: 'left' }}>
+                        <label
+                          htmlFor="coverLetterUpload"
+                          style={{
+                            fontWeight: '600',
+                            display: 'block',
+                            marginBottom: '8px',
+                            color: '#e2e8f0',
+                            fontSize: '0.85rem',
+                          }}
+                        >
+                          ✉️ Cover Letter (Optional)
+                        </label>
+                        <div
+                          className="cover-letter-upload-container"
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.02)',
+                            border: '1px dashed rgba(255, 255, 255, 0.1)',
+                            borderRadius: 'var(--radius-md)',
+                            padding: '12px 16px',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '12px',
+                            transition: 'all 0.2s',
+                          }}
+                        >
+                          <input
+                            type="file"
+                            id="coverLetterUpload"
+                            hidden
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                              if (e.target.files && e.target.files[0]) {
+                                const clFile = e.target.files[0]
+                                const validTypes = ['.pdf', '.docx', '.txt']
+                                const isValid = validTypes.some(ext => clFile.name.toLowerCase().endsWith(ext))
+                                if (isValid) {
+                                  setCoverLetterFile(clFile)
+                                  setCoverLetterError(null)
+                                } else {
+                                  setCoverLetterError('Only PDF, DOCX, and TXT files are supported.')
+                                }
+                              }
+                            }}
+                          />
+                          <label
+                            htmlFor="coverLetterUpload"
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              cursor: 'pointer',
+                              flex: 1,
+                              margin: 0,
+                            }}
+                          >
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.7 }}>
+                              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                              <polyline points="22,6 12,13 2,6"/>
+                            </svg>
+                            <span style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.7)', userSelect: 'none' }}>
+                              {coverLetterFile ? coverLetterFile.name : 'Upload optional Cover Letter (PDF, DOCX, TXT)'}
+                            </span>
+                          </label>
+                          {coverLetterFile && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                e.preventDefault()
+                                setCoverLetterFile(null)
+                              }}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#ef4444',
+                                cursor: 'pointer',
+                                padding: '4px',
+                                display: 'inline-flex',
+                              }}
+                            >
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18" />
+                                <line x1="6" y1="6" x2="18" y2="18" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
+                        {coverLetterError && (
+                          <div style={{ color: '#ef4444', fontSize: '13px', marginTop: '6px', fontWeight: '500' }}>
+                            ⚠️ {coverLetterError}
+                          </div>
+                        )}
+                      </div>
+
                       {/* Optional Job Description */}
                       <div className="mb-4" style={{ textAlign: 'left' }}>
                         <label
@@ -1488,6 +1838,11 @@ function App() {
                         </p>
                       )}
                     </div>
+                  </>
+                )}
+              </section>
+                </div>
+              </div>
 
               {/* Loading Skeleton & Determinate Progress Bar */}
               {loading && (
@@ -1527,6 +1882,7 @@ function App() {
                   <div id="ats-score">
                     <AtsScore
                       score={score}
+
                       readabilityLabel={readabilityLabel}
                     />
                   </div>
@@ -1549,7 +1905,15 @@ function App() {
                     </p>
                   )}
 
-                  <div style={{ display: 'flex', gap: '8px', marginTop: '16px', marginBottom: '16px', justifyContent: 'center' }}>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '8px',
+                      marginTop: '16px',
+                      marginBottom: '16px',
+                      justifyContent: 'center',
+                    }}
+                  >
                     <button
                       type="button"
                       onClick={() => setActiveTab('detailed')}
@@ -1559,7 +1923,10 @@ function App() {
                         fontSize: '0.9rem',
                         fontWeight: '600',
                         cursor: 'pointer',
-                        background: activeTab === 'detailed' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                        background:
+                          activeTab === 'detailed'
+                            ? 'var(--color-primary, #6366f1)'
+                            : 'rgba(255, 255, 255, 0.05)',
                         color: '#fff',
                         border: '1px solid rgba(255, 255, 255, 0.15)',
                         transition: 'all 0.2s ease',
@@ -1577,13 +1944,54 @@ function App() {
                           fontSize: '0.9rem',
                           fontWeight: '600',
                           cursor: 'pointer',
-                          background: activeTab === 'matrix' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                          background:
+                            activeTab === 'matrix'
+                              ? 'var(--color-primary, #6366f1)'
+                              : 'rgba(255, 255, 255, 0.05)',
                           color: '#fff',
                           border: '1px solid rgba(255, 255, 255, 0.15)',
                           transition: 'all 0.2s ease',
                         }}
                       >
                         Compare All Tracks
+                      </button>
+                    )}
+                    {coverLetterFeedback && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('cover_letter')}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          background: activeTab === 'cover_letter' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                          color: '#fff',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        ✉️ Cover Letter
+                      </button>
+                    )}
+                    {interviewQuestions && interviewQuestions.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setActiveTab('interview_questions')}
+                        style={{
+                          padding: '8px 16px',
+                          borderRadius: 'var(--radius-md)',
+                          fontSize: '0.9rem',
+                          fontWeight: '600',
+                          cursor: 'pointer',
+                          background: activeTab === 'interview_questions' ? 'var(--color-primary, #6366f1)' : 'rgba(255, 255, 255, 0.05)',
+                          color: '#fff',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        💬 Interview Prep
                       </button>
                     )}
                   </div>
@@ -1602,6 +2010,10 @@ function App() {
                         setActiveTab('detailed')
                       }}
                     />
+                  ) : activeTab === 'cover_letter' && coverLetterFeedback ? (
+                    <CoverLetterFeedbackPanel feedback={coverLetterFeedback} />
+                  ) : activeTab === 'interview_questions' && interviewQuestions && interviewQuestions.length > 0 ? (
+                    <InterviewQuestionsPanel questions={interviewQuestions} />
                   ) : (
                     <>
                       {/* Skills Section */}
@@ -1689,7 +2101,12 @@ function App() {
                                 }}
                               >
                                 {matchedSkills.map((s, i) => (
-                                  <SkillChip key={i} skill={s} type="matched" targetRole={targetRole} />
+                                  <SkillChip
+                                    key={i}
+                                    skill={s}
+                                    type="matched"
+                                    targetRole={targetRole}
+                                  />
                                 ))}
                               </div>
                             )}
@@ -1728,7 +2145,11 @@ function App() {
                                   type="button"
                                   className={`app-btn app-btn--accent${copied ? ' is-success' : ''}`}
                                   onClick={copySuggestionsToClipboard}
-                                  style={{ minHeight: '44px', padding: '8px 16px', fontSize: '13px' }}
+                                  style={{
+                                    minHeight: '44px',
+                                    padding: '8px 16px',
+                                    fontSize: '13px',
+                                  }}
                                 >
                                   {copied ? '✅ Copied!' : '📋 Copy All'}
                                 </button>
@@ -1786,15 +2207,79 @@ function App() {
                                         color: 'var(--body-text)',
                                         textAlign: 'left',
                                         cursor: 'pointer',
+                                        borderBottom: '1px solid var(--surface-border)',
                                       }}
                                     >
                                       Export CSV
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const plan = generateActionPlan({
+                                          score: score || 0,
+                                          targetRole,
+                                          suggestions,
+                                          missingSkills,
+                                          readabilityLabel,
+                                          coverLetterFeedback,
+                                          fileName: activeFileName,
+                                        })
+                                        exportActionPlanMarkdown(plan)
+                                        setShowExportDropdown(false)
+                                      }}
+                                      style={{
+                                        padding: '8px 12px',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: 'var(--body-text)',
+                                        textAlign: 'left',
+                                        cursor: 'pointer',
+                                        borderBottom: '1px solid var(--surface-border)',
+                                      }}
+                                    >
+                                      Action Plan (.md)
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        const plan = generateActionPlan({
+                                          score: score || 0,
+                                          targetRole,
+                                          suggestions,
+                                          missingSkills,
+                                          readabilityLabel,
+                                          coverLetterFeedback,
+                                          fileName: activeFileName,
+                                        })
+                                        exportActionPlanPdf(plan)
+                                        setShowExportDropdown(false)
+                                      }}
+                                      style={{
+                                        padding: '8px 12px',
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: 'var(--body-text)',
+                                        textAlign: 'left',
+                                        cursor: 'pointer',
+                                      }}
+                                    >
+                                      Action Plan (.pdf)
                                     </button>
                                   </div>
                                 )}
                               </div>
                             </div>
                           </div>
+
+                          <ActionPlanChecklist
+                            score={score || 0}
+                            targetRole={targetRole}
+                            suggestions={suggestions}
+                            missingSkills={missingSkills}
+                            readabilityLabel={readabilityLabel}
+                            coverLetterFeedback={coverLetterFeedback}
+                            fileName={activeFileName}
+                          />
 
                           {suggestions.length === 0 ? (
                             <p

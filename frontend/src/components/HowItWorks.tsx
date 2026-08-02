@@ -2,7 +2,6 @@ import React from 'react'
 import { UploadCloud, Cpu, CheckCircle } from 'lucide-react'
 
 const steps = [
-  
   {
     icon: <UploadCloud size={36} />,
     color: '#eeeff5',

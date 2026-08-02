@@ -78,8 +78,10 @@ export function SkillWordCloud({ skills }: SkillWordCloudProps) {
   // Run d3-cloud layout when dimensions or words change
   useEffect(() => {
     if (wordsData.length === 0 || dimensions.width === 0) {
-      setWords(wordsData)
-      setLayoutReady(true)
+      setTimeout(() => {
+        setWords(wordsData)
+        setLayoutReady(true)
+      }, 0)
       return
     }
 

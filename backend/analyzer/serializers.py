@@ -48,7 +48,8 @@ class ResumeAnalysisSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResumeAnalysis
         fields = ("id", "share_id", "file_name", "score", "skills_found", "suggestions",
-                  "matched_skills", "missing_skills", "target_role", "created_at", "resume_text")
+                  "matched_skills", "missing_skills", "target_role", "created_at", "resume_text",
+                  "cover_letter_text", "cover_letter_feedback", "interview_questions")
 
 
 class VersionComparisonSerializer(serializers.Serializer):

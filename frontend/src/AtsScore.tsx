@@ -6,8 +6,7 @@ interface AtsScoreProps {
   readabilityLabel?: string | null
 }
 
-export const AtsScore: React.FC<AtsScoreProps> = ({ score ,
-  readabilityLabel}) => {
+export const AtsScore: React.FC<AtsScoreProps> = ({ score, readabilityLabel }) => {
   return (
     <div className="score-section mt-4">
       <div
@@ -39,8 +38,7 @@ export const AtsScore: React.FC<AtsScoreProps> = ({ score ,
           }}
         >
           <span>
-            Readability:{' '}
-            <strong style={{ textTransform: 'capitalize' }}>{readabilityLabel}</strong>
+            Readability: <strong style={{ textTransform: 'capitalize' }}>{readabilityLabel}</strong>
           </span>
           <InfoTooltip content="Based on sentence length and word complexity (Flesch-Kincaid formula) — easier text is quicker for recruiters to scan." />
         </div>

@@ -18,6 +18,14 @@ export default defineConfig({
       'Referrer-Policy': 'strict-origin-when-cross-origin',
     },
   },
+  build: {
+    rollupOptions: {
+      external: ['html2canvas'],
+    },
+    rolldownOptions: {
+      external: ['html2canvas'],
+    },
+  },
   // @ts-expect-error vitest options
   test: {
     globals: true,

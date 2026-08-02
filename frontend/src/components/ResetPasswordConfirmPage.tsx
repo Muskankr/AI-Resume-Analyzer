@@ -4,7 +4,6 @@ import axios from 'axios'
 import { Lock, Loader2, CheckCircle } from 'lucide-react'
 
 export const ResetPasswordConfirmPage: React.FC = () => {
- 
   const { uid, token } = useParams<{ uid: string; token: string }>()
   const navigate = useNavigate()
 
@@ -14,7 +13,6 @@ export const ResetPasswordConfirmPage: React.FC = () => {
   const [success, setSuccess] = useState('')
   const [loading, setLoading] = useState(false)
 
-  
   const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,13 +37,12 @@ export const ResetPasswordConfirmPage: React.FC = () => {
         token,
         new_password: password,
       })
-      
+
       setSuccess('Password reset successful! Redirecting...')
-      
+
       setTimeout(() => {
         navigate('/')
       }, 3000)
-      
     } catch (err: unknown) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.error || 'Invalid or expired reset token.')
@@ -58,12 +55,21 @@ export const ResetPasswordConfirmPage: React.FC = () => {
   }
 
   return (
-    <div className="auth-overlay" style={{ position: 'fixed', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+    <div
+      className="auth-overlay"
+      style={{
+        position: 'fixed',
+        inset: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <div className="auth-modal" style={{ cursor: 'default' }}>
         <h3>
           <Lock size={16} /> Set New Password
         </h3>
-        
+
         {success ? (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
             <CheckCircle color="#4ade80" size={48} style={{ margin: '0 auto 16px' }} />
@@ -80,7 +86,7 @@ export const ResetPasswordConfirmPage: React.FC = () => {
               required
               autoFocus
             />
-            
+
             <input
               className="auth-input"
               type="password"
@@ -89,9 +95,9 @@ export const ResetPasswordConfirmPage: React.FC = () => {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
-            
+
             {error && <p className="auth-error">{error}</p>}
-            
+
             <button className="auth-submit-btn" type="submit" disabled={loading}>
               {loading ? (
                 <>
