@@ -55,7 +55,7 @@ function highlightSkills(text: string, skills: string[]): React.ReactNode[] {
   )
 }
 
-/** Rows per request from `/api/history/`. */
+/** Rows per request from `/api/v1/history/`. */
 const HISTORY_PAGE_SIZE = 20
 
 interface HistoryRow {
@@ -76,7 +76,7 @@ interface HistoryPage {
   results: HistoryRow[]
 }
 
-/** `/api/history/` answers with a bare array, or an envelope when paginated. */
+/** `/api/v1/history/` answers with a bare array, or an envelope when paginated. */
 function historyRowsOf(payload: HistoryRow[] | HistoryPage): HistoryRow[] {
   return Array.isArray(payload) ? payload : (payload?.results ?? [])
 }
