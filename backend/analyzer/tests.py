@@ -617,7 +617,11 @@ class CaptchaProtectionTests(TestCase):
         from rest_framework import status
         resp = self.client.post("/api/auth/signup/", {"username": "newbot", "password": "password123"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("email", resp.data)
+        # Was asserting on "email", a field SignupSerializer does not have, so
+        # this test failed on main whatever the CAPTCHA did. The rejection it is
+        # actually describing is the missing challenge.
+        self.assertIn("captcha_token", resp.data)
+        self.assertFalse(User.objects.filter(username="newbot").exists())
 
 
 class ContactUsTests(TestCase):

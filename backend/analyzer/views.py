@@ -21,6 +21,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from rest_framework.throttling import SimpleRateThrottle
+from rest_framework_simplejwt.tokens import RefreshToken
 
 from .comparison import compare_versions
 from .models import ResumeAnalysis, UserProfile
@@ -54,19 +55,41 @@ class UploadRateThrottle(SimpleRateThrottle):
         }
 
 
-def verify_captcha_token(token_string):
+from .captcha import issue_challenge, verify_from_request_data
+
+#: One message for every way a CAPTCHA can fail — forged, expired, replayed or
+#: simply wrong. Saying which would tell a script what to change.
+CAPTCHA_FAILED_MESSAGE = (
+    "CAPTCHA verification failed. Please complete the security challenge."
+)
+
+
+def verify_captcha_token(data, consume=True):
+    """Return ``True`` when the request body carries a solved challenge.
+
+    This used to take the token alone and accept any string beginning with
+    ``CAP-VERIFIED-``, which the browser generated for itself — so it accepted
+    forgeries by design. It now takes the whole request body, because verifying
+    a CAPTCHA needs the answer as well as the token; the real work lives in
+    :mod:`analyzer.captcha`.
+
+    Pass ``consume=False`` to check a challenge without spending it, for
+    callers that need to gate on it before deciding whether to act.
     """
-    Verifies server-side CAPTCHA challenge token.
-    Valid token formats: 'CAP-VERIFIED-<timestamp>-<hash>' or test token.
+    return verify_from_request_data(data, consume=consume)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def captcha_challenge_view(request):
+    """Hand out a fresh challenge.
+
+    The expected answer never leaves the server in readable form — it travels
+    inside the signed token, which the client cannot alter without breaking the
+    signature.
     """
-    if not token_string or not isinstance(token_string, str):
-        return False
-    token = token_string.strip()
-    if token.startswith("CAP-VERIFIED-") and len(token) >= 20:
-        return True
-    if token in ("PASSED_CAPTCHA_TOKEN_FOR_TESTING", "test-captcha-token"):
-        return True
-    return False
+    question, token = issue_challenge()
+    return Response({"question": question, "captcha_token": token})
 
 
 from .file_validation import (
@@ -104,23 +127,49 @@ def validate_uploaded_file(f, formats=RESUME_FORMATS, field_label="resume"):
 @api_view(["POST"])
 @permission_classes([AllowAny])
 def signup(request):
-    captcha_token = request.data.get("captcha_token") or request.data.get("captcha")
-    if not verify_captcha_token(captcha_token):
+    # Checked in three steps on purpose.
+    #
+    # The CAPTCHA is verified first, but *without* spending it. Validating the
+    # account details first instead would let anyone probe for taken usernames
+    # without ever solving a puzzle — the reply says "username already exists"
+    # rather than "CAPTCHA failed".
+    #
+    # It is only consumed once the details are known good, so a typo or a taken
+    # username costs the user a retry rather than a fresh puzzle.
+    if not verify_captcha_token(request.data, consume=False):
         return Response(
-            {"captcha_token": ["CAPTCHA verification failed. Please complete the security challenge."]},
+            {"captcha_token": [CAPTCHA_FAILED_MESSAGE]},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     serializer = SignupSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    if serializer.is_valid():
-        serializer.save()
+    # Spend it. Between the check above and here nothing has been written, so a
+    # token that loses the race simply fails this second call.
+    if not verify_captcha_token(request.data):
         return Response(
-            {"detail": "Account created successfully."},
-            status=status.HTTP_201_CREATED,
+            {"captcha_token": [CAPTCHA_FAILED_MESSAGE]},
+            status=status.HTTP_400_BAD_REQUEST,
         )
 
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    user = serializer.save()
+
+    # Tokens are returned here so the client does not have to immediately call
+    # the login endpoint with the same CAPTCHA token. Challenges are single-use
+    # now, so that second call would legitimately be rejected — and asking
+    # someone to solve two puzzles to create one account is not a real option.
+    refresh = RefreshToken.for_user(user)
+
+    return Response(
+        {
+            "detail": "Account created successfully.",
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+        },
+        status=status.HTTP_201_CREATED,
+    )
 
 
 @api_view(["POST"])

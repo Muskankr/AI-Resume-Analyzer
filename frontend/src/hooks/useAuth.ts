@@ -41,15 +41,38 @@ export function useAuth() {
     }
   }
 
-  const signup = useCallback(async (username: string, password: string, captchaToken?: string) => {
-    await axios.post(`${BACKEND}/api/auth/signup/`, { username, password, captcha_token: captchaToken })
-    const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password, captcha_token: captchaToken })
-    persist({ username, token: res.data.access, avatarUrl: res.data.avatar_url }, true)
-  }, [])
+  const signup = useCallback(
+    async (username: string, password: string, captchaToken?: string, captchaAnswer?: string) => {
+      // Signup now returns the token pair itself. It used to create the
+      // account and then immediately call /auth/login/ with the same CAPTCHA
+      // token -- which no longer works, because challenges are single-use, and
+      // making someone solve two puzzles to create one account is not an
+      // option. One round trip less, too.
+      const res = await axios.post(`${BACKEND}/api/auth/signup/`, {
+        username,
+        password,
+        captcha_token: captchaToken,
+        captcha_answer: captchaAnswer,
+      })
+      persist({ username, token: res.data.access }, true)
+    },
+    []
+  )
 
   const login = useCallback(
-    async (username: string, password: string, rememberMe: boolean = true, captchaToken?: string) => {
-      const res = await axios.post(`${BACKEND}/api/auth/login/`, { username, password, captcha_token: captchaToken })
+    async (
+      username: string,
+      password: string,
+      rememberMe: boolean = true,
+      captchaToken?: string,
+      captchaAnswer?: string
+    ) => {
+      const res = await axios.post(`${BACKEND}/api/auth/login/`, {
+        username,
+        password,
+        captcha_token: captchaToken,
+        captcha_answer: captchaAnswer,
+      })
       persist({ username, token: res.data.access, avatarUrl: res.data.avatar_url }, rememberMe)
     },
     []
