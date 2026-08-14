@@ -14,3 +14,19 @@
  if __name__ == "__main__":
 +    run_visual_regression_tests()
      main()
+
++--- a/apps/cli/main.py
++@@ -10,6 +10,7 @@
++ import click
++ from .commands import register_commands
++ 
+++from .utils.visual_regression_test import run_visual_regression_tests
++ 
++ def create_cli_app():
++     app = click.Group()
++@@ -20,4 +21,5 @@ def create_cli_app():
++     register_commands(app)
++ 
++     return app
+++
+++run_visual_regression_tests()
