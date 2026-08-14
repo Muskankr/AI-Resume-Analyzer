@@ -33,6 +33,7 @@ interface AnalysisResult {
   matched_skills?: string[]
   missing_skills?: string[]
   resume_text?: string
+  interview_questions?: string[]
 }
 
 type Theme = 'light' | 'dark'
