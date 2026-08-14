@@ -4,8 +4,19 @@ import axios from 'axios'
 import { CaptchaChallenge } from './components/CaptchaChallenge'
 
 interface AuthModalProps {
-  onSignup: (username: string, password: string, captchaToken?: string) => Promise<void>
-  onLogin: (username: string, password: string, rememberMe: boolean, captchaToken?: string) => Promise<void>
+  onSignup: (
+    username: string,
+    password: string,
+    captchaToken?: string,
+    captchaAnswer?: string
+  ) => Promise<void>
+  onLogin: (
+    username: string,
+    password: string,
+    rememberMe: boolean,
+    captchaToken?: string,
+    captchaAnswer?: string
+  ) => Promise<void>
   onClose: () => void
 }
 
@@ -15,6 +26,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [captchaToken, setCaptchaToken] = useState('')
+  const [captchaAnswer, setCaptchaAnswer] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -32,7 +44,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
     e.preventDefault()
     setError('')
 
-    if (mode !== 'forgot_password' && !captchaToken) {
+    // Both halves are required: the token is the server's signed challenge and
+    // the answer is what gets checked against it.
+    if (mode !== 'forgot_password' && (!captchaToken || !captchaAnswer)) {
       setError('Please complete the security check before submitting.')
       return
     }
@@ -40,10 +54,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
     setLoading(true)
     try {
       if (mode === 'signup') {
-        await onSignup(username, password, captchaToken)
+        await onSignup(username, password, captchaToken, captchaAnswer)
         onClose()
       } else if (mode === 'login') {
-        await onLogin(username, password, rememberMe, captchaToken)
+        await onLogin(username, password, rememberMe, captchaToken, captchaAnswer)
         onClose()
       } else if (mode === 'forgot_password') {
         await axios.post('http://localhost:8000/api/password-reset/', { username: username })
@@ -179,7 +193,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
             </div>
           )}
           {mode !== 'forgot_password' && (
-            <CaptchaChallenge onVerify={(token) => setCaptchaToken(token)} />
+            <CaptchaChallenge
+              onChange={(token, answer) => {
+                setCaptchaToken(token)
+                setCaptchaAnswer(answer)
+              }}
+            />
           )}
           <div style={{ textAlign: 'right', marginBottom: '16px' }}>
             <button

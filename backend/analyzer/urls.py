@@ -27,6 +27,7 @@ from .views import (
     task_status,
     mock_interview_view,
     export_user_data,
+    captcha_challenge_view,
 )
 
 urlpatterns = [
@@ -41,6 +42,8 @@ urlpatterns = [
     path("skills-leaderboard/", skills_leaderboard_view),
     path("unsubscribe/", unsubscribe_digest_view),
     path("account/export/", export_user_data, name="export_user_data"),
+
+    path("captcha/", captcha_challenge_view),
 
     path("auth/signup/", signup),
     path("auth/login/", CustomTokenObtainPairView.as_view()),

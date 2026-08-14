@@ -1,45 +1,74 @@
-import React, { useState, useEffect } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
+import axios from 'axios'
+
+const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
 
 interface CaptchaChallengeProps {
-  onVerify: (captchaToken: string) => void
+  /**
+   * Called with the signed challenge token and the answer the user typed.
+   * Both are needed — the server checks the answer against the token, so
+   * neither half proves anything on its own.
+   *
+   * Called with empty strings whenever a new challenge is being fetched, so a
+   * stale pair can never be left sitting in the parent's state.
+   */
+  onChange: (captchaToken: string, captchaAnswer: string) => void
   onReset?: () => void
 }
 
-export const CaptchaChallenge: React.FC<CaptchaChallengeProps> = ({ onVerify }) => {
-  const [num1, setNum1] = useState(0)
-  const [num2, setNum2] = useState(0)
-  const [userAnswer, setUserAnswer] = useState('')
-  const [verified, setVerified] = useState(false)
-  const [error, setError] = useState(false)
+/**
+ * Arithmetic CAPTCHA whose question comes from the backend.
+ *
+ * The previous version generated the sum in the browser and, on a correct
+ * answer, minted its own `CAP-VERIFIED-...` token that the server accepted at
+ * face value — so the check could be skipped entirely by posting that string
+ * directly. The question and the expected answer now both live server-side,
+ * and the answer is sent back to be verified. This component no longer decides
+ * whether anyone passed.
+ */
+export const CaptchaChallenge: React.FC<CaptchaChallengeProps> = ({ onChange, onReset }) => {
+  const [question, setQuestion] = useState('')
+  const [token, setToken] = useState('')
+  const [answer, setAnswer] = useState('')
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState(false)
 
-  const generateChallenge = () => {
-    const a = Math.floor(Math.random() * 8) + 1
-    const b = Math.floor(Math.random() * 8) + 1
-    setNum1(a)
-    setNum2(b)
-    setUserAnswer('')
-    setVerified(false)
-    setError(false)
-  }
+  const loadChallenge = useCallback(async () => {
+    setLoading(true)
+    setLoadError(false)
+    setAnswer('')
+    // Clear the parent's copy up front: the old pair is about to be replaced
+    // and must not remain submittable in the meantime.
+    onChange('', '')
+
+    try {
+      const res = await axios.get(`${BACKEND}/api/captcha/`)
+      setQuestion(res.data.question)
+      setToken(res.data.captcha_token)
+    } catch {
+      setLoadError(true)
+      setQuestion('')
+      setToken('')
+    } finally {
+      setLoading(false)
+    }
+  }, [onChange])
 
   useEffect(() => {
-    generateChallenge()
-  }, [])
+    loadChallenge()
+  }, [loadChallenge])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value
-    setUserAnswer(val)
-    setError(false)
+    const value = e.target.value
+    setAnswer(value)
+    // Deliberately no client-side "is it correct" check — that is the server's
+    // job now, and repeating it here would just hand out the answer.
+    onChange(token, value.trim())
+  }
 
-    if (parseInt(val.trim(), 10) === num1 + num2) {
-      setVerified(true)
-      const now = Date.now()
-      const randStr = Math.random().toString(36).substring(2, 10)
-      const token = `CAP-VERIFIED-${now}-${randStr}`
-      onVerify(token)
-    } else {
-      setVerified(false)
-    }
+  const handleRefresh = () => {
+    onReset?.()
+    loadChallenge()
   }
 
   return (
@@ -49,8 +78,8 @@ export const CaptchaChallenge: React.FC<CaptchaChallengeProps> = ({ onVerify }) 
         margin: '16px 0',
         padding: '14px 16px',
         borderRadius: '10px',
-        background: verified ? 'rgba(34, 197, 94, 0.08)' : 'rgba(255, 255, 255, 0.04)',
-        border: `1px solid ${verified ? 'rgba(34, 197, 94, 0.4)' : 'rgba(255, 255, 255, 0.12)'}`,
+        background: 'rgba(255, 255, 255, 0.04)',
+        border: '1px solid rgba(255, 255, 255, 0.12)',
         transition: 'all 0.25s ease',
       }}
     >
@@ -84,35 +113,23 @@ export const CaptchaChallenge: React.FC<CaptchaChallengeProps> = ({ onVerify }) 
               borderRadius: '6px',
             }}
           >
-            {num1} + {num2} = ?
+            {loading ? '…' : loadError ? '—' : `${question} = ?`}
           </span>
         </div>
 
-        {verified ? (
-          <span
-            style={{
-              color: '#22c55e',
-              fontWeight: 600,
-              fontSize: '0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
-          >
-            ✓ Verified
-          </span>
-        ) : (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <input
             type="number"
-            value={userAnswer}
+            value={answer}
             onChange={handleInputChange}
             placeholder="Answer"
             aria-label="Security check answer"
+            disabled={loading || loadError}
             style={{
               width: '70px',
               padding: '6px 10px',
               borderRadius: '6px',
-              border: `1px solid ${error ? '#ef4444' : 'rgba(255,255,255,0.2)'}`,
+              border: '1px solid rgba(255,255,255,0.2)',
               background: 'rgba(15, 23, 42, 0.6)',
               color: '#fff',
               fontSize: '0.9rem',
@@ -120,14 +137,31 @@ export const CaptchaChallenge: React.FC<CaptchaChallengeProps> = ({ onVerify }) 
               outline: 'none',
             }}
           />
-        )}
+          <button
+            type="button"
+            onClick={handleRefresh}
+            aria-label="Get a new security question"
+            title="Get a new question"
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#94a3b8',
+              cursor: 'pointer',
+              fontSize: '1rem',
+              padding: '2px 4px',
+              lineHeight: 1,
+            }}
+          >
+            ↻
+          </button>
+        </div>
       </div>
 
-      {!verified && (
-        <p style={{ fontSize: '0.78rem', color: '#94a3b8', margin: '6px 0 0 0', textAlign: 'left' }}>
-          Solve the quick puzzle above to verify you are human.
-        </p>
-      )}
+      <p style={{ fontSize: '0.78rem', color: '#94a3b8', margin: '6px 0 0 0', textAlign: 'left' }}>
+        {loadError
+          ? 'Could not load the security check. Use ↻ to try again.'
+          : 'Solve the quick puzzle above to verify you are human.'}
+      </p>
     </div>
   )
 }
