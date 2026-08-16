@@ -92,7 +92,7 @@ describe('ProfilePage', () => {
         expect(digestToggle).toBeChecked()
 
         expect(mockedAxiosGet).toHaveBeenCalledWith(
-            expect.stringContaining('/api/profile/'),
+            expect.stringContaining('/api/v1/profile/'),
             {
                 headers: {
                     Authorization: 'Bearer fake-token',
@@ -191,7 +191,7 @@ describe('ProfilePage', () => {
         })
 
         expect(mockedAxiosPut).toHaveBeenCalledWith(
-            expect.stringContaining('/api/profile/'),
+            expect.stringContaining('/api/v1/profile/'),
             {
                 username: 'updateduser',
                 email: 'updated@example.com',

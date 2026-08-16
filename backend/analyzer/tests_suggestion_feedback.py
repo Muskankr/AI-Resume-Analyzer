@@ -91,11 +91,11 @@ class SuggestionFeedbackEndpointTests(TestCase):
         self.client.force_authenticate(user=self.user)
 
     def _post(self, **payload):
-        return self.client.post("/api/suggestion-feedback/", payload, format="json")
+        return self.client.post("/api/v1/suggestion-feedback/", payload, format="json")
 
     def test_requires_authentication(self):
         response = APIClient().post(
-            "/api/suggestion-feedback/",
+            "/api/v1/suggestion-feedback/",
             {"analysis_id": self.analysis.pk, "suggestion_text": SUGGESTION, "vote": "up"},
             format="json",
         )
@@ -181,7 +181,7 @@ class SuggestionFeedbackEndpointTests(TestCase):
         )
 
         response = self.client.get(
-            f"/api/suggestion-feedback/?analysis_id={self.analysis.pk}"
+            f"/api/v1/suggestion-feedback/?analysis_id={self.analysis.pk}"
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -195,14 +195,14 @@ class SuggestionFeedbackEndpointTests(TestCase):
             user=stranger, analysis=theirs, suggestion_text=SUGGESTION, vote="up"
         )
 
-        response = self.client.get(f"/api/suggestion-feedback/?analysis_id={theirs.pk}")
+        response = self.client.get(f"/api/v1/suggestion-feedback/?analysis_id={theirs.pk}")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_withdraws_a_vote(self):
         self._post(analysis_id=self.analysis.pk, suggestion_text=SUGGESTION, vote="up")
 
         response = self.client.delete(
-            "/api/suggestion-feedback/",
+            "/api/v1/suggestion-feedback/",
             {"analysis_id": self.analysis.pk, "suggestion_text": SUGGESTION},
             format="json",
         )
@@ -213,7 +213,7 @@ class SuggestionFeedbackEndpointTests(TestCase):
 
     def test_delete_without_a_stored_vote_is_not_an_error(self):
         response = self.client.delete(
-            "/api/suggestion-feedback/",
+            "/api/v1/suggestion-feedback/",
             {"analysis_id": self.analysis.pk, "suggestion_text": SUGGESTION},
             format="json",
         )

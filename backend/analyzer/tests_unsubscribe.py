@@ -99,7 +99,7 @@ class UnsubscribeEndpointTests(TestCase):
 
     def test_valid_token_unsubscribes(self):
         token = make_unsubscribe_token(self.user)
-        response = self.client.get(f"/api/unsubscribe/?token={token}")
+        response = self.client.get(f"/api/v1/unsubscribe/?token={token}")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["unsubscribed_count"], 1)
@@ -108,7 +108,7 @@ class UnsubscribeEndpointTests(TestCase):
 
     def test_token_works_by_post_as_well(self):
         response = self.client.post(
-            "/api/unsubscribe/", {"token": make_unsubscribe_token(self.user)}
+            "/api/v1/unsubscribe/", {"token": make_unsubscribe_token(self.user)}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.profile.refresh_from_db()
@@ -116,14 +116,14 @@ class UnsubscribeEndpointTests(TestCase):
 
     def test_bare_email_no_longer_unsubscribes_anyone(self):
         """The reported problem: no proof of ownership was required."""
-        response = self.client.get("/api/unsubscribe/?email=victim@example.com")
+        response = self.client.get("/api/v1/unsubscribe/?email=victim@example.com")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.other_profile.refresh_from_db()
         self.assertTrue(self.other_profile.weekly_digest_opt_in)
 
     def test_bare_username_no_longer_unsubscribes_anyone(self):
-        response = self.client.post("/api/unsubscribe/", {"username": "victim"})
+        response = self.client.post("/api/v1/unsubscribe/", {"username": "victim"})
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.other_profile.refresh_from_db()
@@ -131,21 +131,21 @@ class UnsubscribeEndpointTests(TestCase):
 
     def test_one_users_token_cannot_unsubscribe_another(self):
         token = make_unsubscribe_token(self.user)
-        self.client.get(f"/api/unsubscribe/?token={token}")
+        self.client.get(f"/api/v1/unsubscribe/?token={token}")
 
         self.other_profile.refresh_from_db()
         self.assertTrue(self.other_profile.weekly_digest_opt_in)
 
     def test_response_is_identical_for_known_and_unknown_addresses(self):
         """No status-code oracle for whether an account exists."""
-        known = self.client.get("/api/unsubscribe/?email=digest@example.com")
-        unknown = self.client.get("/api/unsubscribe/?email=nobody-here@example.com")
+        known = self.client.get("/api/v1/unsubscribe/?email=digest@example.com")
+        unknown = self.client.get("/api/v1/unsubscribe/?email=nobody-here@example.com")
 
         self.assertEqual(known.status_code, unknown.status_code)
         self.assertEqual(known.data, unknown.data)
 
     def test_invalid_token_is_rejected_without_saying_why(self):
-        response = self.client.get("/api/unsubscribe/?token=clearly-not-valid")
+        response = self.client.get("/api/v1/unsubscribe/?token=clearly-not-valid")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("no longer valid", response.data["error"])
@@ -153,7 +153,7 @@ class UnsubscribeEndpointTests(TestCase):
     def test_expired_token_reads_the_same_as_an_invalid_one(self):
         with override_settings(UNSUBSCRIBE_TOKEN_MAX_AGE_DAYS=0):
             response = self.client.get(
-                f"/api/unsubscribe/?token={make_unsubscribe_token(self.user)}"
+                f"/api/v1/unsubscribe/?token={make_unsubscribe_token(self.user)}"
             )
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -162,7 +162,7 @@ class UnsubscribeEndpointTests(TestCase):
 
     def test_authenticated_user_can_unsubscribe_without_a_token(self):
         self.client.force_authenticate(user=self.user)
-        response = self.client.post("/api/unsubscribe/", {})
+        response = self.client.post("/api/v1/unsubscribe/", {})
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.profile.refresh_from_db()
@@ -170,22 +170,22 @@ class UnsubscribeEndpointTests(TestCase):
 
     def test_authenticated_user_cannot_unsubscribe_someone_else(self):
         self.client.force_authenticate(user=self.user)
-        self.client.post("/api/unsubscribe/", {"email": "victim@example.com"})
+        self.client.post("/api/v1/unsubscribe/", {"email": "victim@example.com"})
 
         self.other_profile.refresh_from_db()
         self.assertTrue(self.other_profile.weekly_digest_opt_in)
 
     def test_unsubscribing_twice_still_reads_as_success(self):
         token = make_unsubscribe_token(self.user)
-        self.client.get(f"/api/unsubscribe/?token={token}")
-        second = self.client.get(f"/api/unsubscribe/?token={token}")
+        self.client.get(f"/api/v1/unsubscribe/?token={token}")
+        second = self.client.get(f"/api/v1/unsubscribe/?token={token}")
 
         self.assertEqual(second.status_code, status.HTTP_200_OK)
         self.assertTrue(second.data["already_unsubscribed"])
         self.assertEqual(second.data["unsubscribed_count"], 0)
 
     def test_missing_token_explains_what_to_do(self):
-        response = self.client.get("/api/unsubscribe/")
+        response = self.client.get("/api/v1/unsubscribe/")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("missing its token", response.data["error"])
@@ -217,7 +217,7 @@ class WeeklyDigestLinkTests(TestCase):
         body = mail.outbox[0].body
         token = body.split("/unsubscribe?token=")[1].split()[0]
 
-        response = APIClient().get(f"/api/unsubscribe/?token={token}")
+        response = APIClient().get(f"/api/v1/unsubscribe/?token={token}")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         profile = UserProfile.objects.get(user=self.user)

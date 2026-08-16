@@ -171,7 +171,7 @@ class UploadEndpointValidationTests(TestCase):
     def _post(self, **payload):
         with patch("analyzer.views.analyze_resume_task.delay") as mock_delay:
             mock_delay.return_value = type("Task", (), {"id": "test-task-id"})()
-            response = self.client.post("/api/upload/", payload)
+            response = self.client.post("/api/v1/upload/", payload)
         return response
 
     def test_pdf_resume_is_accepted(self):
@@ -236,7 +236,7 @@ class ComparisonUploadValidationTests(TestCase):
 
     def test_compare_uploads_rejects_an_invalid_second_file(self):
         response = self.client.post(
-            "/api/compare-uploads/",
+            "/api/v1/compare-uploads/",
             {
                 "file1": txt_upload("v1.txt"),
                 "file2": SimpleUploadedFile(
@@ -250,7 +250,7 @@ class ComparisonUploadValidationTests(TestCase):
 
     def test_compare_uploads_accepts_two_valid_files(self):
         response = self.client.post(
-            "/api/compare-uploads/",
+            "/api/v1/compare-uploads/",
             {
                 "file1": txt_upload("v1.txt", b"Python developer with Django experience."),
                 "file2": txt_upload("v2.txt", b"Python developer with Django and React experience."),
@@ -262,7 +262,7 @@ class ComparisonUploadValidationTests(TestCase):
 
     def test_bulk_jd_comparison_rejects_an_invalid_resume(self):
         response = self.client.post(
-            "/api/compare-bulk-jds/",
+            "/api/v1/compare-bulk-jds/",
             {
                 "file": SimpleUploadedFile(
                     "resume.exe", b"MZ\x90\x00", content_type="application/octet-stream"

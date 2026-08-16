@@ -253,13 +253,13 @@ class CompareVersionsAPITests(TestCase):
     def test_compare_requires_auth(self):
         anon_client = APIClient()
         resp = anon_client.get(
-            "/api/compare/", {"older": self.older.id, "newer": self.newer.id}
+            "/api/v1/compare/", {"older": self.older.id, "newer": self.newer.id}
         )
         self.assertEqual(resp.status_code, 401)
 
     def test_compare_returns_diff(self):
         resp = self.client.get(
-            "/api/compare/", {"older": self.older.id, "newer": self.newer.id}
+            "/api/v1/compare/", {"older": self.older.id, "newer": self.newer.id}
         )
         self.assertEqual(resp.status_code, 200)
         self.assertEqual(resp.data["score_delta"], 25)
@@ -267,19 +267,19 @@ class CompareVersionsAPITests(TestCase):
         self.assertTrue(len(resp.data["insights"]) > 0)
 
     def test_compare_rejects_missing_params(self):
-        resp = self.client.get("/api/compare/", {"older": self.older.id})
+        resp = self.client.get("/api/v1/compare/", {"older": self.older.id})
         self.assertEqual(resp.status_code, 400)
 
     def test_compare_rejects_same_id(self):
         resp = self.client.get(
-            "/api/compare/", {"older": self.older.id, "newer": self.older.id}
+            "/api/v1/compare/", {"older": self.older.id, "newer": self.older.id}
         )
         self.assertEqual(resp.status_code, 400)
 
     def test_compare_blocks_other_users_analyses(self):
         foreign = _make_analysis(self.other_user, score=90)
         resp = self.client.get(
-            "/api/compare/", {"older": self.older.id, "newer": foreign.id}
+            "/api/v1/compare/", {"older": self.older.id, "newer": foreign.id}
         )
         self.assertEqual(resp.status_code, 404)
 
@@ -312,7 +312,7 @@ class SecurityHeadersTests(TestCase):
 
     def test_security_headers_are_present_on_api_responses(self):
         # Trigger an API request
-        resp = self.client.get("/api/compare/")
+        resp = self.client.get("/api/v1/compare/")
         
         # Check that Content-Security-Policy is present and configured for APIs
         self.assertIn("Content-Security-Policy", resp)
@@ -447,7 +447,7 @@ class JdAnalysisTests(TestCase):
         from rest_framework import status
         
         # Test empty input error
-        resp = self.client.post("/api/analyze-jd/", {"job_description": ""})
+        resp = self.client.post("/api/v1/analyze-jd/", {"job_description": ""})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", resp.data)
         
@@ -457,7 +457,7 @@ class JdAnalysisTests(TestCase):
             "JavaScript, HTML, and CSS. Working with teams to deliver responsive layouts is essential. "
             "React and TypeScript are strong plusses. The candidate will work in a fast-paced environment."
         )
-        resp = self.client.post("/api/analyze-jd/", {"job_description": jd_text})
+        resp = self.client.post("/api/v1/analyze-jd/", {"job_description": jd_text})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn("keywords", resp.data)
         
@@ -511,7 +511,7 @@ class SkillsLeaderboardTests(TestCase):
             matched_skills=["react", "typescript"],
         )
         jd_text = "Looking for a React developer with strong React experience, TypeScript, and CSS skills."
-        resp = self.client.post("/api/analyze-jd/", {"job_description": jd_text})
+        resp = self.client.post("/api/v1/analyze-jd/", {"job_description": jd_text})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn("keywords", resp.data)
         
@@ -548,7 +548,7 @@ class SkillsLeaderboardTests(TestCase):
             missing_skills=["css"],
         )
         
-        resp = self.client.get("/api/skills-leaderboard/")
+        resp = self.client.get("/api/v1/skills-leaderboard/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         
         self.assertIn("last_updated", resp.data)
@@ -570,13 +570,13 @@ class UserProfileTests(TestCase):
 
     def test_get_profile_requires_auth(self):
         from rest_framework import status
-        resp = self.client.get("/api/profile/")
+        resp = self.client.get("/api/v1/profile/")
         self.assertEqual(resp.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_get_profile_success(self):
         from rest_framework import status
         self.client.force_authenticate(user=self.user)
-        resp = self.client.get("/api/profile/")
+        resp = self.client.get("/api/v1/profile/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data["username"], "testuser")
         self.assertEqual(resp.data["email"], "test@example.com")
@@ -584,7 +584,7 @@ class UserProfileTests(TestCase):
     def test_put_profile_success(self):
         from rest_framework import status
         self.client.force_authenticate(user=self.user)
-        resp = self.client.put("/api/profile/", {"username": "newusername", "email": "newemail@example.com"})
+        resp = self.client.put("/api/v1/profile/", {"username": "newusername", "email": "newemail@example.com"})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data["username"], "newusername")
         self.assertEqual(resp.data["email"], "newemail@example.com")
@@ -596,14 +596,14 @@ class UserProfileTests(TestCase):
     def test_put_profile_duplicate_username(self):
         from rest_framework import status
         self.client.force_authenticate(user=self.user)
-        resp = self.client.put("/api/profile/", {"username": "otheruser", "email": "test@example.com"})
+        resp = self.client.put("/api/v1/profile/", {"username": "otheruser", "email": "test@example.com"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("username", resp.data)
 
     def test_put_profile_duplicate_email(self):
         from rest_framework import status
         self.client.force_authenticate(user=self.user)
-        resp = self.client.put("/api/profile/", {"username": "testuser", "email": "other@example.com"})
+        resp = self.client.put("/api/v1/profile/", {"username": "testuser", "email": "other@example.com"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", resp.data)
 
@@ -615,7 +615,7 @@ class CaptchaProtectionTests(TestCase):
 
     def test_signup_fails_without_captcha_token(self):
         from rest_framework import status
-        resp = self.client.post("/api/auth/signup/", {"username": "newbot", "password": "password123"})
+        resp = self.client.post("/api/v1/auth/signup/", {"username": "newbot", "password": "password123"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", resp.data)
 
@@ -627,14 +627,14 @@ class ContactUsTests(TestCase):
 
     def test_contact_us_validation_error(self):
         from rest_framework import status
-        resp = self.client.post("/api/contact/", {"name": "", "email": "test@example.com", "message": ""})
+        resp = self.client.post("/api/v1/contact/", {"name": "", "email": "test@example.com", "message": ""})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", resp.data)
 
     def test_contact_us_success(self):
         from rest_framework import status
         resp = self.client.post(
-            "/api/contact/",
+            "/api/v1/contact/",
             {
                 "name": "Jane Doe",
                 "email": "jane@example.com",
@@ -657,7 +657,7 @@ class ProfileAvatarTests(TestCase):
         
     def test_login_returns_avatar_url(self):
         from rest_framework import status
-        resp = self.client.post("/api/auth/login/", {"username": "avataruser", "password": "password123"})
+        resp = self.client.post("/api/v1/auth/login/", {"username": "avataruser", "password": "password123"})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn("avatar_url", resp.data)
         self.assertIsNone(resp.data["avatar_url"])
@@ -665,32 +665,32 @@ class ProfileAvatarTests(TestCase):
     def test_upload_and_delete_avatar(self):
         from rest_framework import status
         from django.core.files.uploadedfile import SimpleUploadedFile
-        login_resp = self.client.post("/api/auth/login/", {"username": "avataruser", "password": "password123"})
+        login_resp = self.client.post("/api/v1/auth/login/", {"username": "avataruser", "password": "password123"})
         token = login_resp.data["access"]
         auth_headers = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
         
         txt_file = SimpleUploadedFile("avatar.txt", b"plain text content", content_type="text/plain")
-        resp = self.client.post("/api/profile/avatar/", {"avatar": txt_file}, **auth_headers)
+        resp = self.client.post("/api/v1/profile/avatar/", {"avatar": txt_file}, **auth_headers)
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", resp.data)
         
         large_file = SimpleUploadedFile("avatar.png", b"x" * (2 * 1024 * 1024 + 1), content_type="image/png")
-        resp = self.client.post("/api/profile/avatar/", {"avatar": large_file}, **auth_headers)
+        resp = self.client.post("/api/v1/profile/avatar/", {"avatar": large_file}, **auth_headers)
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         
         valid_img = SimpleUploadedFile("avatar.png", b"fake_png_binary_data", content_type="image/png")
-        resp = self.client.post("/api/profile/avatar/", {"avatar": valid_img}, **auth_headers)
+        resp = self.client.post("/api/v1/profile/avatar/", {"avatar": valid_img}, **auth_headers)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn("avatar_url", resp.data)
         self.assertIsNotNone(resp.data["avatar_url"])
         
-        login_resp = self.client.post("/api/auth/login/", {"username": "avataruser", "password": "password123"})
+        login_resp = self.client.post("/api/v1/auth/login/", {"username": "avataruser", "password": "password123"})
         self.assertIsNotNone(login_resp.data["avatar_url"])
         
-        del_resp = self.client.delete("/api/profile/avatar/", **auth_headers)
+        del_resp = self.client.delete("/api/v1/profile/avatar/", **auth_headers)
         self.assertEqual(del_resp.status_code, status.HTTP_200_OK)
         
-        login_resp = self.client.post("/api/auth/login/", {"username": "avataruser", "password": "password123"})
+        login_resp = self.client.post("/api/v1/auth/login/", {"username": "avataruser", "password": "password123"})
         self.assertIsNone(login_resp.data["avatar_url"])
 
 
@@ -709,7 +709,7 @@ class CompareBulkJDsTests(TestCase):
         ]
         
         resp = self.client.post(
-            "/api/compare-bulk-jds/",
+            "/api/v1/compare-bulk-jds/",
             {
                 "file": txt_file,
                 "job_descriptions": json.dumps(jds)
@@ -738,12 +738,12 @@ class WeeklyDigestTests(TestCase):
         self.client.force_authenticate(user=self.user)
 
         # GET profile - default is False
-        resp = self.client.get("/api/profile/")
+        resp = self.client.get("/api/v1/profile/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertFalse(resp.data["weekly_digest_opt_in"])
 
         # PUT profile - set opt-in True
-        put_resp = self.client.put("/api/profile/", {"username": "digestuser", "email": "digest@example.com", "weekly_digest_opt_in": True})
+        put_resp = self.client.put("/api/v1/profile/", {"username": "digestuser", "email": "digest@example.com", "weekly_digest_opt_in": True})
         self.assertEqual(put_resp.status_code, status.HTTP_200_OK)
         self.assertTrue(put_resp.data["weekly_digest_opt_in"])
 
@@ -760,7 +760,7 @@ class WeeklyDigestTests(TestCase):
         # Unsubscribe with the signed token that digest emails now carry. A
         # bare ?email= param no longer works — see tests_unsubscribe.py.
         token = make_unsubscribe_token(self.user)
-        resp = self.client.get(f"/api/unsubscribe/?token={token}")
+        resp = self.client.get(f"/api/v1/unsubscribe/?token={token}")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data["unsubscribed_count"], 1)
 
@@ -805,7 +805,7 @@ class ExportUserDataTests(TestCase):
         self.profile.save()
 
     def test_export_requires_authentication(self):
-        response = self.client.get("/api/account/export/")
+        response = self.client.get("/api/v1/account/export/")
 
         self.assertEqual(response.status_code, 401)
 
@@ -822,7 +822,7 @@ class ExportUserDataTests(TestCase):
 
         self.client.force_authenticate(user=self.user)
 
-        response = self.client.get("/api/account/export/")
+        response = self.client.get("/api/v1/account/export/")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -882,7 +882,7 @@ class ExportUserDataTests(TestCase):
 
         self.client.force_authenticate(user=self.user)
 
-        response = self.client.get("/api/account/export/")
+        response = self.client.get("/api/v1/account/export/")
 
         self.assertEqual(response.status_code, 200)
 
