@@ -41,11 +41,12 @@ class ResumeAnalysis(models.Model):
 
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    is_verified = models.BooleanField(default=False)
     avatar = models.FileField(upload_to="avatars/", blank=True, null=True)
     weekly_digest_opt_in = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.user.username}'s Profile"
+        return f"{self.user.username}'s Profile (Verified: {self.is_verified})"
 
 
 class KnownDevice(models.Model):
@@ -242,3 +243,4 @@ def invalidate_role_skills_cache(sender, **kwargs):
 @receiver(m2m_changed, sender=Role.skills.through)
 def invalidate_m2m_cache(sender, **kwargs):
     cache.delete("role_skills_dict")
+
