@@ -1,14 +1,22 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, useLocation, Link } from 'react-router-dom'
 import NotFound from './components/NotFound'
 import axios from 'axios'
 import './index.css'
 import { AtsScore } from './AtsScore'
+import {
+  RESUME_ACCEPT_ATTRIBUTE,
+  describeUploadLimits,
+  validateResumeFile,
+} from './utils/fileValidation'
 import { useAnalysisHistory, type AnalysisEntry } from './hooks/useAnalysisHistory'
 import { HistorySidebar } from './HistorySidebar'
 import { useAuth } from './hooks/useAuth'
+import { api } from './api/client'
 import { AuthModal } from './AuthModal'
+import { SuggestionVote, type VoteValue } from './components/SuggestionVote'
 import { Footer } from './Footer'
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import AnalysisSkeleton from './components/AnalysisSkeleton/AnalysisSkeleton'
 import { InfoTooltip } from './components/InfoTooltip'
 import { SkillWordCloud } from './components/SkillWordCloud'
@@ -54,6 +62,7 @@ import { SharedResultView } from './SharedResultView'
 import CookieConsentBanner from './components/CookieConsentBanner'
 import AdminDashboard from './components/AdminDashboard'
 import { ActionPlanChecklist } from './components/ActionPlanChecklist'
+import { ScoreBreakdown, type ScoreBreakdownData } from './components/ScoreBreakdown'
 import {
   exportActionPlanMarkdown,
   exportActionPlanPdf,
@@ -97,9 +106,10 @@ function getInitialTheme(): Theme {
 function highlightSkills(text: string, skills: string[]): React.ReactNode[] {
   if (!text) return []
   if (skills.length === 0) return [text]
-
+  // Sort longest first so multi-word skills (e.g. "machine learning") match before shorter ones
   const sorted = [...skills].sort((a, b) => b.length - a.length)
   const escaped = sorted.map((s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+  // \b works for alphanumeric boundaries; for symbols like c++ we use lookahead/lookbehind
   const pattern = new RegExp(`(?<![\\w])(${escaped.join('|')})(?![\\w])`, 'gi')
   const parts = text.split(pattern)
   const skillSet = new Set(skills.map((s) => s.toLowerCase()))
@@ -113,6 +123,50 @@ function highlightSkills(text: string, skills: string[]): React.ReactNode[] {
       part
     )
   )
+}
+
+/** Rows per request from `/api/history/`. */
+const HISTORY_PAGE_SIZE = 20
+
+interface HistoryRow {
+  id: number
+  file_name: string
+  score: number
+  skills_found: string[]
+  suggestions: string[]
+  matched_skills: string[]
+  missing_skills: string[]
+  target_role: string
+  created_at: string
+}
+
+interface HistoryPage {
+  count: number
+  next: string | null
+  results: HistoryRow[]
+}
+
+/** `/api/history/` answers with a bare array, or an envelope when paginated. */
+function historyRowsOf(payload: HistoryRow[] | HistoryPage): HistoryRow[] {
+  return Array.isArray(payload) ? payload : (payload?.results ?? [])
+}
+
+function nextPageUrl(payload: HistoryRow[] | HistoryPage): string | null {
+  return Array.isArray(payload) ? null : (payload?.next ?? null)
+}
+
+function toAnalysisEntries(payload: HistoryRow[] | HistoryPage): AnalysisEntry[] {
+  return historyRowsOf(payload).map((item) => ({
+    id: String(item.id),
+    timestamp: new Date(item.created_at).getTime(),
+    score: item.score,
+    skills: item.skills_found,
+    suggestions: item.suggestions,
+    matchedSkills: item.matched_skills,
+    missingSkills: item.missing_skills,
+    targetRole: item.target_role,
+    fileName: item.file_name,
+  }))
 }
 
 function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
@@ -131,12 +185,22 @@ interface SuggestionCardProps {
   text: string
   index: number
   backendUrl?: string
+  roastMode?: boolean
+  vote?: VoteValue | null
+  onVote?: (vote: VoteValue | null) => void
+  userLoggedIn?: boolean
 }
 
-const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl = '' }) => {
+const SuggestionCard: React.FC<SuggestionCardProps> = ({
+  text,
+  index,
+  backendUrl = '',
+  roastMode = false,
+  vote = null,
+  onVote,
+  userLoggedIn = false,
+}) => {
   const [copied, setCopied] = React.useState(false)
-  const [voted, setVoted] = React.useState<'up' | 'down' | null>(null)
-  const [isVoting, setIsVoting] = React.useState(false)
 
   const handleCopy = () => {
     navigator.clipboard.writeText(text)
@@ -144,21 +208,15 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
     setTimeout(() => setCopied(false), 2000)
   }
 
-  const handleVote = async (vote: 'up' | 'down') => {
-    if (voted !== null || isVoting) return
-    setIsVoting(true)
-    try {
-      await axios.post(`${backendUrl}/api/suggestion-feedback/`, {
-        suggestion: text,
-        vote,
-        index,
-      })
-      setVoted(vote)
-    } catch (err) {
-      console.error('Failed to send suggestion feedback:', err)
-      setVoted(vote)
-    } finally {
-      setIsVoting(false)
+  let displayText = text
+  if (roastMode) {
+    if (text.startsWith('Add projects or experience with ')) {
+      const skill = text.replace('Add projects or experience with ', '')
+      displayText = `Ghosting recruiters because ${skill} is nowhere to be found? Time to build a project with ${skill}!`
+    } else if (text.startsWith('Quantify bullet: ')) {
+      displayText = `Where are the numbers? '${text.replace('Quantify bullet: ', '')}' needs real impact stats, not vague fairy tales!`
+    } else {
+      displayText = `Spill the tea: ${text}`
     }
   }
 
@@ -166,29 +224,20 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
     <div className="suggestion-card">
       <div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-          <span style={{ fontSize: '16px' }}>💡</span>
+          <span style={{ fontSize: '16px' }}>{roastMode ? '🔥' : '💡'}</span>
           <span
             style={{
               fontSize: '12px',
               fontWeight: '700',
-              color: 'var(--color-primary)',
+              color: roastMode ? '#ef4444' : 'var(--color-primary)',
               textTransform: 'uppercase',
               letterSpacing: '0.5px',
             }}
           >
-            Recommendation #{index + 1}
+            {roastMode ? `Roast #${index + 1}` : `Recommendation #${index + 1}`}
           </span>
         </div>
-        <p
-          style={{
-            margin: 0,
-            fontSize: 'var(--font-size-sm)',
-            color: 'var(--body-text)',
-            lineHeight: '1.6',
-          }}
-        >
-          {text}
-        </p>
+        <p className="suggestion-text">{displayText}</p>
       </div>
 
       <div
@@ -204,75 +253,59 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
         }}
       >
         {/* Feedback Widget */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          {voted === null ? (
-            <>
-              <span
-                style={{
-                  fontSize: '0.78rem',
-                  color: 'var(--muted-text)',
-                  fontWeight: '500',
-                }}
-              >
-                Was this helpful?
-              </span>
-              <button
-                type="button"
-                onClick={() => handleVote('up')}
-                disabled={isVoting}
-                title="Helpful"
-                aria-label="Vote helpful"
-                style={{
-                  background: 'var(--surface-soft-bg)',
-                  border: '1px solid var(--surface-border)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '4px 8px',
-                  cursor: 'pointer',
-                  color: 'var(--body-text)',
-                  fontSize: '0.85rem',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                👍
-              </button>
-              <button
-                type="button"
-                onClick={() => handleVote('down')}
-                disabled={isVoting}
-                title="Not helpful"
-                aria-label="Vote not helpful"
-                style={{
-                  background: 'var(--surface-soft-bg)',
-                  border: '1px solid var(--surface-border)',
-                  borderRadius: 'var(--radius-sm)',
-                  padding: '4px 8px',
-                  cursor: 'pointer',
-                  color: 'var(--body-text)',
-                  fontSize: '0.85rem',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                👎
-              </button>
-            </>
-          ) : (
+        {userLoggedIn && onVote && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span
               style={{
                 fontSize: '0.78rem',
-                color: voted === 'up' ? '#4ade80' : '#f87171',
-                fontWeight: '600',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
+                color: 'var(--muted-text)',
+                fontWeight: '500',
               }}
             >
-              {voted === 'up' ? 'Thanks for your feedback! 👍' : 'Thanks for your feedback! 👎'}
+              Was this helpful?
             </span>
-          )}
-        </div>
+            <button
+              type="button"
+              onClick={() => onVote(vote === 'up' ? null : 'up')}
+              title="Helpful"
+              aria-label="Vote helpful"
+              style={{
+                background: vote === 'up' ? 'rgba(74, 222, 128, 0.2)' : 'var(--surface-soft-bg)',
+                border: `1px solid ${vote === 'up' ? '#4ade80' : 'var(--surface-border)'}`,
+                borderRadius: 'var(--radius-sm)',
+                padding: '4px 8px',
+                cursor: 'pointer',
+                color: 'var(--body-text)',
+                fontSize: '0.85rem',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              👍
+            </button>
+            <button
+              type="button"
+              onClick={() => onVote(vote === 'down' ? null : 'down')}
+              title="Not helpful"
+              aria-label="Vote not helpful"
+              style={{
+                background: vote === 'down' ? 'rgba(248, 113, 113, 0.2)' : 'var(--surface-soft-bg)',
+                border: `1px solid ${vote === 'down' ? '#f87171' : 'var(--surface-border)'}`,
+                borderRadius: 'var(--radius-sm)',
+                padding: '4px 8px',
+                cursor: 'pointer',
+                color: 'var(--body-text)',
+                fontSize: '0.85rem',
+                transition: 'all 0.2s ease',
+              }}
+            >
+              👎
+            </button>
+          </div>
+        )}
 
         {/* Copy Button */}
         <button
+          type="button"
           onClick={handleCopy}
           className="suggestion-copy-btn"
           aria-label="Copy recommendation text"
@@ -285,12 +318,21 @@ const SuggestionCard: React.FC<SuggestionCardProps> = ({ text, index, backendUrl
 }
 
 function App() {
-  const [theme, setTheme] = useState<Theme>(getInitialTheme);
-  const [loading, setLoading] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+  const location = useLocation()
+  const [theme, setTheme] = useState<Theme>(getInitialTheme)
+  const [loading, setLoading] = useState(false)
+  const [file, setFile] = useState<File | null>(null)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+  const [isDragging, setIsDragging] = useState(false)
   const [score, setScore] = useState<number | null>(null)
+  const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdownData | null>(null)
   const [skills, setSkills] = useState<string[]>([])
   const [suggestions, setSuggestions] = useState<string[]>([])
+  const [roastMode, setRoastMode] = useState<boolean>(false)
+  const [analysisId, setAnalysisId] = useState<number | null>(null)
+  const [suggestionVotes, setSuggestionVotes] = useState<Record<string, VoteValue>>({})
+
   // Validation States
   const [fileError, setFileError] = useState<string | null>(null)
   const [roleError, setRoleError] = useState<string | null>(null)
@@ -328,7 +370,6 @@ function App() {
   const [activeTab, setActiveTab] = useState<'detailed' | 'matrix' | 'cover_letter' | 'interview_questions'>('detailed')
   const [resumeUrl, setResumeUrl] = useState<string>('')
   const [urlError, setUrlError] = useState<string | null>(null)
-  const [isDragging, setIsDragging] = useState(false)
 
   // Cover Letter States
   const [coverLetterFile, setCoverLetterFile] = useState<File | null>(null)
@@ -345,6 +386,10 @@ function App() {
   const [jdKeywords, setJdKeywords] = useState<any[]>([])
   const [jdLoading, setJdLoading] = useState(false)
   const [jdError, setJdError] = useState<string | null>(null)
+
+  // Retry state
+  const [retryCount, setRetryCount] = useState(0)
+  const [cooldownRemaining, setCooldownRemaining] = useState(0)
 
   // Auth
   const { user, signup, login, logout, resendVerification, refreshUserStatus } = useAuth()
@@ -381,131 +426,56 @@ function App() {
     unreadCount,
     lastViewedTimestamp,
     markAllAsViewed,
-    addEntry,
     deleteEntry,
     clearHistory,
     setEntries,
   } = useAnalysisHistory()
-
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(true)
-  }
-
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-  }
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault()
-    e.stopPropagation()
-    setIsDragging(false)
-    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-      const droppedFile = e.dataTransfer.files[0]
-      const validTypes = ['.pdf', '.docx']
-      const isValid = validTypes.some((ext) => droppedFile.name.toLowerCase().endsWith(ext))
-
-      if (isValid) {
-        setFile(droppedFile)
-        setFileError(null)
-      } else {
-        setFileError('Only PDF and DOCX files are supported.')
-      }
-    }
-  }
-
-  let currentStep: 1 | 2 | 3 = 1
-  if (loading) {
-    currentStep = 2
-  } else if (!loading && score !== null) {
-    currentStep = 3
-  }
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
-
-  const handleDeleteEntry = async (id: string) => {
-    if (user) {
-      try {
-        await axios.delete(`${backendUrl}/api/history/${id}/`, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        })
-      } catch (error) {
-        console.error('Failed to delete from database', error)
-      }
-    }
-    deleteEntry(id)
-  }
-
-  const MAX_CHARS = 2000
-  const isClose = jobDesc.length >= MAX_CHARS * 0.9
-  const isOver = jobDesc.length > MAX_CHARS
-
-  const handleClearAll = async () => {
-    if (user) {
-      try {
-        await axios.delete(`${backendUrl}/api/history/clear/`, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        })
-      } catch (error) {
-        console.error('Failed to clear database history', error)
-      }
-    }
-    clearHistory()
-  }
+  const [historyNextUrl, setHistoryNextUrl] = useState<string | null>(null)
+  // Modal that diffs two saved uploads against each other.
+  const [showCompare, setShowCompare] = useState(false)
 
   const fetchDbHistory = useCallback(
-    async (token: string) => {
+    async () => {
       try {
-        const res = await axios.get(`${backendUrl}/api/history/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        const dbEntries: AnalysisEntry[] = res.data.map(
-          (item: {
-            id: string | number
-            created_at: string | number
-            score: number
-            skills_found: string[]
-            suggestions: string[]
-            matched_skills: string[]
-            missing_skills: string[]
-            target_role: string
-            file_name: string
-            cover_letter_text?: string
-            cover_letter_feedback?: any
-            interview_questions?: string[]
-          }) => ({
-            id: String(item.id),
-            timestamp: new Date(item.created_at).getTime(),
-            score: item.score,
-            skills: item.skills_found,
-            suggestions: item.suggestions,
-            matchedSkills: item.matched_skills,
-            missingSkills: item.missing_skills,
-            targetRole: item.target_role,
-            fileName: item.file_name,
-            coverLetterText: item.cover_letter_text,
-            coverLetterFeedback: item.cover_letter_feedback,
-            interviewQuestions: item.interview_questions,
-          })
-        )
-        const uniqueDbEntries = dbEntries.filter(
-          (entry, index, self) =>
-            index ===
-            self.findIndex((t) => t.fileName === entry.fileName && t.score === entry.score)
-        )
-        setEntries(uniqueDbEntries)
-      } catch {
-        /* silently ignore */
+        const res = await api.get(`/api/history/?page=1&page_size=${HISTORY_PAGE_SIZE}`)
+        setEntries(toAnalysisEntries(res.data))
+        setHistoryNextUrl(nextPageUrl(res.data))
+      } catch (error) {
+        if (!axios.isAxiosError(error) || error.response?.status !== 401) {
+          console.error('Could not load analysis history', error)
+        }
       }
     },
-    [backendUrl, setEntries]
+    [setEntries]
   )
 
+  const loadMoreDbHistory = useCallback(async () => {
+    if (!historyNextUrl || !user) return
+    try {
+      const res = await api.get(historyNextUrl)
+      const older = toAnalysisEntries(res.data)
+      setEntries((previous) => {
+        const seen = new Set(previous.map((entry) => entry.id))
+        return [...previous, ...older.filter((entry) => !seen.has(entry.id))]
+      })
+      setHistoryNextUrl(nextPageUrl(res.data))
+    } catch {
+      /* silently ignore */
+    }
+  }, [historyNextUrl, setEntries, user])
+
   useEffect(() => {
-    if (user) fetchDbHistory(user.token)
+    if (user) fetchDbHistory()
   }, [user, fetchDbHistory])
+
+  useEffect(() => {
+    if (cooldownRemaining > 0) {
+      const timer = setTimeout(() => {
+        setCooldownRemaining((prev) => prev - 1)
+      }, 1000)
+      return () => clearTimeout(timer)
+    }
+  }, [cooldownRemaining])
 
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
@@ -650,6 +620,12 @@ function App() {
     })
   }
 
+  const getRetryDelay = (attemptNumber: number): number => {
+    // Exponential backoff: 2^attemptNumber seconds, capped at 30 seconds
+    const delay = Math.pow(2, attemptNumber)
+    return Math.min(delay, 30)
+  }
+
   const runAnalysis = async (
     fileToAnalyze: File | null,
     source: 'sample' | 'upload',
@@ -686,8 +662,20 @@ function App() {
         setAnalysisStageLabel('Stage 3/3: Generating ATS score & recommendations...')
       }, 1000)
 
-      const headers = user ? { Authorization: `Bearer ${user.token}` } : {}
-      const res = await axios.post(`${backendUrl}/api/upload/`, formData, { headers })
+      const res = await api.post('/api/upload/', formData)
+      const taskId = res.data.task_id
+
+      let result = null
+      while (true) {
+        const statusRes = await api.get(`/api/status/${taskId}/`)
+        if (statusRes.data.state === 'SUCCESS') {
+          result = statusRes.data.result
+          break
+        } else if (statusRes.data.state === 'FAILURE') {
+          throw new Error(statusRes.data.error || 'Analysis failed')
+        }
+        await new Promise((r) => setTimeout(r, 1000))
+      }
 
       clearTimeout(stageTimer1)
       clearTimeout(stageTimer2)
@@ -695,19 +683,20 @@ function App() {
       setAnalysisProgress(100)
       setAnalysisStageLabel('Analysis complete!')
 
-      setScore(res.data.score)
-      setSkills(res.data.skills_found || [])
-      setSuggestions(res.data.suggestions || [])
-      setMatchedSkills(res.data.matched_skills || [])
-      setMissingSkills(res.data.missing_skills || [])
-      setResumeText(res.data.resume_text || '')
-      setCoverLetterText(res.data.cover_letter_text || '')
-      setCoverLetterFeedback(res.data.cover_letter_feedback || null)
-      setInterviewQuestions(res.data.interview_questions || [])
+      setScore(result.score)
+      setScoreBreakdown(result.score_breakdown || null)
+      setSkills(result.skills_found || [])
+      setSuggestions(result.suggestions || [])
+      setMatchedSkills(result.matched_skills || [])
+      setMissingSkills(result.missing_skills || [])
+      setResumeText(result.resume_text || '')
+      setCoverLetterText(result.cover_letter_text || '')
+      setCoverLetterFeedback(result.cover_letter_feedback || null)
+      setInterviewQuestions(result.interview_questions || [])
 
-      setReadabilityLabel(res.data.readability_label ?? null)
-      if (res.data.share_id) setShareId(res.data.share_id)
-      setTrackComparisons(res.data.track_comparisons || null)
+      setReadabilityLabel(result.readability_label ?? null)
+      if (result.share_id) setShareId(result.share_id)
+      setTrackComparisons(result.track_comparisons || null)
       setActiveTab('detailed')
       const fileName = fileToAnalyze ? fileToAnalyze.name : url ? 'Imported Resume' : 'Resume'
       setActiveFileName(fileName)
@@ -719,20 +708,24 @@ function App() {
 
       setLoading(false)
 
+      // Reset retry state on success
+      setRetryCount(0)
+      setCooldownRemaining(0)
+
       if (user) {
-        await fetchDbHistory(user.token)
+        await fetchDbHistory()
       } else {
         addEntry({
-          score: res.data.score,
-          skills: res.data.skills_found || [],
-          suggestions: res.data.suggestions || [],
-          matchedSkills: res.data.matched_skills || [],
-          missingSkills: res.data.missing_skills || [],
+          score: result.score,
+          skills: result.skills_found || [],
+          suggestions: result.suggestions || [],
+          matchedSkills: result.matched_skills || [],
+          missingSkills: result.missing_skills || [],
           targetRole: targetRole,
           fileName: fileName,
-          coverLetterText: res.data.cover_letter_text,
-          coverLetterFeedback: res.data.cover_letter_feedback,
-          interviewQuestions: res.data.interview_questions,
+          coverLetterText: result.cover_letter_text,
+          coverLetterFeedback: result.cover_letter_feedback,
+          interviewQuestions: result.interview_questions,
         })
       }
 
@@ -768,7 +761,10 @@ function App() {
         } else {
           errorMsg = error.response?.data?.error ?? error.message
         }
+      } else if (error instanceof Error) {
+        errorMsg = error.message
       }
+
       if (!(axios.isAxiosError(error) && error.response?.status === 429)) {
         if (
           axios.isAxiosError(error) &&
@@ -784,6 +780,10 @@ function App() {
               : `Upload failed: ${errorMsg}`
           )
         }
+        // Increment retry count and set cooldown backoff
+        const newRetryCount = retryCount + 1
+        setRetryCount(newRetryCount)
+        setCooldownRemaining(getRetryDelay(newRetryCount))
       }
 
       setLoading(false)
@@ -812,6 +812,10 @@ function App() {
   }
 
   const uploadResume = async () => {
+    if (cooldownRemaining > 0) {
+      return // Prevent retry during cooldown
+    }
+
     let hasError = false
 
     if (!targetRole || targetRole.trim() === '') {
@@ -860,6 +864,10 @@ function App() {
   }
 
   const handleSampleResume = async () => {
+    if (cooldownRemaining > 0) {
+      return // Prevent retry during cooldown
+    }
+
     try {
       await requestNotificationPermission()
       setLoading(true)
@@ -878,6 +886,72 @@ function App() {
       setLoading(false)
     }
   }
+      setActiveFileName(sampleFile.name)
+    } catch (error: unknown) {
+      console.error(error)
+      alert('Could not load sample resume')
+      setLoading(false)
+    }
+  }
+  const submitSuggestionVote = useCallback(
+    async (suggestion: string, vote: VoteValue | null) => {
+      if (!user || analysisId === null) return
+
+      // Update locally first so the control responds immediately, and roll
+      // back if the request fails — a vote that silently vanishes is exactly
+      // what this endpoint used to do.
+      const previous = suggestionVotes[suggestion] ?? null
+      setSuggestionVotes((current) => {
+        const next = { ...current }
+        if (vote === null) delete next[suggestion]
+        else next[suggestion] = vote
+        return next
+      })
+
+      const payload = { analysis_id: analysisId, suggestion_text: suggestion }
+
+      try {
+        if (vote === null) {
+          await api.delete('/api/suggestion-feedback/', { data: payload })
+        } else {
+          await api.post('/api/suggestion-feedback/', { ...payload, vote })
+        }
+      } catch {
+        setSuggestionVotes((current) => {
+          const rolledBack = { ...current }
+          if (previous === null) delete rolledBack[suggestion]
+          else rolledBack[suggestion] = previous
+          return rolledBack
+        })
+      }
+    },
+    [analysisId, suggestionVotes, user]
+  )
+
+  // Restore votes already cast against this analysis, so returning to it does
+  // not reset every control to neutral.
+  useEffect(() => {
+    if (!user || analysisId === null) return
+
+    let cancelled = false
+    api
+      .get(`/api/suggestion-feedback/?analysis_id=${analysisId}`)
+      .then((res) => {
+        if (cancelled) return
+        const stored: Record<string, VoteValue> = {}
+        for (const row of res.data?.results ?? []) {
+          stored[row.suggestion_text] = row.vote
+        }
+        setSuggestionVotes(stored)
+      })
+      .catch(() => {
+        /* votes are a nice-to-have; leave the controls neutral */
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [analysisId, user])
 
   const copySuggestionsToClipboard = () => {
     if (suggestions.length === 0) return
@@ -927,11 +1001,17 @@ function App() {
 
   const selectHistoryEntry = (entry: AnalysisEntry) => {
     setScore(entry.score)
+    // History entries predate the breakdown and do not carry one.
+    setScoreBreakdown(null)
     setSkills(entry.skills)
     setSuggestions(entry.suggestions)
     setMatchedSkills(entry.matchedSkills)
     setMissingSkills(entry.missingSkills)
     setTargetRole(entry.targetRole)
+    // History entries carry a client-side id, not the analysis id, so there is
+    // nothing safe to attach a vote to when one is replayed.
+    setAnalysisId(null)
+    setSuggestionVotes({})
     setActiveFileName(entry.fileName)
     setCoverLetterText(entry.coverLetterText || '')
     setCoverLetterFeedback(entry.coverLetterFeedback || null)
@@ -947,12 +1027,22 @@ function App() {
     clearHistory()
   }
 
+  if (location.pathname === '/privacy') {
+    return (
+      <>
+        <PrivacyPolicyPage />
+        <Footer />
+      </>
+    )
+  }
+
   return (
     <>
       <a href="#main-content" className="skip-to-content">
         Skip to main content
       </a>
       <OnboardingTour />
+    
       <HistorySidebar
         entries={entries}
         unreadCount={unreadCount}
@@ -965,6 +1055,8 @@ function App() {
         isOpen={historyOpen}
         onToggle={() => setHistoryOpen((v) => !v)}
         onCompare={() => setCompareOpen(true)}
+        hasMoreOnServer={historyNextUrl !== null}
+        onLoadMoreFromServer={loadMoreDbHistory}
       />
 
       {compareOpen && (
@@ -1067,6 +1159,14 @@ function App() {
                   onLogin={login}
                   onClose={() => setShowAuthModal(false)}
                 />
+              )}
+              {analysisSource === 'sample' && (
+                <div className="sample-notice-banner mb-4">
+                  <span>ℹ️ Viewing Sample Resume Analysis</span>
+                  <span style={{ fontWeight: 'normal', fontSize: '13px' }}>
+                    — This analysis is based on a bundled sample resume.
+                  </span>
+                </div>
               )}
 
               <div className={score === null && !loading ? 'hero-container' : ''}>
@@ -2015,6 +2115,7 @@ function App() {
                     <InterviewQuestionsPanel questions={interviewQuestions} />
                   ) : (
                     <>
+                      <ScoreBreakdown breakdown={scoreBreakdown} />
                       {/* Skills Section */}
                       <section className="mt-4" aria-labelledby="skills-found-heading">
                         <h4 id="skills-found-heading">Skills Found ({skills.length})</h4>
@@ -2135,9 +2236,35 @@ function App() {
                               marginBottom: '12px',
                             }}
                           >
-                            <h4 id="suggestions-heading" style={{ margin: 0 }}>
-                              💡 Suggestions
-                            </h4>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <h4 id="suggestions-heading" style={{ margin: 0 }}>
+                                {roastMode ? '🔥 Resume Roast' : '💡 Suggestions'}
+                              </h4>
+                              <label
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '6px',
+                                  cursor: 'pointer',
+                                  fontSize: '13px',
+                                  fontWeight: '600',
+                                  padding: '4px 10px',
+                                  borderRadius: '20px',
+                                  background: roastMode ? '#ef4444' : 'rgba(255,255,255,0.1)',
+                                  color: '#fff',
+                                  transition: 'all 0.2s ease',
+                                }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={roastMode}
+                                  onChange={(e) => setRoastMode(e.target.checked)}
+                                  aria-label="Toggle Resume Roast mode"
+                                  style={{ cursor: 'pointer' }}
+                                />
+                                🔥 Roast Mode {roastMode ? 'ON' : 'OFF'}
+                              </label>
+                            </div>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
                               {suggestions.length > 0 && (
                                 <button
@@ -2301,6 +2428,10 @@ function App() {
                                   text={suggestion}
                                   index={index}
                                   backendUrl={backendUrl}
+                                  roastMode={roastMode}
+                                  vote={suggestionVotes[suggestion] ?? null}
+                                  onVote={(vote) => submitSuggestionVote(suggestion, vote)}
+                                  userLoggedIn={!!user}
                                 />
                               ))}
                             </div>
@@ -2408,4 +2539,4 @@ function App() {
   )
 }
 
-              export default App
+export default App

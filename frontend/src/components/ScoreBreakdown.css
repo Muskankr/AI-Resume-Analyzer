@@ -1,0 +1,170 @@
+.score-breakdown {
+  margin: var(--space-4) auto 0;
+  max-width: 640px;
+  text-align: left;
+  background: var(--card-bg, rgba(255, 255, 255, 0.02));
+  border: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+}
+
+.score-breakdown__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--space-3);
+  padding: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.score-breakdown__toggle:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm, 6px);
+}
+
+.score-breakdown__toggle-text {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.score-breakdown__title {
+  font-size: var(--text-base);
+  font-weight: 600;
+  color: var(--card-text, #e2e8f0);
+}
+
+.score-breakdown__overall {
+  font-size: var(--text-sm);
+  font-weight: 700;
+  color: var(--color-primary);
+  white-space: nowrap;
+}
+
+.score-breakdown__chevron {
+  font-size: 0.7rem;
+  color: var(--muted-text, #94a3b8);
+}
+
+.score-breakdown__summary {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-sm);
+  color: var(--muted-text, #94a3b8);
+}
+
+.score-breakdown__panel {
+  margin-top: var(--space-4);
+  border-top: 1px solid var(--card-border, rgba(255, 255, 255, 0.08));
+  padding-top: var(--space-4);
+}
+
+.score-breakdown__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.score-breakdown__factor-head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.score-breakdown__status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  font-size: 0.7rem;
+  font-weight: 700;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.score-breakdown__label {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--card-text, #e2e8f0);
+}
+
+.score-breakdown__points {
+  margin-left: auto;
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-text, #94a3b8);
+  white-space: nowrap;
+}
+
+.score-breakdown__bar {
+  margin-top: var(--space-2);
+  height: 6px;
+  border-radius: 999px;
+  background: var(--score-track, rgba(148, 163, 184, 0.25));
+  overflow: hidden;
+}
+
+.score-breakdown__bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.4s ease;
+}
+
+.score-breakdown__detail {
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--muted-text, #94a3b8);
+}
+
+.score-breakdown__footnote {
+  margin: var(--space-4) 0 0;
+  font-size: var(--text-xs);
+  color: var(--muted-text, #94a3b8);
+}
+
+/* Status colours. Each row also carries an icon and a points count, so the
+   meaning does not depend on colour alone. */
+.score-breakdown__factor--strong .score-breakdown__status,
+.score-breakdown__factor--strong .score-breakdown__bar-fill {
+  background: var(--color-accent, #22c55e);
+}
+
+.score-breakdown__factor--partial .score-breakdown__status,
+.score-breakdown__factor--partial .score-breakdown__bar-fill {
+  background: #f59e0b;
+}
+
+.score-breakdown__factor--weak .score-breakdown__status,
+.score-breakdown__factor--weak .score-breakdown__bar-fill {
+  background: var(--color-danger, #ef4444);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .score-breakdown__bar-fill {
+    transition: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .score-breakdown__points {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .score-breakdown__factor-head {
+    flex-wrap: wrap;
+  }
+}

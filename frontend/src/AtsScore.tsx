@@ -8,9 +8,19 @@ interface AtsScoreProps {
 
 export const AtsScore: React.FC<AtsScoreProps> = ({ score, readabilityLabel }) => {
   return (
-    <div className="score-section mt-4">
+    <div
+      className="score-section mt-4"
+      role="region"
+      aria-label="ATS Resume Score Summary"
+      aria-live="polite"
+    >
       <div
         className="score-circle mb-3"
+        role="meter"
+        aria-label="ATS Match Score"
+        aria-valuenow={score}
+        aria-valuemin={0}
+        aria-valuemax={100}
         style={{ '--score': `${score * 3.6}deg` } as React.CSSProperties}
       >
         <span className="score-text">{score}%</span>

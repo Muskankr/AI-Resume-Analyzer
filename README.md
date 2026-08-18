@@ -180,8 +180,8 @@ git clone https://github.com/Muskankr/AI-Resume-Analyzer.git
 We recommend installing dependencies inside a secure Python virtual environment:
 
 ```bash
-# Navigate to server directory
-cd server
+# Navigate to backend directory
+cd backend
 
 # Initialize a virtual environment
 python -m venv venv
@@ -228,6 +228,12 @@ Create your environment variables by copying the provided examples:
 
 ```bash
 cd frontend
+
+# Windows
+copy .env.development.example .env.development
+copy .env.production.example .env.production
+
+# macOS / Linux
 cp .env.development.example .env.development
 cp .env.production.example .env.production
 ```
@@ -267,12 +273,12 @@ This project uses [Sentry](https://sentry.io) for production error tracking on b
 
 Add the DSNs to your `.env` files:
 
-**Backend (`server/.env`)**
+**Backend (backend/.env)**
 ```env
 SENTRY_DSN=your-django-sentry-dsn
 ```
 
-**Frontend (`client/.env`)**
+**Frontend (frontend/.env)**
 ```env
 VITE_SENTRY_DSN=your-react-sentry-dsn
 ```
@@ -326,19 +332,52 @@ npm run test:coverage
 ---
 
 ## API Reference
+## API Reference
+
+The AI Resume Analyzer backend provides an OpenAPI-documented REST API.
+
+### Interactive API Documentation
+
+The API can be explored interactively using Swagger UI:
+
+- **Frontend Swagger UI:** `http://localhost:5173/docs`
+- **Backend Swagger UI:** `http://127.0.0.1:8000/api/docs/`
+
+### OpenAPI Specification
+
+The generated OpenAPI specification is available at:
+
+`http://127.0.0.1:8000/api/schema/`
+
+### Authentication
+
+Protected endpoints use JWT bearer authentication.
+
+After obtaining an access token from:
+
+`POST /api/auth/login/`
+
+provide it in the Swagger UI using the **Authorize** button:
+
+```text
+Bearer <access_token>
+```
 
 ### Parse Resume File
 
-Validates and parses an uploaded resume, matches standard technical keywords, calculates scores, and returns suggestions.
+Uploads a resume and starts the resume analysis process.
 
 - **Endpoint:** `/api/upload/`
 - **Method:** `POST`
 - **Payload Format:** `multipart/form-data`
 
 #### Parameters
+
 | Name | Type | Required | Description |
 | :--- | :--- | :---: | :--- |
-| `file` | `binary (PDF)` | **Yes** | The document to analyze |
+| `resume` | `binary (PDF/document)` | **Yes** | The resume document to analyze |
+
+--- 
 
 #### Sample Success JSON Response (`200 OK`)
 ```json
@@ -367,7 +406,7 @@ The resume upload endpoint (`POST /api/upload/`) is throttled per client IP usin
 | :--- | :--- | :--- |
 | `RESUME_UPLOAD_RATE` | `10/hour` | Max requests per IP. Format: `<n>/hour`, `<n>/day`, `<n>/min` |
 
-To change the limit, set `RESUME_UPLOAD_RATE` in your `server/.env`:
+To change the limit, set RESUME_UPLOAD_RATE in your backend/.env:
 
 ```env
 RESUME_UPLOAD_RATE=20/hour
@@ -402,6 +441,157 @@ To ensure parity between local development and production environments, the head
 - **Production (Vercel):** Configured via [vercel.json](file:///e:/ECSOC-26/AI-Resume-Analyzer/frontend/vercel.json) files in the root and frontend directories.
 - **Local Development (Vite):** Preconfigured in [vite.config.ts](file:///e:/ECSOC-26/AI-Resume-Analyzer/frontend/vite.config.ts) to send headers when running the local dev server (`npm run dev`).
 - **Django Backend:** Applied dynamically in all environments via Django settings and a custom middleware in [middleware.py](file:///e:/ECSOC-26/AI-Resume-Analyzer/backend/resume_analyzer/middleware.py).
+
+## 🔧 Troubleshooting
+
+If you encounter issues while setting up or running the project, try the following solutions.
+
+### Backend server not starting
+
+**Possible causes**
+- Virtual environment is not activated.
+- Dependencies are missing.
+- Database migrations have not been applied.
+- Environment variables are not configured correctly.
+
+**Solutions**
+```bash
+cd backend
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+---
+
+### Frontend cannot connect to the backend
+
+**Possible causes**
+- Backend server is not running.
+- `VITE_BACKEND_URL` is incorrect.
+- CORS settings are misconfigured.
+
+**Solutions**
+- Ensure the backend is running on `http://127.0.0.1:8000`.
+- Verify the `VITE_BACKEND_URL` value in your environment file.
+- Restart the frontend after updating environment variables.
+
+---
+
+### Missing environment variables
+
+**Symptoms**
+- Application fails during startup.
+- API requests fail unexpectedly.
+
+**Solutions**
+Copy the example environment files before starting the project.
+
+Backend:
+
+```bash
+# Windows
+copy .env.example .env
+
+# macOS / Linux
+cp .env.example .env
+```
+
+Frontend:
+
+```bash
+# Windows
+copy .env.development.example .env.development
+
+# macOS / Linux
+cp .env.development.example .env.development
+```
+
+---
+
+### Port already in use
+
+**Symptoms**
+
+```
+Address already in use
+```
+
+**Solutions**
+
+Use another port or stop the process currently using the required port.
+
+Example:
+
+```bash
+python manage.py runserver 8001
+```
+
+---
+
+### Dependency installation errors
+
+**Possible causes**
+
+- Unsupported Node.js or Python version.
+- Interrupted package installation.
+- Corrupted dependency cache.
+
+**Solutions**
+
+Backend:
+
+```bash
+pip install -r requirements.txt
+```
+
+Frontend:
+
+```bash
+npm install
+```
+
+Make sure you are using:
+- Node.js **v18+**
+- Python **3.10+**
+
+---
+
+## Frequently Asked Questions (FAQ)
+
+### 1. Which resume formats are supported?
+Currently, the application supports **PDF resumes** for analysis. Make sure the uploaded file is valid and not corrupted.
+
+### 2. What are the minimum Node.js and Python versions?
+The recommended versions are:
+- **Node.js:** v18 or higher
+- **Python:** v3.10 or higher
+
+### 3. Why is my resume upload failing?
+If your upload fails, check the following:
+- The resume is in PDF format.
+- The backend server is running.
+- The file is not corrupted.
+- The API endpoint is correctly configured.
+
+### 4. How do I configure environment variables?
+Copy the provided example environment files (`.env.example`, `.env.development.example`, or `.env.production.example`) to the appropriate `.env` files and update the required values before starting the application.
+
+### 5. How do I run the frontend and backend together?
+Start the backend server first, then run the frontend in a separate terminal:
+
+```bash
+# Backend
+cd backend
+python manage.py runserver
+
+# Frontend
+cd frontend
+npm install
+npm run dev
+```
+
+Once both services are running, open the frontend in your browser and ensure it is connected to the backend API.
 
 ---
 
@@ -461,3 +651,7 @@ A huge thanks to all the developers who have contributed code, fixed bugs, and i
 <div align="center">
   Show your support by leaving a ⭐ on this repository!
 </div>
+
+## Community
+
+Join our [Discord Community](YOUR_DISCORD_URL) to ask questions, discuss the project, and connect with contributors.

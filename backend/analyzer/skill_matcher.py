@@ -1,4 +1,5 @@
 import re
+import ahocorasick
 
 from .skill_dictionary import load_skill_dictionary
 
@@ -20,77 +21,72 @@ def normalize_text(text: str) -> str:
     return text.strip()
 
 
-def build_alias_patterns():
+def build_automaton():
     """
-    Build compiled regex patterns for every canonical skill
+    Build Aho-Corasick automaton for every canonical skill
     and all of its aliases.
     """
 
     dictionary = load_skill_dictionary()
-
-    patterns = {}
+    A = ahocorasick.Automaton()
 
     for category in dictionary.values():
-
         if not isinstance(category, list):
             continue
 
         for skill in category:
-
             canonical = skill.get("name")
-
             if not canonical:
                 continue
 
             aliases = set(skill.get("aliases", []))
-
-            # Canonical name should also match.
             aliases.add(canonical)
 
-            compiled_patterns = []
-
             for alias in aliases:
+                alias_lower = alias.lower()
+                # AhoCorasick stores (index, value) at each matched node.
+                # We store both the alias and the canonical name.
+                A.add_word(alias_lower, (alias_lower, canonical))
 
-                # Match complete words only.
-                # Prevents false positives such as:
-                # react -> reactive
-                # c -> education
-                pattern = re.compile(
-                    rf"(?<!\w){re.escape(alias.lower())}(?!\w)",
-                    re.IGNORECASE,
-                )
+    A.make_automaton()
+    return A
 
-                compiled_patterns.append(pattern)
+AUTOMATON = build_automaton()
 
-            patterns[canonical] = compiled_patterns
+def is_word_boundary(text: str, start: int, end: int) -> bool:
+    """
+    Checks if a matched substring is bounded by non-word characters.
+    Equivalent to regex (?<!\w) ... (?!\w)
+    """
+    def is_word_char(c):
+        return c.isalnum() or c == '_'
 
-    return patterns
+    if start > 0 and is_word_char(text[start - 1]):
+        return False
+    if end < len(text) and is_word_char(text[end]):
+        return False
 
-
-PATTERNS = build_alias_patterns()
+    return True
 
 
 def extract_skills(text: str):
     """
-    Extract canonical skills from resume text.
+    Extract canonical skills from resume text using Aho-Corasick.
 
     Returns:
         list[str]
     """
-
     normalized = normalize_text(text)
-
     detected = []
 
-    for canonical, regexes in PATTERNS.items():
-
-        for regex in regexes:
-
-            if regex.search(normalized):
-
-                detected.append(canonical)
-
-                break
+    # pyahocorasick returns (end_index, (alias_lower, canonical))
+    # end_index is inclusive.
+    for end_index, (alias_lower, canonical) in AUTOMATON.iter(normalized):
+        start_index = end_index - len(alias_lower) + 1
+        
+        # Match complete words only to prevent false positives (e.g. react in reactive)
+        if is_word_boundary(normalized, start_index, end_index + 1):
+            detected.append(canonical)
 
     # Preserve insertion order and remove duplicates.
     return list(dict.fromkeys(detected))

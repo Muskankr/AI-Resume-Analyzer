@@ -7,7 +7,7 @@ import {
 } from '../utils/actionPlanUtils'
 import { ListChecks, Download, FileText, CheckCircle2, TrendingUp, Sparkles } from 'lucide-react'
 
-interface ActionPlanChecklistProps extends ActionPlanParams {}
+interface ActionPlanChecklistProps extends ActionPlanParams { }
 
 export const ActionPlanChecklist: React.FC<ActionPlanChecklistProps> = (props) => {
   const actionPlan = generateActionPlan(props)
@@ -193,13 +193,13 @@ export const ActionPlanChecklist: React.FC<ActionPlanChecklistProps> = (props) =
                 background: isDone
                   ? 'rgba(34, 197, 94, 0.08)'
                   : isTop3
-                  ? 'rgba(255, 255, 255, 0.04)'
-                  : 'rgba(0, 0, 0, 0.15)',
+                    ? 'rgba(255, 255, 255, 0.04)'
+                    : 'rgba(0, 0, 0, 0.15)',
                 border: isDone
                   ? '1px solid rgba(34, 197, 94, 0.3)'
                   : isTop3
-                  ? '1px solid rgba(129, 140, 248, 0.25)'
-                  : '1px solid rgba(255, 255, 255, 0.06)',
+                    ? '1px solid rgba(129, 140, 248, 0.25)'
+                    : '1px solid rgba(255, 255, 255, 0.06)',
                 cursor: 'pointer',
                 transition: 'all 0.15s ease-in-out',
                 opacity: isDone ? 0.75 : 1,
@@ -212,7 +212,7 @@ export const ActionPlanChecklist: React.FC<ActionPlanChecklistProps> = (props) =
                   <input
                     type="checkbox"
                     checked={isDone}
-                    onChange={() => {}} // handled by parent onClick
+                    onChange={() => { }} // handled by parent onClick
                     style={{ width: '16px', height: '16px', cursor: 'pointer' }}
                   />
                 )}
@@ -279,6 +279,23 @@ export const ActionPlanChecklist: React.FC<ActionPlanChecklistProps> = (props) =
                 >
                   Reason: {item.reason}
                 </div>
+                {item.resourceUrl && (
+                  <div style={{ marginTop: '8px' }}>
+                    <a
+                      href={item.resourceUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{
+                        color: '#60a5fa',
+                        fontSize: '0.85rem',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      📚 Free learning resource
+                    </a>
+                  </div>
+                )}
               </div>
             </div>
           )

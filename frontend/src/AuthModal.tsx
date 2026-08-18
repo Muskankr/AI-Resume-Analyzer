@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Lock, FileSignature, Loader2 } from 'lucide-react'
+import { Lock, FileSignature, Loader2, Eye, EyeOff } from 'lucide-react'
 import axios from 'axios'
 import { CaptchaChallenge } from './components/CaptchaChallenge'
 
@@ -18,6 +18,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
   const [captchaToken, setCaptchaToken] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,7 +48,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
         await onLogin(username, password, rememberMe, captchaToken)
         onClose()
       } else if (mode === 'forgot_password') {
-        await axios.post('http://localhost:8000/api/password-reset/', { username: username })
+        // Was hardcoded to http://localhost:8000, so "forgot password" only
+        // ever worked on a developer's own machine.
+        const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
+        await axios.post(`${backendUrl}/api/password-reset/`, { username })
         onClose()
       }
     } catch (err: unknown) {
@@ -50,8 +64,14 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
 
   return (
     <div className="auth-overlay" onClick={onClose}>
-      <div className="auth-modal" onClick={(e) => e.stopPropagation()}>
-        <h3>
+      <div
+        className="auth-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="auth-modal-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h3 id="auth-modal-title">
           {mode === 'login' ? (
             <>
               <Lock size={16} /> Login
@@ -65,6 +85,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
         <form onSubmit={submit}>
           {mode === 'forgot_password' && (
             <input
+              id="auth-forgot-username"
+              name="username"
               className="auth-input"
               type="text"
               placeholder="Enter your username"
@@ -72,17 +94,22 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
               onChange={(e) => setUsername(e.target.value)}
               required
               autoFocus
+              autoComplete="username"
             />
           )}
           {mode !== 'forgot_password' && (
             <>
               <input
+                id="auth-username"
+                name="username"
                 className="auth-input"
+                type="text"
                 placeholder="Username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
                 autoFocus
+                autoComplete="username"
               />
               {mode === 'signup' && (
                 <input
@@ -94,14 +121,40 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
                   required
                 />
               )}
-              <input
-                className="auth-input"
-                type="password"
-                placeholder="Password (min 6 chars)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input
+                  id="auth-password"
+                  name="password"
+                  className="auth-input"
+                  type={showPassword ? 'text' : 'password'}
+                  placeholder="Password (min 6 chars)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
+                  style={{ width: '100%', paddingRight: '40px' }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                  style={{
+                    position: 'absolute',
+                    right: '10px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: '#666',
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '4px',
+                  }}
+                >
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
             </>
           )}
           {mode === 'signup' &&

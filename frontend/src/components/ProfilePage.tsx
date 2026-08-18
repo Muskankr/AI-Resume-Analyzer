@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react'
-import axios from 'axios'
+import { api } from '../api/client'
 import { useAuth } from '../hooks/useAuth'
 
-const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
-
 export const ProfilePage: React.FC = () => {
-  const { user, updateProfileSession } = useAuth()
+  const { user, updateProfileSession, exportUserData } = useAuth()
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
+  const [weeklyDigestOptIn, setWeeklyDigestOptIn] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
-  
+
   const [originalUsername, setOriginalUsername] = useState('')
   const [originalEmail, setOriginalEmail] = useState('')
-  
+  const [originalOptIn, setOriginalOptIn] = useState(false)
+
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [successMsg, setSuccessMsg] = useState<string | null>(null)
 
@@ -25,16 +26,18 @@ export const ProfilePage: React.FC = () => {
       try {
         setLoading(true)
         setError(null)
-        const response = await axios.get(`${BACKEND}/api/profile/`, {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        })
+        // Through `api` so an expired access token is refreshed and the
+        // request retried. Building the header from `user.token` by hand meant
+        // the profile page was blank with "Failed to load profile details"
+        // fifteen minutes after signing in.
+        const response = await api.get('/api/profile/')
         const data = response.data
         setUsername(data.username)
         setEmail(data.email || '')
+        setWeeklyDigestOptIn(!!data.weekly_digest_opt_in)
         setOriginalUsername(data.username)
         setOriginalEmail(data.email || '')
+        setOriginalOptIn(!!data.weekly_digest_opt_in)
       } catch (err: any) {
         setError(err.response?.data?.error || 'Failed to load profile details.')
       } finally {
@@ -48,10 +51,28 @@ export const ProfilePage: React.FC = () => {
   const handleCancel = () => {
     setUsername(originalUsername)
     setEmail(originalEmail)
+    setWeeklyDigestOptIn(originalOptIn)
     setIsEditing(false)
     setError(null)
     setSuccessMsg(null)
   }
+
+  const handleExportData = async () => {
+    try {
+      setExporting(true)
+      setError(null)
+      setSuccessMsg(null)
+
+      await exportUserData()
+
+      setSuccessMsg('Your account data has been downloaded successfully.')
+    } catch (err: any) {
+      setError(err.response?.data?.error || err.message || 'Failed to export your data.')
+    } finally {
+      setExporting(false)
+    }
+  }
+
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,23 +97,21 @@ export const ProfilePage: React.FC = () => {
       setSaving(true)
       setError(null)
       setSuccessMsg(null)
-      
-      const response = await axios.put(
-        `${BACKEND}/api/profile/`,
-        { username, email },
-        {
-          headers: {
-            Authorization: `Bearer ${user.token}`,
-          },
-        }
-      )
+
+      const response = await api.put('/api/profile/', {
+        username,
+        email,
+        weekly_digest_opt_in: weeklyDigestOptIn,
+      })
 
       const updated = response.data
       setUsername(updated.username)
       setEmail(updated.email)
+      setWeeklyDigestOptIn(!!updated.weekly_digest_opt_in)
       setOriginalUsername(updated.username)
       setOriginalEmail(updated.email)
-      
+      setOriginalOptIn(!!updated.weekly_digest_opt_in)
+
       // Update global context session
       updateProfileSession(updated.username)
 
@@ -183,7 +202,9 @@ export const ProfilePage: React.FC = () => {
               <label htmlFor="profile-username" style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--heading-text)' }}>Username</label>
               <input
                 id="profile-username"
+                name="username"
                 type="text"
+                autoComplete="username"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 disabled={!isEditing || saving}
@@ -205,7 +226,9 @@ export const ProfilePage: React.FC = () => {
               <label htmlFor="profile-email" style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--heading-text)' }}>Email Address</label>
               <input
                 id="profile-email"
+                name="email"
                 type="email"
+                autoComplete="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 disabled={!isEditing || saving}
@@ -223,7 +246,60 @@ export const ProfilePage: React.FC = () => {
               />
             </div>
 
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              borderRadius: 'var(--radius-md)',
+              border: '1px solid var(--control-border)',
+              background: 'rgba(255, 255, 255, 0.02)'
+            }}>
+              <div>
+                <label htmlFor="weekly-digest-toggle" style={{ fontSize: '0.9rem', fontWeight: '600', color: 'var(--heading-text)', display: 'block' }}>
+                  📧 Weekly Resume-Tips Email Digest
+                </label>
+                <span style={{ fontSize: '0.8rem', color: 'var(--muted-text)', display: 'block', marginTop: '2px' }}>
+                  Receive actionable resume guidelines and score improvement nudges once a week.
+                </span>
+              </div>
+              <div className="form-check form-switch" style={{ margin: 0, paddingLeft: '2.5em' }}>
+                <input
+                  id="weekly-digest-toggle"
+                  className="form-check-input"
+                  type="checkbox"
+                  role="switch"
+                  checked={weeklyDigestOptIn}
+                  onChange={(e) => setWeeklyDigestOptIn(e.target.checked)}
+                  disabled={!isEditing || saving}
+                  style={{ width: '2.2em', height: '1.2em', cursor: isEditing ? 'pointer' : 'not-allowed' }}
+                />
+              </div>
+            </div>
+
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '10px', borderTop: '1px solid var(--surface-border)', paddingTop: '20px' }}>
+              <button
+                type="button"
+                className="app-btn app-btn--secondary"
+                onClick={handleExportData}
+                disabled={exporting || saving}
+                style={{ minWidth: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+              >
+                {exporting ? (
+                  <>
+                    <span
+                      className="spinner-border spinner-border-sm"
+                      role="status"
+                      aria-hidden="true"
+                      style={{ width: '1rem', height: '1rem' }}
+                    />
+                    Exporting...
+                  </>
+                ) : (
+                  'Export My Data'
+                )}
+              </button>
+
               {!isEditing ? (
                 <button
                   type="button"

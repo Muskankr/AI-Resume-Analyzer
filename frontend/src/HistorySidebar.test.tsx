@@ -71,7 +71,7 @@ describe('HistorySidebar component (#246)', () => {
     expect(badge).toHaveClass('history-badge')
   })
 
-  it('calls onMarkAllAsViewed and onToggle when clicking the toggle icon', () => {
+  it('calls onToggle but NOT onMarkAllAsViewed when clicking the toggle icon', () => {
     const handleToggle = vi.fn()
     const handleMarkAllAsViewed = vi.fn()
 
@@ -95,8 +95,32 @@ describe('HistorySidebar component (#246)', () => {
 
     fireEvent.click(toggleBtn)
 
-    expect(handleMarkAllAsViewed).toHaveBeenCalledTimes(1)
+    expect(handleMarkAllAsViewed).not.toHaveBeenCalled()
     expect(handleToggle).toHaveBeenCalledTimes(1)
+  })
+
+  it('renders "Mark Read" button when unreadCount > 0 and calls onMarkAllAsViewed when clicked', () => {
+    const handleMarkAllAsViewed = vi.fn()
+
+    render(
+      <HistorySidebar
+        entries={mockEntries}
+        unreadCount={2}
+        lastViewedTimestamp={0}
+        isOpen={true}
+        onToggle={() => {}}
+        onMarkAllAsViewed={handleMarkAllAsViewed}
+        onSelect={() => {}}
+        onDelete={() => {}}
+        onClear={() => {}}
+      />
+    )
+
+    const markReadBtn = screen.getByRole('button', { name: /mark all as read/i })
+    expect(markReadBtn).toBeInTheDocument()
+
+    fireEvent.click(markReadBtn)
+    expect(handleMarkAllAsViewed).toHaveBeenCalledTimes(1)
   })
 
   it('opens panel listing the actual notifications with NEW indicators for unread items', () => {

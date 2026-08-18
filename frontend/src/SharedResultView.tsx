@@ -21,7 +21,11 @@ export const SharedResultView: React.FC = () => {
   useEffect(() => {
     const fetchSharedData = async () => {
       try {
-        const res = await axios.get(`${BACKEND}/api/analyzer/shared/${shareId}/`)
+        // `analyzer.urls` is included under `api/`, not `api/analyzer/`, so the
+        // endpoint is `/api/shared/<uuid>/`. The extra prefix made every share
+        // link 404 and render "Result Not Found" — indistinguishable from a
+        // share that genuinely did not exist. See #632.
+        const res = await axios.get(`${BACKEND}/api/shared/${shareId}/`)
         setData(res.data)
       } catch (err: unknown) {
         const axiosErr = err as { response?: { data?: { detail?: string } } }

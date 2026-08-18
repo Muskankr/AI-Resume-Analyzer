@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import axios from 'axios'
+import { api } from '../api/client'
 import type { AuthUser } from '../hooks/useAuth'
 
 interface AdminDashboardProps {
@@ -18,8 +18,6 @@ interface AdminStats {
   top_missing_skills: StatItem[]
 }
 
-const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
-
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
   const [stats, setStats] = useState<AdminStats | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -30,9 +28,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user }) => {
 
     const fetchStats = async () => {
       try {
-        const res = await axios.get(`${BACKEND}/api/admin/stats/`, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        })
+        const res = await api.get('/api/admin/stats/')
         setStats(res.data)
       } catch (err: unknown) {
         const axiosErr = err as { response?: { status?: number } }

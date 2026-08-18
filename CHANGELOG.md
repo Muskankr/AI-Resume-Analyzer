@@ -7,7 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
-- Low-friction CAPTCHA bot protection for signup and login forms with server-side token validation in Django REST API (#473).
+- Dedicated dark mode SVG icon symbol variants and currentColor support avoiding degraded color-inversion artifacts (#534).
+- Opt-in playful "Resume Roast" alternate feedback tone switch in suggestions section with humorously constructive feedback while remaining constructive (#497).
+- Dedicated Privacy Policy page explaining data collection, immediate document deletion policy, user history control, and cookie usage, linked directly in the footer (#470).
+- Terms of Service page at `/terms` covering acceptable use, account terms, data handling, IP rights, disclaimers, and liability; linked from footer (#469).
 - Exportable prioritized Action Plan checklist ranked by estimated ATS score impact in clean Markdown (.md) and PDF (.pdf) formats (#379).
 - Created basic SEO crawlability files `sitemap.xml` and `robots.txt` in frontend public directory for search engine indexing (#354).
 - Responsive hamburger navigation menu below 1024px with slide-in animation, backdrop overlay, Escape key dismiss, and auto-close on resize (#245).
@@ -23,7 +26,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Resume history tracking improvements.
 - Authentication modal enhancements.
 - Resume thumbnail/file preview (name, size, type icon) shown immediately after file selection, before analysis (#140).
+- Multi-resume "Download All (.ZIP)" export in Bulk JD Compare and History Sidebar; generates individual PDF and JSON reports per resume with distinguishable filenames inside a single ZIP archive (#495).
+- Optional weekly resume-tips email digest: logged-in users can opt-in via an Account Settings toggle; digest includes a curated actionable tip and a personalised ATS score-improvement nudge; unsubscribe link included in every email and a dedicated `/unsubscribe` page provided (#496).
 ### Changed
+- Password hashing now uses Argon2 as the primary hasher, with PBKDF2 retained as a fallback so existing users are transparently migrated to Argon2 on their next successful login (#478).
 - Compressed static raster images and added WebP optimized assets reducing total image bundle size from ~1.15 MB to ~956 KB (16.8% reduction) with no visible quality loss (#353).
 - Improved onboarding experience and user interface consistency.
 - Enhanced visual styling across the application.
@@ -33,6 +39,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ### Fixed
 - Fixed widespread low-opacity/faded text across stats, How It Works cards, upload zone, and footer (#242).
+- Added proper HTML autocomplete attributes (`username`, `email`, `new-password`, `current-password`) to auth and account form inputs for password manager compatibility (#531).
 - Minor UI and styling fixes across multiple frontend components.
 - Improved responsiveness and consistency across the application.
 - Various bug fixes related to resume analysis and UI rendering.

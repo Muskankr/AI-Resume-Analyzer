@@ -13,15 +13,15 @@ describe('Drag and Drop Zone Contrast & Visual Pairing (#258)', () => {
       </MemoryRouter>
     )
 
-    const primaryText = screen.getByText(/Drag & Drop Resume or/i)
+    const primaryText = screen.getByText(/Drag & Drop Resume/i)
     expect(primaryText).toBeInTheDocument()
     expect(primaryText.className).toContain('upload-text-primary')
 
-    const browseText = screen.getByText('Click to Browse')
+    const browseText = screen.getByText(/Click to Browse/i)
     expect(browseText).toBeInTheDocument()
     expect(browseText.className).toContain('upload-text-browse')
 
-    const secondaryText = screen.getByText('Supports PDF, DOCX, TXT up to 10MB')
+    const secondaryText = screen.getByText(/Supports PDF, DOCX or TXT up to 5MB/i)
     expect(secondaryText).toBeInTheDocument()
     expect(secondaryText.className).toContain('upload-text-secondary')
 

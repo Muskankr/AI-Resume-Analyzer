@@ -1,0 +1,32 @@
+name: Welcome First-Time Contributors
+
+on:
+  issues:
+    types: [opened]
+  pull_request_target:
+    types: [opened]
+
+permissions:
+  issues: write
+  pull-requests: write
+
+jobs:
+  welcome:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Welcome First-Time Contributor
+        uses: actions/first-interaction@v1
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          issue-comment: |
+            Welcome to **AI Resume Analyzer**! 🎉 
+
+            Thank you for opening your first issue in this repository! Please take a moment to review our [CONTRIBUTING.md](https://github.com/Babin123456/AI-Resume-Analyzer/blob/main/CONTRIBUTING.md) and our [Code of Conduct](https://github.com/Babin123456/AI-Resume-Analyzer/blob/main/CODE_OF_CONDUCT.md) (#180).
+
+            We appreciate your contribution and our maintainers will review it shortly.
+          pr-comment: |
+            Welcome to **AI Resume Analyzer**! 🎉 
+
+            Thank you for opening your first pull request in this repository! Please ensure you have reviewed our [CONTRIBUTING.md](https://github.com/Babin123456/AI-Resume-Analyzer/blob/main/CONTRIBUTING.md) and adhere to our [Code of Conduct](https://github.com/Babin123456/AI-Resume-Analyzer/blob/main/CODE_OF_CONDUCT.md) (#180).
+
+            Our team will review your PR soon. Happy contributing! 🚀

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
-import { X, ClipboardList, BookOpen, Trash2, GitCompare } from 'lucide-react'
+import { X, ClipboardList, BookOpen, Trash2, GitCompare, Archive, Check } from 'lucide-react'
 import type { AnalysisEntry } from './hooks/useAnalysisHistory'
 import { ScoreHistoryChart } from './components/ScoreHistoryChart'
+import { downloadBulkReportsZip, type BulkReportItem } from './utils/exportZipReports'
 const PAGE_SIZE = 10
 
 type SortMode = "recent" | "most-matched" | "most-missing";
@@ -18,6 +19,10 @@ interface HistorySidebarProps {
   isOpen: boolean
   onToggle: () => void
   onCompare?: () => void
+  /** True when the server has older analyses that have not been fetched yet. */
+  hasMoreOnServer?: boolean
+  /** Fetches the next page from the server; resolves once entries are appended. */
+  onLoadMoreFromServer?: () => Promise<void> | void
 }
 
 const SORT_MODE_STORAGE_KEY = "history_sort_mode";
@@ -34,8 +39,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   isOpen,
   onToggle,
   onCompare,
+  hasMoreOnServer = false,
+  onLoadMoreFromServer,
 }) => {
   const [confirmClear, setConfirmClear] = useState(false);
+  const [downloadingZip, setDownloadingZip] = useState(false);
   const [sortMode, setSortMode] = useState<SortMode>(() => {
     try {
       const saved = localStorage.getItem(SORT_MODE_STORAGE_KEY);
@@ -47,6 +55,28 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     }
     return "recent";
   });
+
+  const handleDownloadHistoryZip = async () => {
+    if (entries.length === 0) return
+    setDownloadingZip(true)
+    try {
+      const reports: BulkReportItem[] = entries.map((e) => ({
+        id: e.id,
+        fileName: e.fileName,
+        targetRole: e.targetRole,
+        score: e.score,
+        matchedSkills: e.matchedSkills,
+        missingSkills: e.missingSkills,
+        suggestions: e.suggestions,
+        timestamp: e.timestamp,
+      }))
+      await downloadBulkReportsZip(reports, 'resume-analysis-history.zip')
+    } catch (err) {
+      console.error('Failed to export history ZIP:', err)
+    } finally {
+      setDownloadingZip(false)
+    }
+  }
 
   // Persist sort mode to localStorage
   useEffect(() => {
@@ -65,24 +95,40 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   }, [entries])
 
   useEffect(() => {
-    if (isOpen && onMarkAllAsViewed) {
-      onMarkAllAsViewed()
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onToggle()
+      }
     }
-  }, [isOpen, onMarkAllAsViewed])
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onToggle])
 
   const handleToggleClick = () => {
-    if (!isOpen && onMarkAllAsViewed) {
-      onMarkAllAsViewed()
-    }
     onToggle()
   }
 
-  const handleLoadMore = () => {
+  const handleLoadMore = async () => {
+    // Reveal what has already been fetched first; only go back to the server
+    // once every locally held entry is on screen.
+    if (visibleCount < entries.length) {
+      setIsLoadingMore(true)
+      setTimeout(() => {
+        setVisibleCount((prev) => prev + PAGE_SIZE)
+        setIsLoadingMore(false)
+      }, 300)
+      return
+    }
+
+    if (!onLoadMoreFromServer) return
+
     setIsLoadingMore(true)
-    setTimeout(() => {
+    try {
+      await onLoadMoreFromServer()
       setVisibleCount((prev) => prev + PAGE_SIZE)
+    } finally {
       setIsLoadingMore(false)
-    }, 300)
+    }
   }
 
   const formatDate = (ts: number) => {
@@ -153,6 +199,17 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             <BookOpen size={18} /> Notifications & History
           </h3>
           <div className="history-header-actions">
+            {entries.length > 0 && (
+              <button
+                className="history-compare-btn"
+                onClick={handleDownloadHistoryZip}
+                disabled={downloadingZip}
+                title="Download all history reports as ZIP"
+                style={{ background: 'rgba(99, 102, 241, 0.15)', borderColor: 'rgba(99, 102, 241, 0.3)' }}
+              >
+                <Archive size={14} /> ZIP
+              </button>
+            )}
             {onCompare && entries.length > 1 && (
               <button
                 className="history-compare-btn"
@@ -160,6 +217,20 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 title="Compare two resume versions"
               >
                 <GitCompare size={14} /> Compare
+              </button>
+            )}
+            {unreadCount > 0 && onMarkAllAsViewed && (
+              <button
+                className="history-compare-btn"
+                onClick={onMarkAllAsViewed}
+                title="Mark all as read"
+                // The visible label is abbreviated to fit the toolbar, so the
+                // accessible name came out as "Mark Read" — `title` does not
+                // provide one when the button already has text content. Spell
+                // it out for screen readers.
+                aria-label="Mark all as read"
+              >
+                <Check size={14} /> Mark Read
               </button>
             )}
             {entries.length > 0 && (
@@ -265,7 +336,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                 )
               })}
             </ul>
-            {visibleCount < entries.length && (
+            {(visibleCount < entries.length || hasMoreOnServer) && (
               <div
                 className="history-load-more-container"
                 style={{ textAlign: 'center', margin: '1rem 0' }}

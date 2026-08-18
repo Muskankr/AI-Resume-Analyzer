@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import axios from 'axios'
+import { api } from '../api/client'
 import type { AuthUser } from '../hooks/useAuth'
 
 interface ProfileModalProps {
@@ -13,8 +13,6 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose, onAva
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
-
-  const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
 
   // Get initials for fallback
   const getInitials = () => {
@@ -48,12 +46,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose, onAva
     formData.append('avatar', file)
 
     try {
-      const res = await axios.post(`${backendUrl}/api/profile/avatar/`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          Authorization: `Bearer ${user.token}`,
-        },
-      })
+      const res = await api.post('/api/profile/avatar/', formData)
       onAvatarUpdated(res.data.avatar_url)
       setSuccess('Profile picture updated successfully!')
     } catch (err: any) {
@@ -70,11 +63,7 @@ export const ProfileModal: React.FC<ProfileModalProps> = ({ user, onClose, onAva
     setSuccess(null)
 
     try {
-      await axios.delete(`${backendUrl}/api/profile/avatar/`, {
-        headers: {
-          Authorization: `Bearer ${user.token}`,
-        },
-      })
+      await api.delete('/api/profile/avatar/')
       onAvatarUpdated(null)
       setSuccess('Profile picture removed.')
     } catch (err: any) {

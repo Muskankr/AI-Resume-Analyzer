@@ -1,5 +1,5 @@
 import pytest
-from quantify_checker import flag_unquantified_bullets
+from resume_analyzer.quantify_checker import flag_unquantified_bullets
 
 SHOULD_FLAG = [
     "Improved application performance significantly",

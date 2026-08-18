@@ -84,6 +84,8 @@
   --select-focus-shadow: rgba(99, 102, 241, 0.3);
   --bs-body-color: var(--body-text);
   --bs-heading-color: var(--heading-text);
+  --icon-color: #475569;
+  --icon-hover-color: #1e293b;
 
   /* Standardized Border Radius Tokens */
   --radius-sm: 6px;
@@ -155,6 +157,15 @@
   --select-focus-shadow: rgba(99, 102, 241, 0.2);
   --bs-body-color: var(--body-text);
   --bs-heading-color: var(--heading-text);
+  --icon-color: #cbd5e1;
+  --icon-hover-color: #ffffff;
+}
+
+svg.app-icon,
+.icon-adaptive {
+  color: var(--icon-color);
+  fill: currentColor;
+  transition: color 0.2s ease;
 }
 
 body {
@@ -2214,6 +2225,23 @@ input {
 
 [data-theme='light'] .skip-to-content:focus {
   outline: 2px solid #2563eb;
+}
+
+/* Global focus-visible indicator for keyboard-only navigation QA (#498) */
+:focus-visible {
+  outline: 3px solid var(--color-primary, #3b82f6) !important;
+  outline-offset: 2px !important;
+  border-radius: 4px;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid #3b82f6 !important;
+  outline-offset: 2px !important;
 }
 
 @media print {

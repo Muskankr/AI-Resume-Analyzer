@@ -3,6 +3,14 @@ import re
 import uuid
 import requests
 from django.conf import settings
+from urllib.parse import urljoin
+
+from .url_safety import (
+    GENERIC_REJECTION_MESSAGE,
+    MAX_REDIRECTS,
+    UnsafeURLError,
+    assert_url_is_safe,
+)
 
 
 def convert_to_direct_download_url(url: str) -> tuple[str, str]:
@@ -38,11 +46,58 @@ def convert_to_direct_download_url(url: str) -> tuple[str, str]:
     return url, filename
 
 
+def fetch_with_redirect_guard(url: str, headers: dict, timeout: int = 15):
+    """Fetch ``url``, re-checking safety on every redirect hop.
+
+    ``requests`` follows redirects itself by default, which would make the
+    check on the submitted URL meaningless — a link on a host the attacker
+    controls can answer ``302 Location: http://169.254.169.254/`` and the
+    client would follow it without ever asking us. So redirects are turned off
+    and the chain is walked here, running :func:`assert_url_is_safe` before
+    each request.
+
+    Returns the final streaming response.
+    """
+    current = url
+
+    for _ in range(MAX_REDIRECTS + 1):
+        assert_url_is_safe(current)
+
+        response = requests.get(
+            current,
+            stream=True,
+            timeout=timeout,
+            headers=headers,
+            allow_redirects=False,
+        )
+
+        if not response.is_redirect and not response.is_permanent_redirect:
+            return response
+
+        location = response.headers.get("Location")
+        # The body of a redirect is of no interest, and leaving it unread keeps
+        # the connection out of the pool.
+        response.close()
+
+        if not location:
+            raise UnsafeURLError(reason="redirect without a Location header")
+
+        # Relative redirects are legal, so resolve against the URL we just
+        # asked for rather than assuming an absolute target.
+        current = urljoin(current, location)
+
+    raise UnsafeURLError(reason=f"more than {MAX_REDIRECTS} redirects")
+
+
 def download_and_validate_url(url: str, max_size_mb: int = 10) -> tuple[str, str]:
     """
     Downloads a resume from a URL, validates accessibility, size, and format.
     Returns (saved_file_path, file_name).
     Raises ValueError with user-friendly error message on failure.
+
+    The URL is checked before every request, including each redirect hop, so it
+    cannot be aimed at loopback, private or link-local addresses. See
+    :mod:`analyzer.url_safety` for what is rejected and why.
     """
     if not url or not url.strip().startswith(("http://", "https://")):
         raise ValueError("Please provide a valid URL starting with http:// or https://")
@@ -58,18 +113,26 @@ def download_and_validate_url(url: str, max_size_mb: int = 10) -> tuple[str, str
     }
 
     try:
-        response = requests.get(direct_url, stream=True, timeout=15, headers=headers)
+        response = fetch_with_redirect_guard(direct_url, headers=headers, timeout=15)
+    except UnsafeURLError:
+        # Deliberately not re-raised with its reason attached: the reason says
+        # what is reachable from the server, which is exactly what we do not
+        # want to tell an anonymous caller.
+        raise ValueError(GENERIC_REJECTION_MESSAGE)
     except requests.exceptions.Timeout:
         raise ValueError("The request timed out while trying to fetch the file. Please check the URL and try again.")
-    except requests.exceptions.RequestException as e:
-        raise ValueError(f"Failed to connect to the provided URL: {str(e)}")
+    except requests.exceptions.RequestException:
+        # The exception text carries the host and port that failed, which turns
+        # a connection error into a scan result. Kept generic for the same
+        # reason as above.
+        raise ValueError(GENERIC_REJECTION_MESSAGE)
 
-    if response.status_code in (401, 403):
-        raise ValueError("The provided link is private or inaccessible. Please ensure share permissions are set to 'Anyone with the link can view'.")
-    elif response.status_code == 404:
-        raise ValueError("File not found at the provided URL (404). Please check the link and try again.")
-    elif response.status_code != 200:
-        raise ValueError(f"Could not download file from URL (HTTP Status {response.status_code}).")
+    if response.status_code != 200:
+        # Every non-200 gets one answer. Distinguishing 401/403 from 404 from
+        # "connection refused" is what let this endpoint be used to map which
+        # internal services exist.
+        response.close()
+        raise ValueError(GENERIC_REJECTION_MESSAGE)
 
     # Check Content-Length if available
     content_length = response.headers.get("Content-Length")

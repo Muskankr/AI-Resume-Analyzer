@@ -1,5 +1,7 @@
-import { useCallback, useState } from 'react'
 import axios from 'axios'
+import { useCallback, useState } from 'react'
+
+import { api } from '../api/client'
 
 export interface TextDiffLine {
   type: 'added' | 'removed'
@@ -23,8 +25,6 @@ export interface VersionComparison {
   insights: string[]
 }
 
-const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
-
 export function useCompareVersions(token: string | undefined) {
   const [comparison, setComparison] = useState<VersionComparison | null>(null)
   const [loading, setLoading] = useState(false)
@@ -39,8 +39,10 @@ export function useCompareVersions(token: string | undefined) {
       setLoading(true)
       setError(null)
       try {
-        const res = await axios.get<VersionComparison>(`${BACKEND}/api/compare/`, {
-          headers: { Authorization: `Bearer ${token}` },
+        // `token` is still a parameter because callers use it to tell whether
+        // there is a session at all; the header itself now comes from `api`,
+        // which reads the current token rather than one captured on render.
+        const res = await api.get<VersionComparison>('/api/compare/', {
           params: { older: olderId, newer: newerId },
         })
         setComparison(res.data)
