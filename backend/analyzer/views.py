@@ -1622,3 +1622,123 @@ def test_webhook(request, pk):
         },
         status=status.HTTP_200_OK,
     )
+
+
+# Active Session / Device Management Helper Functions & Views
+import re
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from .models import UserSession
+from .serializers import UserSessionSerializer
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0].strip()
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+def parse_user_agent(ua_string):
+    if not ua_string:
+        return "Unknown Device"
+
+    os_name = "Unknown OS"
+    if "Windows" in ua_string:
+        os_name = "Windows"
+    elif "Macintosh" in ua_string or "Mac OS X" in ua_string:
+        os_name = "macOS"
+    elif "iPhone" in ua_string or "iPad" in ua_string:
+        os_name = "iOS"
+    elif "Android" in ua_string:
+        os_name = "Android"
+    elif "Linux" in ua_string:
+        os_name = "Linux"
+
+    browser_name = "Unknown Browser"
+    if "Chrome" in ua_string and "Safari" in ua_string and "Edge" not in ua_string and "OPR" not in ua_string:
+        browser_name = "Chrome"
+    elif "Safari" in ua_string and "Chrome" not in ua_string:
+        browser_name = "Safari"
+    elif "Firefox" in ua_string:
+        browser_name = "Firefox"
+    elif "Edge" in ua_string or "Edg" in ua_string:
+        browser_name = "Edge"
+    elif "OPR" in ua_string or "Opera" in ua_string:
+        browser_name = "Opera"
+
+    return f"{browser_name} on {os_name}"
+
+
+class SessionListView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        current_jti = getattr(request.auth, "payload", {}).get("jti")
+        if current_jti:
+            UserSession.objects.filter(user=request.user, access_jti=current_jti).update(
+                ip_address=get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                device_info=parse_user_agent(request.META.get('HTTP_USER_AGENT', ''))
+            )
+
+        sessions = UserSession.objects.filter(user=request.user).order_by("-last_active")
+        serializer = UserSessionSerializer(sessions, many=True, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class SessionRevokeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        session_key = request.data.get("session_key")
+        if not session_key:
+            return Response({"error": "session_key is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        session = UserSession.objects.filter(user=request.user, session_key=session_key).first()
+        if not session:
+            return Response({"error": "Session not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        current_jti = getattr(request.auth, "payload", {}).get("jti")
+        if session.access_jti == current_jti:
+            return Response({"error": "Cannot revoke the current active session directly."}, status=status.HTTP_400_BAD_REQUEST)
+
+        session.delete()
+        return Response({"message": "Session revoked successfully."}, status=status.HTTP_200_OK)
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except (InvalidToken, TokenError) as e:
+            raise InvalidToken(e.args[0])
+
+        raw_token = request.data.get("refresh")
+        if raw_token:
+            try:
+                old_refresh = RefreshToken(raw_token)
+                old_jti = old_refresh['jti']
+
+                session = UserSession.objects.filter(session_key=old_jti).first()
+                if not session:
+                    return Response({"detail": "Session has been revoked."}, status=status.HTTP_401_UNAUTHORIZED)
+
+                new_refresh = RefreshToken(serializer.validated_data['refresh'])
+                new_access = AccessToken(serializer.validated_data['access'])
+
+                session.session_key = new_refresh['jti']
+                session.access_jti = new_access['jti']
+                session.ip_address = get_client_ip(request)
+                ua = request.META.get('HTTP_USER_AGENT', '')
+                session.user_agent = ua
+                session.device_info = parse_user_agent(ua)
+                session.save()
+            except Exception:
+                return Response({"detail": "Invalid or revoked session refresh token."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)

@@ -1059,3 +1059,75 @@ class ExportUserDataTests(TestCase):
 
         self.assertIn(own_analysis.id, exported_ids)
         self.assertNotIn(foreign_analysis.id, exported_ids)
+
+
+class UserSessionTests(TestCase):
+    def setUp(self):
+        from rest_framework.test import APIClient
+        self.client = APIClient()
+        self.user = User.objects.create_user(username="sessionuser", password="password123", email="session@example.com")
+
+    def test_session_created_on_login(self):
+        from analyzer.models import UserSession
+        resp = self.client.post("/api/auth/login/", {"username": "sessionuser", "password": "password123"})
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("access", resp.data)
+        self.assertIn("refresh", resp.data)
+
+        # Check that a UserSession was created
+        sessions = UserSession.objects.filter(user=self.user)
+        self.assertEqual(sessions.count(), 1)
+        session = sessions.first()
+        self.assertIsNotNone(session.access_jti)
+        self.assertIsNotNone(session.session_key)
+
+    def test_session_list_and_revoke(self):
+        from analyzer.models import UserSession
+        # Log in to create a session
+        login_resp = self.client.post("/api/auth/login/", {"username": "sessionuser", "password": "password123"})
+        token = login_resp.data["access"]
+        auth_headers = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+        # List sessions
+        list_resp = self.client.get("/api/auth/sessions/", **auth_headers)
+        self.assertEqual(list_resp.status_code, 200)
+        self.assertEqual(len(list_resp.data), 1)
+        self.assertTrue(list_resp.data[0]["is_current"])
+
+        # Create another session (simulate second login)
+        other_session = UserSession.objects.create(
+            user=self.user,
+            session_key="other_refresh_jti",
+            access_jti="other_access_jti",
+            device_info="Firefox on Linux"
+        )
+
+        list_resp = self.client.get("/api/auth/sessions/", **auth_headers)
+        self.assertEqual(len(list_resp.data), 2)
+
+        # Revoke the other session
+        revoke_resp = self.client.post("/api/auth/sessions/revoke/", {"session_key": "other_refresh_jti"}, **auth_headers)
+        self.assertEqual(revoke_resp.status_code, 200)
+        self.assertFalse(UserSession.objects.filter(session_key="other_refresh_jti").exists())
+
+        # Attempt to revoke current session directly should fail
+        current_jti = UserSession.objects.filter(user=self.user).first().session_key
+        revoke_resp = self.client.post("/api/auth/sessions/revoke/", {"session_key": current_jti}, **auth_headers)
+        self.assertEqual(revoke_resp.status_code, 400)
+
+    def test_revoked_session_rejects_requests(self):
+        from analyzer.models import UserSession
+        login_resp = self.client.post("/api/auth/login/", {"username": "sessionuser", "password": "password123"})
+        token = login_resp.data["access"]
+        auth_headers = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
+
+        # Request works initially
+        status_resp = self.client.get("/api/auth/status/", **auth_headers)
+        self.assertEqual(status_resp.status_code, 200)
+
+        # Revoke session by deleting it from database
+        UserSession.objects.filter(user=self.user).delete()
+
+        # Request should now fail
+        status_resp = self.client.get("/api/auth/status/", **auth_headers)
+        self.assertEqual(status_resp.status_code, 401)

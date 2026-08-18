@@ -51,11 +51,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="navbar">
-      <Link
-        to="/"
-        className={`navbar-brand ${theme}`}
-        onClick={closeMenu}
-      >
+      <Link to="/" className={`navbar-brand ${theme}`} onClick={closeMenu}>
         🚀 AI Resume Analyzer
       </Link>
       <button
@@ -143,7 +139,10 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
 
           {user ? (
-            <div className="navbar-user" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div
+              className="navbar-user"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
               <button
                 type="button"
                 onClick={() => onProfileClick?.()}
@@ -194,6 +193,14 @@ export const Navbar: React.FC<NavbarProps> = ({
                 style={{ textDecoration: 'none', color: 'inherit' }}
               >
                 {user.username}
+              </Link>
+              <Link
+                to="/security"
+                className="auth-bar-btn"
+                onClick={closeMenu}
+                style={{ textDecoration: 'none', marginRight: '10px', marginLeft: '10px' }}
+              >
+                🛡️ Security
               </Link>
               <button
                 className="auth-bar-btn"
