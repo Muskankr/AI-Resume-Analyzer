@@ -16,7 +16,7 @@ const defaultProps = {
   user: null,
   onLogin: vi.fn(),
   onLogout: vi.fn(),
-
+  onHistoryClick: vi.fn(),
 }
 
 const renderNavbar = (
@@ -62,7 +62,7 @@ describe('Navbar Component right-side cluster (#244)', () => {
           user={null}
           onLogin={() => {}}
           onLogout={() => {}}
-
+          onHistoryClick={() => {}}
         />
       </MemoryRouter>
     )
@@ -77,7 +77,7 @@ describe('Navbar Component right-side cluster (#244)', () => {
   })
 
   it('renders user profile when user is authenticated', () => {
-    const user = { username: 'testuser', token: 'fake-token' }
+    const user = { username: 'testuser', token: 'fake-token', is_verified: true }
     render(
       <MemoryRouter>
         <Navbar
@@ -86,7 +86,7 @@ describe('Navbar Component right-side cluster (#244)', () => {
           user={user}
           onLogin={() => {}}
           onLogout={() => {}}
-
+          onHistoryClick={() => {}}
         />
       </MemoryRouter>
     )
@@ -106,7 +106,7 @@ describe('Navbar responsive hamburger (#245)', () => {
           user={null}
           onLogin={() => {}}
           onLogout={() => {}}
-
+          onHistoryClick={() => {}}
         />
       </MemoryRouter>
     )
@@ -126,7 +126,7 @@ describe('Navbar responsive hamburger (#245)', () => {
           user={null}
           onLogin={() => {}}
           onLogout={() => {}}
-
+          onHistoryClick={() => {}}
         />
       </MemoryRouter>
     )
@@ -146,6 +146,7 @@ describe('Navbar responsive hamburger (#245)', () => {
   })
 
   it('closes menu when a nav link is clicked', () => {
+    const onHistoryClick = vi.fn()
     render(
       <MemoryRouter>
         <Navbar
@@ -154,6 +155,7 @@ describe('Navbar responsive hamburger (#245)', () => {
           user={null}
           onLogin={() => {}}
           onLogout={() => {}}
+          onHistoryClick={onHistoryClick}
         />
       </MemoryRouter>
     )
@@ -164,9 +166,10 @@ describe('Navbar responsive hamburger (#245)', () => {
     fireEvent.click(toggle)
     expect(menu.className).toContain('mobile-open')
 
-    const atsLink = screen.getByText('ATS Score')
-    fireEvent.click(atsLink)
+    const historyLink = screen.getByText('History')
+    fireEvent.click(historyLink)
     expect(menu.className).not.toContain('mobile-open')
+    expect(onHistoryClick).toHaveBeenCalled()
   })
 })
 

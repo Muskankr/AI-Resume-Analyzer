@@ -18,6 +18,7 @@ export interface StoredSession {
   token: string
   refresh?: string
   avatarUrl?: string
+  is_verified?: boolean
 }
 
 const STORAGE_KEY = 'auth_user'

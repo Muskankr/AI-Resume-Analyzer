@@ -1,9 +1,10 @@
-from rest_framework import serializers
 from django.contrib.auth.models import User
+from rest_framework import serializers
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from drf_spectacular.utils import OpenApiResponse, extend_schema
-from .models import Resume, ResumeAnalysis
+from .models import Resume, ResumeAnalysis, UserProfile
 
 
 class ResumeSerializer(serializers.ModelSerializer):
@@ -13,11 +14,17 @@ class ResumeSerializer(serializers.ModelSerializer):
 
 
 class SignupSerializer(serializers.ModelSerializer):
+    email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, min_length=6)
 
     class Meta:
         model = User
-        fields = ("username", "password")
+        fields = ("username", "email", "password")
+
+    def validate_email(self, value):
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError("A user with this email already exists.")
+        return value
 
     def validate_password(self, value):
         """Run the project's configured password validators.
@@ -48,6 +55,14 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from .models import UserProfile
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    @classmethod
+    def get_token(cls, user):
+        token = super().get_token(user)
+        token['username'] = user.username
+        profile, _ = UserProfile.objects.get_or_create(user=user)
+        token['is_verified'] = profile.is_verified
+        return token
+
     def validate(self, attrs):
         request = self.context.get("request")
         if request and hasattr(request, "data"):
@@ -60,6 +75,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         data = super().validate(attrs)
         profile, _ = UserProfile.objects.get_or_create(user=self.user)
+        data['username'] = self.user.username
+        data['is_verified'] = profile.is_verified
+
         if profile.avatar:
             if request:
                 data["avatar_url"] = request.build_absolute_uri(profile.avatar.url)

@@ -40,28 +40,32 @@ export function useAuth() {
     setUser(u)
   }
 
-  const signup = useCallback(async (username: string, password: string, captchaToken?: string) => {
-    await axios.post(`${BACKEND}/api/auth/signup/`, {
-      username,
-      password,
-      captcha_token: captchaToken,
-    })
-    const res = await axios.post(`${BACKEND}/api/auth/login/`, {
-      username,
-      password,
-      captcha_token: captchaToken,
-    })
-    persist(
-      {
+  const signup = useCallback(
+    async (username: string, email: string, password: string, captchaToken?: string) => {
+      await axios.post(`${BACKEND}/api/auth/signup/`, {
         username,
-        token: res.data.access,
-        // Was discarded. Without it a session cannot outlive its access token.
-        refresh: res.data.refresh,
-        avatarUrl: res.data.avatar_url,
-      },
-      true
-    )
-  }, [])
+        email,
+        password,
+        captcha_token: captchaToken,
+      })
+      const res = await axios.post(`${BACKEND}/api/auth/login/`, {
+        username,
+        password,
+        captcha_token: captchaToken,
+      })
+      persist(
+        {
+          username,
+          token: res.data.access,
+          refresh: res.data.refresh,
+          is_verified: res.data.is_verified || false,
+          avatarUrl: res.data.avatar_url,
+        },
+        true
+      )
+    },
+    []
+  )
 
   const login = useCallback(
     async (
@@ -80,6 +84,7 @@ export function useAuth() {
           username,
           token: res.data.access,
           refresh: res.data.refresh,
+          is_verified: res.data.is_verified || false,
           avatarUrl: res.data.avatar_url,
         },
         rememberMe
@@ -93,6 +98,60 @@ export function useAuth() {
     clearSession()
     setUser(null)
   }, [])
+
+  const refreshUserStatus = useCallback(async () => {
+    if (!user) return
+    try {
+      const res = await axios.get(`${BACKEND}/api/auth/status/`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      })
+      if (res.data.is_verified !== user.is_verified) {
+        const updated = { ...user, is_verified: res.data.is_verified }
+        const remember = localStorage.getItem('auth_user') !== null
+        persist(updated, remember)
+      }
+    } catch (err) {
+      console.error('Failed to refresh user status', err)
+    }
+  }, [user])
+
+  const verifyEmail = useCallback(
+    async (token: string) => {
+      const res = await axios.post(`${BACKEND}/api/auth/verify-email/`, { token })
+      if (user) {
+        await refreshUserStatus()
+      }
+      return res.data
+    },
+    [user, refreshUserStatus]
+  )
+
+  const resendVerification = useCallback(async () => {
+    if (!user) throw new Error('User is not authenticated')
+    const res = await axios.post(
+      `${BACKEND}/api/auth/resend-verification/`,
+      {},
+      {
+        headers: { Authorization: `Bearer ${user.token}` },
+      }
+    )
+    return res.data
+  }, [user])
+
+  useEffect(() => {
+    if (user && !user.is_verified) {
+      const onFocus = () => {
+        refreshUserStatus()
+      }
+      window.addEventListener('focus', onFocus)
+      const interval = setInterval(refreshUserStatus, 10000)
+
+      return () => {
+        window.removeEventListener('focus', onFocus)
+        clearInterval(interval)
+      }
+    }
+  }, [user, refreshUserStatus])
 
   const dismissSessionExpired = useCallback(() => setSessionExpired(false), [])
 
@@ -146,6 +205,9 @@ export function useAuth() {
     signup,
     login,
     logout,
+    verifyEmail,
+    resendVerification,
+    refreshUserStatus,
     updateProfileSession,
     updateUserAvatar,
     exportUserData,
