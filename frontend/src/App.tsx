@@ -137,6 +137,7 @@ interface HistoryRow {
   matched_skills: string[]
   missing_skills: string[]
   target_role: string
+  experience_level?: string
   created_at: string
 }
 
@@ -165,6 +166,7 @@ function toAnalysisEntries(payload: HistoryRow[] | HistoryPage): AnalysisEntry[]
     matchedSkills: item.matched_skills,
     missingSkills: item.missing_skills,
     targetRole: item.target_role,
+    experienceLevel: item.experience_level || 'Mid-Level',
     fileName: item.file_name,
   }))
 }
@@ -350,6 +352,13 @@ function App() {
 
   // Component States
   const [targetRole, setTargetRole] = useState('Frontend Developer')
+  const [experienceLevel, setExperienceLevel] = useState(() => {
+    try {
+      return localStorage.getItem('selected_experience_level') || 'Mid-Level'
+    } catch {
+      return 'Mid-Level'
+    }
+  })
   const [matchedSkills, setMatchedSkills] = useState<string[]>([])
   const [missingSkills, setMissingSkills] = useState<string[]>([])
   const [showAllSkills, setShowAllSkills] = useState(false)
@@ -1000,6 +1009,9 @@ function App() {
     setMatchedSkills(entry.matchedSkills)
     setMissingSkills(entry.missingSkills)
     setTargetRole(entry.targetRole)
+    if (entry.experienceLevel) {
+      setExperienceLevel(entry.experienceLevel)
+    }
     // History entries carry a client-side id, not the analysis id, so there is
     // nothing safe to attach a vote to when one is replayed.
     setAnalysisId(null)

@@ -73,6 +73,38 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                     {"captcha_token": ["CAPTCHA verification failed. Please complete the security challenge."]}
                 )
 
+        username = attrs.get("username")
+        password = attrs.get("password")
+
+        from django.contrib.auth import authenticate
+        from django.contrib.auth.models import User
+        from rest_framework.exceptions import AuthenticationFailed
+
+        user = User.objects.filter(username=username).first()
+        if not user:
+            # Generic message to prevent user enumeration
+            raise AuthenticationFailed("No active account found with the given credentials.")
+
+        if not user.is_active:
+            raise AuthenticationFailed({
+                "detail": "Your account has been locked or deactivated. Please reset your password to unlock it or contact support.",
+                "code": "account_locked"
+            })
+
+        if not user.check_password(password):
+            # Generic message to prevent user enumeration
+            raise AuthenticationFailed("No active account found with the given credentials.")
+
+        # Check if email is verified (forward-compatible with issue 371)
+        profile = getattr(user, 'profile', None)
+        is_verified = getattr(profile, 'is_verified', True) if profile else True
+        if not is_verified:
+            raise AuthenticationFailed({
+                "detail": "Your email address is not verified. Please verify your email to gain full account access.",
+                "code": "email_unverified",
+                "email": user.email
+            })
+
         data = super().validate(attrs)
         profile, _ = UserProfile.objects.get_or_create(user=self.user)
         data['username'] = self.user.username
@@ -85,6 +117,37 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
                 data["avatar_url"] = profile.avatar.url
         else:
             data["avatar_url"] = None
+
+        if request:
+            from .models import KnownDevice
+            from .views import get_client_ip, parse_user_agent, send_new_device_login_alert
+
+            ip = get_client_ip(request)
+            ua = request.META.get('HTTP_USER_AGENT', '')
+            device = parse_user_agent(ua)
+
+            known_devices = KnownDevice.objects.filter(user=self.user)
+            has_existing = known_devices.exists()
+            device_exists = known_devices.filter(ip_address=ip, device_info=device).exists()
+
+            if not device_exists:
+                if has_existing:
+                    # Unrecognized login! Send email alert.
+                    try:
+                        send_new_device_login_alert(self.user, ip, device)
+                    except Exception:
+                        pass
+
+                # Save as a known device (registers initial silently, or adds new device)
+                try:
+                    KnownDevice.objects.get_or_create(
+                        user=self.user,
+                        ip_address=ip,
+                        device_info=device
+                    )
+                except Exception:
+                    pass
+
         return data
 
 
@@ -94,7 +157,7 @@ class ResumeAnalysisSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResumeAnalysis
         fields = ("id", "share_id", "file_name", "score", "skills_found", "suggestions",
-                  "matched_skills", "missing_skills", "target_role", "created_at", "resume_text",
+                  "matched_skills", "missing_skills", "target_role", "experience_level", "created_at", "resume_text",
                   "cover_letter_text", "cover_letter_feedback", "interview_questions")
 
 
@@ -110,7 +173,7 @@ class ResumeAnalysisListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResumeAnalysis
         fields = ("id", "share_id", "file_name", "score", "skills_found", "suggestions",
-                  "matched_skills", "missing_skills", "target_role", "created_at")
+                  "matched_skills", "missing_skills", "target_role", "experience_level", "created_at")
 
 class VersionComparisonSerializer(serializers.Serializer):
     older_id = serializers.IntegerField()

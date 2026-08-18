@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 @shared_task
-def analyze_resume_task(file_path, target_role, file_name, user_id=None, job_description=None, cover_letter_path=None, cover_letter_name=None):
+def analyze_resume_task(file_path, target_role, file_name, user_id=None, job_description=None, cover_letter_path=None, cover_letter_name=None, experience_level="Mid-Level"):
 
     # 1. Run the AI analysis and capture the result
     analysis_result = analyze_resume(
@@ -22,7 +22,8 @@ def analyze_resume_task(file_path, target_role, file_name, user_id=None, job_des
         user_id=user_id,
         job_description=job_description,
         cover_letter_path=cover_letter_path,
-        cover_letter_name=cover_letter_name
+        cover_letter_name=cover_letter_name,
+        experience_level=experience_level,
     )
 
     # 2. If this was triggered by a logged-in user, queue their webhooks. Each

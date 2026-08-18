@@ -16,6 +16,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [captchaToken, setCaptchaToken] = useState('')
+  const [unverifiedEmail, setUnverifiedEmail] = useState('')
+  const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
+  const [resendMessage, setResendMessage] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -30,9 +33,31 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [onClose])
 
+  const handleResendVerification = async () => {
+    if (!unverifiedEmail) return
+    setResendStatus('sending')
+    setResendMessage('')
+    try {
+      const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
+      await axios.post(`${backendUrl}/api/auth/resend-verification/`, { email: unverifiedEmail })
+      setResendStatus('success')
+      setResendMessage('Verification email has been resent successfully!')
+    } catch (err: any) {
+      setResendStatus('error')
+      setResendMessage(
+        err.response?.data?.detail ||
+          err.response?.data?.error ||
+          'Failed to resend verification email.'
+      )
+    }
+  }
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
+    setUnverifiedEmail('')
+    setResendStatus('idle')
+    setResendMessage('')
 
     if (mode !== 'forgot_password' && !captchaToken) {
       setError('Please complete the security check before submitting.')
@@ -54,9 +79,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
         await axios.post(`${backendUrl}/api/password-reset/`, { username })
         onClose()
       }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Authentication failed'
+    } catch (err: any) {
+      let msg = 'Authentication failed'
+      let emailVal = ''
+      if (err.response?.data) {
+        const data = err.response.data
+        if (data.detail) {
+          msg = data.detail
+        } else if (data.error) {
+          msg = data.error
+        } else if (typeof data === 'string') {
+          msg = data
+        } else {
+          const firstKey = Object.keys(data)[0]
+          if (firstKey) {
+            msg = Array.isArray(data[firstKey]) ? data[firstKey][0] : data[firstKey]
+          }
+        }
+
+        if (data.code === 'email_unverified' && data.email) {
+          emailVal = data.email
+        }
+      } else if (err.message) {
+        msg = err.message
+      }
       setError(msg)
+      setUnverifiedEmail(emailVal)
     } finally {
       setLoading(false)
     }
@@ -248,6 +296,69 @@ export const AuthModal: React.FC<AuthModalProps> = ({ onSignup, onLogin, onClose
             </button>
           </div>
           {error && <p className="auth-error">{error}</p>}
+
+          {unverifiedEmail && (
+            <div style={{ marginTop: '10px', marginBottom: '16px', textAlign: 'center' }}>
+              {resendStatus === 'success' ? (
+                <p style={{ color: 'var(--color-accent, #22c55e)', fontSize: '0.9rem', margin: 0 }}>
+                  {resendMessage}
+                </p>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleResendVerification}
+                    disabled={resendStatus === 'sending'}
+                    className="app-btn app-btn--secondary"
+                    style={{
+                      width: '100%',
+                      padding: '8px 12px',
+                      fontSize: '0.9rem',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {resendStatus === 'sending'
+                      ? 'Sending Verification Link...'
+                      : 'Resend Verification Email'}
+                  </button>
+                  {resendStatus === 'error' && (
+                    <p
+                      style={{
+                        color: 'var(--color-danger, #ef4444)',
+                        fontSize: '0.85rem',
+                        marginTop: '6px',
+                        margin: 0,
+                      }}
+                    >
+                      {resendMessage}
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {error && error.includes('locked') && (
+            <div style={{ marginTop: '10px', marginBottom: '16px', textAlign: 'center' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('forgot_password')
+                  setError('')
+                }}
+                className="app-btn app-btn--secondary"
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                }}
+              >
+                Reset Password to Unlock
+              </button>
+            </div>
+          )}
+
           <button className="auth-submit-btn" type="submit" disabled={loading}>
             {loading ? (
               <>

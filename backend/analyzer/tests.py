@@ -1135,3 +1135,45 @@ class ExportUserDataTests(TestCase):
 
         self.assertIn(own_analysis.id, exported_ids)
         self.assertNotIn(foreign_analysis.id, exported_ids)
+
+
+class ExperienceLevelTests(TestCase):
+    @patch("analyzer.services.pdfplumber.open")
+    def test_experience_level_skill_expectations_vary_for_frontend(self, mock_open):
+        mock_open.return_value = _fake_pdf("Experienced with HTML, CSS, JavaScript, React, Git, GitHub.")
+        
+        # At Junior level, this resume has all required skills
+        junior_res = analyze_resume("dummy.pdf", "Frontend Developer", experience_level="Junior")
+        self.assertEqual(junior_res["score"], 100)
+        self.assertEqual(len(junior_res["missing_skills"]), 0)
+
+        # At Senior level, advanced skills like system design, mentoring, ci/cd, docker are expected
+        senior_res = analyze_resume("dummy.pdf", "Frontend Developer", experience_level="Senior")
+        self.assertLess(senior_res["score"], 100)
+        self.assertTrue(len(senior_res["missing_skills"]) > 0)
+        self.assertTrue(any("leadership" in s.lower() or "mentoring" in s.lower() or "architectural" in s.lower() for s in senior_res["suggestions"]))
+
+    @patch("analyzer.services.pdfplumber.open")
+    def test_experience_level_skill_expectations_vary_for_backend(self, mock_open):
+        mock_open.return_value = _fake_pdf("Python, JavaScript, SQL, Git, GitHub, Flask, Node.js.")
+        
+        junior_res = analyze_resume("dummy.pdf", "Backend Developer", experience_level="Junior")
+        self.assertEqual(junior_res["score"], 100)
+
+        senior_res = analyze_resume("dummy.pdf", "Backend Developer", experience_level="Senior")
+        self.assertLess(senior_res["score"], 100)
+        self.assertTrue(any("senior" in s.lower() or "leadership" in s.lower() or "architectural" in s.lower() or "scalable" in s.lower() for s in senior_res["suggestions"]))
+
+    @patch("analyzer.services.pdfplumber.open")
+    def test_experience_level_persists_in_model(self, mock_open):
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        user = User.objects.create_user(username="leveluser", email="level@example.com", password="password123")
+        
+        mock_open.return_value = _fake_pdf("Python, SQL, Excel, Pandas, Data Analysis.")
+        res = analyze_resume("dummy.pdf", "Data Analyst", user_id=user.id, experience_level="Senior")
+        
+        from analyzer.models import ResumeAnalysis
+        record = ResumeAnalysis.objects.get(id=res["id"])
+        self.assertEqual(record.experience_level, "Senior")
+        self.assertEqual(record.target_role, "Data Analyst")

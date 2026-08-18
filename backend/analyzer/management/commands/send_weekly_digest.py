@@ -88,7 +88,11 @@ class Command(BaseCommand):
             )
 
             if dry_run:
-                self.stdout.write(f"[DRY-RUN] To: {user.email}\nSubject: {subject}\n{body}\n")
+                try:
+                    self.stdout.write(f"[DRY-RUN] To: {user.email}\nSubject: {subject}\n{body}\n")
+                except UnicodeEncodeError:
+                    safe_body = body.encode("ascii", "replace").decode("ascii")
+                    self.stdout.write(f"[DRY-RUN] To: {user.email}\nSubject: {subject}\n{safe_body}\n")
             else:
                 try:
                     send_mail(
