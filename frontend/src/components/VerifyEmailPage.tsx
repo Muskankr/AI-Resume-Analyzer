@@ -48,28 +48,40 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ onVerification
   }, [token, navigate, onVerificationSuccess])
 
   return (
-    <div className="verify-email-container" style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      minHeight: '80vh',
-      padding: '24px',
-    }}>
-      <div className="verify-email-card" style={{
-        maxWidth: '450px',
-        width: '100%',
-        background: 'rgba(255, 255, 255, 0.03)',
-        backdropFilter: 'blur(16px)',
-        border: '1px solid rgba(255, 255, 255, 0.08)',
-        borderRadius: 'var(--radius-lg, 16px)',
-        padding: '40px 32px',
-        textAlign: 'center',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
-      }}>
+    <div
+      className="verify-email-container"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '80vh',
+        padding: '24px',
+      }}
+    >
+      <div
+        className="verify-email-card"
+        style={{
+          maxWidth: '450px',
+          width: '100%',
+          background: 'rgba(255, 255, 255, 0.03)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid rgba(255, 255, 255, 0.08)',
+          borderRadius: 'var(--radius-lg, 16px)',
+          padding: '40px 32px',
+          textAlign: 'center',
+          boxShadow: '0 20px 40px rgba(0,0,0,0.3)',
+        }}
+      >
         {status === 'loading' && (
           <div>
-            <Loader2 className="spin" size={48} style={{ color: '#6366f1', margin: '0 auto 24px' }} />
-            <h3 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '12px', color: '#fff' }}>
+            <Loader2
+              className="spin"
+              size={48}
+              style={{ color: '#6366f1', margin: '0 auto 24px' }}
+            />
+            <h3
+              style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '12px', color: '#fff' }}
+            >
               Verifying Your Email
             </h3>
             <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.95rem' }}>
@@ -81,11 +93,21 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ onVerification
         {status === 'success' && (
           <div>
             <CheckCircle size={56} style={{ color: '#10b981', margin: '0 auto 24px' }} />
-            <h3 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '12px', color: '#fff' }}>
+            <h3
+              style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '12px', color: '#fff' }}
+            >
               Email Verified!
             </h3>
-            <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.95rem', marginBottom: '24px', lineHeight: '1.5' }}>
-              Your account is now fully verified. Redirecting you to the workspace in a few seconds...
+            <p
+              style={{
+                color: 'rgba(255,255,255,0.8)',
+                fontSize: '0.95rem',
+                marginBottom: '24px',
+                lineHeight: '1.5',
+              }}
+            >
+              Your account is now fully verified. Redirecting you to the workspace in a few
+              seconds...
             </p>
             <button
               onClick={() => navigate('/')}
@@ -112,14 +134,31 @@ export const VerifyEmailPage: React.FC<VerifyEmailPageProps> = ({ onVerification
         {status === 'error' && (
           <div>
             <XCircle size={56} style={{ color: '#ef4444', margin: '0 auto 24px' }} />
-            <h3 style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '12px', color: '#fff' }}>
+            <h3
+              style={{ fontSize: '1.6rem', fontWeight: 700, marginBottom: '12px', color: '#fff' }}
+            >
               Verification Failed
             </h3>
-            <p style={{ color: '#ef4444', fontSize: '0.95rem', fontWeight: 500, marginBottom: '20px' }}>
+            <p
+              style={{
+                color: '#ef4444',
+                fontSize: '0.95rem',
+                fontWeight: 500,
+                marginBottom: '20px',
+              }}
+            >
               {errorMsg}
             </p>
-            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.88rem', marginBottom: '24px', lineHeight: '1.5' }}>
-              Please request a new verification link from your account warning banner on the dashboard page.
+            <p
+              style={{
+                color: 'rgba(255,255,255,0.6)',
+                fontSize: '0.88rem',
+                marginBottom: '24px',
+                lineHeight: '1.5',
+              }}
+            >
+              Please request a new verification link from your account warning banner on the
+              dashboard page.
             </p>
             <button
               onClick={() => navigate('/')}
