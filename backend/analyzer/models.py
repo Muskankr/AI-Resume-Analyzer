@@ -23,6 +23,7 @@ class ResumeAnalysis(models.Model):
     matched_skills = models.JSONField(default=list)
     missing_skills = models.JSONField(default=list)
     target_role = models.CharField(max_length=100)
+    experience_level = models.CharField(max_length=50, default="Mid-Level", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     job_description = models.TextField(blank=True, null=True)
     resume_text = models.TextField(blank=True, null=True)

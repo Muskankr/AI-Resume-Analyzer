@@ -224,6 +224,10 @@ def upload_resume(request):
     file = request.FILES.get("file")
     url = request.data.get("url") or request.data.get("resume_url")
     target_role = clean_text(request.data.get("role"), max_length=100)
+    experience_level = clean_text(
+        request.data.get("experience_level") or request.data.get("level") or "Mid-Level",
+        max_length=50,
+    )
     # `.get(key, "")` returns the stored value when the key is present, so a
     # JSON body carrying `"job_description": null` produced None here and the
     # slice raised TypeError. This line sits above the try/except, so that was
@@ -295,6 +299,7 @@ def upload_resume(request):
             job_description=job_desc,
             cover_letter_path=cover_letter_path,
             cover_letter_name=cover_letter_name,
+            experience_level=experience_level,
         )
 
         return Response({"task_id": task.id})
@@ -326,6 +331,10 @@ def compare_uploads(request):
     file1 = request.FILES.get("file1")
     file2 = request.FILES.get("file2")
     target_role = clean_text(request.data.get("role"), max_length=100)
+    experience_level = clean_text(
+        request.data.get("experience_level") or request.data.get("level") or "Mid-Level",
+        max_length=50,
+    )
     job_desc = clean_text(
         request.data.get("job_description"),
         max_length=MAX_STORED_JOB_DESCRIPTION_LENGTH,
@@ -356,6 +365,7 @@ def compare_uploads(request):
             file_name=f.name,
             user_id=user_id,
             job_description=job_desc,
+            experience_level=experience_level,
         )
 
     try:

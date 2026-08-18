@@ -70,6 +70,7 @@ interface HistoryRow {
   matched_skills: string[]
   missing_skills: string[]
   target_role: string
+  experience_level?: string
   created_at: string
 }
 
@@ -98,6 +99,7 @@ function toAnalysisEntries(payload: HistoryRow[] | HistoryPage): AnalysisEntry[]
     matchedSkills: item.matched_skills,
     missingSkills: item.missing_skills,
     targetRole: item.target_role,
+    experienceLevel: item.experience_level || 'Mid-Level',
     fileName: item.file_name,
   }))
 }
@@ -133,6 +135,13 @@ function App() {
 
   // Component States
   const [targetRole, setTargetRole] = useState('Frontend Developer')
+  const [experienceLevel, setExperienceLevel] = useState(() => {
+    try {
+      return localStorage.getItem('selected_experience_level') || 'Mid-Level'
+    } catch {
+      return 'Mid-Level'
+    }
+  })
   const [matchedSkills, setMatchedSkills] = useState<string[]>([])
   const [missingSkills, setMissingSkills] = useState<string[]>([])
   const [showAllSkills, setShowAllSkills] = useState(false)
@@ -202,6 +211,14 @@ function App() {
   }, [user, fetchDbHistory])
 
   useEffect(() => {
+    try {
+      localStorage.setItem('selected_experience_level', experienceLevel)
+    } catch {
+      // persistence is best-effort; ignore if storage is unavailable
+    }
+  }, [experienceLevel])
+
+  useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     try {
       localStorage.setItem('theme', theme)
@@ -237,6 +254,7 @@ function App() {
       const formData = new FormData()
       formData.append('file', fileToAnalyze)
       formData.append('role', targetRole)
+      formData.append('experience_level', experienceLevel)
 
       // Through `api`, which attaches the current access token and, on a 401,
       // refreshes once and retries. This used to build an Authorization header
@@ -451,6 +469,9 @@ function App() {
     setMatchedSkills(entry.matchedSkills)
     setMissingSkills(entry.missingSkills)
     setTargetRole(entry.targetRole)
+    if (entry.experienceLevel) {
+      setExperienceLevel(entry.experienceLevel)
+    }
     // History entries carry a client-side id, not the analysis id, so there is
     // nothing safe to attach a vote to when one is replayed.
     setAnalysisId(null)
@@ -528,24 +549,45 @@ function App() {
             <AuthModal onSignup={signup} onLogin={login} onClose={() => setShowAuthModal(false)} />
           )}
           <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
-          {/* Role Selector Dropdown */}
-          <div className="mb-4">
-            <label
-              htmlFor="roleSelect"
-              style={{ marginRight: '10px', fontWeight: '600', color: '#fff' }}
-            >
-              Target Career Track:
-            </label>
-            <select
-              id="roleSelect"
-              value={targetRole}
-              onChange={(e) => setTargetRole(e.target.value)}
-              style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #ccc' }}
-            >
-              <option value="Frontend Developer">Frontend Developer</option>
-              <option value="Backend Developer">Backend Developer</option>
-              <option value="Data Analyst">Data Analyst</option>
-            </select>
+          {/* Role and Experience Level Selectors */}
+          <div className="mb-4 d-flex flex-wrap gap-3 align-items-center justify-content-center">
+            <div className="d-flex align-items-center">
+              <label
+                htmlFor="roleSelect"
+                style={{ marginRight: '10px', fontWeight: '600', color: '#fff' }}
+              >
+                Target Career Track:
+              </label>
+              <select
+                id="roleSelect"
+                value={targetRole}
+                onChange={(e) => setTargetRole(e.target.value)}
+                style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #ccc' }}
+              >
+                <option value="Frontend Developer">Frontend Developer</option>
+                <option value="Backend Developer">Backend Developer</option>
+                <option value="Data Analyst">Data Analyst</option>
+              </select>
+            </div>
+
+            <div className="d-flex align-items-center">
+              <label
+                htmlFor="experienceLevelSelect"
+                style={{ marginRight: '10px', fontWeight: '600', color: '#fff' }}
+              >
+                Experience Level:
+              </label>
+              <select
+                id="experienceLevelSelect"
+                value={experienceLevel}
+                onChange={(e) => setExperienceLevel(e.target.value)}
+                style={{ padding: '6px 12px', borderRadius: '6px', border: '1px solid #ccc' }}
+              >
+                <option value="Junior">Junior (0-2 yrs)</option>
+                <option value="Mid-Level">Mid-Level (2-5 yrs)</option>
+                <option value="Senior">Senior (5+ yrs)</option>
+              </select>
+            </div>
           </div>
           <div
             className={`upload-box mb-3${isDragging ? ' dragging' : ''}`}
@@ -679,7 +721,7 @@ function App() {
               </h5>
               {activeFileName && (
                 <p style={{ fontSize: '13px', opacity: 0.7, marginTop: '-8px' }}>
-                  📄 {activeFileName}
+                  📄 {activeFileName} • 🎯 {targetRole} • 💼 {experienceLevel}
                 </p>
               )}
 
@@ -720,7 +762,7 @@ function App() {
                 className="mt-4 p-3"
                 style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}
               >
-                <h4>🎯 Skill Gap Matrix ({targetRole})</h4>
+                <h4>🎯 Skill Gap Matrix ({targetRole} • {experienceLevel})</h4>
                 <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '12px' }}>
                   <div>
                     <h6 style={{ color: '#22c55e' }}>Matched Skills</h6>

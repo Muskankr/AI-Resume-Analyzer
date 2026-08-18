@@ -325,7 +325,9 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                         <Trash2 size={14} />
                       </button>
                     </div>
-                    <div className="history-item-role">{entry.targetRole}</div>
+                    <div className="history-item-role">
+                      {entry.targetRole}{entry.experienceLevel ? ` • ${entry.experienceLevel}` : ''}
+                    </div>
                     <div className="history-item-file">{entry.fileName}</div>
                     <div className="history-item-time">{formatDate(entry.timestamp)}</div>
                     <div className="history-item-skills">

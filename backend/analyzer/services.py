@@ -12,6 +12,46 @@ User = get_user_model()
 
 from django.core.cache import cache
 
+EXPERIENCE_LEVEL_SKILLS = {
+    "Junior": {
+        "Frontend Developer": ["html", "css", "javascript", "react", "git", "github"],
+        "Backend Developer": ["python", "javascript", "sql", "git", "github", "flask", "node.js"],
+        "Data Analyst": ["python", "sql", "excel", "pandas", "data analysis", "jupyter"],
+    },
+    "Mid-Level": {
+        "Frontend Developer": [
+            "html", "css", "javascript", "typescript", "react",
+            "next.js", "tailwind", "git", "github", "webpack",
+        ],
+        "Backend Developer": [
+            "python", "django", "flask", "fastapi", "node.js", "express.js",
+            "sql", "mysql", "postgresql", "mongodb", "docker", "git", "github",
+        ],
+        "Data Analyst": [
+            "python", "sql", "excel", "machine learning", "deep learning",
+            "data analysis", "pandas", "numpy", "matplotlib", "tensorflow",
+            "scikit-learn", "jupyter",
+        ],
+    },
+    "Senior": {
+        "Frontend Developer": [
+            "html", "css", "javascript", "typescript", "react", "next.js",
+            "tailwind", "git", "github", "webpack", "docker",
+            "system design", "leadership", "mentoring", "ci/cd", "performance optimization",
+        ],
+        "Backend Developer": [
+            "python", "django", "fastapi", "node.js", "postgresql", "mongodb",
+            "docker", "kubernetes", "git", "github", "system design", "microservices",
+            "ci/cd", "leadership", "mentoring", "distributed systems", "redis",
+        ],
+        "Data Analyst": [
+            "python", "sql", "excel", "machine learning", "deep learning",
+            "data analysis", "pandas", "numpy", "matplotlib", "tensorflow",
+            "scikit-learn", "jupyter", "bigquery", "data modeling", "leadership", "mentoring",
+        ],
+    },
+}
+
 def get_role_skills():
     role_skills = cache.get("role_skills_dict")
     if role_skills is None:
@@ -21,6 +61,53 @@ def get_role_skills():
             role_skills[role.name] = [skill.name for skill in role.skills.all()]
         cache.set("role_skills_dict", role_skills, timeout=60*60*24)
     return role_skills
+
+def get_role_skills_for_level(target_role, experience_level="Mid-Level"):
+    norm_level = "Mid-Level"
+    if experience_level:
+        el_lower = str(experience_level).strip().lower()
+        if "junior" in el_lower or "entry" in el_lower:
+            norm_level = "Junior"
+        elif "senior" in el_lower or "lead" in el_lower or "staff" in el_lower:
+            norm_level = "Senior"
+        else:
+            norm_level = "Mid-Level"
+
+    level_dict = EXPERIENCE_LEVEL_SKILLS.get(norm_level, {})
+    if target_role in level_dict:
+        return level_dict[target_role]
+    return get_role_skills().get(target_role, [])
+
+def generate_level_tailored_suggestions(missing_skills, experience_level="Mid-Level", target_role=""):
+    norm_level = "Mid-Level"
+    if experience_level:
+        el_lower = str(experience_level).strip().lower()
+        if "junior" in el_lower or "entry" in el_lower:
+            norm_level = "Junior"
+        elif "senior" in el_lower or "lead" in el_lower or "staff" in el_lower:
+            norm_level = "Senior"
+        else:
+            norm_level = "Mid-Level"
+
+    suggestions = []
+    if norm_level == "Senior":
+        for skill in missing_skills:
+            if skill in ["leadership", "mentoring", "management"]:
+                suggestions.append("Highlight engineering mentorship, cross-team alignment, and technical leadership initiatives.")
+            elif skill in ["system design", "microservices", "distributed systems", "ci/cd"]:
+                suggestions.append(f"Demonstrate scalable system design and architecture governance with {skill.title()}.")
+            else:
+                suggestions.append(f"Demonstrate senior-level production mastery, architectural decisions, and performance scaling with {skill.title()}.")
+        if not any("leadership" in s.lower() or "mentorship" in s.lower() or "architectural" in s.lower() for s in suggestions):
+            suggestions.append("Demonstrate senior technical leadership, architectural decision records (ADRs), and developer mentorship.")
+    elif norm_level == "Junior":
+        for skill in missing_skills:
+            suggestions.append(f"Build foundational portfolio projects and highlight coursework or hands-on practice with {skill.title()}.")
+    else:
+        for skill in missing_skills:
+            suggestions.append(f"Add projects or experience with {skill.title()}")
+
+    return suggestions
 
 PIPELINE_STAGES = [
     {"stage": "extracting", "label": "Extracting text from document", "percent": 25},
@@ -43,11 +130,31 @@ def extract_text_from_file(file_path, file_name):
     text = ""
     if file_name.lower().endswith('.docx'):
         doc = docx.Document(file_path)
+        # Extract paragraph text
         for paragraph in doc.paragraphs:
             text += paragraph.text + "\n"
+        # Extract table text to capture nested tables/tabular resumes
+        for table in doc.tables:
+            for row in table.rows:
+                for cell in row.cells:
+                    text += cell.text + " "
+                text += "\n"
     elif file_name.lower().endswith('.txt'):
-        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-            text = f.read()
+        # Robust multi-encoding fallback parsing
+        for encoding in ('utf-8-sig', 'utf-16', 'latin-1'):
+            try:
+                with open(file_path, 'r', encoding=encoding) as f:
+                    text = f.read()
+                break
+            except (UnicodeDecodeError, LookupError):
+                continue
+        else:
+            # Final fallback in case none of the above succeeded
+            try:
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    text = f.read()
+            except Exception:
+                pass
     else:
         with pdfplumber.open(file_path) as pdf:
             for page in pdf.pages:
@@ -309,7 +416,7 @@ def generate_interview_questions(skills, target_role):
     return questions[:8]
 
 
-def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None, job_description=None, cover_letter_path=None, cover_letter_name=None):
+def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None, job_description=None, cover_letter_path=None, cover_letter_name=None, experience_level="Mid-Level"):
     text = ""
     try:
         text = extract_text_from_file(file_path, file_name)
@@ -326,7 +433,7 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
     if job_description and job_description.strip():
         required = extract_skills(job_description)
     else:
-        required = get_role_skills().get(target_role, [])
+        required = get_role_skills_for_level(target_role, experience_level)
 
     for skill in required:
         if skill in detected:
@@ -340,10 +447,7 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
         else min(len(detected) * 10, 100)
     )
 
-    suggestions = [
-        f"Add projects or experience with {skill.title()}"
-        for skill in missing
-    ]
+    suggestions = generate_level_tailored_suggestions(missing, experience_level, target_role)
 
     # Process optional cover letter if provided
     cover_letter_text = ""
@@ -368,6 +472,7 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
                 user=user,
                 file_name=file_name,
                 target_role=target_role,
+                experience_level=experience_level or "Mid-Level",
                 job_description=job_description,
                 score=score,
                 skills_found=detected,
@@ -390,15 +495,16 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
     }
 
     track_comparisons = {}
-    for role, req_skills in get_role_skills().items():
-        role_matched = [s for s in req_skills if s in detected]
-        role_missing = [s for s in req_skills if s not in detected]
+    for role, _ in get_role_skills().items():
+        role_req_skills = get_role_skills_for_level(role, experience_level)
+        role_matched = [s for s in role_req_skills if s in detected]
+        role_missing = [s for s in role_req_skills if s not in detected]
         role_score = (
-            int(len(role_matched) / len(req_skills) * 100)
-            if req_skills
+            int(len(role_matched) / len(role_req_skills) * 100)
+            if role_req_skills
             else min(len(detected) * 10, 100)
         )
-        role_suggestions = [f"Add projects or experience with {s.title()}" for s in role_missing]
+        role_suggestions = generate_level_tailored_suggestions(role_missing, experience_level, role)
         
         track_comparisons[role] = {
             "score": role_score,
@@ -435,6 +541,7 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
         "matched_skills": matched,
         "missing_skills": missing,
         "target_role": target_role,
+        "experience_level": experience_level or "Mid-Level",
         "resume_text": raw_text,
         "cover_letter_text": cover_letter_text if cover_letter_text else None,
         "cover_letter_feedback": cover_letter_feedback,

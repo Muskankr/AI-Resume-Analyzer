@@ -9,6 +9,7 @@ export interface AnalysisEntry {
   matchedSkills: string[]
   missingSkills: string[]
   targetRole: string
+  experienceLevel?: string
   fileName: string
   source?: 'sample' | 'upload'
   share_id?: string
