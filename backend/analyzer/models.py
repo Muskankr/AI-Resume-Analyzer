@@ -49,17 +49,18 @@ class UserProfile(models.Model):
         return f"{self.user.username}'s Profile"
 
 
-class KnownDevice(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="known_devices")
+class UserSession(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sessions")
+    session_key = models.CharField(max_length=255, unique=True) # stores refresh token's jti
+    access_jti = models.CharField(max_length=255, unique=True, null=True, blank=True) # stores access token's jti
     ip_address = models.GenericIPAddressField(null=True, blank=True)
-    device_info = models.CharField(max_length=255)
-    last_login = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ('user', 'ip_address', 'device_info')
+    user_agent = models.TextField(null=True, blank=True)
+    device_info = models.CharField(max_length=255, null=True, blank=True)
+    last_active = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.user.username} - {self.device_info} ({self.ip_address})"
+        return f"{self.user.username} Session ({self.device_info})"
 
 
 def generate_webhook_secret():

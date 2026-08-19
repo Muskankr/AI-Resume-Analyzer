@@ -1,9 +1,5 @@
 from django.urls import path
 from .views import PasswordResetRequestView, PasswordResetConfirmView
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-)
 
 from .views import (
     upload_resume,
@@ -30,6 +26,9 @@ from .views import (
     manage_webhooks,
     webhook_detail,
     test_webhook,
+    CustomTokenRefreshView,
+    SessionListView,
+    SessionRevokeView,
 )
 
 urlpatterns = [
@@ -50,7 +49,9 @@ urlpatterns = [
 
     path("auth/signup/", signup),
     path("auth/login/", CustomTokenObtainPairView.as_view()),
-    path("auth/refresh/", TokenRefreshView.as_view()),
+    path("auth/refresh/", CustomTokenRefreshView.as_view()),
+    path("auth/sessions/", SessionListView.as_view()),
+    path("auth/sessions/revoke/", SessionRevokeView.as_view()),
 
     path("history/", analysis_history),
     path("history/clear/", clear_user_history),

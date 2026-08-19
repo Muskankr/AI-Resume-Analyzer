@@ -45,7 +45,25 @@ class SignupSerializer(serializers.ModelSerializer):
 
 
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import UserProfile
+from .models import UserProfile, UserSession
+
+class UserSessionSerializer(serializers.ModelSerializer):
+    is_current = serializers.SerializerMethodField()
+
+    class Meta:
+        model = UserSession
+        fields = ("id", "session_key", "ip_address", "device_info", "last_active", "created_at", "is_current")
+
+    def get_current_session_key(self):
+        request = self.context.get("request")
+        if request and hasattr(request, "auth") and request.auth:
+            return getattr(request.auth, "payload", {}).get("jti")
+        return None
+
+    def get_is_current(self, obj):
+        current_jti = self.get_current_session_key()
+        return obj.session_key == current_jti
+
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
@@ -101,34 +119,27 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             data["avatar_url"] = None
 
         if request:
-            from .models import KnownDevice
-            from .views import get_client_ip, parse_user_agent, send_new_device_login_alert
+            from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+            from .views import get_client_ip, parse_user_agent
+            try:
+                refresh_token = RefreshToken(data['refresh'])
+                access_token = AccessToken(data['access'])
+                refresh_jti = refresh_token['jti']
+                access_jti = access_token['jti']
+                ip = get_client_ip(request)
+                ua = request.META.get('HTTP_USER_AGENT', '')
+                device = parse_user_agent(ua)
 
-            ip = get_client_ip(request)
-            ua = request.META.get('HTTP_USER_AGENT', '')
-            device = parse_user_agent(ua)
-
-            known_devices = KnownDevice.objects.filter(user=self.user)
-            has_existing = known_devices.exists()
-            device_exists = known_devices.filter(ip_address=ip, device_info=device).exists()
-
-            if not device_exists:
-                if has_existing:
-                    # Unrecognized login! Send email alert.
-                    try:
-                        send_new_device_login_alert(self.user, ip, device)
-                    except Exception:
-                        pass
-
-                # Save as a known device (registers initial silently, or adds new device)
-                try:
-                    KnownDevice.objects.get_or_create(
-                        user=self.user,
-                        ip_address=ip,
-                        device_info=device
-                    )
-                except Exception:
-                    pass
+                UserSession.objects.create(
+                    user=self.user,
+                    session_key=refresh_jti,
+                    access_jti=access_jti,
+                    ip_address=ip,
+                    user_agent=ua,
+                    device_info=device
+                )
+            except Exception as e:
+                pass
 
         return data
 

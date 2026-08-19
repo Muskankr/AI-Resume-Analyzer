@@ -1634,10 +1634,15 @@ def test_webhook(request, pk):
     )
 
 
-# New Device / Location Login Email Alerts Helper Functions
-import requests
-from django.core.mail import send_mail
-from django.utils import timezone
+# Active Session / Device Management Helper Functions & Views
+import re
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.views import TokenRefreshView
+from rest_framework_simplejwt.tokens import AccessToken, RefreshToken
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from .models import UserSession
+from .serializers import UserSessionSerializer
 
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -1677,48 +1682,73 @@ def parse_user_agent(ua_string):
 
     return f"{browser_name} on {os_name}"
 
-def get_approximate_location(ip):
-    if not ip or ip in ('127.0.0.1', '::1'):
-        return "Localhost (Development)"
-    try:
-        resp = requests.get(f"https://ipapi.co/{ip}/json/", timeout=1.0)
-        if resp.status_code == 200:
-            data = resp.json()
-            city = data.get("city")
-            region = data.get("region")
-            country = data.get("country_name")
-            if city and country:
-                return f"{city}, {region}, {country}" if region else f"{city}, {country}"
-            elif country:
-                return country
-    except Exception:
-        pass
-    return "Approximate Location"
 
-def send_new_device_login_alert(user, ip, device_info):
-    if not user.email:
-        return
+class SessionListView(APIView):
+    permission_classes = [IsAuthenticated]
 
-    location = get_approximate_location(ip)
-    login_time = timezone.now().strftime("%Y-%m-%d %H:%M:%S UTC")
-    reset_link = build_password_reset_link(user)
+    def get(self, request):
+        current_jti = getattr(request.auth, "payload", {}).get("jti")
+        if current_jti:
+            UserSession.objects.filter(user=request.user, access_jti=current_jti).update(
+                ip_address=get_client_ip(request),
+                user_agent=request.META.get('HTTP_USER_AGENT', ''),
+                device_info=parse_user_agent(request.META.get('HTTP_USER_AGENT', ''))
+            )
 
-    subject = "Security Alert: New login from unrecognized device or location"
-    message = (
-        f"Hello {user.username},\n\n"
-        "We detected a login to your account from a new, unrecognized device or location:\n\n"
-        f"  Device: {device_info}\n"
-        f"  Location: {location} (IP: {ip})\n"
-        f"  Time: {login_time}\n\n"
-        "If this was you, no action is needed.\n\n"
-        "If this wasn't you, your account may be compromised. Please reset your password immediately using the link below:\n"
-        f"{reset_link}\n"
-    )
+        sessions = UserSession.objects.filter(user=request.user).order_by("-last_active")
+        serializer = UserSessionSerializer(sessions, many=True, context={"request": request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
-    send_mail(
-        subject=subject,
-        message=message,
-        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@ai-resume-analyzer.dev"),
-        recipient_list=[user.email],
-        fail_silently=False,
-    )
+
+class SessionRevokeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        session_key = request.data.get("session_key")
+        if not session_key:
+            return Response({"error": "session_key is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        session = UserSession.objects.filter(user=request.user, session_key=session_key).first()
+        if not session:
+            return Response({"error": "Session not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        current_jti = getattr(request.auth, "payload", {}).get("jti")
+        if session.access_jti == current_jti:
+            return Response({"error": "Cannot revoke the current active session directly."}, status=status.HTTP_400_BAD_REQUEST)
+
+        session.delete()
+        return Response({"message": "Session revoked successfully."}, status=status.HTTP_200_OK)
+
+
+class CustomTokenRefreshView(TokenRefreshView):
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+        except (InvalidToken, TokenError) as e:
+            raise InvalidToken(e.args[0])
+
+        raw_token = request.data.get("refresh")
+        if raw_token:
+            try:
+                old_refresh = RefreshToken(raw_token)
+                old_jti = old_refresh['jti']
+
+                session = UserSession.objects.filter(session_key=old_jti).first()
+                if not session:
+                    return Response({"detail": "Session has been revoked."}, status=status.HTTP_401_UNAUTHORIZED)
+
+                new_refresh = RefreshToken(serializer.validated_data['refresh'])
+                new_access = AccessToken(serializer.validated_data['access'])
+
+                session.session_key = new_refresh['jti']
+                session.access_jti = new_access['jti']
+                session.ip_address = get_client_ip(request)
+                ua = request.META.get('HTTP_USER_AGENT', '')
+                session.user_agent = ua
+                session.device_info = parse_user_agent(ua)
+                session.save()
+            except Exception:
+                return Response({"detail": "Invalid or revoked session refresh token."}, status=status.HTTP_401_UNAUTHORIZED)
+
+        return Response(serializer.validated_data, status=status.HTTP_200_OK)
