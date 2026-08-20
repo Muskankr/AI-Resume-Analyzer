@@ -5,7 +5,7 @@ django-cors-headers>=4.9.0
 # Listed in INSTALLED_APPS and used by every @extend_schema in views.py, but it
 # was never declared here — a fresh `pip install -r requirements.txt` produced a
 # tree that could not even run `manage.py check`.
-drf-spectacular>=0.27.0
+drf-spectacular>=0.30.0
 sentry-sdk[django]>=1.45.0
 pdfplumber>=0.11.10
 gunicorn>=26.0.0
