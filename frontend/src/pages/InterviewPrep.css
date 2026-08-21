@@ -1,0 +1,41 @@
+.interview-prep-page {
+    background-color: var(--bg-color, #0f172a);
+    color: var(--text-color, #f8fafc);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.flashcard {
+    perspective: 1000px;
+    height: 450px;
+    width: 100%;
+}
+
+.flashcard-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transform-style: preserve-3d;
+}
+
+.flashcard.flipped .flashcard-inner {
+    transform: rotateY(180deg);
+}
+
+.flashcard-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.flashcard-front {
+    z-index: 2;
+    transform: rotateY(0deg);
+}
+
+.flashcard-back {
+    transform: rotateY(180deg);
+}

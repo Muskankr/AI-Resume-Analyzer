@@ -172,7 +172,36 @@ class KnownDevice(models.Model):
         unique_together = ('user', 'ip_address', 'device_info')
 
     def __str__(self):
-        return f"{self.user.username} - {self.device_info} ({self.ip_address})"
+        return f"{self.user.username} - {self.id}"
+
+
+class InterviewSession(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="interview_sessions")
+    analysis = models.ForeignKey(ResumeAnalysis, on_delete=models.SET_NULL, null=True, related_name="interview_sessions")
+    target_role = models.CharField(max_length=150)
+    created_at = models.DateTimeField(auto_now_add=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    overall_confidence_score = models.IntegerField(null=True, blank=True, help_text="User's average confidence across questions in out of 10")
+
+    def __str__(self):
+        return f"Session for {self.user.username} - {self.target_role}"
+
+
+class InterviewQuestion(models.Model):
+    QUESTION_TYPES = (
+        ('technical', 'Technical'),
+        ('behavioral', 'Behavioral'),
+        ('situational', 'Situational')
+    )
+    session = models.ForeignKey(InterviewSession, on_delete=models.CASCADE, related_name="questions")
+    question_text = models.TextField()
+    question_type = models.CharField(max_length=20, choices=QUESTION_TYPES)
+    related_skill = models.CharField(max_length=100, blank=True, null=True, help_text="Skill this question targets (if technical)")
+    suggested_answer_points = models.JSONField(default=list, help_text="Points to look for in a good answer")
+    user_confidence_rating = models.IntegerField(null=True, blank=True, help_text="User rating from 1-10 on their answer")
+    
+    def __str__(self):
+        return f"{self.question_type} - {self.question_text[:50]}"
 
 
 def generate_webhook_secret():

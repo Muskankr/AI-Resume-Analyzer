@@ -67,6 +67,17 @@ urlpatterns = [
         name="manage_analysis_share",
     ),
 
+    # Document analysis & conversion
+    path('parse/', parse_resume, name='parse_resume'),
+    path('pdf-to-json/', extract_text_from_pdf, name='pdf_to_json'),
+    
+    # Dashboard API
+    path('dashboard/stats/', dashboard_stats_view, name='dashboard_stats'),
+    
+    # Interview Prep API
+    path('interview/generate/', generate_interview, name='generate_interview'),
+    path('interview/<int:session_id>/submit/', submit_interview_results, name='submit_interview_results'),
+
     # Webhooks. The views for these have existed since #549 but were never
     # given a path, so the feature has been unreachable.
     path("webhooks/", manage_webhooks, name="manage_webhooks"),
