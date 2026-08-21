@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useLocation, Link } from 'react-router-dom'
+import { FileText, Briefcase } from 'lucide-react'
 import axios from 'axios'
 import './index.css'
 import { AtsScore } from './AtsScore'
@@ -659,6 +660,16 @@ function App() {
             {user ? (
               <>
                 <Link
+                  to="/job-tracker"
+                  className={`flex flex-col items-center p-2 rounded-xl transition-all duration-300 ${isActive('/job-tracker')
+                    ? 'text-blue-500 bg-blue-50'
+                    : 'text-slate-600 hover:text-blue-600 hover:bg-slate-50'
+                    }`}
+                >
+                  <Briefcase className="mb-1" size={24} />
+                  <span className="text-[10px] font-semibold text-center leading-tight">Job Tracker</span>
+                </Link>
+                <Link
                   to="/profile"
                   className="auth-username"
                   style={{ textDecoration: 'none', color: 'inherit' }}
@@ -1204,7 +1215,7 @@ function App() {
           {/* closes the conditional block */}
         </div>{' '}
         {/* closes .main-card */}
-      </div>{' '}
+      </div > {' '}
       {/* closes .container */}
       <Footer /> {/* footer should be outside main container */}
     </>

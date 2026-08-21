@@ -33,6 +33,8 @@ from .views import (
     webhook_detail,
     test_webhook,
 )
+from .career_path import generate_career_path, get_user_career_paths, get_career_path_details
+from .applications import get_job_applications, create_job_application, update_job_application, delete_job_application
 
 urlpatterns = [
     path("upload/", upload_resume),
@@ -66,6 +68,17 @@ urlpatterns = [
         manage_analysis_share,
         name="manage_analysis_share",
     ),
+
+    # Career Path API
+    path('career-path/generate/', generate_career_path, name='generate_career_path'),
+    path('career-path/history/', get_user_career_paths, name='get_user_career_paths'),
+    path('career-path/<int:path_id>/', get_career_path_details, name='get_career_path_details'),
+
+    # Job Tracker API
+    path('applications/', get_job_applications, name='get_job_applications'),
+    path('applications/create/', create_job_application, name='create_job_application'),
+    path('applications/<int:app_id>/update/', update_job_application, name='update_job_application'),
+    path('applications/<int:app_id>/delete/', delete_job_application, name='delete_job_application'),
 
     # Webhooks. The views for these have existed since #549 but were never
     # given a path, so the feature has been unreachable.

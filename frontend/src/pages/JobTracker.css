@@ -1,0 +1,21 @@
+.job-tracker-page {
+    background-color: var(--bg-color, #0f172a);
+    color: var(--text-color, #f8fafc);
+}
+
+.kanban-scroll {
+    scroll-snap-type: x mandatory;
+}
+
+.kanban-column {
+    scroll-snap-align: start;
+}
+
+.job-tracker-page input,
+.job-tracker-page select {
+    transition: all 0.2s ease-in-out;
+}
+
+.job-tracker-page .bg-slate-900 {
+    background-color: #0f172a;
+}

@@ -5,7 +5,7 @@ import './index.css'
 import App from './App.tsx'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import ErrorBoundary from './components/ErrorBoundary'
-import {  BrowserRouter } from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 import ApiDocs from "./pages/Apidocs";
 
 
@@ -50,6 +50,8 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 import { Routes, Route } from 'react-router-dom'
 import { TermsOfService } from './pages/TermsOfService'
 import { ProfilePage } from './components/ProfilePage'
+import { JobTrackerPage } from './pages/JobTrackerPage';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 
 createRoot(document.getElementById('root')!).render(
@@ -61,6 +63,14 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/*" element={<App />} />
           <Route path="/docs" element={<ApiDocs />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route
+            path="/job-tracker"
+            element={
+              <ProtectedRoute>
+                <JobTrackerPage />
+              </ProtectedRoute>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </ErrorBoundary>

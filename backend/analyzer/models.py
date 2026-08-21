@@ -174,6 +174,29 @@ class KnownDevice(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.device_info} ({self.ip_address})"
 
+class JobApplication(models.Model):
+    STATUS_CHOICES = (
+        ('WISHLIST', 'Wishlist'),
+        ('APPLIED', 'Applied'),
+        ('INTERVIEWING', 'Interviewing'),
+        ('OFFER', 'Offer'),
+        ('REJECTED', 'Rejected'),
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="job_applications")
+    company = models.CharField(max_length=150)
+    role_title = models.CharField(max_length=150)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='WISHLIST')
+    
+    resume_analysis = models.ForeignKey(ResumeAnalysis, on_delete=models.SET_NULL, null=True, blank=True)
+    
+    job_description = models.TextField(blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-updated_at']
 
 def generate_webhook_secret():
     """Return a fresh signing secret for a webhook.
