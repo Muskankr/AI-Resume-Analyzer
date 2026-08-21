@@ -1,0 +1,73 @@
+.dashboard-page {
+  background-color: var(--bg-color, #0f172a);
+  color: var(--text-color, #f8fafc);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.dashboard-page .glass-panel {
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+}
+
+.dashboard-page .glass-panel:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dashboard-page .app-btn {
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+}
+
+.dashboard-page .app-btn:hover {
+  background: linear-gradient(135deg, #7dd3fc 0%, #a5b4fc 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(56, 189, 248, 0.6);
+}
+
+.dashboard-page .app-btn-outline {
+  background: transparent;
+  color: #38bdf8;
+  border: 1px solid #38bdf8;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.dashboard-page .app-btn-outline:hover {
+  background: rgba(56, 189, 248, 0.1);
+  color: #7dd3fc;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+}
+
+.dashboard-charts-container .chart-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-charts-container .chart-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg, #38bdf8, #818cf8);
+  opacity: 0.8;
+}
+
+.custom-alert-danger {
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  color: #fca5a5;
+}

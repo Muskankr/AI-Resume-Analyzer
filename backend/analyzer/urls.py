@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
+from .user_dashboard import dashboard_stats_view
 
 from .views import (
     upload_resume,
@@ -19,6 +20,7 @@ from .views import (
     admin_stats_view,
     analyze_jd_view,
     user_profile_view,
+    dashboard_stats_view,
     contact_us_view,
     CustomTokenObtainPairView,
     social_auth_view,
@@ -58,6 +60,7 @@ urlpatterns = [
     path("history/", analysis_history),
     path("history/clear/", clear_user_history),
     path("history/<int:pk>/", history_detail),
+    path("dashboard/stats/", dashboard_stats_view, name="dashboard_stats"),
     # Owner-side control over the public link for one analysis: read its
     # state, enable/extend/rotate it, or revoke it. Sharing used to be an
     # implicit property of every row with no way to switch it off. See #705.

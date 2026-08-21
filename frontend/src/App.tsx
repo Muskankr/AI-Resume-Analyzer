@@ -661,9 +661,16 @@ function App() {
                 <Link
                   to="/profile"
                   className="auth-username"
-                  style={{ textDecoration: 'none', color: 'inherit' }}
+                  style={{ textDecoration: 'none', color: 'inherit', marginRight: '16px' }}
                 >
                   👤 {user.username}
+                </Link>
+                <Link
+                  to="/dashboard"
+                  className="auth-username"
+                  style={{ textDecoration: 'none', color: 'inherit', fontWeight: 'bold' }}
+                >
+                  📊 Dashboard
                 </Link>
                 <button className="auth-bar-btn" onClick={logout}>
                   Logout
