@@ -172,8 +172,25 @@ class KnownDevice(models.Model):
         unique_together = ('user', 'ip_address', 'device_info')
 
     def __str__(self):
-        return f"{self.user.username} - {self.device_info} ({self.ip_address})"
+        return f"{self.question_type} - {self.question_text[:50]}"
 
+class CoverLetter(models.Model):
+    TONE_CHOICES = (
+        ('professional', 'Professional'),
+        ('enthusiastic', 'Enthusiastic'),
+        ('confident', 'Confident'),
+        ('casual', 'Casual')
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="cover_letters")
+    analysis = models.ForeignKey(ResumeAnalysis, on_delete=models.SET_NULL, null=True, blank=True)
+    target_role = models.CharField(max_length=150)
+    job_description = models.TextField(blank=True, null=True)
+    tone = models.CharField(max_length=20, choices=TONE_CHOICES, default='professional')
+    generated_content = models.TextField(help_text="The generated cover letter body")
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    def __str__(self):
+        return f"Cover Letter for {self.user.username} - {self.target_role}"
 
 def generate_webhook_secret():
     """Return a fresh signing secret for a webhook.

@@ -868,9 +868,19 @@ function App() {
                 📄
               </span>
               <span className="upload-text-primary">
-                Drag &amp; Drop Resume or{' '}
-                <span className="upload-text-browse">Click to Browse</span>
-              </span>
+                <Target className="mb-1" size={24} />
+                <span className="text-[10px] font-semibold text-center leading-tight">Mock Interview</span>
+              </Link>
+              <Link
+                to="/cover-letter"
+                className={`flex flex-col items-center p-2 rounded-xl transition-all duration-300 ${isActive('/cover-letter')
+                    ? 'text-teal-500 bg-teal-50'
+                    : 'text-slate-600 hover:text-teal-600 hover:bg-slate-50'
+                  }`}
+              >
+                <FileText className="mb-1" size={24} />
+                <span className="text-[10px] font-semibold text-center leading-tight">Cover Letter</span>
+              </Link>
               {file ? (
                 <span
                   className="upload-text-secondary"

@@ -5,7 +5,7 @@ import './index.css'
 import App from './App.tsx'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import ErrorBoundary from './components/ErrorBoundary'
-import {  BrowserRouter } from 'react-router-dom'
+import { BrowserRouter } from 'react-router-dom'
 import ApiDocs from "./pages/Apidocs";
 
 
@@ -50,6 +50,11 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 import { Routes, Route } from 'react-router-dom'
 import { TermsOfService } from './pages/TermsOfService'
 import { ProfilePage } from './components/ProfilePage'
+import { ProfileSettings } from './components/ProfileSettings';
+import { DashboardPage } from './pages/DashboardPage';
+import { InterviewPrepPage } from './pages/InterviewPrepPage';
+import { CoverLetterBuilderPage } from './pages/CoverLetterBuilderPage';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 
 createRoot(document.getElementById('root')!).render(
