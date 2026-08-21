@@ -755,21 +755,23 @@ h3 {
 .history-sort-btn {
   flex: 1;
   min-width: 80px;
-  background: rgba(255,255,255,0.08);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--card-text);
-  border: 1px solid rgba(255,255,255,0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   padding: 6px 10px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 11px;
   font-weight: 600;
-  transition: background 0.2s ease, border-color 0.2s ease;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
   text-align: center;
 }
 
 .history-sort-btn:hover {
-  background: rgba(255,255,255,0.15);
-  border-color: rgba(255,255,255,0.3);
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .history-sort-btn--active {
@@ -1061,6 +1063,86 @@ h3 {
   font-size: var(--text-xs);
   padding: 0;
   text-decoration: underline;
+}
+
+/* ── Social OAuth Buttons (#537) ─────────────────────────── */
+.auth-social-section {
+  margin-top: 18px;
+  width: 100%;
+}
+
+.auth-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 14px 0 12px;
+  color: var(--body-text);
+  opacity: 0.6;
+  font-size: var(--text-xs);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid currentColor;
+  opacity: 0.3;
+}
+
+.auth-divider span {
+  padding: 0 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.75rem;
+}
+
+.auth-social-buttons {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+}
+
+.auth-social-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.03);
+  color: inherit;
+}
+
+.auth-social-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.07);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.auth-social-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[data-theme='dark'] .auth-social-btn {
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--card-text);
+}
+
+[data-theme='dark'] .auth-social-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.social-icon {
+  flex-shrink: 0;
 }
 
 .app-footer {

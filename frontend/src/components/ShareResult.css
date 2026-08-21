@@ -56,3 +56,85 @@
   color: var(--text-tertiary, #9ca3af);
   margin: 0;
 }
+
+.share-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 10px;
+  font-size: 0.78rem;
+  color: var(--text-tertiary, #9ca3af);
+}
+
+.share-meta-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.share-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.share-lifetime-label {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #4b5563);
+  margin: 0;
+}
+
+.share-lifetime-select {
+  padding: 8px 10px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 6px;
+  background: var(--bg-main, #f9fafb);
+  color: var(--text-primary, #111827);
+  font-size: 0.9rem;
+}
+
+.share-secondary-btn,
+.share-danger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color, #e5e7eb);
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 500;
+  transition:
+    opacity 0.2s,
+    border-color 0.2s;
+}
+
+.share-secondary-btn {
+  color: var(--text-secondary, #4b5563);
+}
+
+.share-danger-btn {
+  color: var(--danger-color, #b91c1c);
+  border-color: var(--danger-color, #b91c1c);
+}
+
+.share-secondary-btn:hover:not(:disabled),
+.share-danger-btn:hover:not(:disabled) {
+  opacity: 0.8;
+}
+
+.share-copy-btn:disabled,
+.share-secondary-btn:disabled,
+.share-danger-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.share-error-text {
+  font-size: 0.8rem;
+  color: var(--danger-color, #b91c1c);
+  margin: 8px 0 0;
+}

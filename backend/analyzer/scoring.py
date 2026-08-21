@@ -175,15 +175,18 @@ def _bullet_lines(lines: Sequence[str]) -> List[str]:
 
 
 def score_keyword_match(matched: Sequence[str], required: Sequence[str],
-                        detected: Sequence[str]) -> FactorScore:
+                        detected: Sequence[str], partial_skills: Optional[Sequence] = None) -> FactorScore:
     """Points for covering the keywords the target role (or job description) asks for."""
+    partials = partial_skills or []
+    num_partial = len(partials)
     if required:
-        ratio = len(matched) / len(required)
+        effective_matched = len(matched) + (0.5 * num_partial)
+        ratio = min(1.0, effective_matched / len(required))
         earned = ratio * WEIGHTS["keyword_match"]
-        detail = (
-            f"{len(matched)} of {len(required)} target keywords found "
-            f"({int(round(ratio * 100))}% coverage)."
-        )
+        detail = f"{len(matched)} of {len(required)} target keywords found"
+        if num_partial > 0:
+            detail += f", plus {num_partial} partial match{'es' if num_partial != 1 else ''}"
+        detail += f" ({int(round(ratio * 100))}% coverage)."
         if ratio < 1 and len(required) - len(matched) <= 3:
             detail += " You are a few keywords away from full coverage."
     else:
@@ -441,6 +444,7 @@ def compute_score_breakdown(
     readability_score: Optional[float] = None,
     readability_label: str = "",
     quantify_nudges: Optional[Sequence[Dict]] = None,
+    partial_skills: Optional[Sequence] = None,
 ) -> ScoreBreakdown:
     """Score a resume across every factor and return the parts plus the total.
 
@@ -473,7 +477,7 @@ def compute_score_breakdown(
         )
 
     factors = [
-        score_keyword_match(matched_skills, required_skills, detected_skills),
+        score_keyword_match(matched_skills, required_skills, detected_skills, partial_skills),
         score_sections(text),
         score_impact_language(lines),
         score_contact_details(text),

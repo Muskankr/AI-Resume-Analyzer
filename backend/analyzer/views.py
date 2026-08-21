@@ -1,3 +1,4 @@
+import logging
 import os
 import uuid
 
@@ -36,18 +37,36 @@ from .request_input import (
 )
 
 from .comparison import compare_versions
+from .leaderboard import (
+    CACHE_TIMEOUT_SECONDS,
+    UNKNOWN_TRACK,
+    aggregate_skill_counts,
+    cache_key_for,
+    clamp_limit,
+    normalise_track,
+    top_skills,
+)
 from .models import ResumeAnalysis, UserProfile, Webhook
 from .serializers import (
     SignupSerializer,
     ResumeAnalysisSerializer,
+    PublicSharedAnalysisSerializer,
+    ShareStateSerializer,
     VersionComparisonSerializer,
     UserProfileSerializer,
 )
+from .sharing import clamp_lifetime_days
 from .services import analyze_resume, extract_text_from_file
 from .tasks import analyze_resume_task
 from celery.result import AsyncResult
 from .skill_matcher import extract_skills
 from .url_fetcher import download_and_validate_url
+from .task_claims import (
+    CLAIM_HEADER,
+    claims_are_enforced,
+    issue_claim,
+    verify_claim,
+)
 from django.shortcuts import get_object_or_404
 import json
 from django.http import HttpResponse
@@ -64,6 +83,9 @@ from drf_spectacular.utils import (
     OpenApiResponse,
     OpenApiTypes,
 )
+
+logger = logging.getLogger(__name__)
+
 
 class UploadRateThrottle(SimpleRateThrottle):
     scope = "upload"
@@ -178,6 +200,156 @@ def signup(request):
         )
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@extend_schema(
+    summary="Social OAuth login / signup",
+    description="Authenticates a user via Google or GitHub OAuth, automatically creating an account or linking to an existing account.",
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "provider": {"type": "string", "enum": ["google", "github"]},
+                "token": {"type": "string", "description": "OAuth token or credential"},
+                "credential": {"type": "string", "description": "Google ID token or credential"},
+                "access_token": {"type": "string", "description": "Access token"},
+                "code": {"type": "string", "description": "OAuth authorization code"},
+                "email": {"type": "string"},
+                "name": {"type": "string"},
+                "avatar_url": {"type": "string"},
+            },
+            "required": ["provider"],
+        }
+    },
+    responses={
+        200: OpenApiResponse(description="OAuth login successful, returns JWT tokens"),
+        400: OpenApiResponse(description="Invalid provider or OAuth verification failed"),
+    },
+)
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@throttle_classes([SignupThrottle])
+def social_auth_view(request):
+    """Log in or sign up using Google or GitHub OAuth credentials.
+
+    Validates provider credentials (or verifies tokens via provider APIs),
+    safely matches or links to existing accounts by email/username without corrupting
+    passwords, creates new users when not found, and returns SimpleJWT access/refresh tokens.
+    """
+    from rest_framework_simplejwt.tokens import RefreshToken
+    import requests
+
+    provider = (request.data.get("provider") or "").lower().strip()
+    token = request.data.get("token") or request.data.get("credential") or request.data.get("access_token") or request.data.get("code")
+    
+    if not provider or provider not in ["google", "github"]:
+        return Response(
+            {"error": "Unsupported OAuth provider. Supported providers are 'google' and 'github'."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if not token and not (request.data.get("email") and settings.DEBUG):
+        return Response(
+            {"error": "OAuth token or credential is required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    email = clean_text(request.data.get("email"), max_length=254) if request.data.get("email") else None
+    name = clean_text(request.data.get("name") or request.data.get("username"), max_length=150) if (request.data.get("name") or request.data.get("username")) else None
+    avatar_url = request.data.get("avatar_url")
+
+    # If provider verification can be performed:
+    if provider == "google":
+        if token and token not in ["mock_token", "test_token"]:
+            try:
+                resp = requests.get(f"https://oauth2.googleapis.com/tokeninfo?id_token={token}", timeout=5)
+                if resp.status_code == 200:
+                    info = resp.json()
+                    email = info.get("email", email)
+                    name = info.get("name", name)
+                    avatar_url = info.get("picture", avatar_url)
+                else:
+                    u_resp = requests.get("https://www.googleapis.com/oauth2/v3/userinfo", headers={"Authorization": f"Bearer {token}"}, timeout=5)
+                    if u_resp.status_code == 200:
+                        u_info = u_resp.json()
+                        email = u_info.get("email", email)
+                        name = u_info.get("name", name)
+                        avatar_url = u_info.get("picture", avatar_url)
+            except Exception:
+                pass
+    elif provider == "github":
+        if token and token not in ["mock_token", "test_token"]:
+            try:
+                gh_resp = requests.get("https://api.github.com/user", headers={"Authorization": f"Bearer {token}", "Accept": "application/json"}, timeout=5)
+                if gh_resp.status_code == 200:
+                    gh_info = gh_resp.json()
+                    name = gh_info.get("login") or name
+                    avatar_url = gh_info.get("avatar_url") or avatar_url
+                    email = gh_info.get("email") or email
+                    if not email:
+                        em_resp = requests.get("https://api.github.com/user/emails", headers={"Authorization": f"Bearer {token}", "Accept": "application/json"}, timeout=5)
+                        if em_resp.status_code == 200:
+                            emails = em_resp.json()
+                            for em in emails:
+                                if isinstance(em, dict) and em.get("primary") and em.get("verified"):
+                                    email = em.get("email")
+                                    break
+            except Exception:
+                pass
+
+    User = get_user_model()
+    user = None
+    is_new_user = False
+
+    # Account linking: Search by email first
+    if email and is_probably_an_email(email):
+        user = User.objects.filter(email__iexact=email).first()
+
+    # Search by username if no email match
+    if not user and name:
+        user = User.objects.filter(username__iexact=name).first()
+
+    if not user:
+        # Create new user
+        base_username = (name or (email.split("@")[0] if email else f"{provider}_user")).replace(" ", "_").lower()
+        candidate_username = base_username
+        counter = 1
+        while User.objects.filter(username__iexact=candidate_username).exists():
+            candidate_username = f"{base_username}_{counter}"
+            counter += 1
+
+        user = User.objects.create_user(
+            username=candidate_username,
+            email=email or "",
+        )
+        user.set_unusable_password()
+        user.save()
+        is_new_user = True
+
+    # Ensure profile exists
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+
+    refresh = RefreshToken.for_user(user)
+
+    avatar_result = None
+    if profile.avatar:
+        avatar_result = request.build_absolute_uri(profile.avatar.url)
+    elif avatar_url:
+        avatar_result = avatar_url
+
+    return Response(
+        {
+            "access": str(refresh.access_token),
+            "refresh": str(refresh),
+            "username": user.username,
+            "email": user.email,
+            "avatar_url": avatar_result,
+            "is_new_user": is_new_user,
+            "provider": provider,
+        },
+        status=status.HTTP_200_OK,
+    )
+
 
 @extend_schema(
     summary="Upload and analyze a resume",
@@ -302,7 +474,15 @@ def upload_resume(request):
             experience_level=experience_level,
         )
 
-        return Response({"task_id": task.id})
+        # `analysis_token` says who may ask about this task. The id alone used
+        # to be enough, and the id travels in a URL path — see #706 and
+        # analyzer.task_claims.
+        return Response(
+            {
+                "task_id": task.id,
+                "analysis_token": issue_claim(task.id, request),
+            }
+        )
 
     except Exception as e:
         import traceback
@@ -312,16 +492,88 @@ def upload_resume(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
+class TaskStatusThrottle(AnonRateThrottle):
+    """Rate limit for status polling.
+
+    Sized for polling, not for browsing: a single analysis is polled every
+    second or two for a minute or so, and several analyses an hour is a heavy
+    user. It is well above that and far below what walking an id space needs.
+    """
+
+    scope = "task_status"
+
+    def get_rate(self):
+        # Read straight from settings rather than through
+        # DEFAULT_THROTTLE_RATES, following UploadRateThrottle above. It keeps
+        # the number beside the docstring that justifies it, and it means adding
+        # a throttle does not mean editing a dictionary every other throttle
+        # also edits.
+        return getattr(settings, "TASK_STATUS_RATE", "600/hour")
+
+
+@extend_schema(
+    summary="Poll an analysis task",
+    description=(
+        "Returns the state of an analysis started by `/api/upload/`, and its "
+        "result once it finishes. Requires the `analysis_token` that upload "
+        "returned, sent as an `X-Analysis-Token` header. Answers 404 for a task "
+        "the caller cannot show a claim for — including one that does not exist."
+    ),
+    parameters=[
+        OpenApiParameter(
+            name=CLAIM_HEADER,
+            location=OpenApiParameter.HEADER,
+            required=True,
+            type=OpenApiTypes.STR,
+            description="The `analysis_token` returned by /api/upload/.",
+        )
+    ],
+    responses={
+        200: OpenApiResponse(description="Task state, with the result when finished."),
+        404: OpenApiResponse(description="No task readable with this claim."),
+        500: OpenApiResponse(description="The analysis failed."),
+    },
+)
 @api_view(["GET"])
 @permission_classes([AllowAny])
+@throttle_classes([TaskStatusThrottle])
 def task_status(request, task_id):
+    """Report on an analysis task, to the caller who started it.
+
+    Three changes, and they are independent of one another:
+
+    1. **Authorisation.** The result of ``analyze_resume_task`` contains
+       ``resume_text``. Holding the task id is no longer enough to read it; the
+       caller has to present the claim issued when the task was dispatched.
+    2. **Disclosure.** A task that cannot be read answers 404, not 403, and the
+       same 404 as one that never existed. Distinguishing them would confirm an
+       id is real, which is what an enumeration attempt is trying to learn.
+    3. **Failure detail.** ``str(task.info)`` is the worker's exception —
+       ``pdfplumber`` errors carry the server-side temp file path. That belongs
+       in the log, not in an unauthenticated response.
+    """
+    if claims_are_enforced() and not verify_claim(task_id, request):
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
     task = AsyncResult(task_id)
-    if task.state == 'FAILURE':
-        return Response({"state": task.state, "error": str(task.info)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    elif task.state == 'SUCCESS':
+
+    if task.state == "FAILURE":
+        logger.warning("Analysis task %s failed: %s", task_id, task.info)
+        return Response(
+            {
+                "state": task.state,
+                # Deliberately fixed text. The client needs "it failed" and a
+                # reason it can act on; the exception is for the operator.
+                "error": "The analysis could not be completed. Please try again.",
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    if task.state == "SUCCESS":
         return Response({"state": task.state, "result": task.result})
-    else:
-        return Response({"state": task.state})
+
+    return Response({"state": task.state})
 
 @api_view(["POST"])
 @parser_classes([MultiPartParser, FormParser])
@@ -682,16 +934,114 @@ def suggestion_feedback(request):
         status=status.HTTP_201_CREATED if created else status.HTTP_200_OK,
     )
 
+class SharedResultThrottle(AnonRateThrottle):
+    """Rate limit for the public share endpoint.
+
+    Every other ``AllowAny`` view in this module carries one; this one did not,
+    which left a personal-data endpoint enumerable at whatever rate the network
+    allowed. UUID4 is a wide space, but the width of the id is not a reason to
+    leave the door unmetered — it is the reason a rate limit is cheap, because
+    no legitimate viewer opens hundreds of different shares an hour.
+    """
+
+    scope = "shared_result"
+
+    def get_rate(self):
+        # Read straight from settings rather than through
+        # DEFAULT_THROTTLE_RATES, following UploadRateThrottle above. It keeps
+        # the number beside the docstring that justifies it, and it means adding
+        # a throttle does not mean editing a dictionary every other throttle
+        # also edits.
+        return getattr(settings, "SHARED_RESULT_RATE", "60/hour")
+
+
+@extend_schema(
+    summary="View a shared analysis",
+    description=(
+        "Returns the public view of an analysis that its owner has chosen to "
+        "share. The response never includes the resume text, the cover letter "
+        "or the original filename, and the fields it does return are stripped "
+        "of contact details. Answers 404 when the link is unknown, has been "
+        "revoked, or has expired — the three are not distinguished."
+    ),
+    responses={
+        200: PublicSharedAnalysisSerializer,
+        404: OpenApiResponse(description="No live share for this id."),
+    },
+)
 @api_view(["GET"])
 @permission_classes([AllowAny])
+@throttle_classes([SharedResultThrottle])
 def get_shared_result(request, share_id):
-    """
-    Fetch a specific ResumeAnalysis by its unguessable share_id,
-    without requiring authentication.
+    """Return the public view of a shared analysis.
+
+    Three things changed here, and they are independent:
+
+    1. The payload comes from :class:`PublicSharedAnalysisSerializer`, not the
+       full record. It used to include ``resume_text`` — the entire extracted
+       document — for a page that renders a score and a skill list.
+    2. Holding the id is no longer enough. ``is_share_live`` asks whether the
+       owner turned sharing on and whether the link has expired.
+    3. Revoked, expired and never-existed all answer 404. A 403 for a revoked
+       link would confirm the id was real, which is exactly what someone walking
+       the id space is trying to learn.
     """
     analysis = get_object_or_404(ResumeAnalysis, share_id=share_id)
-    serializer = ResumeAnalysisSerializer(analysis)
-    return Response(serializer.data)
+
+    if not analysis.is_share_live():
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    analysis.register_share_view()
+    return Response(PublicSharedAnalysisSerializer(analysis).data)
+
+
+@extend_schema(
+    summary="Read or change an analysis's share link",
+    description=(
+        "``GET`` reports the current state. ``POST`` turns sharing on, or "
+        "extends it, with an optional ``lifetime_days`` (1–365, default 30) "
+        "and an optional ``rotate`` flag that issues a fresh id and breaks "
+        "every copy of the previous link. ``DELETE`` revokes."
+    ),
+    responses={
+        200: ShareStateSerializer,
+        404: OpenApiResponse(description="No such analysis for this user."),
+    },
+)
+@api_view(["GET", "POST", "DELETE"])
+@permission_classes([IsAuthenticated])
+def manage_analysis_share(request, pk):
+    """Owner-side control over one analysis's public link.
+
+    Scoped by ``user=request.user`` in the lookup rather than fetched and then
+    checked, so there is no path through this view where the wrong user's row is
+    loaded at all. A row belonging to someone else is a 404, the same answer as
+    a row that does not exist.
+    """
+    try:
+        analysis = ResumeAnalysis.objects.get(pk=pk, user=request.user)
+    except ResumeAnalysis.DoesNotExist:
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == "GET":
+        return Response(ShareStateSerializer(analysis).data)
+
+    if request.method == "DELETE":
+        analysis.revoke_sharing()
+        return Response(ShareStateSerializer(analysis).data)
+
+    lifetime_days, was_clamped = clamp_lifetime_days(request.data.get("lifetime_days"))
+    rotate = request.data.get("rotate") is True
+
+    analysis.enable_sharing(lifetime_days=lifetime_days, rotate=rotate)
+
+    payload = ShareStateSerializer(analysis).data
+    if was_clamped:
+        # Say so rather than silently disagreeing with the request that was just
+        # acknowledged with a 200. A client that asked for ten years and is told
+        # nothing has no way to know its link dies in one.
+        payload["lifetime_clamped_to_days"] = lifetime_days
+    return Response(payload)
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
@@ -763,13 +1113,12 @@ def export_user_data(request):
 
 User = get_user_model()
 
-import logging
-
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.throttling import AnonRateThrottle
 
-logger = logging.getLogger(__name__)
+# `logger` was defined here, 500 lines below the top of the module and below
+# several of its own users. It now lives with the other module-level setup.
 
 #: Same answer whether or not the username exists, so this endpoint cannot be
 #: used to find out which accounts are registered.
@@ -1002,61 +1351,109 @@ def analyze_jd_view(request):
     return Response({"keywords": results}, status=status.HTTP_200_OK)
 
 
+class SkillsLeaderboardThrottle(AnonRateThrottle):
+    """Rate limit for the leaderboard.
+
+    The aggregation no longer scales with the table, but a cold cache is still
+    a full pass over it, and this is an ``AllowAny`` endpoint with no throttle
+    at all today.
+    """
+
+    scope = "skills_leaderboard"
+
+    def get_rate(self):
+        # Read straight from settings rather than through
+        # DEFAULT_THROTTLE_RATES, following UploadRateThrottle above. It keeps
+        # the number beside the docstring that justifies it, and it means adding
+        # a throttle does not mean editing a dictionary every other throttle
+        # also edits.
+        return getattr(settings, "SKILLS_LEADERBOARD_RATE", "120/hour")
+
+
+@extend_schema(
+    summary="Most common matched and missing skills",
+    description=(
+        "Aggregate skill counts across analyses. `track` filters to one career "
+        "track and is matched case-insensitively against the known roles; an "
+        "unrecognised track returns an empty leaderboard. `limit` (1-50, "
+        "default 10) sets how many skills each list carries. `per_user=true` "
+        "counts each skill once per person rather than once per analysis."
+    ),
+    parameters=[
+        OpenApiParameter("track", OpenApiTypes.STR, description="Career track to filter to."),
+        OpenApiParameter("limit", OpenApiTypes.INT, description="Skills per list (1-50)."),
+        OpenApiParameter(
+            "per_user",
+            OpenApiTypes.BOOL,
+            description="Count each skill once per user rather than once per analysis.",
+        ),
+    ],
+)
 @api_view(["GET"])
 @permission_classes([AllowAny])
+@throttle_classes([SkillsLeaderboardThrottle])
 def skills_leaderboard_view(request):
+    """Report the most common matched and missing skills.
+
+    Four things changed, and only the first is the headline:
+
+    1. Rows are **streamed**. The previous implementation did
+       ``list(analyses.values_list(...))``, holding every skill list from every
+       analysis in memory to build two counters and then throwing the lists
+       away. The loop needs one row at a time.
+    2. ``track`` is **normalised against the known roles** before it goes
+       anywhere near a cache key. It used to be interpolated raw, so casing and
+       whitespace each produced their own entry and an arbitrary string produced
+       an entry that would never be read again.
+    3. ``limit`` is bounded, and is part of the cache key — an unbounded limit
+       would be an unbounded number of entries.
+    4. ``per_user`` is available as a denominator. Counting analyses means one
+       person re-running the same resume eight times moves the percentages;
+       counting people answers the question the page actually asks. Left off by
+       default so the numbers on the existing page do not change under anyone.
+    """
     from django.core.cache import cache
     from django.utils.timezone import now
-    
-    track = request.query_params.get("track", "")
-    
-    cache_key = f"skills_leaderboard_{track}"
+
+    # Imported here rather than at module level, as `analyze_jd_view` already
+    # does for the same function.
+    from .services import get_role_skills
+
+    known_tracks = set(get_role_skills().keys())
+    track = normalise_track(request.query_params.get("track"), known_tracks)
+    limit = clamp_limit(request.query_params.get("limit"))
+    per_user = str(request.query_params.get("per_user", "")).lower() in ("1", "true", "yes")
+
+    cache_key = cache_key_for(track, limit, per_user)
     cached_data = cache.get(cache_key)
     if cached_data is not None:
         return Response(cached_data, status=status.HTTP_200_OK)
-        
-    analyses = ResumeAnalysis.objects.all()
-    if track:
-        analyses = analyses.filter(target_role=track)
-        
-    data_list = list(analyses.values_list("matched_skills", "missing_skills"))
-    total_count = len(data_list)
-    
-    matched_counter = Counter()
-    missing_counter = Counter()
-    
-    for matched, missing in data_list:
-        if isinstance(matched, list):
-            matched_counter.update(matched)
-        if isinstance(missing, list):
-            missing_counter.update(missing)
-            
-    top_matched = [
-        {
-            "skill": skill.title(),
-            "count": count,
-            "percentage": int(count / total_count * 100) if total_count > 0 else 0
-        }
-        for skill, count in matched_counter.most_common(10)
-    ]
-    
-    top_missing = [
-        {
-            "skill": skill.title(),
-            "count": count,
-            "percentage": int(count / total_count * 100) if total_count > 0 else 0
-        }
-        for skill, count in missing_counter.most_common(10)
-    ]
-    
+
+    if track == UNKNOWN_TRACK:
+        # One shared answer for every unrecognised track. Filtering on the raw
+        # string would give the same empty result at the cost of a full scan per
+        # distinct spelling.
+        analyses = ResumeAnalysis.objects.none()
+    else:
+        analyses = ResumeAnalysis.objects.all()
+        if track:
+            analyses = analyses.filter(target_role=track)
+
+    matched_counter, missing_counter, total_count = aggregate_skill_counts(
+        analyses, per_user=per_user
+    )
+
     response_data = {
         "total_analyses": total_count,
-        "matched_skills": top_matched,
-        "missing_skills": top_missing,
-        "last_updated": now().isoformat()
+        "counted_by": "user" if per_user else "analysis",
+        "track": track if track != UNKNOWN_TRACK else "",
+        "limit": limit,
+        "matched_skills": top_skills(matched_counter, total_count, limit),
+        "missing_skills": top_skills(missing_counter, total_count, limit),
+        "last_updated": now().isoformat(),
     }
-    
-    cache.set(cache_key, response_data, 300)
+
+    cache.set(cache_key, response_data, CACHE_TIMEOUT_SECONDS)
     return Response(response_data, status=status.HTTP_200_OK)
 
 

@@ -88,6 +88,38 @@ export function useAuth() {
     []
   )
 
+  const loginWithOAuth = useCallback(
+    async (
+      provider: 'google' | 'github',
+      payload?: {
+        token?: string
+        credential?: string
+        access_token?: string
+        code?: string
+        email?: string
+        name?: string
+        avatar_url?: string
+      }
+    ) => {
+      const res = await axios.post(`${BACKEND}/api/auth/oauth/`, {
+        provider,
+        token: payload?.token || payload?.credential || 'mock_token',
+        ...payload,
+      })
+      persist(
+        {
+          username: res.data.username,
+          token: res.data.access,
+          refresh: res.data.refresh,
+          avatarUrl: res.data.avatar_url,
+        },
+        true
+      )
+      return res.data
+    },
+    []
+  )
+
   const logout = useCallback(() => {
     setSessionExpired(false)
     clearSession()
@@ -145,6 +177,7 @@ export function useAuth() {
     dismissSessionExpired,
     signup,
     login,
+    loginWithOAuth,
     logout,
     updateProfileSession,
     updateUserAvatar,

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useLocation, Link,} from 'react-router-dom'
+import { useLocation, Link } from 'react-router-dom'
 import axios from 'axios'
 import './index.css'
 import { AtsScore } from './AtsScore'
@@ -8,17 +8,22 @@ import {
   describeUploadLimits,
   validateResumeFile,
 } from './utils/fileValidation'
-import { useAnalysisHistory, type AnalysisEntry } from './hooks/useAnalysisHistory'
+import { useAnalysisHistory } from './hooks/useAnalysisHistory'
+import type { AnalysisEntry, PartialSkillItem } from './hooks/useAnalysisHistory'
 import { HistorySidebar } from './HistorySidebar'
 import { CompareVersions } from './components/CompareVersions/CompareVersions'
 import { useAuth } from './hooks/useAuth'
 import { api } from './api/client'
+import { analysisTokenHeaders } from './utils/analysisToken'
 import { AuthModal } from './AuthModal'
 import { SuggestionVote, type VoteValue } from './components/SuggestionVote'
 import { Footer } from './Footer'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import { InterviewQuestionsPanel } from './components/InterviewQuestionsPanel'
+import { TimelinePanel } from './components/TimelinePanel'
+import { type TimelineData } from './utils/timelineFormat'
 import { ScoreBreakdown, type ScoreBreakdownData } from './components/ScoreBreakdown'
+import { ShareResult } from './components/ShareResult'
 
 type Theme = 'light' | 'dark'
 
@@ -68,6 +73,7 @@ interface HistoryRow {
   skills_found: string[]
   suggestions: string[]
   matched_skills: string[]
+  partial_skills?: PartialSkillItem[]
   missing_skills: string[]
   target_role: string
   experience_level?: string
@@ -97,6 +103,7 @@ function toAnalysisEntries(payload: HistoryRow[] | HistoryPage): AnalysisEntry[]
     skills: item.skills_found,
     suggestions: item.suggestions,
     matchedSkills: item.matched_skills,
+    partialSkills: item.partial_skills || [],
     missingSkills: item.missing_skills,
     targetRole: item.target_role,
     experienceLevel: item.experience_level || 'Mid-Level',
@@ -115,7 +122,6 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
 }
 
 function App() {
-
   const location = useLocation()
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const [loading, setLoading] = useState(false)
@@ -125,6 +131,7 @@ function App() {
   const [isDragging, setIsDragging] = useState(false)
   const [score, setScore] = useState<number | null>(null)
   const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdownData | null>(null)
+  const [timeline, setTimeline] = useState<TimelineData | null>(null)
   const [skills, setSkills] = useState<string[]>([])
   const [suggestions, setSuggestions] = useState<string[]>([])
   const [roastMode, setRoastMode] = useState<boolean>(false)
@@ -132,6 +139,34 @@ function App() {
   // anonymous analyses are not persisted, so there is nothing to attach a vote to.
   const [analysisId, setAnalysisId] = useState<number | null>(null)
   const [suggestionVotes, setSuggestionVotes] = useState<Record<string, VoteValue>>({})
+
+  // Job Description Draft State (#533)
+  const JD_DRAFT_KEY = 'jd_draft'
+  const [jobDescription, setJobDescription] = useState<string>(() => {
+    try {
+      return localStorage.getItem('jd_draft') || ''
+    } catch {
+      return ''
+    }
+  })
+  const [isDraftSaved, setIsDraftSaved] = useState<boolean>(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        if (jobDescription.trim()) {
+          localStorage.setItem(JD_DRAFT_KEY, jobDescription)
+          setIsDraftSaved(true)
+        } else {
+          localStorage.removeItem(JD_DRAFT_KEY)
+          setIsDraftSaved(false)
+        }
+      } catch {
+        // storage disabled or unavailable
+      }
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [jobDescription])
 
   // Component States
   const [targetRole, setTargetRole] = useState('Frontend Developer')
@@ -143,6 +178,7 @@ function App() {
     }
   })
   const [matchedSkills, setMatchedSkills] = useState<string[]>([])
+  const [partialSkills, setPartialSkills] = useState<PartialSkillItem[]>([])
   const [missingSkills, setMissingSkills] = useState<string[]>([])
   const [showAllSkills, setShowAllSkills] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -155,41 +191,46 @@ function App() {
   const [cooldownRemaining, setCooldownRemaining] = useState(0)
 
   // Auth
-  const { user, signup, login, logout } = useAuth()
+  const { user, signup, login, loginWithOAuth, logout } = useAuth()
   const [showAuthModal, setShowAuthModal] = useState(false)
 
   // History
-  const { entries, deleteEntry, clearHistory, setEntries, unreadCount, lastViewedTimestamp, markAllAsViewed } = useAnalysisHistory()
+  const {
+    entries,
+    deleteEntry,
+    clearHistory,
+    setEntries,
+    unreadCount,
+    lastViewedTimestamp,
+    markAllAsViewed,
+  } = useAnalysisHistory()
   const [historyOpen, setHistoryOpen] = useState(false)
   const [historyNextUrl, setHistoryNextUrl] = useState<string | null>(null)
   const [activeFileName, setActiveFileName] = useState('')
   // Modal that diffs two saved uploads against each other.
   const [showCompare, setShowCompare] = useState(false)
 
-  const fetchDbHistory = useCallback(
-    async () => {
-      try {
-        // Via `api`: it attaches the current access token and, on a 401,
-        // refreshes and retries. This call used to pass a token that had
-        // usually expired, and then swallow the 401 -- so the sidebar just
-        // silently stopped updating with no clue as to why.
-        const res = await api.get(`/api/history/?page=1&page_size=${HISTORY_PAGE_SIZE}`)
-        // The endpoint returns a bare array when asked for no particular page,
-        // and a {count, next, results} envelope otherwise. Handle both so this
-        // keeps working against a backend that has not been updated yet.
-        setEntries(toAnalysisEntries(res.data))
-        setHistoryNextUrl(nextPageUrl(res.data))
-      } catch (error) {
-        // A 401 that survives the refresh means the session is genuinely gone;
-        // useAuth surfaces that separately. Anything else is worth seeing in
-        // the console rather than vanishing.
-        if (!axios.isAxiosError(error) || error.response?.status !== 401) {
-          console.error('Could not load analysis history', error)
-        }
+  const fetchDbHistory = useCallback(async () => {
+    try {
+      // Via `api`: it attaches the current access token and, on a 401,
+      // refreshes and retries. This call used to pass a token that had
+      // usually expired, and then swallow the 401 -- so the sidebar just
+      // silently stopped updating with no clue as to why.
+      const res = await api.get(`/api/history/?page=1&page_size=${HISTORY_PAGE_SIZE}`)
+      // The endpoint returns a bare array when asked for no particular page,
+      // and a {count, next, results} envelope otherwise. Handle both so this
+      // keeps working against a backend that has not been updated yet.
+      setEntries(toAnalysisEntries(res.data))
+      setHistoryNextUrl(nextPageUrl(res.data))
+    } catch (error) {
+      // A 401 that survives the refresh means the session is genuinely gone;
+      // useAuth surfaces that separately. Anything else is worth seeing in
+      // the console rather than vanishing.
+      if (!axios.isAxiosError(error) || error.response?.status !== 401) {
+        console.error('Could not load analysis history', error)
       }
-    },
-    [setEntries]
-  )
+    }
+  }, [setEntries])
 
   const loadMoreDbHistory = useCallback(async () => {
     if (!historyNextUrl || !user) return
@@ -201,10 +242,72 @@ function App() {
         return [...previous, ...older.filter((entry) => !seen.has(entry.id))]
       })
       setHistoryNextUrl(nextPageUrl(res.data))
-    } catch {
-      /* silently ignore */
+    } catch (error) {
+      if (!axios.isAxiosError(error) || error.response?.status !== 401) {
+        console.error('Could not load next page of history', error)
+      }
     }
   }, [historyNextUrl, setEntries, user])
+
+  // const handleUploadSuccess = async (taskId: string, fileToAnalyze: File) => {
+  //   try {
+  //     let result = null
+  //     while (true) {
+  //       const statusRes = await api.get(`/api/status/${taskId}/`)
+  //       if (statusRes.data.state === 'SUCCESS') {
+  //         result = statusRes.data.result
+  //         break
+  //       } else if (statusRes.data.state === 'FAILURE') {
+  //         throw new Error(statusRes.data.error || 'Analysis failed')
+  //       }
+  //       await new Promise(r => setTimeout(r, 1000))
+  //     }
+
+  //     setScore(result.score)
+  //     setScoreBreakdown(result.score_breakdown || null)
+  //     setSkills(result.skills_found || [])
+  //     setSuggestions(result.suggestions || [])
+  //     setMatchedSkills(result.matched_skills || [])
+  //     setPartialSkills(result.partial_skills || [])
+  //     setMissingSkills(result.missing_skills || [])
+  //     setResumeText(result.resume_text || '')
+  //     setInterviewQuestions(result.interview_questions || [])
+  //     setAnalysisId(typeof result.id === 'number' ? result.id : null)
+  //     setSuggestionVotes({})
+  //     setActiveFileName(fileToAnalyze.name)
+
+  //     setLoading(false)
+
+  //     // Reset retry state on success
+  //     setRetryCount(0)
+  //     setCooldownRemaining(0)
+
+  //     if (user) {
+  //       await fetchDbHistory()
+  //     }
+  //   } catch (error: unknown) {
+  //     console.error(error)
+
+  //     let errorMsg = 'Unknown error'
+
+  //     if (axios.isAxiosError(error)) {
+  //       errorMsg = error.response?.data?.error ?? error.message
+  //     } else if (error instanceof Error) {
+  //       errorMsg = error.message
+  //     }
+
+  //     alert(
+  //       `Upload failed: ${errorMsg}`
+  //     )
+
+  //     setLoading(false)
+
+  //     // Increment retry count and set cooldown
+  //     const newRetryCount = retryCount + 1
+  //     setRetryCount(newRetryCount)
+  //     setCooldownRemaining(getRetryDelay(newRetryCount))
+  //   }
+  // }
 
   useEffect(() => {
     if (user) fetchDbHistory()
@@ -254,7 +357,9 @@ function App() {
       const formData = new FormData()
       formData.append('file', fileToAnalyze)
       formData.append('role', targetRole)
-      formData.append('experience_level', experienceLevel)
+      if (jobDescription.trim()) {
+        formData.append('job_description', jobDescription.trim())
+      }
 
       // Through `api`, which attaches the current access token and, on a 401,
       // refreshes once and retries. This used to build an Authorization header
@@ -267,29 +372,48 @@ function App() {
       const res = await api.post('/api/upload/', formData)
       const taskId = res.data.task_id
 
+      // The task id alone used to be enough to read an analysis — including its
+      // `resume_text` — from `/api/status/`, and the id travels in a URL path,
+      // so it reaches access logs and browser history. Upload now also returns a
+      // claim saying who may ask about the task, and it goes in a header rather
+      // than the query string so it does not follow the id into those logs.
+      // See #706.
+      const analysisHeaders = analysisTokenHeaders(res.data.analysis_token)
+
       let result = null
       while (true) {
-        const statusRes = await api.get(`/api/status/${taskId}/`)
+        const statusRes = await api.get(`/api/status/${taskId}/`, { headers: analysisHeaders })
         if (statusRes.data.state === 'SUCCESS') {
           result = statusRes.data.result
           break
         } else if (statusRes.data.state === 'FAILURE') {
           throw new Error(statusRes.data.error || 'Analysis failed')
         }
-        await new Promise(r => setTimeout(r, 1000))
+        await new Promise((r) => setTimeout(r, 1000))
       }
 
       setScore(result.score)
       setScoreBreakdown(result.score_breakdown || null)
+      setTimeline(result.timeline || null)
       setSkills(result.skills_found || [])
       setSuggestions(result.suggestions || [])
       setMatchedSkills(result.matched_skills || [])
+      setPartialSkills(result.partial_skills || [])
       setMissingSkills(result.missing_skills || [])
       setResumeText(result.resume_text || '')
       setInterviewQuestions(result.interview_questions || [])
       setAnalysisId(typeof result.id === 'number' ? result.id : null)
       setSuggestionVotes({})
       setActiveFileName(fileToAnalyze.name)
+
+      // Clear draft once successfully analyzed (#533)
+      try {
+        localStorage.removeItem(JD_DRAFT_KEY)
+      } catch {
+        // ignore
+      }
+      setJobDescription('')
+      setIsDraftSaved(false)
 
       setLoading(false)
 
@@ -372,9 +496,11 @@ function App() {
     setFile(null)
     setScore(null)
     setScoreBreakdown(null)
+    setTimeline(null)
     setSkills([])
     setSuggestions([])
     setMatchedSkills([])
+    setPartialSkills([])
     setMissingSkills([])
     setResumeText('')
     setInterviewQuestions([])
@@ -464,9 +590,11 @@ function App() {
     setScore(entry.score)
     // History entries predate the breakdown and do not carry one.
     setScoreBreakdown(null)
+    setTimeline(null)
     setSkills(entry.skills)
     setSuggestions(entry.suggestions)
     setMatchedSkills(entry.matchedSkills)
+    setPartialSkills(entry.partialSkills || [])
     setMissingSkills(entry.missingSkills)
     setTargetRole(entry.targetRole)
     if (entry.experienceLevel) {
@@ -493,7 +621,6 @@ function App() {
 
   return (
     <>
-    
       <HistorySidebar
         entries={entries}
         onSelect={selectHistoryEntry}
@@ -517,7 +644,6 @@ function App() {
       )}
       <div className="container mt-5">
         <div className="main-card text-center">
-
           {/* Theme toggle */}
           <button
             type="button"
@@ -532,7 +658,11 @@ function App() {
           <div className="auth-bar">
             {user ? (
               <>
-                <Link to="/profile" className="auth-username" style={{ textDecoration: 'none', color: 'inherit' }}>
+                <Link
+                  to="/profile"
+                  className="auth-username"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
+                >
                   👤 {user.username}
                 </Link>
                 <button className="auth-bar-btn" onClick={logout}>
@@ -546,7 +676,12 @@ function App() {
             )}
           </div>
           {showAuthModal && (
-            <AuthModal onSignup={signup} onLogin={login} onClose={() => setShowAuthModal(false)} />
+            <AuthModal
+              onSignup={signup}
+              onLogin={login}
+              onOAuthLogin={loginWithOAuth}
+              onClose={() => setShowAuthModal(false)}
+            />
           )}
           <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
           {/* Role and Experience Level Selectors */}
@@ -588,6 +723,95 @@ function App() {
                 <option value="Senior">Senior (5+ yrs)</option>
               </select>
             </div>
+          </div>
+
+          {/* Job Description Draft Input (#533) */}
+          <div
+            className="mb-4"
+            style={{
+              textAlign: 'left',
+              maxWidth: '680px',
+              margin: '0 auto 20px',
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1px solid var(--surface-border, rgba(255, 255, 255, 0.1))',
+              borderRadius: 'var(--radius-lg, 12px)',
+              padding: '16px',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '8px',
+              }}
+            >
+              <label
+                htmlFor="jobDescriptionInput"
+                style={{
+                  fontWeight: '600',
+                  fontSize: '0.9rem',
+                  color: 'var(--heading-text, #fff)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                💼 Target Job Description <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: 'var(--muted-text, #94a3b8)' }}>(Optional)</span>
+              </label>
+              {isDraftSaved && (
+                <span
+                  style={{
+                    fontSize: '0.75rem',
+                    color: '#4ade80',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                >
+                  💾 Draft auto-saved
+                </span>
+              )}
+            </div>
+            <textarea
+              id="jobDescriptionInput"
+              className="custom-textarea"
+              placeholder="Paste job description text here to tailor matching and identify specific missing skills..."
+              value={jobDescription}
+              onChange={(e) => setJobDescription(e.target.value)}
+              rows={3}
+              style={{
+                width: '100%',
+                minHeight: '80px',
+                fontSize: '0.9rem',
+                resize: 'vertical',
+                boxSizing: 'border-box',
+              }}
+            />
+            {jobDescription && (
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  marginTop: '6px',
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => setJobDescription('')}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: 'var(--muted-text, #94a3b8)',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    textDecoration: 'underline',
+                  }}
+                >
+                  Clear Draft
+                </button>
+              </div>
+            )}
           </div>
           <div
             className={`upload-box mb-3${isDragging ? ' dragging' : ''}`}
@@ -644,14 +868,21 @@ function App() {
                 📄
               </span>
               <span className="upload-text-primary">
-                Drag &amp; Drop Resume or <span className="upload-text-browse">Click to Browse</span>
+                Drag &amp; Drop Resume or{' '}
+                <span className="upload-text-browse">Click to Browse</span>
               </span>
               {file ? (
-                <span className="upload-text-secondary" style={{ display: 'block', marginTop: '4px' }}>
+                <span
+                  className="upload-text-secondary"
+                  style={{ display: 'block', marginTop: '4px' }}
+                >
                   Selected: {file.name}
                 </span>
               ) : uploadError ? (
-                <span className="upload-text-error" style={{ display: 'block', marginTop: '4px', color: '#ff6b6b' }}>
+                <span
+                  className="upload-text-error"
+                  style={{ display: 'block', marginTop: '4px', color: '#ff6b6b' }}
+                >
                   {uploadError}
                 </span>
               ) : (
@@ -714,7 +945,24 @@ function App() {
 
               <ScoreBreakdown breakdown={scoreBreakdown} />
 
+              {/*
+                Employment timeline. Recruiters read the dates before the
+                bullets and an ATS parses them into structured employment
+                records, so a resume can score well here and still be filtered
+                on its history — which nothing in the analyzer looked at (#709).
+              */}
+              <TimelinePanel timeline={timeline} />
+
               <ResumePreview text={resumeText} skills={skills} />
+
+              {/*
+                Share controls. Previously there was no way to publish or
+                unpublish an analysis from the UI at all — the link simply
+                existed for every saved analysis (#705). `analysisId` is null
+                for anonymous runs and for the bundled sample, and the component
+                renders nothing in that case.
+              */}
+              <ShareResult analysisId={analysisId} />
 
               <h5 className="analysis-done" role="status" aria-live="polite">
                 ✅ Resume Analysis Complete
@@ -763,7 +1011,7 @@ function App() {
                 style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}
               >
                 <h4>🎯 Skill Gap Matrix ({targetRole} • {experienceLevel})</h4>
-                <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '12px', flexWrap: 'wrap', gap: '16px' }}>
                   <div>
                     <h6 style={{ color: '#22c55e' }}>Matched Skills</h6>
                     {matchedSkills.length === 0 ? (
@@ -776,6 +1024,20 @@ function App() {
                       ))
                     )}
                   </div>
+                  {partialSkills.length > 0 && (
+                    <div>
+                      <h6 style={{ color: '#eab308' }}>Partial Matches</h6>
+                      {partialSkills.map((p, i) => {
+                        const name = typeof p === 'string' ? p : p.skill
+                        const variant = typeof p === 'object' ? p.matched_variant : ''
+                        return (
+                          <span key={i} className="badge bg-warning text-dark m-1" title={typeof p === 'object' ? p.note : ''}>
+                            {name} {variant ? `(${variant})` : ''}
+                          </span>
+                        )
+                      })}
+                    </div>
+                  )}
                   <div>
                     <h6 style={{ color: '#ef4444' }}>Missing Skills</h6>
                     {missingSkills.length === 0 ? (
@@ -791,6 +1053,61 @@ function App() {
                 </div>
               </div>
 
+              {/* Skills You're Closest to Matching (Partial Credit Suggestions) */}
+              {partialSkills.length > 0 && (
+                <div
+                  className="mt-4 p-3"
+                  style={{
+                    background: 'rgba(234, 179, 8, 0.1)',
+                    border: '1px solid rgba(234, 179, 8, 0.3)',
+                    borderRadius: '8px',
+                  }}
+                >
+                  <h4 style={{ color: '#eab308', margin: '0 0 12px 0', fontSize: '16px', fontWeight: '600' }}>
+                    ⚡ Skills You're Closest to Matching (Partial Credit)
+                  </h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {partialSkills.map((p, i) => {
+                      const skillName = typeof p === 'string' ? p : p.skill
+                      const variant = typeof p === 'object' ? p.matched_variant : ''
+                      const note = typeof p === 'object' ? p.note : ''
+                      return (
+                        <div
+                          key={i}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            background: 'rgba(0, 0, 0, 0.25)',
+                            padding: '10px 14px',
+                            borderRadius: '6px',
+                            flexWrap: 'wrap',
+                            gap: '8px',
+                          }}
+                        >
+                          <div>
+                            <span className="badge bg-warning text-dark me-2" style={{ fontWeight: '600' }}>
+                              Partial Match
+                            </span>
+                            <strong style={{ color: '#fff', fontSize: '14px' }}>{skillName}</strong>
+                            {variant && (
+                              <span style={{ fontSize: '13px', color: '#cbd5e1', marginLeft: '8px' }}>
+                                (Resume mentions: <code style={{ color: '#fef08a' }}>{variant}</code>)
+                              </span>
+                            )}
+                          </div>
+                          {note && (
+                            <span style={{ fontSize: '12px', color: '#94a3b8', fontStyle: 'italic' }}>
+                              💡 {note}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
               {/* SUGGESTIONS BOX WITH THE UTILITY BUTTON & ROAST MODE TOGGLE */}
               <div className="suggestion-box mt-4">
                 <div
@@ -804,7 +1121,9 @@ function App() {
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <h4 style={{ margin: 0 }}>{roastMode ? '🔥 Resume Roast' : '💡 Suggestions'}</h4>
+                    <h4 style={{ margin: 0 }}>
+                      {roastMode ? '🔥 Resume Roast' : '💡 Suggestions'}
+                    </h4>
                     <label
                       style={{
                         display: 'inline-flex',

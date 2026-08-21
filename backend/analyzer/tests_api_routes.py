@@ -58,6 +58,7 @@ ROUTES = [
     ),
     ("/api/auth/signup/", "hooks/useAuth.ts"),
     ("/api/auth/login/", "hooks/useAuth.ts"),
+    ("/api/auth/oauth/", "hooks/useAuth.ts"),
     ("/api/auth/refresh/", "api/client.ts"),
     ("/api/password-reset/", "AuthModal.tsx"),
     ("/api/password-reset-confirm/", "components/ResetPasswordConfirmPage.tsx"),
@@ -230,10 +231,17 @@ class SharedResultEndpointTests(TestCase):
         self.client = APIClient()
         self.user = User.objects.create_user(username="sharer", password="password123")
 
-    def _analysis(self):
+    def _analysis(self, shared=True):
+        """Create an analysis, published by default.
+
+        Sharing became opt-in in #705 — an analysis is no longer readable by id
+        just because it exists — so these routing tests, which are about the URL
+        resolving, have to publish first. The lifecycle itself is covered in
+        ``tests_share_privacy``.
+        """
         from analyzer.models import ResumeAnalysis
 
-        return ResumeAnalysis.objects.create(
+        analysis = ResumeAnalysis.objects.create(
             user=self.user,
             file_name="resume.pdf",
             score=72,
@@ -243,6 +251,9 @@ class SharedResultEndpointTests(TestCase):
             missing_skills=["docker"],
             target_role="Backend Developer",
         )
+        if shared:
+            analysis.enable_sharing(lifetime_days=30)
+        return analysis
 
     def test_a_share_link_resolves_and_returns_the_analysis(self):
         analysis = self._analysis()
@@ -257,6 +268,12 @@ class SharedResultEndpointTests(TestCase):
 
         resp = self.client.get(f"/api/shared/{analysis.share_id}/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
+
+    def test_an_unshared_analysis_is_not_reachable_by_id(self):
+        analysis = self._analysis(shared=False)
+
+        resp = self.client.get(f"/api/shared/{analysis.share_id}/")
+        self.assertEqual(resp.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_an_unknown_share_id_is_a_404(self):
         resp = self.client.get("/api/shared/2b0c9a1e-5f3d-4a7b-9c2e-8d1f0a6b4c33/")

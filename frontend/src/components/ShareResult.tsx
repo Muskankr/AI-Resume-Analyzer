@@ -1,38 +1,205 @@
-import React, { useState } from 'react'
-import { Share2, Check, Copy } from 'lucide-react'
+import React, { useCallback, useEffect, useState } from 'react'
+import { Share2, Check, Copy, Link2Off, RefreshCw, ShieldCheck, Eye } from 'lucide-react'
+import { api } from '../api/client'
+import {
+  DEFAULT_LIFETIME_DAYS,
+  LIFETIME_CHOICES,
+  formatExpiry,
+  type ShareState,
+} from '../utils/shareLink'
 import './ShareResult.css'
 
+/**
+ * Controls for publishing one analysis behind a public link.
+ *
+ * This component used to render a link unconditionally, built in the browser
+ * from a `share_id` the backend assigned to every analysis at creation. That
+ * link already worked before it was shown, and there was nothing here — or
+ * anywhere else — that could turn it off again (#705).
+ *
+ * Sharing is now server-side state, so the component reads it rather than
+ * assuming it: `GET` on mount, and every button is a request whose response is
+ * the new state. Nothing is inferred locally from "the request returned 200",
+ * because the server also decides the expiry and can clamp a requested one.
+ */
+
 interface ShareResultProps {
-  shareId: string
+  /** Primary key of the analysis. Null while no saved analysis is on screen. */
+  analysisId: number | null
 }
 
-export const ShareResult: React.FC<ShareResultProps> = ({ shareId }) => {
-  const [copied, setCopied] = useState(false)
+/**
+ * What has been loaded, and which analysis it was loaded for.
+ *
+ * Kept as one object so switching analyses cannot render the previous one's
+ * link against the new id — the alternative, clearing state in an effect, is a
+ * cascading render for something that is really a derived value.
+ */
+interface Loaded {
+  forId: number
+  data: ShareState
+}
 
-  const shareUrl = `${window.location.origin}/shared/${shareId}`
+export const ShareResult: React.FC<ShareResultProps> = ({ analysisId }) => {
+  const [loaded, setLoaded] = useState<Loaded | null>(null)
+  const [lifetimeDays, setLifetimeDays] = useState(DEFAULT_LIFETIME_DAYS)
+  const [busy, setBusy] = useState(false)
+  const [copied, setCopied] = useState(false)
+  const [error, setError] = useState('')
+
+  const endpoint = analysisId === null ? null : `/api/history/${analysisId}/share/`
+
+  useEffect(() => {
+    if (analysisId === null || !endpoint) return
+
+    // Guards against a stale response overwriting a newer one when the user
+    // switches analyses faster than the requests come back.
+    let current = true
+
+    api
+      .get<ShareState>(endpoint)
+      .then((res) => {
+        if (current) setLoaded({ forId: analysisId, data: res.data })
+      })
+      .catch(() => {
+        // Leave whatever is on screen alone. The share state is not worth an
+        // error banner over the analysis the user actually came to read.
+      })
+
+    return () => {
+      current = false
+    }
+  }, [analysisId, endpoint])
+
+  const run = useCallback(
+    async (request: () => Promise<{ data: ShareState }>) => {
+      if (analysisId === null) return
+      setBusy(true)
+      setError('')
+      try {
+        const res = await request()
+        setLoaded({ forId: analysisId, data: res.data })
+      } catch {
+        setError('Could not reach the server. Nothing was changed.')
+      } finally {
+        setBusy(false)
+      }
+    },
+    [analysisId]
+  )
+
+  // `forId` is checked rather than trusted: a response for the previous
+  // analysis must not be rendered against the current one.
+  const state = loaded && loaded.forId === analysisId ? loaded.data : null
+
+  const handleEnable = () =>
+    endpoint && run(() => api.post<ShareState>(endpoint, { lifetime_days: lifetimeDays }))
+
+  const handleRotate = () =>
+    endpoint &&
+    run(() => api.post<ShareState>(endpoint, { lifetime_days: lifetimeDays, rotate: true }))
+
+  const handleRevoke = () => endpoint && run(() => api.delete<ShareState>(endpoint))
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(shareUrl)
+    if (!state?.share_url) return
+    navigator.clipboard?.writeText(state.share_url)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+
+  if (analysisId === null || !state) return null
 
   return (
     <div className="share-result-container mt-4">
       <div className="share-header">
         <Share2 size={16} />
-        <span>Share Analysis Result</span>
+        <span>Share this analysis</span>
       </div>
-      <div className="share-input-group">
-        <input type="text" value={shareUrl} readOnly className="share-url-input" />
-        <button className="share-copy-btn" onClick={handleCopy}>
-          {copied ? <Check size={14} /> : <Copy size={14} />}
-          {copied ? 'Copied' : 'Copy Link'}
-        </button>
-      </div>
-      <p className="share-help-text">
-        Anyone with this link can view a read-only version of this specific analysis.
-      </p>
+
+      {state.is_live && state.share_url ? (
+        <>
+          <div className="share-input-group">
+            <input
+              type="text"
+              value={state.share_url}
+              readOnly
+              className="share-url-input"
+              aria-label="Public link to this analysis"
+            />
+            <button className="share-copy-btn" onClick={handleCopy} disabled={busy}>
+              {copied ? <Check size={14} /> : <Copy size={14} />}
+              {copied ? 'Copied' : 'Copy Link'}
+            </button>
+          </div>
+
+          <div className="share-meta">
+            <span className="share-meta-item">
+              <ShieldCheck size={13} /> {formatExpiry(state.share_expires_at)}
+            </span>
+            <span className="share-meta-item">
+              <Eye size={13} /> {state.share_view_count}{' '}
+              {state.share_view_count === 1 ? 'view' : 'views'}
+            </span>
+          </div>
+
+          <div className="share-actions">
+            <button className="share-secondary-btn" onClick={handleRotate} disabled={busy}>
+              <RefreshCw size={13} /> New link
+            </button>
+            <button className="share-danger-btn" onClick={handleRevoke} disabled={busy}>
+              <Link2Off size={13} /> Stop sharing
+            </button>
+          </div>
+
+          <p className="share-help-text">
+            The page behind this link shows your score, target role and skill lists. It never
+            includes your resume text, your cover letter or the original filename.
+            <strong> New link</strong> stops every copy of the current one from working.
+          </p>
+        </>
+      ) : (
+        <>
+          <div className="share-actions">
+            <label className="share-lifetime-label" htmlFor="share-lifetime">
+              Link lasts
+            </label>
+            <select
+              id="share-lifetime"
+              className="share-lifetime-select"
+              value={lifetimeDays}
+              onChange={(event) => setLifetimeDays(Number(event.target.value))}
+              disabled={busy}
+            >
+              {LIFETIME_CHOICES.map((choice) => (
+                <option key={choice.days} value={choice.days}>
+                  {choice.label}
+                </option>
+              ))}
+            </select>
+            <button className="share-copy-btn" onClick={handleEnable} disabled={busy}>
+              <Share2 size={14} /> Create link
+            </button>
+          </div>
+
+          <p className="share-help-text">
+            This analysis is private. Creating a link publishes a read-only page with your score and
+            skill lists — never your resume text — and you can stop sharing at any time.
+          </p>
+        </>
+      )}
+
+      {state.lifetime_clamped_to_days !== undefined && (
+        <p className="share-help-text" role="status">
+          Links can last at most {state.lifetime_clamped_to_days} days, so that is what was set.
+        </p>
+      )}
+
+      {error && (
+        <p className="share-error-text" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   )
 }
