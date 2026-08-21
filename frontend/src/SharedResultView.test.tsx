@@ -27,11 +27,20 @@ vi.mock('axios', () => {
 
 const SHARE_ID = '2b0c9a1e-5f3d-4a7b-9c2e-8d1f0a6b4c33'
 
+// The shape `PublicSharedAnalysisSerializer` returns. `file_name` is absent
+// on purpose — see the payload assertions below.
 const SHARED_RESULT = {
+  share_id: SHARE_ID,
   score: 72,
-  file_name: 'resume.pdf',
+  target_role: 'Backend Developer',
+  experience_level: 'Senior',
   skills_found: ['python', 'django'],
+  matched_skills: ['python'],
+  partial_skills: [],
+  missing_skills: ['docker'],
   suggestions: ['Add projects or experience with Docker'],
+  created_at: '2026-08-01T10:00:00Z',
+  expires_at: '2026-09-01T10:00:00Z',
 }
 
 function renderAt(shareId = SHARE_ID) {
@@ -70,7 +79,27 @@ describe('SharedResultView (#632)', () => {
 
     renderAt()
 
-    expect(await screen.findByText('resume.pdf')).toBeInTheDocument()
+    expect(await screen.findByText(/Backend Developer/)).toBeInTheDocument()
+    expect(screen.getByText('python')).toBeInTheDocument()
+  })
+
+  it('labels the score with the role and level rather than the filename (#705)', async () => {
+    // `Firstname_Lastname_Resume.pdf` identifies the owner, so the public
+    // payload no longer carries a filename and this view no longer asks for one.
+    vi.mocked(axios.get).mockResolvedValue({ data: SHARED_RESULT })
+
+    renderAt()
+
+    expect(await screen.findByText(/Backend Developer • Senior/)).toBeInTheDocument()
+    expect(screen.queryByText(/\.pdf/)).not.toBeInTheDocument()
+  })
+
+  it('tells the viewer the link expires (#705)', async () => {
+    vi.mocked(axios.get).mockResolvedValue({ data: SHARED_RESULT })
+
+    renderAt()
+
+    expect(await screen.findByText(/This link expires in/)).toBeInTheDocument()
   })
 
   it('shows the not-found state when the share does not exist', async () => {
@@ -81,5 +110,15 @@ describe('SharedResultView (#632)', () => {
     renderAt()
 
     expect(await screen.findByText('Result Not Found')).toBeInTheDocument()
+  })
+
+  it('does not claim the link never existed, since revoked and unknown look the same (#705)', async () => {
+    // The backend answers 404 for revoked, expired and never-existed alike, so
+    // the copy has to be true of all three.
+    vi.mocked(axios.get).mockRejectedValue({ response: { data: {} } })
+
+    renderAt()
+
+    expect(await screen.findByText(/may have expired/)).toBeInTheDocument()
   })
 })

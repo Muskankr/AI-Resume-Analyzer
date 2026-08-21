@@ -1,5 +1,6 @@
 import secrets
 import uuid
+from datetime import timedelta
 
 from django.contrib.auth.models import User
 from django.db import models
@@ -21,22 +22,135 @@ class ResumeAnalysis(models.Model):
     skills_found = models.JSONField(default=list)
     suggestions = models.JSONField(default=list)
     matched_skills = models.JSONField(default=list)
+    partial_skills = models.JSONField(default=list, blank=True)
     missing_skills = models.JSONField(default=list)
     target_role = models.CharField(max_length=100)
     experience_level = models.CharField(max_length=50, default="Mid-Level", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     job_description = models.TextField(blank=True, null=True)
     resume_text = models.TextField(blank=True, null=True)
-    share_id = models.UUIDField(default=uuid.uuid4, unique=True)
     cover_letter_text = models.TextField(blank=True, null=True)
     cover_letter_feedback = models.JSONField(blank=True, null=True)
     interview_questions = models.JSONField(blank=True, null=True)
+
+    # --- Public sharing ---------------------------------------------------
+    #
+    # ``share_id`` is still assigned at creation, because it is the row's stable
+    # public name and generating it lazily would mean a nullable unique column.
+    # What changed is that holding the id is no longer sufficient:
+    # :meth:`is_share_live` is now the question the public endpoint asks, and it
+    # is false until someone turns sharing on.
+
+    share_id = models.UUIDField(default=uuid.uuid4, unique=True)
+
+    #: Whether the owner has published this analysis. Off by default — an
+    #: analysis used to be reachable by anyone who learned its id from the
+    #: moment it was created, which is not a decision the owner ever made.
+    share_enabled = models.BooleanField(default=False)
+
+    #: When sharing was last turned on or rotated. Shown in the UI so a user
+    #: looking at an old analysis can tell how long a link has been live.
+    share_created_at = models.DateTimeField(null=True, blank=True)
+
+    #: When the link stops working. Always set while sharing is on — a link with
+    #: no end is the state this exists to remove.
+    share_expires_at = models.DateTimeField(null=True, blank=True)
+
+    #: Rough traffic counter, so "did anyone actually open this?" has an answer
+    #: and an unexpected number is a reason to revoke. Incremented with an F()
+    #: expression, so it is a lower bound under concurrency rather than a lie.
+    share_view_count = models.PositiveIntegerField(default=0)
 
     class Meta:
         ordering = ["-created_at"]
 
     def __str__(self):
         return f"{self.user.username} — {self.file_name} ({self.score}%)"
+
+    def is_share_live(self, at=None):
+        """Return ``True`` when the public endpoint should answer for this row.
+
+        Both halves matter. ``share_enabled`` is the owner's decision;
+        ``share_expires_at`` is the clock. A row that is enabled but past its
+        expiry is not live, and is left alone rather than rewritten — expiry is
+        evaluated on read so a revocation never depends on a cleanup job having
+        run.
+        """
+        if not self.share_enabled:
+            return False
+        if self.share_expires_at is None:
+            # Enabled with no expiry should be unreachable — `enable_sharing` is
+            # the only way to set the flag and it always sets a date. Treated as
+            # not-live rather than trusted, because the failure mode of the
+            # other choice is an immortal link.
+            return False
+        return self.share_expires_at > (at or timezone.now())
+
+    def enable_sharing(self, lifetime_days, rotate=False, at=None):
+        """Publish this analysis for ``lifetime_days``, optionally under a new id.
+
+        Args:
+            lifetime_days: Life of the link from now. The caller is expected to
+                have passed the value through ``sharing.clamp_lifetime_days``.
+            rotate: Issue a fresh ``share_id``, which invalidates every copy of
+                the previous link. This is the "I sent it to the wrong person"
+                button, and it is separate from revoking because the common case
+                is wanting a working link, just not *that* one.
+            at: Clock override, for tests.
+
+        Returns:
+            ``self``, saved.
+        """
+        now = at or timezone.now()
+
+        if rotate or not self.share_enabled:
+            # A link that is off is being turned on, which is a new publication
+            # even if the id is unchanged; resetting the counter keeps the
+            # number answering "views since I shared it" rather than an
+            # all-time total that spans a revocation.
+            self.share_view_count = 0
+        if rotate:
+            self.share_id = uuid.uuid4()
+
+        self.share_enabled = True
+        self.share_created_at = now
+        self.share_expires_at = now + timedelta(days=lifetime_days)
+        self.save(
+            update_fields=[
+                "share_id",
+                "share_enabled",
+                "share_created_at",
+                "share_expires_at",
+                "share_view_count",
+            ]
+        )
+        return self
+
+    def revoke_sharing(self):
+        """Turn the link off and clear its expiry.
+
+        The ``share_id`` is deliberately left in place. Re-enabling later should
+        be a decision about *whether* to share, not a forced rotation, and
+        keeping the id means a user who re-enables does not have to re-send a
+        link they already distributed. :meth:`enable_sharing` with
+        ``rotate=True`` is there for when they do want a clean break.
+        """
+        self.share_enabled = False
+        self.share_expires_at = None
+        self.save(update_fields=["share_enabled", "share_expires_at"])
+        return self
+
+    def register_share_view(self):
+        """Count one public read, without reading the row back first.
+
+        ``F("share_view_count") + 1`` so two concurrent views cannot both write
+        the same number. The in-memory instance is intentionally *not*
+        refreshed — the view has no use for the new value, and refreshing would
+        cost a second query on the hot path of a public endpoint.
+        """
+        type(self).objects.filter(pk=self.pk).update(
+            share_view_count=models.F("share_view_count") + 1
+        )
 
 
 class UserProfile(models.Model):

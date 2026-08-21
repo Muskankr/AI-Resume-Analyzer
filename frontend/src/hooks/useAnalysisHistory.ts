@@ -1,5 +1,11 @@
 import { useState, useEffect, useCallback } from 'react'
 
+export interface PartialSkillItem {
+  skill: string
+  matched_variant?: string
+  note?: string
+}
+
 export interface AnalysisEntry {
   id: string
   timestamp: number
@@ -7,6 +13,7 @@ export interface AnalysisEntry {
   skills: string[]
   suggestions: string[]
   matchedSkills: string[]
+  partialSkills?: PartialSkillItem[]
   missingSkills: string[]
   targetRole: string
   experienceLevel?: string

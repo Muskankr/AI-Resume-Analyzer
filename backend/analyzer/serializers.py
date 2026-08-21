@@ -1,8 +1,10 @@
 from rest_framework import serializers
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
 from drf_spectacular.utils import OpenApiResponse, extend_schema
+from . import sharing
 from .models import Resume, ResumeAnalysis
 
 
@@ -139,7 +141,7 @@ class ResumeAnalysisSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResumeAnalysis
         fields = ("id", "share_id", "file_name", "score", "skills_found", "suggestions",
-                  "matched_skills", "missing_skills", "target_role", "experience_level", "created_at", "resume_text",
+                  "matched_skills", "partial_skills", "missing_skills", "target_role", "experience_level", "created_at", "resume_text",
                   "cover_letter_text", "cover_letter_feedback", "interview_questions")
 
 
@@ -155,7 +157,82 @@ class ResumeAnalysisListSerializer(serializers.ModelSerializer):
     class Meta:
         model = ResumeAnalysis
         fields = ("id", "share_id", "file_name", "score", "skills_found", "suggestions",
-                  "matched_skills", "missing_skills", "target_role", "experience_level", "created_at")
+                  "matched_skills", "partial_skills", "missing_skills", "target_role", "experience_level", "created_at")
+
+class PublicSharedAnalysisSerializer(serializers.ModelSerializer):
+    """What a share link is allowed to return.
+
+    Deliberately not a subset of :class:`ResumeAnalysisSerializer` by way of
+    ``exclude``. An exclude list is a denylist, and a denylist on a model that
+    gains fields over time fails open — the next column added to
+    ``ResumeAnalysis`` would be published by default. ``sharing.PUBLIC_FIELDS``
+    is the allowlist, and adding a field to the public view is a deliberate edit
+    to it.
+
+    On top of the field selection, every string that survives is passed through
+    :func:`~analyzer.sharing.redact_structure`. The fields here are *derived
+    from* the resume — ``skills_found`` is extracted from it, and a suggestion
+    can quote a phrase back — so "we did not serialise ``resume_text``" is not
+    on its own a guarantee that no contact detail is in the response.
+    """
+
+    #: Kept as a plain read-only field rather than the model's UUID, so the
+    #: response carries the string form the frontend puts in a URL.
+    share_id = serializers.CharField(read_only=True)
+
+    #: Present so a viewer can see the link will not last forever, which is the
+    #: reassurance that makes sharing reasonable in the first place.
+    expires_at = serializers.DateTimeField(source="share_expires_at", read_only=True)
+
+    class Meta:
+        model = ResumeAnalysis
+        fields = sharing.PUBLIC_FIELDS + ("expires_at",)
+        read_only_fields = fields
+
+    def to_representation(self, instance):
+        return sharing.redact_structure(super().to_representation(instance))
+
+
+class ShareStateSerializer(serializers.ModelSerializer):
+    """The owner's view of a link: is it on, until when, and how many opens.
+
+    Returned by the share-management endpoint so the UI never has to infer
+    state from a 200 or a 404. ``share_url`` is assembled here rather than in
+    the frontend because the public path is a backend routing detail, and the
+    frontend has already had that wrong once (#632).
+    """
+
+    is_live = serializers.SerializerMethodField()
+    share_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ResumeAnalysis
+        fields = (
+            "share_id",
+            "share_enabled",
+            "share_created_at",
+            "share_expires_at",
+            "share_view_count",
+            "is_live",
+            "share_url",
+        )
+        read_only_fields = fields
+
+    def get_is_live(self, obj) -> bool:
+        return obj.is_share_live()
+
+    def get_share_url(self, obj):
+        """Return the public URL, or ``None`` when there is nothing to link to.
+
+        ``None`` rather than a dead URL: a UI given a string will render it, and
+        a copyable link that 404s is worse than no link at all.
+        """
+        if not obj.is_share_live():
+            return None
+
+        base = getattr(settings, "FRONTEND_URL", "") or ""
+        return f"{base.rstrip('/')}/shared/{obj.share_id}"
+
 
 class VersionComparisonSerializer(serializers.Serializer):
     older_id = serializers.IntegerField()

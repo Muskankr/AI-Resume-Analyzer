@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { formatRelativeTime } from '../utils/formatRelativeTime'
+import { buildLeaderboardUrl, describeDenominator, type CountedBy } from '../utils/leaderboardQuery'
 
 interface LeaderboardItem {
   skill: string
@@ -13,6 +14,8 @@ interface LeaderboardResponse {
   matched_skills: LeaderboardItem[]
   missing_skills: LeaderboardItem[]
   last_updated?: string
+  /** Whether the percentages are over analyses or over people. */
+  counted_by?: CountedBy
 }
 
 interface SkillsLeaderboardProps {
@@ -21,6 +24,7 @@ interface SkillsLeaderboardProps {
 
 export const SkillsLeaderboard: React.FC<SkillsLeaderboardProps> = ({ onBack }) => {
   const [track, setTrack] = useState<string>('')
+  const [countedBy, setCountedBy] = useState<CountedBy>('analysis')
   const [data, setData] = useState<LeaderboardResponse | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
@@ -56,10 +60,7 @@ export const SkillsLeaderboard: React.FC<SkillsLeaderboardProps> = ({ onBack }) 
       setLoading(true)
       setError(null)
       try {
-        const url = track
-          ? `${backendUrl}/api/skills-leaderboard/?track=${encodeURIComponent(track)}`
-          : `${backendUrl}/api/skills-leaderboard/`
-        const res = await axios.get(url)
+        const res = await axios.get(buildLeaderboardUrl(backendUrl, { track, countedBy }))
         setData(res.data)
       } catch (err: unknown) {
         console.error(err)
@@ -69,7 +70,7 @@ export const SkillsLeaderboard: React.FC<SkillsLeaderboardProps> = ({ onBack }) 
       }
     }
     fetchLeaderboard()
-  }, [track, backendUrl])
+  }, [track, countedBy, backendUrl])
 
   return (
     <div
@@ -157,6 +158,32 @@ export const SkillsLeaderboard: React.FC<SkillsLeaderboardProps> = ({ onBack }) 
         ))}
       </div>
 
+      {/* Denominator toggle */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '24px' }}>
+        <label
+          htmlFor="leaderboard-counted-by"
+          style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)', margin: 0 }}
+        >
+          Count each skill
+        </label>
+        <select
+          id="leaderboard-counted-by"
+          value={countedBy}
+          onChange={(event) => setCountedBy(event.target.value as CountedBy)}
+          style={{
+            padding: '6px 10px',
+            borderRadius: 'var(--radius-md)',
+            fontSize: '0.85rem',
+            background: 'rgba(255,255,255,0.06)',
+            color: '#fff',
+            border: '1px solid rgba(255,255,255,0.1)',
+          }}
+        >
+          <option value="analysis">once per analysis</option>
+          <option value="user">once per person</option>
+        </select>
+      </div>
+
       {/* Main Content Area */}
       {loading ? (
         <div style={{ textAlign: 'center', padding: '60px 0', color: 'rgba(255,255,255,0.8)' }}>
@@ -194,8 +221,19 @@ export const SkillsLeaderboard: React.FC<SkillsLeaderboardProps> = ({ onBack }) 
             }}
           >
             <span style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.7)' }}>
-              Total Resumes Aggregated:{' '}
-              <strong style={{ color: '#fff' }}>{data.total_analyses}</strong>
+              {data.counted_by === 'user' ? 'People counted' : 'Analyses counted'}:{' '}
+              <strong style={{ color: '#fff' }}>{data.total_analyses.toLocaleString()}</strong>
+              {/*
+                A percentage is meaningless without its denominator, and this
+                page showed a bare "%" over a number labelled only "Total
+                Resumes Aggregated" — which is what it was, but not what a
+                reader assumes it is. Counting analyses means one person
+                re-running the same resume eight times moves every figure on
+                the page. See #707.
+              */}
+              <span style={{ opacity: 0.6, marginLeft: '6px' }}>
+                ({describeDenominator(data.counted_by, data.total_analyses)})
+              </span>
             </span>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
               {data?.last_updated && (

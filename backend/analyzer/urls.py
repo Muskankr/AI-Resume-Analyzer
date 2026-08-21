@@ -15,11 +15,13 @@ from .views import (
     compare_versions_view,
     suggestion_feedback,
     get_shared_result,
+    manage_analysis_share,
     admin_stats_view,
     analyze_jd_view,
     user_profile_view,
     contact_us_view,
     CustomTokenObtainPairView,
+    social_auth_view,
     profile_avatar_view,
     compare_bulk_jds_view,
     skills_leaderboard_view,
@@ -50,11 +52,20 @@ urlpatterns = [
 
     path("auth/signup/", signup),
     path("auth/login/", CustomTokenObtainPairView.as_view()),
+    path("auth/oauth/", social_auth_view, name="social_auth"),
     path("auth/refresh/", TokenRefreshView.as_view()),
 
     path("history/", analysis_history),
     path("history/clear/", clear_user_history),
     path("history/<int:pk>/", history_detail),
+    # Owner-side control over the public link for one analysis: read its
+    # state, enable/extend/rotate it, or revoke it. Sharing used to be an
+    # implicit property of every row with no way to switch it off. See #705.
+    path(
+        "history/<int:pk>/share/",
+        manage_analysis_share,
+        name="manage_analysis_share",
+    ),
 
     # Webhooks. The views for these have existed since #549 but were never
     # given a path, so the feature has been unreachable.

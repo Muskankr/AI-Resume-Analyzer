@@ -139,3 +139,29 @@ request:
 repo-wide reformat that would conflict with every open pull request. They are
 worth their own change; adding them now would only mean a permanently red
 build.
+
+## Analysis status polling needs a claim
+
+`/api/status/<task_id>/` refuses a poll that carries no `X-Analysis-Token`
+header, so a script or an HTTP client that pokes the endpoint with a task id
+copied from a log now gets a 404 rather than the analysis. That is the point
+(#706), but it does surprise people debugging by hand.
+
+Take the token from the upload response:
+
+```bash
+curl -s -F file=@resume.pdf -F role='Backend Developer' \
+  http://localhost:8000/api/upload/
+# {"task_id": "b3f1…", "analysis_token": "eyJ0Ijoi…"}
+
+curl -H 'X-Analysis-Token: eyJ0Ijoi…' \
+  http://localhost:8000/api/status/b3f1…/
+```
+
+A `?token=` query parameter works too, for clients that cannot set a header.
+Prefer the header: query strings are written to access logs by default in nginx
+and most proxies, which is the exposure the change exists to avoid.
+
+To poke the endpoint freely in local development, set
+`ANALYSIS_CLAIM_REQUIRED=false`. It defaults to on, and production should leave
+it there.
