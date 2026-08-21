@@ -23,15 +23,45 @@ interface APIResponse {
 
 const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
 
+const BULK_JD_DRAFT_KEY = 'bulk_jd_drafts'
+
 export const CompareBulkJds: React.FC<CompareBulkJdsProps> = ({ onClose }) => {
   const [file, setFile] = useState<File | null>(null)
   const [resumeUrl, setResumeUrl] = useState('')
-  const [jds, setJds] = useState<string[]>([''])
+  const [jds, setJds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem(BULK_JD_DRAFT_KEY)
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      }
+    } catch {
+      // ignore
+    }
+    return ['']
+  })
   const [loading, setLoading] = useState(false)
   const [downloadingZip, setDownloadingZip] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [results, setResults] = useState<APIResponse | null>(null)
   const [expandedJds, setExpandedJds] = useState<{ [key: number]: boolean }>({})
+
+  // Debounced draft saving (#533)
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      try {
+        const hasContent = jds.some(j => j && j.trim())
+        if (hasContent) {
+          localStorage.setItem(BULK_JD_DRAFT_KEY, JSON.stringify(jds))
+        } else {
+          localStorage.removeItem(BULK_JD_DRAFT_KEY)
+        }
+      } catch {
+        // ignore
+      }
+    }, 400)
+    return () => clearTimeout(timer)
+  }, [jds])
 
   const toggleExpand = (index: number) => {
     setExpandedJds((prev) => ({ ...prev, [index]: !prev[index] }))
@@ -79,6 +109,11 @@ export const CompareBulkJds: React.FC<CompareBulkJdsProps> = ({ onClose }) => {
 
       const res = await axios.post<APIResponse>(`${BACKEND}/api/compare-bulk-jds/`, formData)
       setResults(res.data)
+      try {
+        localStorage.removeItem(BULK_JD_DRAFT_KEY)
+      } catch {
+        // ignore
+      }
     } catch (err) {
       const message =
         axios.isAxiosError(err) && err.response?.data?.error
