@@ -663,6 +663,13 @@ function App() {
             {user ? (
               <>
                 <Link
+                  to="/ats-analyzer"
+                  className="auth-bar-btn"
+                  style={{ textDecoration: 'none', marginRight: '16px' }}
+                >
+                  ⚡ ATS Analyzer
+                </Link>
+                <Link
                   to="/profile"
                   className="auth-username"
                   style={{ textDecoration: 'none', color: 'inherit' }}
