@@ -33,6 +33,7 @@ from .views import (
     webhook_detail,
     test_webhook,
 )
+from . import career_roadmap
 
 urlpatterns = [
     path("upload/", upload_resume),
@@ -79,5 +80,7 @@ urlpatterns = [
     path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path("admin/stats/", admin_stats_view, name="admin_stats"),
+    path("roadmap/generate/", career_roadmap.generate_career_roadmap, name="generate_career_roadmap"),
+    path("roadmap/courses/", career_roadmap.get_course_recommendations, name="get_course_recommendations"),
 
 ]
