@@ -8,6 +8,7 @@ from . import role_skills
 from .skill_matcher import extract_skills, match_skills_with_partial
 from .scoring import compute_score_breakdown
 from .timeline import analyse as analyse_timeline
+from .formatting_checker import check_resume_formatting
 from resume_analyzer.quantify_checker import flag_unquantified_bullets
 
 User = get_user_model()
@@ -550,6 +551,12 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
 
     quantify_nudges = flag_unquantified_bullets(raw_text.split('\n'))
 
+    # Structural formatting & ATS-friendliness checks (#80)
+    formatting_checks = check_resume_formatting(
+        text=raw_text,
+        file_type=file_name.split('.')[-1].lower() if '.' in file_name else "pdf",
+    )
+
     # Employment timeline. Deliberately kept out of `score` for the same reason
     # `score_breakdown` is: that number is persisted on ResumeAnalysis and read
     # by the leaderboard, version comparison and the digest, so changing what it
@@ -577,6 +584,7 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
         "score_breakdown": score_breakdown.as_dict(),
         "readability_score": readability_score,
         "readability_label": readability_label,
+        "formatting_checks": formatting_checks,
         "skills_found": detected,
         "suggestions": suggestions,
         "quantify_nudges": quantify_nudges,

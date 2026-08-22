@@ -23,6 +23,7 @@ import { InterviewQuestionsPanel } from './components/InterviewQuestionsPanel'
 import { TimelinePanel } from './components/TimelinePanel'
 import { type TimelineData } from './utils/timelineFormat'
 import { ScoreBreakdown, type ScoreBreakdownData } from './components/ScoreBreakdown'
+import { FormattingChecks, type FormattingChecksData } from './components/FormattingChecks'
 import { WhatsNewModal } from './components/WhatsNewModal'
 import { shouldShowWhatsNew } from './data/whatsNewReleases'
 import { ShareResult } from './components/ShareResult'
@@ -134,6 +135,7 @@ function App() {
   const [isDragging, setIsDragging] = useState(false)
   const [score, setScore] = useState<number | null>(null)
   const [scoreBreakdown, setScoreBreakdown] = useState<ScoreBreakdownData | null>(null)
+  const [formattingChecks, setFormattingChecks] = useState<FormattingChecksData | null>(null)
   const [timeline, setTimeline] = useState<TimelineData | null>(null)
   const [skills, setSkills] = useState<string[]>([])
   const [suggestions, setSuggestions] = useState<string[]>([])
@@ -398,6 +400,7 @@ function App() {
 
       setScore(result.score)
       setScoreBreakdown(result.score_breakdown || null)
+      setFormattingChecks(result.formatting_checks || null)
       setTimeline(result.timeline || null)
       setSkills(result.skills_found || [])
       setSuggestions(result.suggestions || [])
@@ -500,6 +503,7 @@ function App() {
     setFile(null)
     setScore(null)
     setScoreBreakdown(null)
+    setFormattingChecks(null)
     setTimeline(null)
     setSkills([])
     setSuggestions([])
@@ -1093,6 +1097,8 @@ function App() {
               <AtsScore score={score} />
 
               <ScoreBreakdown breakdown={scoreBreakdown} />
+
+              <FormattingChecks formattingChecks={formattingChecks} />
 
               {/*
                 Employment timeline. Recruiters read the dates before the
