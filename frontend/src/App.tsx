@@ -659,6 +659,13 @@ function App() {
             {user ? (
               <>
                 <Link
+                  to="/salary-insights"
+                  className="auth-bar-btn"
+                  style={{ textDecoration: 'none', marginRight: '8px', background: 'rgba(16, 185, 129, 0.2)', borderColor: 'rgba(16, 185, 129, 0.4)', color: '#6ee7b7' }}
+                >
+                  💰 Salary Comp
+                </Link>
+                <Link
                   to="/profile"
                   className="auth-username"
                   style={{ textDecoration: 'none', color: 'inherit' }}

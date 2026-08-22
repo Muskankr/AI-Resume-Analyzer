@@ -33,6 +33,7 @@ from .views import (
     webhook_detail,
     test_webhook,
 )
+from .salary_insights import analyze_salary_insights
 
 urlpatterns = [
     path("upload/", upload_resume),
@@ -79,5 +80,5 @@ urlpatterns = [
     path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path("admin/stats/", admin_stats_view, name="admin_stats"),
-
+    path("salary/insights/", analyze_salary_insights, name="analyze_salary_insights"),
 ]
