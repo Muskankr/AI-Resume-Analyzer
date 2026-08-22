@@ -24,6 +24,7 @@ from .views import (
     social_auth_view,
     profile_avatar_view,
     compare_bulk_jds_view,
+    compare_bulk_resumes_view,
     skills_leaderboard_view,
     unsubscribe_digest_view,
     task_status,
@@ -41,6 +42,7 @@ urlpatterns = [
     path("compare-uploads/", compare_uploads),
     path("analyze-jd/", analyze_jd_view),
     path("compare-bulk-jds/", compare_bulk_jds_view),
+    path("compare-bulk-resumes/", compare_bulk_resumes_view),
     path("profile/", user_profile_view),
     # `profile_avatar_view` was imported here but never given a path, so the
     # avatar upload the profile modal has always called returned 404. See #632.

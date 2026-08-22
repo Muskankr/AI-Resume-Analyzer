@@ -1646,6 +1646,106 @@ def compare_bulk_jds_view(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 
+
+@extend_schema(
+    summary="Bulk resume analysis across multiple files",
+    description="Uploads and analyzes multiple resumes in one session against a target role and optional job description, returning a summary list with individual scores and detailed analysis results.",
+)
+@api_view(["POST"])
+@parser_classes([MultiPartParser, FormParser])
+@permission_classes([AllowAny])
+@throttle_classes([UploadRateThrottle])
+def compare_bulk_resumes_view(request):
+    files = request.FILES.getlist("files") or request.FILES.getlist("files[]") or request.FILES.getlist("resumes")
+    if not files and request.FILES.get("file"):
+        files = [request.FILES.get("file")]
+
+    if not files:
+        return Response(
+            {"error": "Please provide at least one resume file to analyze."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    # Allow up to 10 resumes in bulk session
+    files = files[:10]
+    target_role = clean_text(request.data.get("role") or request.data.get("target_role") or "Frontend Developer", max_length=100)
+    experience_level = clean_text(
+        request.data.get("experience_level") or request.data.get("level") or "Mid-Level",
+        max_length=50,
+    )
+    job_desc = clean_text(
+        request.data.get("job_description"),
+        max_length=MAX_STORED_JOB_DESCRIPTION_LENGTH,
+    )
+
+    # Validate each uploaded file
+    for f in files:
+        try:
+            validate_upload(f, field_label=f"resume '{f.name}'")
+        except ValueError as ve:
+            return Response({"error": str(ve)}, status=status.HTTP_400_BAD_REQUEST)
+
+    user_id = request.user.id if request.user.is_authenticated else None
+
+    results = []
+    temp_dir = os.path.join(settings.BASE_DIR, "tmp")
+    os.makedirs(temp_dir, exist_ok=True)
+    storage = FileSystemStorage(location=temp_dir)
+
+    for index, uploaded_file in enumerate(files):
+        unique_name = f"{uuid.uuid4()}_{uploaded_file.name}"
+        saved_name = storage.save(unique_name, uploaded_file)
+        file_path = storage.path(saved_name)
+
+        try:
+            analysis = analyze_resume(
+                file_path=file_path,
+                target_role=target_role,
+                file_name=uploaded_file.name,
+                user_id=user_id,
+                job_description=job_desc,
+                experience_level=experience_level,
+            )
+            results.append({
+                "index": index,
+                "file_name": uploaded_file.name,
+                "score": analysis.get("score", 0),
+                "matched_skills": analysis.get("matched_skills", []),
+                "missing_skills": analysis.get("missing_skills", []),
+                "partial_skills": analysis.get("partial_skills", []),
+                "skills_found": analysis.get("skills_found", []),
+                "suggestions": analysis.get("suggestions", []),
+                "readability_score": analysis.get("readability_score"),
+                "readability_label": analysis.get("readability_label"),
+                "score_breakdown": analysis.get("score_breakdown"),
+                "target_role": target_role,
+                "experience_level": experience_level,
+            })
+        except Exception as err:
+            results.append({
+                "index": index,
+                "file_name": uploaded_file.name,
+                "score": 0,
+                "error": str(err),
+                "matched_skills": [],
+                "missing_skills": [],
+                "partial_skills": [],
+                "skills_found": [],
+                "suggestions": [f"Could not analyze file: {err}"],
+                "target_role": target_role,
+                "experience_level": experience_level,
+            })
+
+    # Sort results by score descending for recruiter summary view
+    results.sort(key=lambda x: x.get("score", 0), reverse=True)
+
+    return Response({
+        "target_role": target_role,
+        "experience_level": experience_level,
+        "total_resumes": len(results),
+        "resumes": results,
+    }, status=status.HTTP_200_OK)
+
 @extend_schema(
     summary="Get or update user profile",
     description=(

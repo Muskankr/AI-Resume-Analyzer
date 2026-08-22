@@ -17,8 +17,9 @@ class KnownDeviceAlertsTests(TestCase):
         # Login
         resp = self.client.post("/api/auth/login/", {
             "username": "alertsuser",
-            "password": "password123"
-        }, HTTP_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0")
+            "password": "password123",
+            "captcha_token": "test-captcha-token",
+        }, HTTP_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0", REMOTE_ADDR="127.0.0.1")
 
         self.assertEqual(resp.status_code, 200)
         # Check KnownDevice was created
@@ -37,8 +38,9 @@ class KnownDeviceAlertsTests(TestCase):
         # Login again from same IP/UA
         resp = self.client.post("/api/auth/login/", {
             "username": "alertsuser",
-            "password": "password123"
-        }, HTTP_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0", REMOTE_ADDR="127.0.0.1")
+            "password": "password123",
+            "captcha_token": "test-captcha-token",
+        }, HTTP_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", REMOTE_ADDR="127.0.0.1")
 
         self.assertEqual(resp.status_code, 200)
         # Verify still 1 known device and no emails sent
@@ -56,7 +58,8 @@ class KnownDeviceAlertsTests(TestCase):
         # Login from a new UA (Firefox on macOS)
         resp = self.client.post("/api/auth/login/", {
             "username": "alertsuser",
-            "password": "password123"
+            "password": "password123",
+            "captcha_token": "test-captcha-token",
         }, HTTP_USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15) Firefox/120.0", REMOTE_ADDR="127.0.0.1")
 
         self.assertEqual(resp.status_code, 200)
@@ -83,7 +86,8 @@ class KnownDeviceAlertsTests(TestCase):
         # Login from a new IP (simulating new location)
         resp = self.client.post("/api/auth/login/", {
             "username": "alertsuser",
-            "password": "password123"
+            "password": "password123",
+            "captcha_token": "test-captcha-token",
         }, HTTP_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0", REMOTE_ADDR="192.168.1.50")
 
         self.assertEqual(resp.status_code, 200)

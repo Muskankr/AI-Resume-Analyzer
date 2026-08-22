@@ -1101,3 +1101,33 @@ class ExperienceLevelTests(TestCase):
         record = ResumeAnalysis.objects.get(id=res["id"])
         self.assertEqual(record.experience_level, "Senior")
         self.assertEqual(record.target_role, "Data Analyst")
+
+
+class BulkResumeAnalysisTests(TestCase):
+    @patch("analyzer.services.pdfplumber.open")
+    def test_compare_bulk_resumes_endpoint(self, mock_open):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        mock_open.return_value = _fake_pdf("HTML CSS JavaScript React TypeScript")
+
+        # Fake valid PDF files with %PDF magic header
+        file1 = SimpleUploadedFile("alice.pdf", b"%PDF-1.4 dummy content 1", content_type="application/pdf")
+        file2 = SimpleUploadedFile("bob.pdf", b"%PDF-1.4 dummy content 2", content_type="application/pdf")
+
+        response = self.client.post(
+            "/api/compare-bulk-resumes/",
+            {
+                "files": [file1, file2],
+                "role": "Frontend Developer",
+                "experience_level": "Junior",
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["total_resumes"], 2)
+        self.assertEqual(len(data["resumes"]), 2)
+        self.assertEqual(data["target_role"], "Frontend Developer")
+        self.assertIn("score", data["resumes"][0])
+        self.assertIn("file_name", data["resumes"][0])
+
