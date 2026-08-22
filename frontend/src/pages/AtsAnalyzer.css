@@ -1,0 +1,19 @@
+.ats-analyzer-page {
+  background-color: var(--bg-color, #0f172a);
+  color: var(--text-color, #f8fafc);
+}
+
+.ats-analyzer-page .animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

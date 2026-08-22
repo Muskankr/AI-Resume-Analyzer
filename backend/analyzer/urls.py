@@ -33,6 +33,8 @@ from .views import (
     webhook_detail,
     test_webhook,
 )
+from .applications import get_job_applications, create_job_application, update_job_application, delete_job_application
+from .ats_analyzer import analyze_ats_density
 
 urlpatterns = [
     path("upload/", upload_resume),
@@ -79,5 +81,6 @@ urlpatterns = [
     path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path("admin/stats/", admin_stats_view, name="admin_stats"),
+    path("ats/analyze/", analyze_ats_density, name="analyze_ats_density"),
 
 ]
