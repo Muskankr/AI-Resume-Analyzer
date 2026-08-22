@@ -792,6 +792,30 @@ function App() {
                 boxSizing: 'border-box',
               }}
             />
+            {(() => {
+              const wordCount = jobDescription.trim() ? jobDescription.trim().split(/\s+/).length : 0;
+              if (wordCount > 0 && wordCount < 50) {
+                return (
+                  <div
+                    style={{
+                      marginTop: '8px',
+                      padding: '8px 12px',
+                      backgroundColor: 'rgba(234, 179, 8, 0.1)',
+                      border: '1px solid rgba(234, 179, 8, 0.3)',
+                      borderRadius: '6px',
+                      fontSize: '0.8rem',
+                      color: '#facc15',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                    }}
+                  >
+                    ⚠️ <span>Friendly tip: Very short job descriptions might yield less accurate analysis. Consider pasting the full description!</span>
+                  </div>
+                );
+              }
+              return null;
+            })()}
             {jobDescription && (
               <div
                 style={{

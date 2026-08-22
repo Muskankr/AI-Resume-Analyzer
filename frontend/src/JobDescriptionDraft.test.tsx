@@ -71,4 +71,29 @@ describe('Job Description Draft Auto-Save (#533)', () => {
     const textarea = screen.getByPlaceholderText(/Paste job description text here/i) as HTMLTextAreaElement
     expect(textarea.value).toBe('')
   })
+
+  it('shows a quality warning when the job description is less than 50 words', () => {
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>
+    )
+
+    const textarea = screen.getByPlaceholderText(/Paste job description text here/i)
+
+    // Type a short JD (5 words)
+    fireEvent.change(textarea, {
+      target: { value: 'This is a short description' },
+    })
+
+    expect(screen.getByText(/Friendly tip: Very short job descriptions/i)).toBeInTheDocument()
+
+    // Type a longer JD (52 words)
+    const longText = 'word '.repeat(52)
+    fireEvent.change(textarea, {
+      target: { value: longText },
+    })
+
+    expect(screen.queryByText(/Friendly tip: Very short job descriptions/i)).not.toBeInTheDocument()
+  })
 })
