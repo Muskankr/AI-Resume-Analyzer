@@ -193,6 +193,26 @@ class ProfileAvatarEndpointTests(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", resp.data)
 
+    def test_a_renamed_non_image_is_rejected(self):
+        renamed = SimpleUploadedFile(
+            "avatar.png", b"this is not image data", content_type="image/png"
+        )
+        resp = self.client.post("/api/profile/avatar/", {"avatar": renamed})
+
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("does not look like a valid", resp.data["error"])
+
+    def test_an_image_signature_must_match_its_extension(self):
+        jpeg_named_as_png = SimpleUploadedFile(
+            "avatar.png", b"\xff\xd8\xff\xe0" + b"\x00" * 32, content_type="image/png"
+        )
+        resp = self.client.post(
+            "/api/profile/avatar/", {"avatar": jpeg_named_as_png}
+        )
+
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("does not look like a valid", resp.data["error"])
+
     def test_an_oversized_image_is_rejected(self):
         huge = SimpleUploadedFile(
             "avatar.png", b"\x89PNG\r\n\x1a\n" + b"x" * (2 * 1024 * 1024),

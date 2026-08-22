@@ -843,7 +843,9 @@ class ProfileAvatarTests(TestCase):
         resp = self.client.post("/api/profile/avatar/", {"avatar": large_file}, **auth_headers)
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         
-        valid_img = SimpleUploadedFile("avatar.png", b"fake_png_binary_data", content_type="image/png")
+        valid_img = SimpleUploadedFile(
+            "avatar.png", b"\x89PNG\r\n\x1a\n" + b"fake_png_binary_data", content_type="image/png"
+        )
         resp = self.client.post("/api/profile/avatar/", {"avatar": valid_img}, **auth_headers)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn("avatar_url", resp.data)

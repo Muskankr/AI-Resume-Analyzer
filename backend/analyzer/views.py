@@ -148,8 +148,10 @@ def verify_captcha_token(token_string):
 
 
 from .file_validation import (
+    AVATAR_FORMATS,
     PDF,
     RESUME_FORMATS,
+    UploadValidationError,
     detect_format,
     get_max_upload_size,
     validate_optional_upload,
@@ -1503,13 +1505,15 @@ def profile_avatar_view(request):
         if not file_obj:
             return Response({"error": "No avatar file provided."}, status=status.HTTP_400_BAD_REQUEST)
 
-        ext = os.path.splitext(file_obj.name)[1].lower()
-        if ext not in [".png", ".jpg", ".jpeg", ".webp"]:
-            return Response({"error": "Only PNG, JPG, JPEG, and WEBP images are allowed."}, status=status.HTTP_400_BAD_REQUEST)
-
-        max_size = 2 * 1024 * 1024
-        if file_obj.size > max_size:
-            return Response({"error": "Image size must be under 2MB."}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            validate_upload(
+                file_obj,
+                formats=AVATAR_FORMATS,
+                field_label="avatar",
+                max_size=2 * 1024 * 1024,
+            )
+        except UploadValidationError as error:
+            return Response({"error": str(error)}, status=status.HTTP_400_BAD_REQUEST)
 
 
         if profile.avatar:

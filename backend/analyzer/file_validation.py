@@ -42,6 +42,9 @@ class FileFormat:
     #: Byte prefixes a genuine file of this type starts with. Empty means the
     #: format has no signature and is identified by :attr:`text_like` instead.
     magic_prefixes: Tuple[bytes, ...] = ()
+    #: Byte sequences that must occur at fixed offsets. This covers formats
+    #: such as WebP, whose signature is split by a variable-length field.
+    magic_offsets: Tuple[Tuple[int, bytes], ...] = ()
     content_types: Tuple[str, ...] = ()
     #: Formats without a signature (plain text) are accepted when the sample
     #: decodes cleanly and holds no NUL bytes.
@@ -52,8 +55,17 @@ class FileFormat:
         return any(name.endswith(ext) for ext in self.extensions)
 
     def matches_content(self, sample: bytes) -> bool:
-        if self.magic_prefixes:
-            return any(sample.startswith(prefix) for prefix in self.magic_prefixes)
+        if self.magic_prefixes and not any(
+            sample.startswith(prefix) for prefix in self.magic_prefixes
+        ):
+            return False
+        if self.magic_offsets and not all(
+            sample[offset : offset + len(expected)] == expected
+            for offset, expected in self.magic_offsets
+        ):
+            return False
+        if self.magic_prefixes or self.magic_offsets:
+            return True
         if self.text_like:
             return _looks_like_text(sample)
         return False
@@ -90,6 +102,35 @@ TXT = FileFormat(
 
 #: Formats accepted for resumes and cover letters — the three the parser reads.
 RESUME_FORMATS: Tuple[FileFormat, ...] = (PDF, DOCX, TXT)
+
+# Profile images must be recognised by their contents as well as their names.
+# Browsers can provide an arbitrary content type and a file can be renamed, so
+# neither is suitable for deciding whether it is safe to store as an avatar.
+PNG = FileFormat(
+    key="png",
+    label="PNG image",
+    extensions=(".png",),
+    magic_prefixes=(b"\x89PNG\r\n\x1a\n",),
+    content_types=("image/png",),
+)
+
+JPEG = FileFormat(
+    key="jpeg",
+    label="JPEG image",
+    extensions=(".jpg", ".jpeg"),
+    magic_prefixes=(b"\xff\xd8\xff",),
+    content_types=("image/jpeg",),
+)
+
+WEBP = FileFormat(
+    key="webp",
+    label="WebP image",
+    extensions=(".webp",),
+    magic_offsets=((0, b"RIFF"), (8, b"WEBP")),
+    content_types=("image/webp",),
+)
+
+AVATAR_FORMATS: Tuple[FileFormat, ...] = (PNG, JPEG, WEBP)
 
 
 def _looks_like_text(sample: bytes) -> bool:
