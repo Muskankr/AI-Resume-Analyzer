@@ -663,6 +663,13 @@ function App() {
             {user ? (
               <>
                 <Link
+                  to="/cover-letter"
+                  className="auth-bar-btn"
+                  style={{ textDecoration: 'none', marginRight: '8px', background: 'rgba(168, 85, 247, 0.2)', borderColor: 'rgba(168, 85, 247, 0.4)', color: '#e879f9' }}
+                >
+                  📝 Cover Letter
+                </Link>
+                <Link
                   to="/profile"
                   className="auth-username"
                   style={{ textDecoration: 'none', color: 'inherit' }}
