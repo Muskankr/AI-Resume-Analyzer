@@ -659,6 +659,13 @@ function App() {
             {user ? (
               <>
                 <Link
+                  to="/mock-interview"
+                  className="auth-bar-btn"
+                  style={{ textDecoration: 'none', marginRight: '8px', background: 'rgba(59, 130, 246, 0.2)', borderColor: 'rgba(59, 130, 246, 0.4)', color: '#93c5fd' }}
+                >
+                  🎙️ Mock Interview
+                </Link>
+                <Link
                   to="/profile"
                   className="auth-username"
                   style={{ textDecoration: 'none', color: 'inherit' }}
