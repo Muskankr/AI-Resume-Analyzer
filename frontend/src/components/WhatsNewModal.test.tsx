@@ -1,61 +1,58 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import { WhatsNewModal } from './WhatsNewModal'
-import {
-  CURRENT_RELEASE,
-  WHATS_NEW_STORAGE_KEY,
-  shouldShowWhatsNew,
-  markWhatsNewAsSeen,
-} from '../data/whatsNewReleases'
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { WhatsNewModal } from './WhatsNewModal';
+import { WhatsNewVersionState, LATEST_RELEASE_HIGHLIGHTS } from './WhatsNewModel';
 
-describe("What's New Changelog Popup (#532)", () => {
+describe('WhatsNewModal & WhatsNewVersionState', () => {
   beforeEach(() => {
-    localStorage.clear()
-  })
+    localStorage.clear();
+  });
 
-  it('detects when popup should be shown for new/returning users', () => {
-    expect(shouldShowWhatsNew()).toBe(true)
+  describe('WhatsNewVersionState', () => {
+    it('should return shouldShowModal = true when version is not in localStorage', () => {
+      expect(WhatsNewVersionState.shouldShowModal()).toBe(true);
+    });
 
-    markWhatsNewAsSeen(CURRENT_RELEASE.version)
-    expect(shouldShowWhatsNew()).toBe(false)
-  })
+    it('should return shouldShowModal = false after marking current version as seen', () => {
+      WhatsNewVersionState.markCurrentVersionSeen('2.5.0');
+      expect(WhatsNewVersionState.shouldShowModal('2.5.0')).toBe(false);
+      expect(localStorage.getItem('whats_new_last_seen_version')).toBe('2.5.0');
+    });
+  });
 
-  it('renders modal with release highlights when open', () => {
-    render(<WhatsNewModal isOpen={true} onClose={vi.fn()} />)
+  describe('WhatsNewModal Component', () => {
+    it('should not render when isOpen is false', () => {
+      render(<WhatsNewModal isOpen={false} onClose={() => {}} />);
+      expect(screen.queryByText(/What's New in AI Resume Analyzer/i)).toBeNull();
+    });
 
-    expect(screen.getByRole('dialog')).toBeInTheDocument()
-    expect(screen.getByText(/What's New/i)).toBeInTheDocument()
-    expect(screen.getByText(new RegExp(`v${CURRENT_RELEASE.version}`, 'i'))).toBeInTheDocument()
+    it('should render release highlights when isOpen is true', () => {
+      render(<WhatsNewModal isOpen={true} onClose={() => {}} />);
+      expect(screen.getByText(/What's New in AI Resume Analyzer/i)).toBeDefined();
+      expect(screen.getByText(LATEST_RELEASE_HIGHLIGHTS.badge)).toBeDefined();
+      expect(screen.getByText(/Got It, Let's Go!/i)).toBeDefined();
+    });
 
-    // Check highlights are rendered
-    for (const highlight of CURRENT_RELEASE.highlights) {
-      expect(screen.getByText(highlight.title)).toBeInTheDocument()
-    }
-  })
+    it('should dismiss modal and mark version seen when clicking Got It button', () => {
+      const handleClose = vi.fn();
+      render(<WhatsNewModal isOpen={true} onClose={handleClose} />);
 
-  it('does not render modal when isOpen is false', () => {
-    render(<WhatsNewModal isOpen={false} onClose={vi.fn()} />)
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-  })
+      const button = screen.getByText(/Got It, Let's Go!/i);
+      fireEvent.click(button);
 
-  it('dismisses modal, updates localStorage, and calls onClose when clicking button', () => {
-    const handleClose = vi.fn()
-    render(<WhatsNewModal isOpen={true} onClose={handleClose} />)
+      expect(handleClose).toHaveBeenCalledTimes(1);
+      expect(localStorage.getItem('whats_new_last_seen_version')).toBe(LATEST_RELEASE_HIGHLIGHTS.version);
+    });
 
-    const dismissBtn = screen.getByRole('button', { name: /Got It, Let's Go!/i })
-    fireEvent.click(dismissBtn)
+    it('should dismiss modal when pressing Escape key', () => {
+      const handleClose = vi.fn();
+      render(<WhatsNewModal isOpen={true} onClose={handleClose} />);
 
-    expect(handleClose).toHaveBeenCalled()
-    expect(localStorage.getItem(WHATS_NEW_STORAGE_KEY)).toBe(CURRENT_RELEASE.version)
-    expect(shouldShowWhatsNew()).toBe(false)
-  })
+      fireEvent.keyDown(window, { key: 'Escape' });
 
-  it('dismisses when pressing Escape key', () => {
-    const handleClose = vi.fn()
-    render(<WhatsNewModal isOpen={true} onClose={handleClose} />)
-
-    fireEvent.keyDown(window, { key: 'Escape' })
-    expect(handleClose).toHaveBeenCalled()
-    expect(localStorage.getItem(WHATS_NEW_STORAGE_KEY)).toBe(CURRENT_RELEASE.version)
-  })
-})
+      expect(handleClose).toHaveBeenCalledTimes(1);
+      expect(localStorage.getItem('whats_new_last_seen_version')).toBe(LATEST_RELEASE_HIGHLIGHTS.version);
+    });
+  });
+});
