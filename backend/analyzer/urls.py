@@ -32,22 +32,19 @@ from .views import (
     manage_webhooks,
     webhook_detail,
     test_webhook,
-    upload_batch_resumes,
-    batch_status,
+    import_jd_url_view,
 )
+from .badge_views import manage_resume_badge, resume_score_badge
 
 urlpatterns = [
     path("upload/", upload_resume),
-    path("batch-upload/", upload_batch_resumes),
-    path("batch-status/<uuid:batch_id>/", batch_status),
+    path("import-jd-url/", import_jd_url_view),
     path("status/<str:task_id>/", task_status),
     path("mock-interview/", mock_interview_view),
     path("compare-uploads/", compare_uploads),
     path("analyze-jd/", analyze_jd_view),
     path("compare-bulk-jds/", compare_bulk_jds_view),
     path("profile/", user_profile_view),
-    # `profile_avatar_view` was imported here but never given a path, so the
-    # avatar upload the profile modal has always called returned 404. See #632.
     path("profile/avatar/", profile_avatar_view, name="profile_avatar"),
     path("contact/", contact_us_view),
     path("skills-leaderboard/", skills_leaderboard_view),
@@ -62,17 +59,12 @@ urlpatterns = [
     path("history/", analysis_history),
     path("history/clear/", clear_user_history),
     path("history/<int:pk>/", history_detail),
-    # Owner-side control over the public link for one analysis: read its
-    # state, enable/extend/rotate it, or revoke it. Sharing used to be an
-    # implicit property of every row with no way to switch it off. See #705.
     path(
         "history/<int:pk>/share/",
         manage_analysis_share,
         name="manage_analysis_share",
     ),
 
-    # Webhooks. The views for these have existed since #549 but were never
-    # given a path, so the feature has been unreachable.
     path("webhooks/", manage_webhooks, name="manage_webhooks"),
     path("webhooks/<int:pk>/", webhook_detail, name="webhook_detail"),
     path("webhooks/<int:pk>/test/", test_webhook, name="test_webhook"),
@@ -80,10 +72,9 @@ urlpatterns = [
     path("compare/", compare_versions_view),
     path("suggestion-feedback/", suggestion_feedback),
     path("shared/<uuid:share_id>/", get_shared_result),
-    path('password-reset/', PasswordResetRequestView.as_view(),
-         name='password_reset_request'),
-    path('password-reset-confirm/', PasswordResetConfirmView.as_view(),
-         name='password_reset_confirm'),
+    path("badge/", manage_resume_badge, name="manage_resume_badge"),
+    path("badge/<uuid:badge_id>/svg/", resume_score_badge, name="resume_score_badge"),
+    path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
+    path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path("admin/stats/", admin_stats_view, name="admin_stats"),
-
 ]

@@ -91,7 +91,7 @@ export const CompareUploads: React.FC<CompareUploadsProps> = ({ onClose, targetR
                   type="file"
                   accept=".pdf,.doc,.docx"
                   onChange={(e) => setFile1(e.target.files ? e.target.files[0] : null)}
-                  style={{ padding: '0.5rem', border: '1px dashed #ccc', borderRadius: '4px' }}
+                  style={{ padding: '0.5rem', border: '1px solid var(--surface-border)', borderRadius: '4px' }}
                 />
               </div>
               <div
@@ -103,7 +103,7 @@ export const CompareUploads: React.FC<CompareUploadsProps> = ({ onClose, targetR
                   type="file"
                   accept=".pdf,.doc,.docx"
                   onChange={(e) => setFile2(e.target.files ? e.target.files[0] : null)}
-                  style={{ padding: '0.5rem', border: '1px dashed #ccc', borderRadius: '4px' }}
+                  style={{ padding: '0.5rem', border: '1px solid var(--surface-border)', borderRadius: '4px' }}
                 />
               </div>
 

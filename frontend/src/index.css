@@ -383,7 +383,7 @@ h3 {
 }
 
 .upload-box {
-  border: 2px dashed var(--upload-border);
+  border: 1.5px solid var(--upload-border);
   padding: 32px 20px;
   border-radius: var(--radius-lg);
   cursor: pointer;
@@ -392,11 +392,16 @@ h3 {
   position: relative;
 }
 
-.upload-box:hover,
-.upload-box.dragging {
+.upload-box:hover {
   border-color: #6366f1;
   background: var(--upload-bg-hover);
-  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.12);
+  box-shadow: 0 4px 12px rgba(99, 102, 241, 0.12);
+}
+
+.upload-box.dragging {
+  border: 2px dashed #6366f1;
+  background: var(--upload-bg-hover);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
 }
 
 .upload-label {

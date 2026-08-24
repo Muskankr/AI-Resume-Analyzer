@@ -21,10 +21,59 @@ saved as `Firstname_Lastname_Resume.pdf`, so publishing it would name the owner
 on a page whose whole point is that it does not.
 
 Everything in the left-hand column is *derived from* the resume — skills are
-extracted from it, and a suggestion can quote a phrase back — so the strings
-that are published are also stripped of email addresses, phone numbers, profile
-URLs and social handles before they go out. A removed span is replaced with
-`[removed]` rather than deleted, so you can see that something was taken out.
+extracted from it, and a suggestion can quote a phrase back — so the strings that
+are published are also stripped of email addresses, phone numbers, profile URLs
+and social handles before they go out. A removed span is replaced with `[removed]`
+rather than deleted, so you can see that something was taken out.
+
+## Turning it on
+
+```http
+POST /api/history/12/share/
+Authorization: Bearer <access token>
+Content-Type: application/json
+
+{ "lifetime_days": 7 }
+```
+
+## Embeddable ATS score badge
+
+Signed-in users can create or retrieve one stable badge URL:
+
+```http
+GET /api/badge/
+Authorization: Bearer <access token>
+```
+
+The response contains an SVG URL and a ready-to-paste Markdown snippet:
+
+```json
+{
+  "badge_id": "3e7c4b8f-5c41-4f20-9d2a-000000000000",
+  "enabled": true,
+  "badge_url": "https://resume.example.com/api/badge/3e7c4b8f-5c41-4f20-9d2a-000000000000/svg/",
+  "markdown": "![ATS Score](https://resume.example.com/api/badge/3e7c4b8f-5c41-4f20-9d2a-000000000000/svg/)"
+}
+```
+
+Embed the returned Markdown in a GitHub README, portfolio, or personal site.
+The public SVG endpoint requires no authentication:
+
+```http
+GET /api/badge/<badge_id>/svg/
+```
+
+The badge does **not** store a copy of the score. Every SVG request resolves the
+user's newest `ResumeAnalysis`, so the same badge URL automatically changes from,
+for example, `72%` to `91%` after a newer resume analysis is completed. The SVG
+response is explicitly marked non-cacheable so a refresh asks the server for the
+current score.
+
+Only the score is exposed by the badge. No resume text, filename, job description,
+skills, email address, or other analysis data is included.
+
+If the user has not completed an analysis yet, the badge displays `N/A`.
+Unknown or disabled badge ids return `404`.
 
 ## Turning it on
 
@@ -84,8 +133,8 @@ clean break.
 GET /api/history/12/share/
 ```
 
-Same body as above. `share_url` is `null` whenever the link is not live, so
-there is never a dead URL to copy.
+Same body as above. `share_url` is `null` whenever the link is not live, so there
+is never a dead URL to copy.
 
 ## The public endpoint
 
