@@ -171,11 +171,8 @@ describe('ProfilePage', () => {
     expect(mockedAxiosPut).toHaveBeenCalledWith(expect.stringContaining('/api/profile/'), {
       username: 'updateduser',
       email: 'updated@example.com',
-      notification_preferences: {
-        browser: false,
-        in_app: true,
-      },
       weekly_digest_opt_in: true,
+      notification_preferences: { browser: false, in_app: true },
     })
 
     await waitFor(() => expect(screen.getByText('Profile and notification preferences updated successfully!')).toBeInTheDocument())
