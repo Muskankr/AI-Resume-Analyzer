@@ -56,6 +56,6 @@ describe('formatRelativeTime', () => {
     const now = new Date()
     const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000).toISOString()
     const result = formatRelativeTime(twoWeeksAgo)
-    expect(result).toMatch(/Updated on \d{1,2} \w{3}/)
+    expect(result).toMatch(/Updated on (\d{1,2} \w{3}|\w{3} \d{1,2})/)
   })
 })

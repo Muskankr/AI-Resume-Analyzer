@@ -32,6 +32,11 @@ class ResumeAnalysis(models.Model):
     cover_letter_text = models.TextField(blank=True, null=True)
     cover_letter_feedback = models.JSONField(blank=True, null=True)
     interview_questions = models.JSONField(blank=True, null=True)
+    
+    # JD Match features
+    job_match_score = models.IntegerField(blank=True, null=True)
+    jd_missing_skills = models.JSONField(default=list, blank=True)
+    jd_matched_skills = models.JSONField(default=list, blank=True)
 
     # --- Public sharing ---------------------------------------------------
     #

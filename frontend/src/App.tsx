@@ -156,6 +156,11 @@ function App() {
   })
   const [isDraftSaved, setIsDraftSaved] = useState<boolean>(false)
 
+  // Job Description Character Limit (#750)
+  const MAX_CHARS = 20000
+  const isClose = jobDescription.length >= MAX_CHARS * 0.9
+  const isOver = jobDescription.length > MAX_CHARS
+
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
@@ -708,20 +713,60 @@ function App() {
               onClose={() => setShowAuthModal(false)}
             />
           )}
-          <h1 className="mb-2">🚀 AI Resume Analyzer</h1>
-          <p
-            className="mb-4"
+          <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
+          {/* Role and Experience Level Selectors */}
+          <div
+            className="role-selector-container mb-4 p-3 d-flex flex-wrap gap-3 align-items-center justify-content-center"
             style={{
-              color: 'var(--muted-text, #94a3b8)',
-              fontSize: '1rem',
-              maxWidth: '620px',
-              margin: '0 auto 28px',
-              lineHeight: 1.5,
+              background: 'rgba(255, 255, 255, 0.03)',
+              border: '1.5px solid var(--surface-border)',
+              borderRadius: 'var(--radius-lg)',
+              maxWidth: '680px',
+              margin: '0 auto var(--space-4)',
             }}
           >
-            Optimize your resume for Applicant Tracking Systems in 3 simple steps: choose your target career track, upload your resume, and get actionable scoring.
-          </p>
+            <div className="d-flex align-items-center">
+              <label
+                htmlFor="roleSelect"
+                style={{ marginRight: '10px', fontWeight: '600', color: '#fff' }}
+              >
+                Target Career Track:
+              </label>
+              <div className="custom-select-container">
+                <select
+                  id="roleSelect"
+                  value={targetRole}
+                  onChange={(e) => setTargetRole(e.target.value)}
+                  className="custom-select-element"
+                >
+                  <option value="Frontend Developer">Frontend Developer</option>
+                  <option value="Backend Developer">Backend Developer</option>
+                  <option value="Data Analyst">Data Analyst</option>
+                </select>
+              </div>
+            </div>
 
+            <div className="d-flex align-items-center">
+              <label
+                htmlFor="experienceLevelSelect"
+                style={{ marginRight: '10px', fontWeight: '600', color: '#fff' }}
+              >
+                Experience Level:
+              </label>
+              <div className="custom-select-container">
+                <select
+                  id="experienceLevelSelect"
+                  value={experienceLevel}
+                  onChange={(e) => setExperienceLevel(e.target.value)}
+                  className="custom-select-element"
+                >
+                  <option value="Junior">Junior (0-2 yrs)</option>
+                  <option value="Mid-Level">Mid-Level (2-5 yrs)</option>
+                  <option value="Senior">Senior (5+ yrs)</option>
+                </select>
+              </div>
+            </div>
+          </div>
           <div
             className="upload-flow-container"
             style={{
@@ -877,12 +922,13 @@ function App() {
                     </span>
                   )}
                 </div>
-                <textarea
+                 <textarea
                   id="jobDescriptionInput"
                   className="custom-textarea"
                   placeholder="Paste job description text here to tailor matching and identify specific missing skills..."
                   value={jobDescription}
                   onChange={(e) => setJobDescription(e.target.value)}
+                  maxLength={MAX_CHARS}
                   rows={3}
                   style={{
                     width: '100%',
@@ -916,14 +962,25 @@ function App() {
                   }
                   return null;
                 })()}
-                {jobDescription && (
-                  <div
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginTop: '6px',
+                    fontSize: '0.75rem',
+                  }}
+                >
+                  <span
                     style={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                      marginTop: '6px',
+                      color: isOver ? '#ef4444' : (isClose ? '#f97316' : 'var(--muted-text, #94a3b8)'),
+                      fontWeight: isOver ? 'bold' : 'normal',
+                      opacity: isOver || isClose ? 1 : 0.8,
                     }}
                   >
+                    {jobDescription.length.toLocaleString()} / {MAX_CHARS.toLocaleString()} characters
+                  </span>
+                  {jobDescription && (
                     <button
                       type="button"
                       onClick={() => setJobDescription('')}
@@ -931,15 +988,15 @@ function App() {
                         background: 'none',
                         border: 'none',
                         color: 'var(--muted-text, #94a3b8)',
-                        fontSize: '0.75rem',
                         cursor: 'pointer',
                         textDecoration: 'underline',
+                        padding: 0,
                       }}
                     >
                       Clear Draft
                     </button>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             </div>
 

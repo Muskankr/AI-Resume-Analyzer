@@ -14,7 +14,9 @@
   },
   "dependencies": {
     "@babel/parser": "^8.0.4",
+    "@popperjs/core": "^2.11.8",
     "@sentry/react": "^10.70.0",
+    "@testing-library/dom": "^10.4.1",
     "axios": "^1.19.0",
     "bootstrap": "^5.3.8",
     "d3-cloud": "^1.2.9",

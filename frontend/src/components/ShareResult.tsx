@@ -9,35 +9,21 @@ import {
 } from '../utils/shareLink'
 import './ShareResult.css'
 
-/**
- * Controls for publishing one analysis behind a public link.
- *
- * This component used to render a link unconditionally, built in the browser
- * from a `share_id` the backend assigned to every analysis at creation. That
- * link already worked before it was shown, and there was nothing here — or
- * anywhere else — that could turn it off again (#705).
- *
- * Sharing is now server-side state, so the component reads it rather than
- * assuming it: `GET` on mount, and every button is a request whose response is
- * the new state. Nothing is inferred locally from "the request returned 200",
- * because the server also decides the expiry and can clamp a requested one.
- */
-
 interface ShareResultProps {
   /** Primary key of the analysis. Null while no saved analysis is on screen. */
   analysisId: number | null
 }
 
-/**
- * What has been loaded, and which analysis it was loaded for.
- *
- * Kept as one object so switching analyses cannot render the previous one's
- * link against the new id — the alternative, clearing state in an effect, is a
- * cascading render for something that is really a derived value.
- */
 interface Loaded {
   forId: number
   data: ShareState
+}
+
+interface BadgeState {
+  badge_id: string
+  enabled: boolean
+  badge_url: string
+  markdown: string
 }
 
 export const ShareResult: React.FC<ShareResultProps> = ({ analysisId }) => {
@@ -46,14 +32,14 @@ export const ShareResult: React.FC<ShareResultProps> = ({ analysisId }) => {
   const [busy, setBusy] = useState(false)
   const [copied, setCopied] = useState(false)
   const [error, setError] = useState('')
+  const [badge, setBadge] = useState<BadgeState | null>(null)
+  const [badgeCopied, setBadgeCopied] = useState<'url' | 'markdown' | null>(null)
 
   const endpoint = analysisId === null ? null : `/api/history/${analysisId}/share/`
 
   useEffect(() => {
     if (analysisId === null || !endpoint) return
 
-    // Guards against a stale response overwriting a newer one when the user
-    // switches analyses faster than the requests come back.
     let current = true
 
     api
@@ -61,15 +47,33 @@ export const ShareResult: React.FC<ShareResultProps> = ({ analysisId }) => {
       .then((res) => {
         if (current) setLoaded({ forId: analysisId, data: res.data })
       })
-      .catch(() => {
-        // Leave whatever is on screen alone. The share state is not worth an
-        // error banner over the analysis the user actually came to read.
-      })
+      .catch(() => {})
 
     return () => {
       current = false
     }
   }, [analysisId, endpoint])
+
+  useEffect(() => {
+    if (analysisId === null) {
+      setBadge(null)
+      return
+    }
+
+    let current = true
+    api
+      .get<BadgeState>('/api/badge/')
+      .then((res) => {
+        if (current) setBadge(res.data)
+      })
+      .catch(() => {
+        if (current) setBadge(null)
+      })
+
+    return () => {
+      current = false
+    }
+  }, [analysisId])
 
   const run = useCallback(
     async (request: () => Promise<{ data: ShareState }>) => {
@@ -88,8 +92,6 @@ export const ShareResult: React.FC<ShareResultProps> = ({ analysisId }) => {
     [analysisId]
   )
 
-  // `forId` is checked rather than trusted: a response for the previous
-  // analysis must not be rendered against the current one.
   const state = loaded && loaded.forId === analysisId ? loaded.data : null
 
   const handleEnable = () =>
@@ -100,6 +102,18 @@ export const ShareResult: React.FC<ShareResultProps> = ({ analysisId }) => {
     run(() => api.post<ShareState>(endpoint, { lifetime_days: lifetimeDays, rotate: true }))
 
   const handleRevoke = () => endpoint && run(() => api.delete<ShareState>(endpoint))
+
+  const copyBadge = async (kind: 'url' | 'markdown') => {
+    if (!badge) return
+    const value = kind === 'url' ? badge.badge_url : badge.markdown
+    try {
+      await navigator.clipboard?.writeText(value)
+      setBadgeCopied(kind)
+      window.setTimeout(() => setBadgeCopied(null), 2000)
+    } catch {
+      // Clipboard access can be denied by browser permissions; the value remains selectable.
+    }
+  }
 
   const handleCopy = () => {
     if (!state?.share_url) return
@@ -199,6 +213,58 @@ export const ShareResult: React.FC<ShareResultProps> = ({ analysisId }) => {
         <p className="share-error-text" role="alert">
           {error}
         </p>
+      )}
+
+      {badge && (
+        <div
+          className="mt-4"
+          style={{
+            padding: '16px',
+            border: '1px solid var(--surface-border, rgba(255,255,255,0.12))',
+            borderRadius: '12px',
+            background: 'var(--surface-soft-bg, rgba(255,255,255,0.03))',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+            <span aria-hidden="true">🏅</span>
+            <strong>Latest ATS Score Badge</strong>
+          </div>
+          <p className="share-help-text" style={{ marginBottom: '12px' }}>
+            Embed this badge in your GitHub README, portfolio, or personal website. It keeps the same URL and refreshes to your latest ATS score.
+          </p>
+
+          <div style={{ marginBottom: '12px' }}>
+            <img src={badge.badge_url} alt="Latest ATS score badge" style={{ verticalAlign: 'middle' }} />
+          </div>
+
+          <div className="share-input-group" style={{ marginBottom: '8px' }}>
+            <input
+              type="text"
+              value={badge.badge_url}
+              readOnly
+              className="share-url-input"
+              aria-label="ATS score badge URL"
+            />
+            <button className="share-copy-btn" onClick={() => copyBadge('url')}>
+              {badgeCopied === 'url' ? <Check size={14} /> : <Copy size={14} />}
+              {badgeCopied === 'url' ? 'Copied' : 'Copy URL'}
+            </button>
+          </div>
+
+          <div className="share-input-group">
+            <input
+              type="text"
+              value={badge.markdown}
+              readOnly
+              className="share-url-input"
+              aria-label="ATS score badge Markdown"
+            />
+            <button className="share-copy-btn" onClick={() => copyBadge('markdown')}>
+              {badgeCopied === 'markdown' ? <Check size={14} /> : <Copy size={14} />}
+              {badgeCopied === 'markdown' ? 'Copied' : 'Copy Markdown'}
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

@@ -96,4 +96,21 @@ describe('Job Description Draft Auto-Save (#533)', () => {
 
     expect(screen.queryByText(/Friendly tip: Very short job descriptions/i)).not.toBeInTheDocument()
   })
+
+  it('renders character counter and updates live', () => {
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>
+    )
+
+    expect(screen.getByText('0 / 20,000 characters')).toBeInTheDocument()
+
+    const textarea = screen.getByPlaceholderText(/Paste job description text here/i)
+    fireEvent.change(textarea, {
+      target: { value: 'A'.repeat(150) },
+    })
+
+    expect(screen.getByText('150 / 20,000 characters')).toBeInTheDocument()
+  })
 })

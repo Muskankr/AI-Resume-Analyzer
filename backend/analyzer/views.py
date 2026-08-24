@@ -132,6 +132,17 @@ class SignupThrottle(AnonRateThrottle):
     scope = "signup"
 
 
+class SkillsLeaderboardThrottle(AnonRateThrottle):
+    """Rate limit for the leaderboard.
+
+    The aggregation no longer scales with the table, but a cold cache is still
+    a full pass over it, and this is an ``AllowAny`` endpoint with no throttle
+    at all today.
+    """
+
+    scope = "skills_leaderboard"
+
+
 def verify_captcha_token(token_string):
     """
     Verifies server-side CAPTCHA challenge token.
@@ -1351,44 +1362,80 @@ def analyze_jd_view(request):
     return Response({"keywords": results}, status=status.HTTP_200_OK)
 
 
-class SkillsLeaderboardThrottle(AnonRateThrottle):
-    """Rate limit for the leaderboard.
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def import_jd_url_view(request):
+    url = request.data.get("url", "").strip()
+    if not url:
+        return Response({"error": "URL is required."}, status=status.HTTP_400_BAD_REQUEST)
 
-    The aggregation no longer scales with the table, but a cold cache is still
-    a full pass over it, and this is an ``AllowAny`` endpoint with no throttle
-    at all today.
-    """
+    if not (url.startswith("http://") or url.startswith("https://")):
+        return Response({"error": "Please enter a valid URL starting with http:// or https://"}, status=status.HTTP_400_BAD_REQUEST)
 
-    scope = "skills_leaderboard"
+    try:
+        import requests
+        from bs4 import BeautifulSoup
 
-    def get_rate(self):
-        # Read straight from settings rather than through
-        # DEFAULT_THROTTLE_RATES, following UploadRateThrottle above. It keeps
-        # the number beside the docstring that justifies it, and it means adding
-        # a throttle does not mean editing a dictionary every other throttle
-        # also edits.
-        return getattr(settings, "SKILLS_LEADERBOARD_RATE", "120/hour")
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
+        res = requests.get(url, headers=headers, timeout=8)
+        res.raise_for_status()
+    except Exception as e:
+        return Response(
+            {"error": "Failed to fetch page content. The page might be JS-heavy, protected by a paywall/CAPTCHA, or down. Please copy and paste the job description manually."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        soup = BeautifulSoup(res.text, "html.parser")
+        
+        # Decompose unneeded nodes
+        for tag in soup(["script", "style", "nav", "header", "footer", "form", "button", "iframe", "noscript"]):
+            tag.decompose()
+
+        # Try to locate common job posting container classes/IDs to avoid sidebars
+        description_selectors = [
+            "#jobDescriptionText", # Indeed
+            ".description__text", ".show-more-less-html__markup", # LinkedIn
+            ".job-description", ".job_description", "[class*='jobDescription']", "[class*='job-description']",
+            "article", "main", ".main"
+        ]
+        
+        body_text = ""
+        for selector in description_selectors:
+            found = soup.select_one(selector)
+            if found:
+                body_text = found.get_text(separator="\n")
+                break
+                
+        if not body_text:
+            body_text = soup.get_text(separator="\n")
+
+        # Clean text
+        lines = (line.strip() for line in body_text.splitlines())
+        chunks = (phrase.strip() for line in lines for phrase in line.split("  "))
+        cleaned_text = "\n".join(chunk for chunk in chunks if chunk)
+
+        # Apply same clean_text check as #330
+        cleaned_text = clean_text(cleaned_text, max_length=MAX_JOB_DESCRIPTION_LENGTH)
+
+        # If length is extremely small (e.g. < 150 chars), it's likely a JS redirect, paywall page, or empty
+        if len(cleaned_text) < 150:
+            return Response(
+                {"error": "Could not extract a valid job description. The page might require JavaScript or login. Please copy and paste the job description text manually."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        return Response({"job_description": cleaned_text}, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(
+            {"error": "An error occurred during extraction. Please copy and paste the job description manually."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
 
 
-@extend_schema(
-    summary="Most common matched and missing skills",
-    description=(
-        "Aggregate skill counts across analyses. `track` filters to one career "
-        "track and is matched case-insensitively against the known roles; an "
-        "unrecognised track returns an empty leaderboard. `limit` (1-50, "
-        "default 10) sets how many skills each list carries. `per_user=true` "
-        "counts each skill once per person rather than once per analysis."
-    ),
-    parameters=[
-        OpenApiParameter("track", OpenApiTypes.STR, description="Career track to filter to."),
-        OpenApiParameter("limit", OpenApiTypes.INT, description="Skills per list (1-50)."),
-        OpenApiParameter(
-            "per_user",
-            OpenApiTypes.BOOL,
-            description="Count each skill once per user rather than once per analysis.",
-        ),
-    ],
-)
 @api_view(["GET"])
 @permission_classes([AllowAny])
 @throttle_classes([SkillsLeaderboardThrottle])

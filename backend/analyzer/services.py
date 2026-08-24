@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from .models import ResumeAnalysis
 from . import role_skills
 from .skill_matcher import extract_skills, match_skills_with_partial
+from .nlp_matcher import calculate_jd_match
 from .scoring import compute_score_breakdown
 from .timeline import analyse as analyse_timeline
 from .formatting_checker import check_resume_formatting
@@ -452,9 +453,15 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
     readability_score, readability_label = calculate_readability(raw_text)
     detected = extract_skills(text)
 
+    job_match_score = None
+    jd_missing_skills = []
+    jd_matched_skills = []
+
     if job_description and job_description.strip():
         required = extract_skills(job_description)
         role_skill_set = None
+        # Compute bespoke JD Match score
+        job_match_score, jd_missing_skills, jd_matched_skills = calculate_jd_match(raw_text, job_description)
     else:
         role_skill_set = resolve_role_skills(target_role, experience_level)
         required = role_skill_set.skills
@@ -499,6 +506,9 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
                 target_role=target_role,
                 experience_level=experience_level or "Mid-Level",
                 job_description=job_description,
+                job_match_score=job_match_score,
+                jd_missing_skills=jd_missing_skills,
+                jd_matched_skills=jd_matched_skills,
                 score=score,
                 skills_found=detected,
                 suggestions=suggestions,
@@ -581,6 +591,9 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
     return {
         "id": analysis_id,
         "score": score,
+        "job_match_score": job_match_score,
+        "jd_missing_skills": jd_missing_skills,
+        "jd_matched_skills": jd_matched_skills,
         "score_breakdown": score_breakdown.as_dict(),
         "readability_score": readability_score,
         "readability_label": readability_label,
