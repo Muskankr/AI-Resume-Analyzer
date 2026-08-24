@@ -714,59 +714,6 @@ function App() {
             />
           )}
           <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
-          {/* Role and Experience Level Selectors */}
-          <div
-            className="role-selector-container mb-4 p-3 d-flex flex-wrap gap-3 align-items-center justify-content-center"
-            style={{
-              background: 'rgba(255, 255, 255, 0.03)',
-              border: '1.5px solid var(--surface-border)',
-              borderRadius: 'var(--radius-lg)',
-              maxWidth: '680px',
-              margin: '0 auto var(--space-4)',
-            }}
-          >
-            <div className="d-flex align-items-center">
-              <label
-                htmlFor="roleSelect"
-                style={{ marginRight: '10px', fontWeight: '600', color: '#fff' }}
-              >
-                Target Career Track:
-              </label>
-              <div className="custom-select-container">
-                <select
-                  id="roleSelect"
-                  value={targetRole}
-                  onChange={(e) => setTargetRole(e.target.value)}
-                  className="custom-select-element"
-                >
-                  <option value="Frontend Developer">Frontend Developer</option>
-                  <option value="Backend Developer">Backend Developer</option>
-                  <option value="Data Analyst">Data Analyst</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="d-flex align-items-center">
-              <label
-                htmlFor="experienceLevelSelect"
-                style={{ marginRight: '10px', fontWeight: '600', color: '#fff' }}
-              >
-                Experience Level:
-              </label>
-              <div className="custom-select-container">
-                <select
-                  id="experienceLevelSelect"
-                  value={experienceLevel}
-                  onChange={(e) => setExperienceLevel(e.target.value)}
-                  className="custom-select-element"
-                >
-                  <option value="Junior">Junior (0-2 yrs)</option>
-                  <option value="Mid-Level">Mid-Level (2-5 yrs)</option>
-                  <option value="Senior">Senior (5+ yrs)</option>
-                </select>
-              </div>
-            </div>
-          </div>
           <div
             className="upload-flow-container"
             style={{
