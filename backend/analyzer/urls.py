@@ -32,10 +32,14 @@ from .views import (
     manage_webhooks,
     webhook_detail,
     test_webhook,
+    upload_batch_resumes,
+    batch_status,
 )
 
 urlpatterns = [
     path("upload/", upload_resume),
+    path("batch-upload/", upload_batch_resumes),
+    path("batch-status/<uuid:batch_id>/", batch_status),
     path("status/<str:task_id>/", task_status),
     path("mock-interview/", mock_interview_view),
     path("compare-uploads/", compare_uploads),

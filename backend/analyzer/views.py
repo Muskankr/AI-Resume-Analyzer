@@ -2119,3 +2119,71 @@ def send_new_device_login_alert(user, ip, device_info):
         recipient_list=[user.email],
         fail_silently=False,
     )
+
+from .models import BatchUpload
+from .tasks import process_batch_upload
+from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.permissions import AllowAny
+from rest_framework.decorators import parser_classes
+from django.core.files.storage import FileSystemStorage
+from django.conf import settings
+import uuid
+import os
+
+@api_view(["POST"])
+@parser_classes([MultiPartParser, FormParser])
+@permission_classes([AllowAny])
+def upload_batch_resumes(request):
+    file = request.FILES.get("file")
+    if not file or not file.name.endswith(".zip"):
+        return Response({"error": "Please provide a valid .zip file."}, status=status.HTTP_400_BAD_REQUEST)
+
+    target_role = clean_text(request.data.get("role") or "General", max_length=100)
+    experience_level = clean_text(
+        request.data.get("experience_level") or request.data.get("level") or "Mid-Level",
+        max_length=50,
+    )
+    job_desc = clean_text(
+        request.data.get("job_description"),
+        max_length=MAX_STORED_JOB_DESCRIPTION_LENGTH,
+    )
+
+    user = request.user if request.user.is_authenticated else None
+    
+    batch = BatchUpload.objects.create(
+        user=user,
+        status="Pending"
+    )
+
+    temp_dir = os.path.join(settings.BASE_DIR, "tmp")
+    os.makedirs(temp_dir, exist_ok=True)
+    storage = FileSystemStorage(location=temp_dir)
+    unique_name = f"{uuid.uuid4()}_{file.name}"
+    saved_name = storage.save(unique_name, file)
+    file_path = storage.path(saved_name)
+
+    process_batch_upload.delay(
+        batch_id=batch.id,
+        zip_file_path=file_path,
+        target_role=target_role,
+        experience_level=experience_level,
+        job_description=job_desc
+    )
+
+    return Response({"batch_id": batch.id})
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def batch_status(request, batch_id):
+    try:
+        batch = BatchUpload.objects.get(id=batch_id)
+        return Response({
+            "id": batch.id,
+            "status": batch.status,
+            "total_files": batch.total_files,
+            "processed_files": batch.processed_files,
+            "results": batch.results,
+            "error_message": batch.error_message
+        })
+    except BatchUpload.DoesNotExist:
+        return Response({"error": "Batch not found"}, status=status.HTTP_404_NOT_FOUND)

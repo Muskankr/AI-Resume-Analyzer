@@ -174,7 +174,13 @@ function App() {
   }, [jobDescription])
 
   // Component States
-  const [targetRole, setTargetRole] = useState('Frontend Developer')
+  const [targetRole, setTargetRole] = useState(() => {
+    try {
+      return localStorage.getItem('selected_target_role') || 'Frontend Developer'
+    } catch {
+      return 'Frontend Developer'
+    }
+  })
   const [experienceLevel, setExperienceLevel] = useState(() => {
     try {
       return localStorage.getItem('selected_experience_level') || 'Mid-Level'
@@ -327,6 +333,15 @@ function App() {
     }
   }, [experienceLevel])
 
+  // Auto-save Target Role selection (#757)
+  useEffect(() => {
+    try {
+      localStorage.setItem('selected_target_role', targetRole)
+    } catch {
+      // persistence is best-effort; ignore if storage is unavailable
+    }
+  }, [targetRole])
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme)
     try {
@@ -416,6 +431,8 @@ function App() {
       // Clear draft once successfully analyzed (#533)
       try {
         localStorage.removeItem(JD_DRAFT_KEY)
+        localStorage.removeItem('selected_target_role')
+        localStorage.removeItem('selected_experience_level')
       } catch {
         // ignore
       }

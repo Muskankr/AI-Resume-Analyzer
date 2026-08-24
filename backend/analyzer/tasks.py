@@ -1,5 +1,7 @@
 import logging
-
+import os
+import tempfile
+import zipfile
 from celery import shared_task
 from django.contrib.auth import get_user_model
 
@@ -76,3 +78,71 @@ def deliver_webhook_task(self, webhook_id, event, data):
             raise self.retry()
 
     return delivered
+
+
+@shared_task
+def process_batch_upload(batch_id, zip_file_path, target_role="General", experience_level="Mid-Level", job_description=None):
+    from .models import BatchUpload
+    try:
+        batch = BatchUpload.objects.get(id=batch_id)
+    except BatchUpload.DoesNotExist:
+        logger.error(f"BatchUpload {batch_id} not found.")
+        return
+
+    batch.status = "Processing"
+    batch.save(update_fields=["status"])
+
+    results = []
+    
+    try:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+                zip_ref.extractall(temp_dir)
+            
+            pdf_files = []
+            for root, dirs, files in os.walk(temp_dir):
+                for file in files:
+                    if file.lower().endswith('.pdf'):
+                        pdf_files.append(os.path.join(root, file))
+            
+            batch.total_files = len(pdf_files)
+            batch.save(update_fields=["total_files"])
+            
+            for i, pdf_path in enumerate(pdf_files):
+                file_name = os.path.basename(pdf_path)
+                
+                try:
+                    analysis_result = analyze_resume(
+                        file_path=pdf_path,
+                        target_role=target_role,
+                        file_name=file_name,
+                        user_id=batch.user_id,
+                        job_description=job_description,
+                        experience_level=experience_level,
+                    )
+                    
+                    results.append({
+                        "file_name": file_name,
+                        "score": analysis_result.get("score"),
+                        "skills_found": analysis_result.get("skills_found", []),
+                        "analysis_id": analysis_result.get("id"),
+                    })
+                except Exception as e:
+                    logger.exception(f"Failed to analyze {file_name} in batch {batch_id}")
+                    results.append({
+                        "file_name": file_name,
+                        "error": str(e)
+                    })
+                
+                batch.processed_files = i + 1
+                batch.save(update_fields=["processed_files"])
+                
+        batch.status = "Completed"
+        batch.results = results
+        batch.save(update_fields=["status", "results"])
+        
+    except Exception as e:
+        logger.exception(f"Batch processing failed for {batch_id}")
+        batch.status = "Failed"
+        batch.error_message = str(e)
+        batch.save(update_fields=["status", "error_message"])

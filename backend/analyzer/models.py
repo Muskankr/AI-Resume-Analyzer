@@ -153,6 +153,24 @@ class ResumeAnalysis(models.Model):
         )
 
 
+class BatchUpload(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="batch_uploads", null=True, blank=True)
+    status = models.CharField(max_length=50, default="Pending")
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    total_files = models.IntegerField(default=0)
+    processed_files = models.IntegerField(default=0)
+    results = models.JSONField(default=list, blank=True)
+    error_message = models.TextField(blank=True, null=True)
+
+    class Meta:
+        ordering = ["-uploaded_at"]
+
+    def __str__(self):
+        return f"Batch {self.id} ({self.status})"
+
+
+
 class UserProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     avatar = models.FileField(upload_to="avatars/", blank=True, null=True)
