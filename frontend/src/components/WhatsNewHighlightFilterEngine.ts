@@ -2,14 +2,15 @@
  * What's New Release Highlights Data Provider & Extension Helpers
  */
 
+import { LATEST_RELEASE_HIGHLIGHTS, type ReleaseFeatureItem } from './WhatsNewModel';
+
 export interface ReleaseFilter {
   category?: string;
   query?: string;
 }
 
 export class WhatsNewHighlightFilterEngine {
-  public static filterFeatures(query: string = ''): typeof import('./WhatsNewModel').LATEST_RELEASE_HIGHLIGHTS.features {
-    const { LATEST_RELEASE_HIGHLIGHTS } = require('./WhatsNewModel');
+  public static filterFeatures(query: string = ''): ReleaseFeatureItem[] {
     if (!query) return LATEST_RELEASE_HIGHLIGHTS.features;
     
     return LATEST_RELEASE_HIGHLIGHTS.features.filter((f: any) =>
