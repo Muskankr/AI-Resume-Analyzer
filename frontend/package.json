@@ -38,7 +38,7 @@
     "@testing-library/user-event": "^14.6.1",
     "@types/d3-cloud": "^1.2.9",
     "@types/node": "^26.1.2",
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.2.18",
     "@types/react-dom": "^19.2.3",
     "@types/swagger-ui-react": "^5.18.0",
     "@vitejs/plugin-react": "^6.0.0",
