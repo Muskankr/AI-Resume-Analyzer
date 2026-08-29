@@ -5,12 +5,18 @@ import { CaptchaChallenge } from './components/CaptchaChallenge'
 import { Button } from './components/Button'
 
 interface AuthModalProps {
-  onSignup: (username: string, password: string, captchaToken?: string) => Promise<void>
+  onSignup: (
+    username: string,
+    password: string,
+    captchaToken?: string,
+    captchaAnswer?: string
+  ) => Promise<void>
   onLogin: (
     username: string,
     password: string,
     rememberMe: boolean,
-    captchaToken?: string
+    captchaToken?: string,
+    captchaAnswer?: string
   ) => Promise<void>
   onOAuthLogin?: (provider: 'google' | 'github', payload?: any) => Promise<void>
   onClose: () => void
@@ -30,6 +36,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [unverifiedEmail, setUnverifiedEmail] = useState('')
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
   const [resendMessage, setResendMessage] = useState('')
+  const [captchaAnswer, setCaptchaAnswer] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
@@ -120,7 +127,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setResendStatus('idle')
     setResendMessage('')
 
-    if (mode !== 'forgot_password' && !captchaToken) {
+    // Both halves are required: the token is the server's signed challenge and
+    // the answer is what gets checked against it.
+    if (mode !== 'forgot_password' && (!captchaToken || !captchaAnswer)) {
       setError('Please complete the security check before submitting.')
       return
     }
@@ -128,10 +137,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setLoading(true)
     try {
       if (mode === 'signup') {
-        await onSignup(username, password, captchaToken)
+        await onSignup(username, password, captchaToken, captchaAnswer)
         onClose()
       } else if (mode === 'login') {
-        await onLogin(username, password, rememberMe, captchaToken)
+        await onLogin(username, password, rememberMe, captchaToken, captchaAnswer)
         onClose()
       } else if (mode === 'forgot_password') {
         // Was hardcoded to http://localhost:8000, so "forgot password" only
@@ -331,7 +340,12 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           )}
           {mode !== 'forgot_password' && (
-            <CaptchaChallenge onVerify={(token) => setCaptchaToken(token)} />
+            <CaptchaChallenge
+              onChange={(token, answer) => {
+                setCaptchaToken(token)
+                setCaptchaAnswer(answer)
+              }}
+            />
           )}
           <div style={{ textAlign: 'right', marginBottom: '16px' }}>
             <button

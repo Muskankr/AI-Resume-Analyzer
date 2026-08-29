@@ -35,6 +35,7 @@ from .views import (
     webhook_detail,
     test_webhook,
     preview_experience_level_view,
+    captcha_challenge_view,
 )
 from .badge_views import manage_resume_badge, resume_score_badge
 
@@ -72,6 +73,8 @@ urlpatterns = [
     path("skills-leaderboard/", skills_leaderboard_view),
     path("unsubscribe/", unsubscribe_digest_view),
     path("account/export/", export_user_data, name="export_user_data"),
+
+    path("captcha/", captcha_challenge_view),
 
     path("auth/signup/", signup),
     path("auth/check-availability/", check_availability, name="check_availability"),

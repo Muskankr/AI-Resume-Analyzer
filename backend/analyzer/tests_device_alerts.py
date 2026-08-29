@@ -4,6 +4,8 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 from analyzer.models import KnownDevice
 
+from .captcha_test_helpers import solved_captcha
+
 
 class KnownDeviceAlertsTests(TestCase):
     def setUp(self):
@@ -18,7 +20,7 @@ class KnownDeviceAlertsTests(TestCase):
         resp = self.client.post("/api/auth/login/", {
             "username": "alertsuser",
             "password": "password123",
-            "captcha_token": "test-captcha-token",
+            **solved_captcha(),
         }, HTTP_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0", REMOTE_ADDR="127.0.0.1")
 
         self.assertEqual(resp.status_code, 200)
@@ -39,7 +41,7 @@ class KnownDeviceAlertsTests(TestCase):
         resp = self.client.post("/api/auth/login/", {
             "username": "alertsuser",
             "password": "password123",
-            "captcha_token": "test-captcha-token",
+            **solved_captcha(),
         }, HTTP_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36", REMOTE_ADDR="127.0.0.1")
 
         self.assertEqual(resp.status_code, 200)
@@ -59,7 +61,7 @@ class KnownDeviceAlertsTests(TestCase):
         resp = self.client.post("/api/auth/login/", {
             "username": "alertsuser",
             "password": "password123",
-            "captcha_token": "test-captcha-token",
+            **solved_captcha(),
         }, HTTP_USER_AGENT="Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15) Firefox/120.0", REMOTE_ADDR="127.0.0.1")
 
         self.assertEqual(resp.status_code, 200)
@@ -87,7 +89,7 @@ class KnownDeviceAlertsTests(TestCase):
         resp = self.client.post("/api/auth/login/", {
             "username": "alertsuser",
             "password": "password123",
-            "captcha_token": "test-captcha-token",
+            **solved_captcha(),
         }, HTTP_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0", REMOTE_ADDR="192.168.1.50")
 
         self.assertEqual(resp.status_code, 200)

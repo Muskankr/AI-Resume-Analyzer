@@ -677,9 +677,20 @@ class UserProfileTests(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", resp.data)
 
-#: A token ``verify_captcha_token`` accepts. Kept in one place so the tests
-#: that only need to get *past* the CAPTCHA do not each invent their own.
-TEST_CAPTCHA_TOKEN = "test-captcha-token"
+def solved_captcha():
+    """Request body fields carrying a genuinely solved challenge.
+
+    There used to be a ``TEST_CAPTCHA_TOKEN = "test-captcha-token"`` constant
+    here, because the old ``verify_captcha_token`` accepted that literal string
+    unconditionally — in production as well as under test. Removing that
+    backdoor is the point of #584, so tests that only need to get *past* the
+    CAPTCHA now solve a real one, the same way a browser does.
+
+    Kept in one place so those tests do not each reimplement the arithmetic.
+    """
+    from .captcha_test_helpers import solved_captcha as _solved
+
+    return _solved()
 
 
 def require_route(test_case, path, issue=""):
@@ -737,6 +748,7 @@ class CaptchaProtectionTests(TestCase):
         # to assert an "email" key that the response has never contained — the
         # assertion had simply never been executed.
         self.assertIn("captcha_token", resp.data)
+        self.assertFalse(User.objects.filter(username="newbot").exists())
 
     def test_signup_succeeds_with_a_captcha_token(self):
         from rest_framework import status
@@ -745,7 +757,7 @@ class CaptchaProtectionTests(TestCase):
             {
                 "username": "realperson",
                 "password": "correct horse battery staple",
-                "captcha_token": TEST_CAPTCHA_TOKEN,
+                **solved_captcha(),
             },
         )
         self.assertEqual(resp.status_code, status.HTTP_201_CREATED)
@@ -808,7 +820,7 @@ class ProfileAvatarTests(TestCase):
             {
                 "username": "avataruser",
                 "password": "password123",
-                "captcha_token": TEST_CAPTCHA_TOKEN,
+                **solved_captcha(),
             },
         )
 

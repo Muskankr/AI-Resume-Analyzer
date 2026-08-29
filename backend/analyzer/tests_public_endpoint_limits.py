@@ -34,6 +34,8 @@ from analyzer.request_input import (
     is_probably_an_email,
 )
 
+from .captcha_test_helpers import solved_captcha
+
 
 def throttled_at(scope, rate):
     """Temporarily set the rate for one throttle scope.
@@ -290,7 +292,7 @@ class SignupThrottleTests(TestCase):
                 {
                     "username": f"person{index}",
                     "password": "correct horse battery staple",
-                    "captcha_token": "test-captcha-token",
+                    **solved_captcha(),
                 },
             )
 

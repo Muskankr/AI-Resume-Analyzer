@@ -53,11 +53,13 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         request = self.context.get("request")
         if request and hasattr(request, "data"):
-            captcha_token = request.data.get("captcha_token") or request.data.get("captcha")
-            from .views import verify_captcha_token
-            if not verify_captcha_token(captcha_token):
+            from .views import CAPTCHA_FAILED_MESSAGE, verify_captcha_token
+
+            # The whole body goes in: verifying a challenge needs the answer
+            # the user typed, not just the token it arrived with.
+            if not verify_captcha_token(request.data):
                 raise serializers.ValidationError(
-                    {"captcha_token": ["CAPTCHA verification failed. Please complete the security challenge."]}
+                    {"captcha_token": [CAPTCHA_FAILED_MESSAGE]}
                 )
 
         username = attrs.get("username")

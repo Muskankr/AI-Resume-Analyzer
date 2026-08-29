@@ -40,45 +40,57 @@ export function useAuth() {
     setUser(u)
   }
 
-  const signup = useCallback(async (username: string, password: string, captchaToken?: string) => {
-    await axios.post(`${BACKEND}/api/auth/signup/`, {
-      username,
-      password,
-      captcha_token: captchaToken,
-    })
-    const res = await axios.post(`${BACKEND}/api/auth/login/`, {
-      username,
-      password,
-      captcha_token: captchaToken,
-    })
-    persist(
-      {
+  const signup = useCallback(
+    async (username: string, password: string, captchaToken?: string, captchaAnswer?: string) => {
+      // Signup returns the token pair itself. It used to create the account and
+      // then immediately call /auth/login/ with the same CAPTCHA token — which
+      // no longer works, because challenges are single-use, and making someone
+      // solve two puzzles to create one account is not an option. One round
+      // trip less, too.
+      const res = await axios.post(`${BACKEND}/api/auth/signup/`, {
         username,
-        token: res.data.access,
-        // Was discarded. Without it a session cannot outlive its access token.
-        refresh: res.data.refresh,
-        avatarUrl: res.data.avatar_url,
-      },
-      true
-    )
-  }, [])
+        password,
+        captcha_token: captchaToken,
+        captcha_answer: captchaAnswer,
+      })
+      persist(
+        {
+          username,
+          token: res.data.access,
+          // From #586. Without it the session cannot outlive its access token,
+          // and a just-created account would silently log itself out. The
+          // signup response carries the pair for exactly this reason.
+          refresh: res.data.refresh,
+          // A new account has no avatar yet; the field is here so the shape
+          // matches what `login` persists rather than diverging from it.
+          avatarUrl: res.data.avatar_url,
+        },
+        true
+      )
+    },
+    []
+  )
 
   const login = useCallback(
     async (
       username: string,
       password: string,
       rememberMe: boolean = true,
-      captchaToken?: string
+      captchaToken?: string,
+      captchaAnswer?: string
     ) => {
       const res = await axios.post(`${BACKEND}/api/auth/login/`, {
         username,
         password,
         captcha_token: captchaToken,
+        captcha_answer: captchaAnswer,
       })
       persist(
         {
           username,
           token: res.data.access,
+          // #586: without the refresh token the session cannot outlive its
+          // access token.
           refresh: res.data.refresh,
           avatarUrl: res.data.avatar_url,
         },
