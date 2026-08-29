@@ -2,9 +2,12 @@
 Views for Market Value Estimator.
 """
 
+import logging
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.throttling import AnonRateThrottle
 from .market_value_estimator import calculate_salary_range, generate_negotiation_points
 from .market_serializers import (
     MarketValueRequestSerializer,
@@ -12,8 +15,29 @@ from .market_serializers import (
 )
 
 
+logger = logging.getLogger(__name__)
+
+
+class MarketValueThrottle(AnonRateThrottle):
+    """Caps the MarketValueView endpoint.
+
+    ``DEFAULT_PERMISSION_CLASSES`` is ``AllowAny`` and this view does not
+    override it, so the endpoint is open. It scans a caller-supplied skill
+    list against the high-value table for every request. Rate from
+    ``DEFAULT_THROTTLE_RATES["market_value"]``.
+
+    ``scope`` is set explicitly: every ``AnonRateThrottle`` subclass inherits
+    the scope "anon" otherwise, which would put this endpoint in the same
+    bucket as unrelated ones.
+    """
+
+    scope = "market_value"
+
+
 class MarketValueView(APIView):
     """API View to estimate market value and generate negotiation points."""
+
+    throttle_classes = [MarketValueThrottle]
 
     def post(self, request, *args, **kwargs):
         request_serializer = MarketValueRequestSerializer(data=request.data)
@@ -52,11 +76,12 @@ class MarketValueView(APIView):
 
             return Response(response_serializer.data, status=status.HTTP_200_OK)
 
-        except Exception as e:
+        except Exception:
+            # `str(e)` used to go back in a "details" field. That hands the
+            # caller file paths, SQL and library internals on any unexpected
+            # failure; the operator wants that detail, the client does not.
+            logger.exception("Market value estimation failed")
             return Response(
-                {
-                    "error": "An unexpected error occurred during market value estimation.",
-                    "details": str(e),
-                },
+                {"error": "An unexpected error occurred during market value estimation."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

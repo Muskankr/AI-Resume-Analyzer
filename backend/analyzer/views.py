@@ -132,6 +132,38 @@ class SignupThrottle(AnonRateThrottle):
     scope = "signup"
 
 
+class AvailabilityCheckThrottle(AnonRateThrottle):
+    """Caps /api/auth/check-availability/.
+
+    The endpoint is ``AllowAny`` and answers "does an account with this
+    username/email exist?" for anyone who asks. With no ceiling that is an
+    enumeration oracle: walk a wordlist, or a breach dump of email addresses,
+    at whatever rate the network allows and learn which ones have accounts
+    here.
+
+    A throttle does not make the oracle go away -- the signup form needs the
+    answer, so the endpoint has to exist -- but it puts a cost on walking it in
+    bulk. Set higher than the analysis endpoints because a legitimate caller
+    hits this once per field as the user types.
+    """
+
+    scope = "availability_check"
+
+
+class ImportJdUrlThrottle(AnonRateThrottle):
+    """Caps /api/import-jd-url/.
+
+    This is the only open endpoint that makes an outbound request to a
+    caller-supplied URL. Unthrottled it is a request forwarder: anyone can have
+    the server issue GETs, at whatever rate they like, from the server's own
+    address and with an 8 second timeout each. Kept deliberately low -- one
+    call is a whole page fetch and parse, and a legitimate user imports a job
+    description a handful of times.
+    """
+
+    scope = "import_jd_url"
+
+
 class SkillsLeaderboardThrottle(AnonRateThrottle):
     """Rate limit for the leaderboard.
 
@@ -228,6 +260,7 @@ def signup(request):
 )
 @api_view(["GET"])
 @permission_classes([AllowAny])
+@throttle_classes([AvailabilityCheckThrottle])
 def check_availability(request):
     field = request.GET.get("field", "").strip().lower()
     value = request.GET.get("value", "").strip()
@@ -1478,6 +1511,7 @@ def analyze_jd_view(request):
 
 @api_view(["POST"])
 @permission_classes([AllowAny])
+@throttle_classes([ImportJdUrlThrottle])
 def import_jd_url_view(request):
     url = request.data.get("url", "").strip()
     if not url:

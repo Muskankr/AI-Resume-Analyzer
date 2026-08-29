@@ -2,9 +2,12 @@
 Views for Project Portfolio Extractor.
 """
 
+import logging
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework.throttling import AnonRateThrottle
 from .project_extractor import analyze_portfolio
 from .project_serializers import (
     ProjectExtractionRequestSerializer,
@@ -12,8 +15,29 @@ from .project_serializers import (
 )
 
 
+logger = logging.getLogger(__name__)
+
+
+class ProjectExtractionThrottle(AnonRateThrottle):
+    """Caps the ProjectExtractionView endpoint.
+
+    ``DEFAULT_PERMISSION_CLASSES`` is ``AllowAny`` and this view does not
+    override it, so the endpoint is open. It runs the metric, action-verb
+    and tech-stack passes over every project it finds in a caller-supplied
+    body. Rate from ``DEFAULT_THROTTLE_RATES["project_extraction"]``.
+
+    ``scope`` is set explicitly: every ``AnonRateThrottle`` subclass inherits
+    the scope "anon" otherwise, which would put this endpoint in the same
+    bucket as unrelated ones.
+    """
+
+    scope = "project_extraction"
+
+
 class ProjectExtractionView(APIView):
     """API View to extract and score resume projects."""
+
+    throttle_classes = [ProjectExtractionThrottle]
 
     def post(self, request, *args, **kwargs):
         request_serializer = ProjectExtractionRequestSerializer(data=request.data)
@@ -45,11 +69,12 @@ class ProjectExtractionView(APIView):
 
             return Response(response_serializer.data, status=status.HTTP_200_OK)
 
-        except Exception as e:
+        except Exception:
+            # `str(e)` used to go back in a "details" field. That hands the
+            # caller file paths, SQL and library internals on any unexpected
+            # failure; the operator wants that detail, the client does not.
+            logger.exception("Project extraction failed")
             return Response(
-                {
-                    "error": "An unexpected error occurred during project extraction.",
-                    "details": str(e),
-                },
+                {"error": "An unexpected error occurred during project extraction."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )

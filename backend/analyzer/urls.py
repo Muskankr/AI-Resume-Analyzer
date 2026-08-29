@@ -35,6 +35,7 @@ from .views import (
     webhook_detail,
     test_webhook,
     preview_experience_level_view,
+    import_jd_url_view,
 )
 from .badge_views import manage_resume_badge, resume_score_badge
 
@@ -57,6 +58,15 @@ from .cliche_views import ClicheDetectorView
 from .linkedin_views import LinkedInOptimizationView
 from .sanitizer_views import FileMetadataView, SanitizeResumeView
 
+# And again, for the five features merged in #945-#949 (#1006). Same shape as
+# the two batches above: view class, serializers, unit tests, no path. The
+# frontend components for all five already POST to the URLs below.
+from .gap_views import GapNarrativeView
+from .market_views import MarketValueView
+from .proficiency_views import ProficiencyEstimationView
+from .project_views import ProjectExtractionView
+from .tone_views import ToneAnalysisView
+
 urlpatterns = [
     path("upload/", upload_resume),
     path("preview-level/", preview_experience_level_view),
@@ -64,6 +74,8 @@ urlpatterns = [
     path("mock-interview/", mock_interview_view),
     path("compare-uploads/", compare_uploads),
     path("analyze-jd/", analyze_jd_view),
+    # Routed in ded2a8a (#777) and dropped by a later merge that kept the view.
+    path("import-jd-url/", import_jd_url_view, name="import_jd_url"),
     path("compare-bulk-jds/", compare_bulk_jds_view),
     path("compare-bulk-resumes/", compare_bulk_resumes_view),
     path("profile/", user_profile_view),
@@ -184,5 +196,45 @@ urlpatterns = [
         "sanitize-resume/",
         SanitizeResumeView.as_view(),
         name="sanitize_resume",
+    ),
+
+    # Gap explanation and narrative builder (#946).
+    # frontend/src/components/GapNarrativeBuilder.tsx
+    path(
+        "generate-gap-narrative/",
+        GapNarrativeView.as_view(),
+        name="generate_gap_narrative",
+    ),
+
+    # Market value and salary estimator (#947).
+    # frontend/src/components/SalaryMarketEstimator.tsx
+    path(
+        "estimate-market-value/",
+        MarketValueView.as_view(),
+        name="estimate_market_value",
+    ),
+
+    # Skill proficiency estimator (#945).
+    # frontend/src/components/SkillProficiencyEstimator.tsx
+    path(
+        "estimate-proficiency/",
+        ProficiencyEstimationView.as_view(),
+        name="estimate_proficiency",
+    ),
+
+    # Project portfolio extractor and impact scorer (#948).
+    # frontend/src/components/ProjectPortfolioScorer.tsx
+    path(
+        "analyze-projects/",
+        ProjectExtractionView.as_view(),
+        name="analyze_projects",
+    ),
+
+    # Tone and sentiment analyzer (#949).
+    # frontend/src/components/ToneCultureFitAnalyzer.tsx
+    path(
+        "analyze-tone/",
+        ToneAnalysisView.as_view(),
+        name="analyze_tone",
     ),
 ]

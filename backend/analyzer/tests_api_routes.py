@@ -86,6 +86,16 @@ ROUTES = [
     ("/api/optimize-linkedin/", "components/LinkedInOptimizer.tsx"),
     ("/api/file-metadata/", "components/PrivacyScrubber.tsx"),
     ("/api/sanitize-resume/", "components/PrivacyScrubber.tsx"),
+    # And a third time, for the five features merged in #945-#949 (#1006).
+    # Same shape again: view class, serializers, unit tests, no path.
+    ("/api/generate-gap-narrative/", "components/GapNarrativeBuilder.tsx"),
+    ("/api/estimate-market-value/", "components/SalaryMarketEstimator.tsx"),
+    ("/api/estimate-proficiency/", "components/SkillProficiencyEstimator.tsx"),
+    ("/api/analyze-projects/", "components/ProjectPortfolioScorer.tsx"),
+    ("/api/analyze-tone/", "components/ToneCultureFitAnalyzer.tsx"),
+    # Routed in ded2a8a (#777), then dropped by a later merge that kept the
+    # view function. Same conflict-residue shape as #872.
+    ("/api/import-jd-url/", "components/JdVisualizerPanel.tsx"),
 ]
 
 #: Endpoints that are open by default and therefore must declare a throttle.

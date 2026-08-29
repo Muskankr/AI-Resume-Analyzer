@@ -242,6 +242,29 @@ REST_FRAMEWORK = {
         # request body to disk before it does anything else.
         'file_metadata': os.environ.get('FILE_METADATA_RATE', '20/hour'),
         'sanitize_resume': os.environ.get('SANITIZE_RESUME_RATE', '60/hour'),
+        # The five features merged in #945-#949 repeated the pattern: view
+        # classes with no permission_classes and no throttle_classes, and this
+        # time no routes either, so nothing surfaced it. Routing them (#1006)
+        # opens five more unauthenticated endpoints, so each gets its own
+        # ceiling and its own scope.
+        'gap_narrative': os.environ.get('GAP_NARRATIVE_RATE', '60/hour'),
+        'market_value': os.environ.get('MARKET_VALUE_RATE', '60/hour'),
+        # Lower than its neighbours: cost here is body size times the number of
+        # skills asked for, not body size alone.
+        'proficiency_estimation': os.environ.get(
+            'PROFICIENCY_ESTIMATION_RATE', '30/hour'
+        ),
+        'project_extraction': os.environ.get('PROJECT_EXTRACTION_RATE', '60/hour'),
+        'tone_analysis': os.environ.get('TONE_ANALYSIS_RATE', '60/hour'),
+        # /api/auth/check-availability/ answers "does this account exist?" to
+        # anyone, and had no ceiling at all -- an enumeration oracle walkable
+        # at whatever rate the network allows. Higher than the analysis
+        # endpoints because the signup form calls it as the user types.
+        'availability_check': os.environ.get('AVAILABILITY_CHECK_RATE', '120/hour'),
+        # /api/import-jd-url/ is the only open endpoint that makes an outbound
+        # request to a caller-supplied URL. Low on purpose: one call is a full
+        # page fetch and parse issued from the server's own address.
+        'import_jd_url': os.environ.get('IMPORT_JD_URL_RATE', '20/hour'),
     },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
