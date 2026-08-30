@@ -1,8 +1,9 @@
-import React, { useState } from 'react'
-import { Lock, FileSignature, Loader2, Eye, EyeOff } from 'lucide-react'
+import React, { useState, useEffect, useRef } from 'react'
+import { Lock, FileSignature, Loader2, Eye, EyeOff, X, AlertCircle, CheckCircle2, ShieldCheck, Mail, ArrowLeft } from 'lucide-react'
 import axios from 'axios'
 import { CaptchaChallenge } from './components/CaptchaChallenge'
 import { Button } from './components/Button'
+import './components/AuthModal.css'
 
 interface AuthModalProps {
   onSignup: (username: string, password: string, captchaToken?: string) => Promise<void>
@@ -26,6 +27,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [rememberMe, setRememberMe] = useState(true)
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [captchaToken, setCaptchaToken] = useState('')
   const [unverifiedEmail, setUnverifiedEmail] = useState('')
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle')
@@ -33,24 +35,43 @@ export const AuthModal: React.FC<AuthModalProps> = ({
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
-  const [usernameStatus, setUsernameStatus] = useState<{ state: 'idle' | 'loading' | 'available' | 'taken'; message: string }>({ state: 'idle', message: '' })
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  
+  const modalRef = useRef<HTMLDivElement>(null)
+  const firstInputRef = useRef<HTMLInputElement>(null)
 
-  React.useEffect(() => {
+  const [usernameStatus, setUsernameStatus] = useState<{
+    state: 'idle' | 'loading' | 'available' | 'taken'
+    message: string
+  }>({ state: 'idle', message: '' })
+
+  // Auto-focus first input when modal opens or mode changes
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      firstInputRef.current?.focus()
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [mode])
+
+  // Username availability check for signup
+  useEffect(() => {
     if (mode !== 'signup' || !username.trim()) {
       setUsernameStatus({ state: 'idle', message: '' })
       return
     }
 
     const timer = setTimeout(async () => {
-      setUsernameStatus({ state: 'loading', message: 'Checking...' })
+      setUsernameStatus({ state: 'loading', message: 'Checking availability...' })
       try {
         const backendUrl = import.meta.env.VITE_BACKEND_URL || ''
-        const res = await fetch(`${backendUrl}/api/auth/check-availability?field=username&value=${encodeURIComponent(username.trim())}`)
+        const res = await fetch(
+          `${backendUrl}/api/auth/check-availability?field=username&value=${encodeURIComponent(username.trim())}`
+        )
         const data = await res.json()
         if (data.isAvailable) {
-          setUsernameStatus({ state: 'available', message: '✓ Available' })
+          setUsernameStatus({ state: 'available', message: 'Username is available' })
         } else {
-          setUsernameStatus({ state: 'taken', message: '✖ Username is already taken.' })
+          setUsernameStatus({ state: 'taken', message: 'Username is already taken' })
         }
       } catch {
         setUsernameStatus({ state: 'idle', message: '' })
@@ -60,6 +81,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     return () => clearTimeout(timer)
   }, [username, mode])
 
+  // Focus trapping & Escape key listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+      }
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusables = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        )
+        if (focusables.length === 0) return
+        const first = focusables[0]
+        const last = focusables[focusables.length - 1]
+        if (e.shiftKey && document.activeElement === first) {
+          last.focus()
+          e.preventDefault()
+        } else if (!e.shiftKey && document.activeElement === last) {
+          first.focus()
+          e.preventDefault()
+        }
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   const handleSocialLogin = async (provider: 'google' | 'github') => {
     setError('')
     setLoading(true)
@@ -68,7 +115,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         await onOAuthLogin(provider, { token: 'mock_oauth_token' })
         onClose()
       } else {
-        // Direct backend call fallback
         const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
         await axios.post(`${backendUrl}/api/auth/oauth/`, {
           provider,
@@ -83,16 +129,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       setLoading(false)
     }
   }
-
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        onClose()
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [onClose])
 
   const handleResendVerification = async () => {
     if (!unverifiedEmail) return
@@ -120,6 +156,11 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     setResendStatus('idle')
     setResendMessage('')
 
+    if (mode === 'signup' && password !== confirmPassword) {
+      setError('Passwords do not match. Please re-enter your password.')
+      return
+    }
+
     if (mode !== 'forgot_password' && !captchaToken) {
       setError('Please complete the security check before submitting.')
       return
@@ -134,8 +175,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         await onLogin(username, password, rememberMe, captchaToken)
         onClose()
       } else if (mode === 'forgot_password') {
-        // Was hardcoded to http://localhost:8000, so "forgot password" only
-        // ever worked on a developer's own machine.
         const backendUrl = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
         await axios.post(`${backendUrl}/api/password-reset/`, { username })
         onClose()
@@ -171,193 +210,285 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     }
   }
 
+  const getPasswordStrength = () => {
+    if (!password) return { score: 0, label: '', colorClass: '' }
+    const hasMinLength = password.length >= 8
+    const hasMixedCase = /[a-z]/.test(password) && /[A-Z]/.test(password)
+    const hasNumber = /[0-9]/.test(password)
+    const hasSymbol = /[^A-Za-z0-9]/.test(password)
+
+    let score = 0
+    if (hasMinLength) score++
+    if (hasMixedCase) score++
+    if (hasNumber) score++
+    if (hasSymbol) score++
+
+    if (password.length < 6) {
+      return { score: 1, label: 'Too short', colorClass: 'weak' }
+    } else if (score <= 1) {
+      return { score: 1, label: 'Weak', colorClass: 'weak' }
+    } else if (score <= 3) {
+      return { score: 2, label: 'Medium', colorClass: 'medium' }
+    } else {
+      return { score: 3, label: 'Strong', colorClass: 'strong' }
+    }
+  }
+
+  const passwordStrength = getPasswordStrength()
+
   return (
-    <div className="auth-overlay" onClick={onClose}>
+    <div
+      className="auth-modal-backdrop"
+      onClick={onClose}
+      role="presentation"
+      data-testid="auth-modal-backdrop"
+    >
       <div
-        className="auth-modal"
+        ref={modalRef}
+        className="auth-modal-container"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="auth-modal-title"
+        aria-labelledby="auth-modal-heading"
         onClick={(e) => e.stopPropagation()}
+        tabIndex={-1}
       >
-        <h3 id="auth-modal-title">
-          {mode === 'login' ? (
-            <>
-              <Lock size={16} /> Login
-            </>
-          ) : (
-            <>
-              <FileSignature size={16} /> Sign Up
-            </>
+        <button
+          className="auth-modal-close-btn"
+          onClick={onClose}
+          aria-label="Close modal"
+          type="button"
+          disabled={loading}
+        >
+          <X size={18} />
+        </button>
+
+        <div className="auth-modal-header">
+          <div className="auth-modal-badge">
+            <ShieldCheck size={20} />
+          </div>
+          <h2 id="auth-modal-heading" className="auth-modal-title">
+            {mode === 'login' && 'Welcome Back'}
+            {mode === 'signup' && 'Create Your Account'}
+            {mode === 'forgot_password' && 'Reset Password'}
+          </h2>
+          <p className="auth-modal-subtitle">
+            {mode === 'login' && 'Log in to access your saved resume analyses & insights'}
+            {mode === 'signup' && 'Sign up to unlock ATS resume optimizations & score history'}
+            {mode === 'forgot_password' && 'Enter your account username to reset your password'}
+          </p>
+        </div>
+
+        {mode !== 'forgot_password' && (
+          <div className="auth-modal-tabs" role="tablist">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'login'}
+              className={`auth-modal-tab ${mode === 'login' ? 'active' : ''}`}
+              onClick={() => {
+                setMode('login')
+                setError('')
+              }}
+              disabled={loading}
+            >
+              <Lock size={15} /> Login
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mode === 'signup'}
+              className={`auth-modal-tab ${mode === 'signup' ? 'active' : ''}`}
+              onClick={() => {
+                setMode('signup')
+                setError('')
+              }}
+              disabled={loading}
+            >
+              <FileSignature size={15} /> Sign Up
+            </button>
+          </div>
+        )}
+
+        {mode === 'forgot_password' && (
+          <button
+            type="button"
+            className="auth-back-link"
+            onClick={() => {
+              setMode('login')
+              setError('')
+            }}
+            disabled={loading}
+          >
+            <ArrowLeft size={14} /> Back to Login
+          </button>
+        )}
+
+        <form onSubmit={submit} className="auth-modal-form" noValidate>
+          {error && (
+            <div className="auth-error-banner" role="alert">
+              <AlertCircle size={18} className="auth-error-icon" />
+              <div className="auth-error-content">
+                <p className="auth-error-text">{error}</p>
+              </div>
+            </div>
           )}
-        </h3>
-        <form onSubmit={submit}>
-          {mode === 'forgot_password' && (
-            <input
-              id="auth-forgot-username"
-              name="username"
-              className="auth-input"
-              type="text"
-              placeholder="Enter your username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              required
-              autoFocus
-              autoComplete="username"
-            />
-          )}
-          {mode !== 'forgot_password' && (
-            <>
+
+          <div className="auth-form-group">
+            <label htmlFor="auth-username-field" className="auth-form-label">
+              Username
+            </label>
+            <div className="auth-input-wrapper">
               <input
-                id="auth-username"
+                ref={firstInputRef}
+                id="auth-username-field"
                 name="username"
-                className="auth-input"
+                className={`auth-input-field ${usernameStatus.state === 'taken' ? 'has-error' : ''}`}
                 type="text"
-                placeholder="Username"
+                placeholder="e.g. alex_dev"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                autoFocus
+                disabled={loading}
                 autoComplete="username"
               />
-              {mode === 'signup' && usernameStatus.message && (
-                <span className={`text-xs mt-1 font-semibold ${usernameStatus.state === 'available' ? 'text-green-500' : 'text-red-400'}`} style={{ display: 'block', fontSize: '0.8rem', marginTop: '4px', marginBottom: '8px', color: usernameStatus.state === 'available' ? '#22c55e' : '#ef4444' }}>
-                  {usernameStatus.message}
-                </span>
-              )}
-              <div style={{ position: 'relative', width: '100%' }}>
+            </div>
+            {mode === 'signup' && usernameStatus.message && (
+              <p
+                className={`auth-field-status ${
+                  usernameStatus.state === 'available' ? 'status-success' : 'status-error'
+                }`}
+              >
+                {usernameStatus.state === 'available' && <CheckCircle2 size={13} />}
+                {usernameStatus.state === 'taken' && <AlertCircle size={13} />}
+                {usernameStatus.message}
+              </p>
+            )}
+          </div>
+
+          {mode !== 'forgot_password' && (
+            <div className="auth-form-group">
+              <label htmlFor="auth-password-field" className="auth-form-label">
+                Password
+              </label>
+              <div className="auth-input-wrapper">
                 <input
-                  id="auth-password"
+                  id="auth-password-field"
                   name="password"
-                  className="auth-input"
+                  className="auth-input-field"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="Password (min 6 chars)"
+                  placeholder={mode === 'signup' ? 'Min 6 characters' : 'Enter your password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
+                  disabled={loading}
                   autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
-                  style={{ width: '100%', paddingRight: '40px' }}
                 />
                 <button
                   type="button"
+                  className="auth-password-toggle"
                   onClick={() => setShowPassword(!showPassword)}
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  style={{
-                    position: 'absolute',
-                    right: '10px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#666',
-                    display: 'flex',
-                    alignItems: 'center',
-                    padding: '4px',
-                  }}
+                  disabled={loading}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-            </>
-          )}
-          {mode === 'signup' &&
-            password &&
-            (() => {
-              const hasMinLength = password.length >= 8
-              const hasMixedCase = /[a-z]/.test(password) && /[A-Z]/.test(password)
-              const hasNumber = /[0-9]/.test(password)
-              const hasSymbol = /[^A-Za-z0-9]/.test(password)
 
-              let score = 0
-              if (hasMinLength) score++
-              if (hasMixedCase) score++
-              if (hasNumber) score++
-              if (hasSymbol) score++
-
-              let strengthLabel = 'Weak'
-              let strengthLevel = 'weak'
-              let filledCount = 1
-
-              if (password.length >= 6) {
-                if (score <= 1) {
-                  strengthLabel = 'Weak'
-                  strengthLevel = 'weak'
-                  filledCount = 1
-                } else if (score <= 3) {
-                  strengthLabel = 'Medium'
-                  strengthLevel = 'medium'
-                  filledCount = 2
-                } else {
-                  strengthLabel = 'Strong'
-                  strengthLevel = 'strong'
-                  filledCount = 3
-                }
-              }
-
-              return (
-                <div className="password-strength-container">
-                  <div className="password-strength-label">
+              {mode === 'signup' && password && (
+                <div className="auth-password-meter">
+                  <div className="auth-meter-header">
                     <span>Password Strength:</span>
-                    <span className={`strength-val ${strengthLevel}`}>{strengthLabel}</span>
+                    <span className={`strength-label ${passwordStrength.colorClass}`}>
+                      {passwordStrength.label}
+                    </span>
                   </div>
-                  <div className="password-strength-bar-container">
+                  <div className="auth-meter-bar-track">
                     <div
-                      className={`password-strength-segment ${filledCount >= 1 ? `${strengthLevel}-filled` : ''}`}
-                    />
-                    <div
-                      className={`password-strength-segment ${filledCount >= 2 ? `${strengthLevel}-filled` : ''}`}
-                    />
-                    <div
-                      className={`password-strength-segment ${filledCount >= 3 ? `${strengthLevel}-filled` : ''}`}
+                      className={`auth-meter-bar-fill ${passwordStrength.colorClass}`}
+                      style={{ width: `${(passwordStrength.score / 3) * 100}%` }}
                     />
                   </div>
                 </div>
-              )
-            })()}
-          {mode === 'login' && (
-            <div
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}
-            >
-              <input
-                type="checkbox"
-                id="rememberMe"
-                checked={rememberMe}
-                onChange={(e) => setRememberMe(e.target.checked)}
-              />
-              <label htmlFor="rememberMe" style={{ fontSize: '0.9rem', color: '#666' }}>
-                Remember me
-              </label>
+              )}
             </div>
           )}
-          {mode !== 'forgot_password' && (
-            <CaptchaChallenge onVerify={(token) => setCaptchaToken(token)} />
+
+          {mode === 'signup' && (
+            <div className="auth-form-group">
+              <label htmlFor="auth-confirm-password-field" className="auth-form-label">
+                Confirm Password
+              </label>
+              <div className="auth-input-wrapper">
+                <input
+                  id="auth-confirm-password-field"
+                  name="confirmPassword"
+                  className={`auth-input-field ${
+                    confirmPassword && password !== confirmPassword ? 'has-error' : ''
+                  }`}
+                  type={showConfirmPassword ? 'text' : 'password'}
+                  placeholder="Re-enter password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  disabled={loading}
+                  autoComplete="new-password"
+                />
+                <button
+                  type="button"
+                  className="auth-password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  aria-label={showConfirmPassword ? 'Hide confirm password' : 'Show confirm password'}
+                  disabled={loading}
+                >
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+              {confirmPassword && password !== confirmPassword && (
+                <p className="auth-field-status status-error">
+                  <AlertCircle size={13} /> Passwords do not match
+                </p>
+              )}
+            </div>
           )}
-          <div style={{ textAlign: 'right', marginBottom: '16px' }}>
-            <button
-              type="button"
-              onClick={() => {
-                setMode('forgot_password')
-                setError('')
-              }}
-              style={{
-                fontSize: '0.9rem',
-                color: '#3b82f6',
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-              }}
-            >
-              Forgot password?
-            </button>
-          </div>
-          {error && <p className="auth-error">{error}</p>}
+
+          {mode === 'login' && (
+            <div className="auth-form-options">
+              <label className="auth-remember-checkbox">
+                <input
+                  type="checkbox"
+                  id="rememberMe"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  disabled={loading}
+                />
+                <span>Remember me</span>
+              </label>
+
+              <button
+                type="button"
+                className="auth-forgot-link"
+                onClick={() => {
+                  setMode('forgot_password')
+                  setError('')
+                }}
+                disabled={loading}
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
+
+          {mode !== 'forgot_password' && (
+            <div className="auth-captcha-box">
+              <CaptchaChallenge onVerify={(token) => setCaptchaToken(token)} />
+            </div>
+          )}
 
           {unverifiedEmail && (
-            <div style={{ marginTop: '10px', marginBottom: '16px', textAlign: 'center' }}>
+            <div className="auth-unverified-box">
               {resendStatus === 'success' ? (
-                <p style={{ color: 'var(--color-accent, #22c55e)', fontSize: '0.9rem', margin: 0 }}>
-                  {resendMessage}
+                <p className="auth-resend-success">
+                  <CheckCircle2 size={16} /> {resendMessage}
                 </p>
               ) : (
                 <>
@@ -368,41 +499,17 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     onClick={handleResendVerification}
                     disabled={resendStatus === 'sending'}
                     isLoading={resendStatus === 'sending'}
+                    leftIcon={<Mail size={14} />}
                   >
                     {resendStatus === 'sending'
                       ? 'Sending Verification Link...'
                       : 'Resend Verification Email'}
                   </Button>
                   {resendStatus === 'error' && (
-                    <p
-                      style={{
-                        color: 'var(--color-danger, #ef4444)',
-                        fontSize: '0.85rem',
-                        marginTop: '6px',
-                        margin: 0,
-                      }}
-                    >
-                      {resendMessage}
-                    </p>
+                    <p className="auth-resend-error">{resendMessage}</p>
                   )}
                 </>
               )}
-            </div>
-          )}
-
-          {error && error.includes('locked') && (
-            <div style={{ marginTop: '10px', marginBottom: '16px', textAlign: 'center' }}>
-              <Button
-                variant="secondary"
-                size="sm"
-                fullWidth
-                onClick={() => {
-                  setMode('forgot_password')
-                  setError('')
-                }}
-              >
-                Reset Password to Unlock
-              </Button>
             </div>
           )}
 
@@ -412,22 +519,27 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             variant="primary"
             size="md"
             fullWidth
+            disabled={loading}
             isLoading={loading}
           >
-            {loading
-              ? 'Please wait...'
-              : mode === 'forgot_password'
-              ? 'Send Reset Link'
-              : mode === 'login'
-              ? 'Login'
-              : 'Create Account'}
+            {loading ? (
+              <>
+                <Loader2 size={16} className="auth-spin-icon" /> Please wait...
+              </>
+            ) : mode === 'forgot_password' ? (
+              'Send Reset Link'
+            ) : mode === 'login' ? (
+              'Log In'
+            ) : (
+              'Create Account'
+            )}
           </Button>
         </form>
 
         {mode !== 'forgot_password' && (
           <div className="auth-social-section">
             <div className="auth-divider">
-              <span>or continue with</span>
+              <span>Or continue with</span>
             </div>
             <div className="auth-social-buttons">
               <Button
@@ -486,20 +598,23 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
           </div>
         )}
-        <p className="auth-switch">
-          {mode === 'login' ? 'No account? ' : 'Have an account? '}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="auth-switch-btn"
-            onClick={() => {
-              setMode(mode === 'login' ? 'signup' : 'login')
-              setError('')
-            }}
-          >
-            {mode === 'login' ? 'Sign up' : 'Log in'}
-          </Button>
-        </p>
+
+        <div className="auth-modal-footer">
+          <p className="auth-switch-text">
+            {mode === 'login' ? "Don't have an account?" : 'Already have an account?'}
+            <button
+              type="button"
+              className="auth-switch-btn"
+              onClick={() => {
+                setMode(mode === 'login' ? 'signup' : 'login')
+                setError('')
+              }}
+              disabled={loading}
+            >
+              {mode === 'login' ? 'Sign up for free' : 'Log in here'}
+            </button>
+          </p>
+        </div>
       </div>
     </div>
   )

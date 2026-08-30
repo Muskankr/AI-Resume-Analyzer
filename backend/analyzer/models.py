@@ -69,6 +69,10 @@ class ResumeAnalysis(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "-created_at", "-id"]),
+            models.Index(fields=["target_role"]),
+        ]
 
     def __str__(self):
         return f"{self.user.username} — {self.file_name} ({self.score}%)"

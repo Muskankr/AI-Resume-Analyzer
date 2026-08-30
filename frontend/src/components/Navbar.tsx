@@ -103,6 +103,13 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Link to="/leaderboard" onClick={() => setMobileOpen(false)}>
             🏆 Leaderboard
           </Link>
+          <Link
+            to="/linkedin-consistency"
+            className={location.pathname === '/linkedin-consistency' ? 'active' : ''}
+            onClick={() => setMobileOpen(false)}
+          >
+            🔗 LinkedIn Consistency
+          </Link>
           <a
             href="#ats-score"
             className={isAtsActive ? 'active' : ''}

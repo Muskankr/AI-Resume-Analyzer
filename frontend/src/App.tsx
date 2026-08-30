@@ -19,6 +19,7 @@ import { AuthModal } from './AuthModal'
 import { SuggestionVote, type VoteValue } from './components/SuggestionVote'
 import { Footer } from './Footer'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
+import LinkedInConsistencyChecker from './components/LinkedInConsistencyChecker'
 import { InterviewQuestionsPanel } from './components/InterviewQuestionsPanel'
 import { TimelinePanel } from './components/TimelinePanel'
 import { type TimelineData } from './utils/timelineFormat'
@@ -36,6 +37,7 @@ import {
   pollAnalysisTask,
 } from './utils/pollAnalysisTask'
 import { SectionAnalyzer } from './components/SectionAnalyzer'
+import { SkillsRadarChart } from './components/SkillsRadarChart'
 
 /**
  * The subset of the analysis payload this screen reads.
@@ -862,6 +864,16 @@ function App() {
     return (
       <>
         <PortfolioShowcaseBuilder />
+        <Footer />
+      </>
+    )
+  }
+
+
+  if (location.pathname === '/linkedin-consistency') {
+    return (
+      <>
+        <LinkedInConsistencyChecker />
         <Footer />
       </>
     )
@@ -1736,6 +1748,9 @@ function App() {
                   </div>
                 </div>
               </div>
+
+              {/* Skills Radar Chart */}
+              <SkillsRadarChart skills={skills} />
 
               {/* Skills You're Closest to Matching (Partial Credit Suggestions) */}
               {partialSkills.length > 0 && (

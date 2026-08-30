@@ -64,3 +64,37 @@ class LinkedInOptimizationView(APIView):
                 {"error": "An unexpected error occurred during optimization."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
+
+from .linkedin_consistency import check_consistency, fetch_linkedin_public_profile
+from .linkedin_serializers import LinkedInConsistencyRequestSerializer, LinkedInConsistencyResponseSerializer
+
+class LinkedInConsistencyView(APIView):
+    """
+    API View to handle LinkedIn profile consistency checks.
+    """
+    throttle_classes = [LinkedInOptimizationThrottle]
+
+    def post(self, request, *args, **kwargs):
+        request_serializer = LinkedInConsistencyRequestSerializer(data=request.data)
+        if not request_serializer.is_valid():
+            return Response({"errors": request_serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
+        
+        validated_data = request_serializer.validated_data
+        resume_text = validated_data.get("resume_text", "")
+        linkedin_text = validated_data.get("linkedin_text", "")
+        linkedin_url = validated_data.get("linkedin_url", "")
+        
+        if linkedin_url:
+            try:
+                linkedin_text = fetch_linkedin_public_profile(linkedin_url)
+            except ValueError as e:
+                return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+                
+        try:
+            result = check_consistency(resume_text, linkedin_text)
+            response_serializer = LinkedInConsistencyResponseSerializer(data=result)
+            response_serializer.is_valid(raise_exception=True)
+            return Response(response_serializer.data, status=status.HTTP_200_OK)
+        except Exception as e:
+            logger.exception("LinkedIn consistency check failed")
+            return Response({"error": "An unexpected error occurred."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

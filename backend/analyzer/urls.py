@@ -38,6 +38,11 @@ from .views import (
 )
 from . import career_roadmap
 from .badge_views import manage_resume_badge, resume_score_badge
+from .application_tracker_views import (
+    ApplicationLogListView,
+    ApplicationLogDetailView,
+    application_stats_view,
+)
 
 # The feature modules below were written with views, serializers and tests, and
 # were never given a path. Everything under `analyzer/` matches the URLs the
@@ -55,7 +60,7 @@ from .multilingual_views import LanguageDetectionView, TranslationView
 from .ab_testing_views import ABTestingStatsView, LogApplicationView
 from .accessibility_views import AccessibilityCheckView
 from .cliche_views import ClicheDetectorView
-from .linkedin_views import LinkedInOptimizationView
+from .linkedin_views import LinkedInOptimizationView, LinkedInConsistencyView
 from .sanitizer_views import FileMetadataView, SanitizeResumeView
 
 urlpatterns = [
@@ -97,6 +102,11 @@ urlpatterns = [
     path("compare/", compare_versions_view),
     path("suggestion-feedback/", suggestion_feedback),
     path("shared/<uuid:share_id>/", get_shared_result),
+    # Job Application Tracker
+    path("applications/", ApplicationLogListView.as_view(), name="application_list"),
+    path("applications/<int:pk>/", ApplicationLogDetailView.as_view(), name="application_detail"),
+    path("applications/stats/", application_stats_view, name="application_stats"),
+
     path("badge/", manage_resume_badge, name="manage_resume_badge"),
     path("badge/<uuid:badge_id>/svg/", resume_score_badge, name="resume_score_badge"),
     path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
@@ -188,4 +198,5 @@ urlpatterns = [
         SanitizeResumeView.as_view(),
         name="sanitize_resume",
     ),
+    path("check-linkedin-consistency/", LinkedInConsistencyView.as_view(), name="check_linkedin_consistency"),
 ]
