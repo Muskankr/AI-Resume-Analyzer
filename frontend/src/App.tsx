@@ -36,7 +36,7 @@ import {
   abortableSleep,
   pollAnalysisTask,
 } from './utils/pollAnalysisTask'
-import { setResumeRoastConsent } from './utils/cookieConsent'
+import { SectionAnalyzer } from './components/SectionAnalyzer'
 import { SkillsRadarChart } from './components/SkillsRadarChart'
 
 /**
@@ -963,6 +963,13 @@ function App() {
             {user ? (
               <>
                 <Link
+                  to="/career-roadmap"
+                  className="auth-bar-btn"
+                  style={{ textDecoration: 'none', marginRight: '8px', background: 'rgba(99, 102, 241, 0.2)', borderColor: 'rgba(99, 102, 241, 0.4)', color: '#818cf8' }}
+                >
+                  🗺️ Career Roadmap
+                </Link>
+                <Link
                   to="/profile"
                   className="auth-username"
                   style={{ textDecoration: 'none', color: 'inherit' }}
@@ -1551,6 +1558,8 @@ function App() {
               <TimelinePanel timeline={timeline} />
 
               <ResumePreview text={resumeText} skills={skills} />
+
+              <SectionAnalyzer resumeText={resumeText} skills={skills} />
 
               {/*
                 Share controls. Previously there was no way to publish or

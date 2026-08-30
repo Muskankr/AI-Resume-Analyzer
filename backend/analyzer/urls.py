@@ -36,6 +36,7 @@ from .views import (
     test_webhook,
     preview_experience_level_view,
 )
+from . import career_roadmap
 from .badge_views import manage_resume_badge, resume_score_badge
 from .application_tracker_views import (
     ApplicationLogListView,
@@ -111,6 +112,8 @@ urlpatterns = [
     path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
     path('password-reset-confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path("admin/stats/", admin_stats_view, name="admin_stats"),
+    path("roadmap/generate/", career_roadmap.generate_career_roadmap, name="generate_career_roadmap"),
+    path("roadmap/courses/", career_roadmap.get_course_recommendations, name="get_course_recommendations"),
 
     # Resume-improvement tools.
     #
