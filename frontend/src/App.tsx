@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useLocation, Link } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { useLocation, Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import './index.css'
 import { AtsScore } from './AtsScore'
@@ -119,7 +119,8 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
 
 function App() {
   const location = useLocation()
-  const { theme, toggleTheme } = useTheme()
+  const navigate = useNavigate()
+  const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const [loading, setLoading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
   const [uploadError, setUploadError] = useState<string | null>(null)
@@ -942,13 +943,7 @@ function App() {
             />
           )}
           <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
-          <p
-            className="text-center mx-auto"
-            style={{ color: 'var(--muted-text)', maxWidth: '600px', marginBottom: 'var(--space-6)' }}
-          >
-            Optimize your resume for Applicant Tracking Systems in 3 simple steps: choose your
-            target career track, upload your resume, and get actionable scoring.
-          </p>
+
           <div
             className="upload-flow-container"
             style={{
@@ -2503,14 +2498,28 @@ function App() {
                 })}
 
                 {/* Reset Button */}
-                <div style={{ marginTop: '24px', textAlign: 'center' }}>
-                  <Button
-                    variant="secondary"
-                    size="md"
+                <div style={{ marginTop: '24px', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                  <button
+                    type="button"
+                    className="app-btn app-btn--secondary"
                     onClick={resetAnalysis}
                   >
                     🔄 Start New Analysis
-                  </Button>
+                  </button>
+                  <button
+                    type="button"
+                    className="app-btn"
+                    style={{ backgroundColor: '#10b981', color: 'white' }}
+                    onClick={() => {
+                      navigate('/builder', { 
+                        state: { 
+                          resumeData: { name: '', email: '', phone: '', skills: skills, experience: [], education: [] } 
+                        } 
+                      })
+                    }}
+                  >
+                    ✏️ Edit & Export PDF
+                  </button>
                 </div>
               </div>
 

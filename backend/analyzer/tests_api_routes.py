@@ -35,7 +35,9 @@ from analyzer.models import UserProfile
 #: that the pattern matches.
 ROUTES = [
     ("/api/upload/", "App.tsx"),
+    ("/api/batch-upload/", "pages/Recruiter/DragDropBatchZone.tsx"),
     ("/api/status/abc-123/", "App.tsx"),
+    ("/api/batch-status/abc-123/", "pages/Recruiter/BatchProgressPanel.tsx"),
     ("/api/history/", "App.tsx, hooks/useAnalysisHistory.ts"),
     ("/api/history/1/", "HistorySidebar.tsx"),
     ("/api/history/clear/", "HistorySidebar.tsx"),

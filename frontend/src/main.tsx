@@ -51,8 +51,7 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 import { Routes, Route } from 'react-router-dom'
 import { TermsOfService } from './pages/TermsOfService'
 import { ProfilePage } from './components/ProfilePage'
-import { CareerRoadmap } from './pages/CareerRoadmap'
-import { SkillGapAnalyzer } from './components/SkillGapAnalyzer'
+import { BuilderPage } from './pages/Builder/BuilderPage'
 import { RecruiterDashboard } from './pages/Recruiter/RecruiterDashboard'
 import { ResumeVersionHistory } from './components/ResumeVersionHistory'
 import { ATSCompatibilityScanner } from './components/ATSCompatibilityScanner'
@@ -61,17 +60,22 @@ import { ContributorCertificate } from './components/ContributorCertificate'
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <ErrorBoundary>
-      <ThemeProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/terms" element={<TermsOfService />} />
-            <Route path="/recruiter" element={<RecruiterDashboard />} />
-            <Route path="/*" element={<App />} />
-            <Route path="/docs" element={<ApiDocs />} />
-            <Route path="/profile" element={<ProfilePage />} />
-          </Routes>
-        </BrowserRouter>
-      </ThemeProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/recruiter" element={<RecruiterDashboard />} />
+          <Route path="/*" element={<App />} />
+          <Route path="/builder" element={<BuilderPage />} />
+          <Route path="/docs" element={<ApiDocs />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/career-roadmap" element={<CareerRoadmap />} />
+          <Route path="/skill-gap" element={<SkillGapAnalyzer />} />
+          <Route path="/version-history" element={<ResumeVersionHistory />} />
+          <Route path="/ats-scanner" element={<ATSCompatibilityScanner />} />
+          <Route path="/contributors" element={<ContributorCertificate />} />
+          <Route path="/contributor-certificate" element={<ContributorCertificate />} />
+        </Routes>
+      </BrowserRouter>
     </ErrorBoundary>
   </StrictMode>
 )

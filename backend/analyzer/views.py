@@ -87,6 +87,7 @@ from .tasks import analyze_resume_task
 from celery.result import AsyncResult
 from .skill_matcher import extract_skills
 from .url_fetcher import download_and_validate_url
+from utils.pdf_generator import generate_resume_pdf
 from .task_claims import (
     CLAIM_HEADER,
     claims_are_enforced,
@@ -1887,6 +1888,32 @@ def user_profile_view(request):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@extend_schema(
+    summary="Export Resume to PDF",
+    description="Receives JSON resume data and returns an ATS-friendly single-column PDF.",
+    responses={
+        200: OpenApiResponse(description="PDF file"),
+        400: OpenApiResponse(description="Bad Request"),
+    },
+)
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+@parser_classes([JSONParser])
+def export_pdf_view(request):
+    try:
+        resume_data = request.data
+        if not resume_data:
+            return Response({"error": "No resume data provided."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        pdf_bytes = generate_resume_pdf(resume_data)
+        
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        response['Content-Disposition'] = 'attachment; filename="resume.pdf"'
+        return response
+    except Exception as e:
+        logger.exception("Failed to generate PDF")
+        return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 #: Categories the contact form offers. Anything else is filed as "Other" rather

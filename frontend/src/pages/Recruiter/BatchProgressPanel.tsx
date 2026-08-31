@@ -15,7 +15,7 @@ export const BatchProgressPanel: React.FC<BatchProgressPanelProps> = ({ batchId,
   useEffect(() => {
     const fetchStatus = async () => {
       try {
-        const response = await fetch(`/api/analyzer/batch-status/${batchId}/`)
+        const response = await fetch(`/api/batch-status/${batchId}/`);
         if (!response.ok) {
           throw new Error('Failed to fetch batch status')
         }
