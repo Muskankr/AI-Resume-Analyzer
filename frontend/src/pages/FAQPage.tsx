@@ -10,11 +10,10 @@ const FAQ_ITEMS: FAQItem[] = [
     question: 'Is my resume stored after I upload it?',
     answer: (
       <>
-        <strong>No, not by default.</strong> If you upload without logging in, your resume file
-        is processed in memory and the temporary file is deleted immediately after analysis.
-        If you are logged in, only your{' '}
-        <em>file name, ATS score, detected skills, and suggestions</em> are saved to your
-        history — the raw PDF is never stored permanently.
+        <strong>No, not by default.</strong> If you upload without logging in, your resume file is
+        processed in memory and the temporary file is deleted immediately after analysis. If you are
+        logged in, only your <em>file name, ATS score, detected skills, and suggestions</em> are
+        saved to your history — the raw PDF is never stored permanently.
       </>
     ),
   },
@@ -22,9 +21,9 @@ const FAQ_ITEMS: FAQItem[] = [
     question: 'What file types are supported?',
     answer: (
       <>
-        Currently the analyzer supports <strong>PDF</strong> files. DOCX (Word) and plain-text
-        TXT support is on the roadmap. For best results, ensure your PDF is text-based (not a
-        scanned image). Image-only PDFs cannot be parsed and will return an empty text result.
+        Currently the analyzer supports <strong>PDF</strong> files. DOCX (Word) and plain-text TXT
+        support is on the roadmap. For best results, ensure your PDF is text-based (not a scanned
+        image). Image-only PDFs cannot be parsed and will return an empty text result.
       </>
     ),
   },
@@ -34,9 +33,9 @@ const FAQ_ITEMS: FAQItem[] = [
       <>
         The score is calculated by matching keywords in your resume against a curated list of
         technical skills and buzzwords relevant to your selected <strong>career track</strong>{' '}
-        (Frontend Developer, Backend Developer, Data Analyst, etc.). A higher percentage of
-        matched keywords produces a higher score. The score is a rough proxy — real ATS systems
-        vary by employer, but keyword density is always a key factor.
+        (Frontend Developer, Backend Developer, Data Analyst, etc.). A higher percentage of matched
+        keywords produces a higher score. The score is a rough proxy — real ATS systems vary by
+        employer, but keyword density is always a key factor.
       </>
     ),
   },
@@ -56,8 +55,8 @@ const FAQ_ITEMS: FAQItem[] = [
     answer: (
       <>
         Currently: <strong>Frontend Developer</strong>, <strong>Backend Developer</strong>, and{' '}
-        <strong>Data Analyst</strong>. More tracks (DevOps, Machine Learning, Product Manager,
-        etc.) are planned. If you would like a specific track added, open an issue on{' '}
+        <strong>Data Analyst</strong>. More tracks (DevOps, Machine Learning, Product Manager, etc.)
+        are planned. If you would like a specific track added, open an issue on{' '}
         <a
           href="https://github.com/Muskankr/AI-Resume-Analyzer/issues"
           target="_blank"
@@ -74,10 +73,10 @@ const FAQ_ITEMS: FAQItem[] = [
     question: 'Do I need an account to use the analyzer?',
     answer: (
       <>
-        <strong>No account is required</strong> for basic analysis. You can upload a resume and
-        get an ATS score, skill breakdown, and suggestions without logging in. Creating an
-        account unlocks <em>analysis history</em>, score tracking over time, resume version
-        comparison, and the ability to share results with a link.
+        <strong>No account is required</strong> for basic analysis. You can upload a resume and get
+        an ATS score, skill breakdown, and suggestions without logging in. Creating an account
+        unlocks <em>analysis history</em>, score tracking over time, resume version comparison, and
+        the ability to share results with a link.
       </>
     ),
   },
@@ -86,8 +85,8 @@ const FAQ_ITEMS: FAQItem[] = [
     answer: (
       <>
         Yes! Logged-in users can use the <strong>Compare Versions</strong> feature to upload two
-        resume files side-by-side and see a diff of scores, matched skills, and suggestions.
-        This is useful when iterating on your resume between job applications.
+        resume files side-by-side and see a diff of scores, matched skills, and suggestions. This is
+        useful when iterating on your resume between job applications.
       </>
     ),
   },
@@ -98,20 +97,20 @@ const FAQ_ITEMS: FAQItem[] = [
         A few common reasons:
         <ul style={{ marginTop: '8px', paddingLeft: '20px' }}>
           <li>
-            <strong>Wrong career track selected</strong> — make sure the track matches the role
-            you are applying for.
+            <strong>Wrong career track selected</strong> — make sure the track matches the role you
+            are applying for.
           </li>
           <li>
             <strong>Skills listed differently</strong> — &ldquo;ReactJS&rdquo; vs
-            &ldquo;React.js&rdquo; vs &ldquo;React&rdquo; may be treated differently. Use
-            canonical names.
+            &ldquo;React.js&rdquo; vs &ldquo;React&rdquo; may be treated differently. Use canonical
+            names.
           </li>
           <li>
             <strong>Scanned/image PDF</strong> — text cannot be extracted from image-only PDFs.
           </li>
           <li>
-            <strong>Missing keywords</strong> — check the &ldquo;Missing Skills&rdquo; section
-            and add any applicable technologies to your resume.
+            <strong>Missing keywords</strong> — check the &ldquo;Missing Skills&rdquo; section and
+            add any applicable technologies to your resume.
           </li>
         </ul>
       </>
@@ -121,10 +120,10 @@ const FAQ_ITEMS: FAQItem[] = [
     question: 'What are the "Suggestions" I receive?',
     answer: (
       <>
-        Suggestions are <strong>improvement recommendations</strong> generated based on your
-        missing skills and detected gaps relative to the selected career track. They include
-        missing keywords to add, formatting tips, and certification recommendations. You can
-        copy all suggestions to your clipboard with one click.
+        Suggestions are <strong>improvement recommendations</strong> generated based on your missing
+        skills and detected gaps relative to the selected career track. They include missing
+        keywords to add, formatting tips, and certification recommendations. You can copy all
+        suggestions to your clipboard with one click.
       </>
     ),
   },
@@ -167,9 +166,9 @@ const FAQ_ITEMS: FAQItem[] = [
     question: 'How do I share my analysis results?',
     answer: (
       <>
-        After running an analysis while logged in, use the <strong>Share Result</strong> button
-        to generate a unique shareable link. Anyone with the link can view your score and
-        suggestions — no account needed to view a shared result.
+        After running an analysis while logged in, use the <strong>Share Result</strong> button to
+        generate a unique shareable link. Anyone with the link can view your score and suggestions —
+        no account needed to view a shared result.
       </>
     ),
   },

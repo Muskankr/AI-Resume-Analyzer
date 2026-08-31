@@ -78,7 +78,8 @@ class ExtractRangesTests(TestCase):
     def test_en_and_em_dashes_and_word_separators(self):
         for separator in ("-", "–", "—", "to", "until", "through"):
             with self.subTest(separator=separator):
-                self.assertEqual(len(extract_ranges(f"Jan 2020 {separator} Mar 2022")), 1)
+                self.assertEqual(
+                    len(extract_ranges(f"Jan 2020 {separator} Mar 2022")), 1)
 
     def test_several_ranges_across_several_lines(self):
         text = "Acme\nJan 2020 - Present\nGlobex\nMar 2017 - Jun 2019\n"
@@ -93,7 +94,8 @@ class ExtractRangesTests(TestCase):
         self.assertEqual(extract_ranges("Reduced errors from 1200 - 340"), [])
 
     def test_version_numbers_are_not_dates(self):
-        self.assertEqual(extract_ranges("Migrated from Python 3.9 to 3.12"), [])
+        self.assertEqual(extract_ranges(
+            "Migrated from Python 3.9 to 3.12"), [])
 
     def test_the_matched_text_is_kept_for_quoting_back(self):
         (found,) = extract_ranges("Senior Engineer   Jan 2020 - Mar 2022")
@@ -145,14 +147,16 @@ class MergedMonthsTests(TestCase):
 
 class GapTests(TestCase):
     def test_a_long_gap_is_reported(self):
-        timeline = analyse("Jan 2018 - Dec 2018\nJan 2020 - Dec 2020", today=TODAY)
+        timeline = analyse(
+            "Jan 2018 - Dec 2018\nJan 2020 - Dec 2020", today=TODAY)
 
         self.assertIn("employment_gap", codes(timeline))
         self.assertEqual(timeline.largest_gap_months, 12)
 
     def test_a_short_gap_is_not_worth_mentioning(self):
         """A notice period plus a job search is not a finding."""
-        timeline = analyse("Jan 2018 - Dec 2018\nFeb 2019 - Dec 2019", today=TODAY)
+        timeline = analyse(
+            "Jan 2018 - Dec 2018\nFeb 2019 - Dec 2019", today=TODAY)
 
         self.assertNotIn("employment_gap", codes(timeline))
 
@@ -160,17 +164,21 @@ class GapTests(TestCase):
         """A gap of exactly the threshold counts; one month less does not."""
         self.assertEqual(GAP_THRESHOLD_MONTHS, 4)
 
-        at_threshold = analyse("Jan 2018 - Jan 2018\nJun 2018 - Dec 2018", today=TODAY)
-        below_threshold = analyse("Jan 2018 - Jan 2018\nMay 2018 - Dec 2018", today=TODAY)
+        at_threshold = analyse(
+            "Jan 2018 - Jan 2018\nJun 2018 - Dec 2018", today=TODAY)
+        below_threshold = analyse(
+            "Jan 2018 - Jan 2018\nMay 2018 - Dec 2018", today=TODAY)
 
         self.assertIn("employment_gap", codes(at_threshold))
         self.assertNotIn("employment_gap", codes(below_threshold))
 
     def test_a_gap_over_a_year_is_more_serious_than_a_short_one(self):
-        short = analyse("Jan 2018 - Dec 2018\nAug 2019 - Dec 2019", today=TODAY)
+        short = analyse(
+            "Jan 2018 - Dec 2018\nAug 2019 - Dec 2019", today=TODAY)
         long = analyse("Jan 2018 - Dec 2018\nJan 2021 - Dec 2021", today=TODAY)
 
-        short_gap = next(f for f in short.findings if f.code == "employment_gap")
+        short_gap = next(
+            f for f in short.findings if f.code == "employment_gap")
         long_gap = next(f for f in long.findings if f.code == "employment_gap")
 
         self.assertEqual(short_gap.severity, SEVERITY_MEDIUM)
@@ -186,7 +194,8 @@ class GapTests(TestCase):
         self.assertNotIn("employment_gap", codes(timeline))
 
     def test_a_gap_names_both_sides(self):
-        timeline = analyse("Jan 2018 - Dec 2018\nJan 2020 - Dec 2020", today=TODAY)
+        timeline = analyse(
+            "Jan 2018 - Dec 2018\nJan 2020 - Dec 2020", today=TODAY)
         gap = next(f for f in timeline.findings if f.code == "employment_gap")
 
         self.assertIn("Jan 2018", gap.evidence)
@@ -195,15 +204,18 @@ class GapTests(TestCase):
 
 class OverlapTests(TestCase):
     def test_concurrent_roles_are_flagged_gently(self):
-        timeline = analyse("Jan 2020 - Dec 2021\nJan 2021 - Dec 2022", today=TODAY)
-        overlap = next(f for f in timeline.findings if f.code == "overlapping_roles")
+        timeline = analyse(
+            "Jan 2020 - Dec 2021\nJan 2021 - Dec 2022", today=TODAY)
+        overlap = next(f for f in timeline.findings if f.code ==
+                       "overlapping_roles")
 
         self.assertEqual(overlap.severity, SEVERITY_LOW)
         self.assertIn("contract work", overlap.message)
 
     def test_a_handover_month_is_not_an_overlap(self):
         """Leaving one job for another, written to the month, looks like this."""
-        timeline = analyse("Jan 2020 - Mar 2021\nMar 2021 - Dec 2022", today=TODAY)
+        timeline = analyse(
+            "Jan 2020 - Mar 2021\nMar 2021 - Dec 2022", today=TODAY)
 
         self.assertNotIn("overlapping_roles", codes(timeline))
 
@@ -211,13 +223,15 @@ class OverlapTests(TestCase):
 class ImpossibleDateTests(TestCase):
     def test_a_reversed_range_is_reported(self):
         timeline = analyse("Mar 2022 - Jan 2020", today=TODAY)
-        finding = next(f for f in timeline.findings if f.code == "reversed_range")
+        finding = next(f for f in timeline.findings if f.code ==
+                       "reversed_range")
 
         self.assertEqual(finding.severity, SEVERITY_HIGH)
 
     def test_a_reversed_range_does_not_poison_the_totals(self):
         """It is dropped, or the gap arithmetic downstream is nonsense."""
-        timeline = analyse("Mar 2022 - Jan 2020\nJan 2024 - Dec 2024", today=TODAY)
+        timeline = analyse(
+            "Mar 2022 - Jan 2020\nJan 2024 - Dec 2024", today=TODAY)
 
         self.assertEqual(timeline.total_months, 12)
 
@@ -235,24 +249,28 @@ class ImpossibleDateTests(TestCase):
 
 class FormatConsistencyTests(TestCase):
     def test_mixed_formats_are_reported(self):
-        timeline = analyse("Jan 2020 - Mar 2021\n04/2018 - 06/2019", today=TODAY)
+        timeline = analyse(
+            "Jan 2020 - Mar 2021\n04/2018 - 06/2019", today=TODAY)
 
         self.assertIn("mixed_date_formats", codes(timeline))
 
     def test_one_format_throughout_is_not_a_finding(self):
-        timeline = analyse("Jan 2020 - Mar 2021\nApr 2018 - Jun 2019", today=TODAY)
+        timeline = analyse(
+            "Jan 2020 - Mar 2021\nApr 2018 - Jun 2019", today=TODAY)
 
         self.assertNotIn("mixed_date_formats", codes(timeline))
 
     def test_present_does_not_count_as_a_competing_format(self):
         """It is the only way to write an open end, not a stylistic choice."""
-        timeline = analyse("Jan 2020 - Present\nMar 2017 - Jun 2019", today=TODAY)
+        timeline = analyse(
+            "Jan 2020 - Present\nMar 2017 - Jun 2019", today=TODAY)
 
         self.assertNotIn("mixed_date_formats", codes(timeline))
 
     def test_year_only_ranges_are_flagged_as_ambiguous(self):
         timeline = analyse("2021 - 2022", today=TODAY)
-        finding = next(f for f in timeline.findings if f.code == "year_only_dates")
+        finding = next(f for f in timeline.findings if f.code ==
+                       "year_only_dates")
 
         self.assertEqual(finding.severity, SEVERITY_LOW)
         self.assertIn("two months or twenty-three", finding.message)
@@ -269,7 +287,8 @@ class UndatedRoleTests(TestCase):
             "Delivered a thing.\n"
         )
         timeline = analyse(text, today=TODAY)
-        finding = next(f for f in timeline.findings if f.code == "undated_role")
+        finding = next(
+            f for f in timeline.findings if f.code == "undated_role")
 
         self.assertEqual(finding.severity, SEVERITY_HIGH)
         self.assertIn("Initech", finding.evidence)
@@ -345,32 +364,38 @@ class SeniorityCrossCheckTests(TestCase):
     SHORT_HISTORY = "Jan 2025 - Present\n"
 
     def test_senior_with_eighteen_months_is_flagged(self):
-        timeline = analyse(self.SHORT_HISTORY, experience_level="Senior", today=TODAY)
-        finding = next(f for f in timeline.findings if f.code == "seniority_mismatch")
+        timeline = analyse(self.SHORT_HISTORY,
+                           experience_level="Senior", today=TODAY)
+        finding = next(f for f in timeline.findings if f.code ==
+                       "seniority_mismatch")
 
         self.assertEqual(finding.severity, SEVERITY_MEDIUM)
         self.assertIn("Senior", finding.message)
 
     def test_senior_with_a_long_history_is_not_flagged(self):
-        timeline = analyse("Jan 2010 - Present", experience_level="Senior", today=TODAY)
+        timeline = analyse("Jan 2010 - Present",
+                           experience_level="Senior", today=TODAY)
 
         self.assertNotIn("seniority_mismatch", codes(timeline))
 
     def test_junior_is_never_flagged(self):
         """There is no floor to fail on the way in."""
-        timeline = analyse(self.SHORT_HISTORY, experience_level="Junior", today=TODAY)
+        timeline = analyse(self.SHORT_HISTORY,
+                           experience_level="Junior", today=TODAY)
 
         self.assertNotIn("seniority_mismatch", codes(timeline))
 
     def test_an_unrecognised_level_skips_the_check_rather_than_guessing(self):
-        timeline = analyse(self.SHORT_HISTORY, experience_level="Wizard", today=TODAY)
+        timeline = analyse(self.SHORT_HISTORY,
+                           experience_level="Wizard", today=TODAY)
 
         self.assertNotIn("seniority_mismatch", codes(timeline))
 
     def test_the_check_reads_common_senior_phrasings(self):
         for level in ("Senior Engineer", "Tech Lead", "Staff", "Principal"):
             with self.subTest(level=level):
-                timeline = analyse(self.SHORT_HISTORY, experience_level=level, today=TODAY)
+                timeline = analyse(self.SHORT_HISTORY,
+                                   experience_level=level, today=TODAY)
                 self.assertIn("seniority_mismatch", codes(timeline))
 
 
@@ -388,8 +413,10 @@ class TimelineShapeTests(TestCase):
         timeline = analyse(text, today=TODAY)
         severities = [f.severity for f in timeline.findings]
 
-        order = {SEVERITY_HIGH: 0, SEVERITY_MEDIUM: 1, SEVERITY_LOW: 2, SEVERITY_INFO: 3}
-        self.assertEqual(severities, sorted(severities, key=lambda s: order[s]))
+        order = {SEVERITY_HIGH: 0, SEVERITY_MEDIUM: 1,
+                 SEVERITY_LOW: 2, SEVERITY_INFO: 3}
+        self.assertEqual(severities, sorted(
+            severities, key=lambda s: order[s]))
 
     def test_total_years_is_rounded_for_display(self):
         timeline = analyse("Jan 2020 - Jun 2021", today=TODAY)
@@ -398,11 +425,14 @@ class TimelineShapeTests(TestCase):
         self.assertEqual(timeline.total_years, 1.5)
 
     def test_a_current_role_is_reported(self):
-        self.assertTrue(analyse("Jan 2020 - Present", today=TODAY).has_current_role)
-        self.assertFalse(analyse("Jan 2020 - Dec 2021", today=TODAY).has_current_role)
+        self.assertTrue(analyse("Jan 2020 - Present",
+                        today=TODAY).has_current_role)
+        self.assertFalse(analyse("Jan 2020 - Dec 2021",
+                         today=TODAY).has_current_role)
 
     def test_ranges_come_back_in_chronological_order(self):
-        timeline = analyse("Jan 2020 - Dec 2021\nJan 2015 - Dec 2016", today=TODAY)
+        timeline = analyse(
+            "Jan 2020 - Dec 2021\nJan 2015 - Dec 2016", today=TODAY)
 
         self.assertEqual([r.start_year for r in timeline.ranges], [2015, 2020])
 
@@ -416,7 +446,8 @@ class TimelineShapeTests(TestCase):
     def test_the_dict_form_is_json_serialisable(self):
         import json
 
-        payload = analyse("Jan 2020 - Present", experience_level="Senior", today=TODAY).as_dict()
+        payload = analyse("Jan 2020 - Present",
+                          experience_level="Senior", today=TODAY).as_dict()
 
         json.dumps(payload)
         self.assertIn("findings", payload)
@@ -446,7 +477,8 @@ class AnalysisIntegrationTests(TestCase):
     def test_the_headline_score_is_untouched(self):
         """It is persisted and read by the leaderboard, digest and charts."""
         without = self._analyse("Python, Django, SQL, Docker.")
-        with_dates = self._analyse("Python, Django, SQL, Docker.\nJan 2020 - Present\n")
+        with_dates = self._analyse(
+            "Python, Django, SQL, Docker.\nJan 2020 - Present\n")
 
         self.assertEqual(without["score"], with_dates["score"])
 

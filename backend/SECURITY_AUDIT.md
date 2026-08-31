@@ -1,4 +1,4 @@
-﻿# Password Hashing Audit — Issue #478
+# Password Hashing Audit — Issue #478
 
 ## Scope
 Reviewed how user passwords are hashed, stored, and verified across
@@ -41,3 +41,28 @@ PBKDF2 hash, which remains valid and secure.
 
 Added `argon2-cffi` to `backend/requirements.txt` (required by Django
 for `Argon2PasswordHasher` to function).
+
+# Signup Abuse Detection — Issue #972
+
+## Scope
+Implemented a mechanism to detect, flag, and prevent abusive signup volume from identical IP addresses without negatively impacting legitimate shared network environments (e.g., universities, libraries).
+
+## Findings
+- Previously, signups were throttled blindly by DRF's `AnonRateThrottle`, which returns a 429 and drops requests.
+- This didn't allow for graduated responses, maintaining logs for manual review, or safely bypassing the throttle for shared networks.
+
+## Change made
+- Added `SignupAbuseEvent` model to track and log suspicious signup attempts, with statuses: `flagged`, `throttled`, and `reviewed`.
+- Added `check_signup_abuse` logic (in `analyzer/abuse_detection.py`) to the signup flow.
+- Improved network evaluation: uses IP + user-agent entropy to determine if repeated signup volume is from a legitimate shared network or a bot. High-volume signups with high user-agent entropy are flagged for maintainer review but *not* blocked.
+
+## Configuration
+Controlled by the following environment variables (defined in `settings.py`):
+- `SIGNUP_ABUSE_ENABLED` (default: 'True'): Master toggle.
+- `SIGNUP_ABUSE_THRESHOLD` (default: 50): Number of signups allowed per window before abuse logic triggers.
+- `SIGNUP_ABUSE_WINDOW_MINUTES` (default: 60): The tracking window.
+- `SIGNUP_ABUSE_COOLDOWN_MINUTES` (default: 60): The cooldown period for blocking after threshold is exceeded (if not a shared network).
+
+## Deployment & Proxy Considerations
+- IP addresses are determined via `get_client_ip()` which respects `HTTP_X_FORWARDED_FOR` if your load balancer / proxy forwards it.
+- Maintainers can review blocked/flagged events in the database using the `SignupAbuseEvent` model.

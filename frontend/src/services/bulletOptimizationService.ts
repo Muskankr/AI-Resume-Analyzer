@@ -30,11 +30,13 @@ export interface OptimizationResponse {
 
 export const optimizeBullets = async (
     bullets: string[],
-    targetRole?: string
+    targetRole?: string,
+    jobDescription?: string
 ): Promise<OptimizationResponse> => {
     const payload = {
         bullets,
         ...(targetRole && { target_role: targetRole }),
+        ...(jobDescription && { job_description: jobDescription }),
     };
 
     const response = await api.post<OptimizationResponse>('/api/analyzer/optimize-bullets/', payload);

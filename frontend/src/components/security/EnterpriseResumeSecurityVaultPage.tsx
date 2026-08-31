@@ -1,35 +1,35 @@
-import React, { useState } from 'react';
-import type { SecurityComplianceReport, SecurityVaultFilterQuery } from './types';
-import { ResumeSecurityVaultEngine } from './ResumeSecurityVaultEngine';
-import { SecurityVaultCard } from './SecurityVaultCard';
-import { SecurityAuditTimeline } from './SecurityAuditTimeline';
+import React, { useState } from 'react'
+import type { SecurityComplianceReport, SecurityVaultFilterQuery } from './types'
+import { ResumeSecurityVaultEngine } from './ResumeSecurityVaultEngine'
+import { SecurityVaultCard } from './SecurityVaultCard'
+import { SecurityAuditTimeline } from './SecurityAuditTimeline'
 
 export const EnterpriseResumeSecurityVaultPage: React.FC = () => {
   const [filters, setFilters] = useState<SecurityVaultFilterQuery>({
     piiRiskLevel: 'All',
     search: '',
-  });
+  })
 
-  const [selectedReport, setSelectedReport] = useState<SecurityComplianceReport | null>(null);
-  const [reports, setReports] = useState(ResumeSecurityVaultEngine.getVaultReports(filters));
-  const [auditLogs, setAuditLogs] = useState(ResumeSecurityVaultEngine.getAuditLogs());
+  const [selectedReport, setSelectedReport] = useState<SecurityComplianceReport | null>(null)
+  const [reports, setReports] = useState(ResumeSecurityVaultEngine.getVaultReports(filters))
+  const [auditLogs, setAuditLogs] = useState(ResumeSecurityVaultEngine.getAuditLogs())
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setFilters((prev) => ({ ...prev, search: val }));
-    setReports(ResumeSecurityVaultEngine.getVaultReports({ ...filters, search: val }));
-  };
+    const val = e.target.value
+    setFilters((prev) => ({ ...prev, search: val }))
+    setReports(ResumeSecurityVaultEngine.getVaultReports({ ...filters, search: val }))
+  }
 
   const handleRiskChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setFilters((prev) => ({ ...prev, piiRiskLevel: val }));
-    setReports(ResumeSecurityVaultEngine.getVaultReports({ ...filters, piiRiskLevel: val }));
-  };
+    const val = e.target.value
+    setFilters((prev) => ({ ...prev, piiRiskLevel: val }))
+    setReports(ResumeSecurityVaultEngine.getVaultReports({ ...filters, piiRiskLevel: val }))
+  }
 
   const handleRedact = (vaultId: string, category: string) => {
-    ResumeSecurityVaultEngine.applyRedaction(vaultId, category);
-    setReports(ResumeSecurityVaultEngine.getVaultReports(filters));
-    
+    ResumeSecurityVaultEngine.applyRedaction(vaultId, category)
+    setReports(ResumeSecurityVaultEngine.getVaultReports(filters))
+
     const newLog = {
       logId: `AUD-${Date.now()}`,
       timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
@@ -37,9 +37,9 @@ export const EnterpriseResumeSecurityVaultPage: React.FC = () => {
       details: `Redacted ${category} snippet on ${vaultId}.`,
       actor: 'Admin Security Analyst',
       complianceImpact: 'Risk Remediated',
-    };
-    setAuditLogs((prev) => [newLog, ...prev]);
-  };
+    }
+    setAuditLogs((prev) => [newLog, ...prev])
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10 font-sans">
@@ -59,7 +59,8 @@ export const EnterpriseResumeSecurityVaultPage: React.FC = () => {
               Enterprise Resume Security & Compliance Vault
             </h1>
             <p className="text-sm text-slate-400 mt-1 max-w-3xl">
-              Automated Data Loss Prevention (DLP), PII detection, redaction controls, and multi-jurisdictional compliance auditing across candidate resume pipelines.
+              Automated Data Loss Prevention (DLP), PII detection, redaction controls, and
+              multi-jurisdictional compliance auditing across candidate resume pipelines.
             </p>
           </div>
         </div>
@@ -67,7 +68,9 @@ export const EnterpriseResumeSecurityVaultPage: React.FC = () => {
         {/* Filter Controls */}
         <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl p-5 shadow-xl grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold text-slate-300 mb-1">Search Candidate Name or Document Title</label>
+            <label className="block text-xs font-bold text-slate-300 mb-1">
+              Search Candidate Name or Document Title
+            </label>
             <input
               type="text"
               value={filters.search}
@@ -78,7 +81,9 @@ export const EnterpriseResumeSecurityVaultPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1">Filter by PII Risk Level</label>
+            <label className="block text-xs font-bold text-slate-300 mb-1">
+              Filter by PII Risk Level
+            </label>
             <select
               value={filters.piiRiskLevel}
               onChange={handleRiskChange}
@@ -117,11 +122,21 @@ export const EnterpriseResumeSecurityVaultPage: React.FC = () => {
                 ✕
               </button>
 
-              <h2 className="text-2xl font-black text-white">{selectedReport.candidateName} Security Audit</h2>
+              <h2 className="text-2xl font-black text-white">
+                {selectedReport.candidateName} Security Audit
+              </h2>
 
               <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2 text-xs">
-                <div className="flex justify-between"><span className="text-slate-400">Retention Days Remaining:</span><span className="text-white font-bold">{selectedReport.retentionDaysRemaining} days</span></div>
-                <div className="flex justify-between"><span className="text-slate-400">Last Audited Timestamp:</span><span className="text-mono text-slate-300">{selectedReport.lastAuditedAt}</span></div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Retention Days Remaining:</span>
+                  <span className="text-white font-bold">
+                    {selectedReport.retentionDaysRemaining} days
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-slate-400">Last Audited Timestamp:</span>
+                  <span className="text-mono text-slate-300">{selectedReport.lastAuditedAt}</span>
+                </div>
               </div>
 
               <button
@@ -138,5 +153,5 @@ export const EnterpriseResumeSecurityVaultPage: React.FC = () => {
         <SecurityAuditTimeline logs={auditLogs} />
       </div>
     </div>
-  );
-};
+  )
+}

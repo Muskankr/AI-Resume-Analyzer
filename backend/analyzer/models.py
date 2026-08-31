@@ -1,3 +1,6 @@
+from django.core.cache import cache
+from django.dispatch import receiver
+from django.db.models.signals import post_save, post_delete, m2m_changed
 import secrets
 import uuid
 from datetime import timedelta
@@ -17,7 +20,8 @@ class Resume(models.Model):
 
 
 class ResumeAnalysis(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="analyses")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="analyses")
     file_name = models.CharField(max_length=255)
     score = models.IntegerField()
     skills_found = models.JSONField(default=list)
@@ -26,7 +30,8 @@ class ResumeAnalysis(models.Model):
     partial_skills = models.JSONField(default=list, blank=True)
     missing_skills = models.JSONField(default=list)
     target_role = models.CharField(max_length=100)
-    experience_level = models.CharField(max_length=50, default="Mid-Level", blank=True)
+    experience_level = models.CharField(
+        max_length=50, default="Mid-Level", blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     job_description = models.TextField(blank=True, null=True)
     resume_text = models.TextField(blank=True, null=True)
@@ -69,6 +74,10 @@ class ResumeAnalysis(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "-created_at", "-id"]),
+            models.Index(fields=["target_role"]),
+        ]
 
     def __str__(self):
         return f"{self.user.username} — {self.file_name} ({self.score}%)"
@@ -161,7 +170,8 @@ class ResumeAnalysis(models.Model):
 
 class BatchUpload(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="batch_uploads", null=True, blank=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE,
+                             related_name="batch_uploads", null=True, blank=True)
     status = models.CharField(max_length=50, default="Pending")
     uploaded_at = models.DateTimeField(auto_now_add=True)
     total_files = models.IntegerField(default=0)
@@ -176,10 +186,12 @@ class BatchUpload(models.Model):
         return f"Batch {self.id} ({self.status})"
 
 
-
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name="profile")
     avatar = models.FileField(upload_to="avatars/", blank=True, null=True)
+    theme_preference = models.CharField(max_length=10, default="system", choices=[
+                                        ('light', 'Light'), ('dark', 'Dark'), ('system', 'System')])
     weekly_digest_opt_in = models.BooleanField(default=False)
     notification_preferences = models.JSONField(
         default=dict,
@@ -192,7 +204,8 @@ class UserProfile(models.Model):
 
 
 class KnownDevice(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="known_devices")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="known_devices")
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     device_info = models.CharField(max_length=255)
     last_login = models.DateTimeField(auto_now=True)
@@ -238,7 +251,8 @@ class Webhook(models.Model):
     #: forever means every future analysis pays for it.
     MAX_CONSECUTIVE_FAILURES = 10
 
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="webhooks")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="webhooks")
     url = models.URLField(max_length=500)
     #: Free-text label so a user with several webhooks can tell them apart.
     description = models.CharField(max_length=120, blank=True, default="")
@@ -370,44 +384,34 @@ class Role(models.Model):
         return self.name
 
 
-from django.db.models.signals import post_save, post_delete, m2m_changed
-from django.dispatch import receiver
-from django.core.cache import cache
-
 @receiver([post_save, post_delete], sender=Role)
 @receiver([post_save, post_delete], sender=Skill)
 def invalidate_role_skills_cache(sender, **kwargs):
     cache.delete("role_skills_dict")
+
 
 @receiver(m2m_changed, sender=Role.skills.through)
 def invalidate_m2m_cache(sender, **kwargs):
     cache.delete("role_skills_dict")
 
 
-class ApplicationLog(models.Model):
+@receiver(post_delete, sender=ResumeAnalysis)
+def delete_resume_analysis_file(sender, instance, **kwargs):
     """
-    Model to track job applications and their outcomes for A/B testing resume versions.
+    Safely handles removing old resume files from the resumes/ directory
+    when a ResumeAnalysis record is deleted to prevent storage bloat.
     """
-    STATUS_CHOICES = [
-        ('applied', 'Applied'),
-        ('screening', 'Screening'),
-        ('interviewed', 'Interviewed'),
-        ('rejected', 'Rejected'),
-        ('offered', 'Offered'),
-    ]
-    
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='application_logs')
-    resume_analysis = models.ForeignKey('ResumeAnalysis', on_delete=models.SET_NULL, null=True, related_name='application_logs')
-    company_name = models.CharField(max_length=255)
-    job_title = models.CharField(max_length=255)
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='applied')
-    applied_date = models.DateField(auto_now_add=True)
-    notes = models.TextField(blank=True, null=True)
-
-    class Meta:
-        ordering = ['-applied_date']
-        verbose_name = 'Application Log'
-        verbose_name_plural = 'Application Logs'
-
-    def __str__(self):
-        return f"{self.job_title} at {self.company_name} - {self.status}"
+    try:
+        from django.core.files.storage import default_storage
+        import os
+        
+        # In a generic case, we can try to delete files in the default storage that match this file_name
+        # If the file_name is just the basename, we might need to look for it in resumes/
+        file_path = f"resumes/{instance.file_name}"
+        if default_storage.exists(file_path):
+            default_storage.delete(file_path)
+            
+        # Also, check if there's an associated Resume object and delete it
+        Resume.objects.filter(file__contains=instance.file_name).delete()
+    except Exception:
+        pass

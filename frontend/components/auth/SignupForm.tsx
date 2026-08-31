@@ -1,46 +1,48 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import { Mail, User, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react'
+import { Mail, User, Lock, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 export const SignupForm: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
   const validateEmail = (emailStr: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr);
-  };
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailStr)
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault()
+    setError(null)
 
     if (!username.trim()) {
-      setError('Please provide a valid username.');
-      return;
+      setError('Please provide a valid username.')
+      return
     }
 
     if (!email.trim() || !validateEmail(email)) {
-      setError('Please enter a valid email address format (e.g., user@example.com).');
-      return;
+      setError('Please enter a valid email address format (e.g., user@example.com).')
+      return
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long.');
-      return;
+      setError('Password must be at least 8 characters long.')
+      return
     }
 
     // Proceed with registration API call
-    setSuccess(true);
-  };
+    setSuccess(true)
+  }
 
   return (
     <div className="max-w-md mx-auto p-6 bg-slate-900 border border-slate-800 rounded-2xl text-slate-100 shadow-xl">
       <h2 className="text-xl font-bold mb-1 text-teal-400">Create Account</h2>
-      <p className="text-xs text-slate-400 mb-6">Enter your details to register for AI-Resume-Analyzer.</p>
+      <p className="text-xs text-slate-400 mb-6">
+        Enter your details to register for AI-Resume-Analyzer.
+      </p>
 
       {success ? (
         <div className="p-4 bg-teal-950/60 border border-teal-800 rounded-xl flex items-center gap-3 text-teal-300 text-sm">
@@ -87,7 +89,9 @@ export const SignupForm: React.FC = () => {
                 className="w-full bg-slate-950 border border-slate-800 rounded-lg pl-10 pr-4 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-teal-500"
               />
             </div>
-            <span className="text-[10px] text-slate-500">Used for login, notifications, and password recovery.</span>
+            <span className="text-[10px] text-slate-500">
+              Used for login, notifications, and password recovery.
+            </span>
           </div>
 
           {/* Password Field */}
@@ -115,5 +119,5 @@ export const SignupForm: React.FC = () => {
         </form>
       )}
     </div>
-  );
-};
+  )
+}

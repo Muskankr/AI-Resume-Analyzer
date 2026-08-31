@@ -1,3 +1,8 @@
+from .url_safety import UnsafeURLError, assert_url_is_safe
+from .models import Webhook
+from .models import SuggestionFeedback
+from .models import UserProfile
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from rest_framework import serializers
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -46,18 +51,17 @@ class SignupSerializer(serializers.ModelSerializer):
         return User.objects.create_user(**validated_data)
 
 
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from .models import UserProfile
-
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         request = self.context.get("request")
         if request and hasattr(request, "data"):
-            captcha_token = request.data.get("captcha_token") or request.data.get("captcha")
+            captcha_token = request.data.get(
+                "captcha_token") or request.data.get("captcha")
             from .views import verify_captcha_token
             if not verify_captcha_token(captcha_token):
                 raise serializers.ValidationError(
-                    {"captcha_token": ["CAPTCHA verification failed. Please complete the security challenge."]}
+                    {"captcha_token": [
+                        "CAPTCHA verification failed. Please complete the security challenge."]}
                 )
 
         username = attrs.get("username")
@@ -70,7 +74,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         user = User.objects.filter(username=username).first()
         if not user:
             # Generic message to prevent user enumeration
-            raise AuthenticationFailed("No active account found with the given credentials.")
+            raise AuthenticationFailed(
+                "No active account found with the given credentials.")
 
         if not user.is_active:
             raise AuthenticationFailed({
@@ -80,11 +85,13 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         if not user.check_password(password):
             # Generic message to prevent user enumeration
-            raise AuthenticationFailed("No active account found with the given credentials.")
+            raise AuthenticationFailed(
+                "No active account found with the given credentials.")
 
         # Check if email is verified (forward-compatible with issue 371)
         profile = getattr(user, 'profile', None)
-        is_verified = getattr(profile, 'is_verified', True) if profile else True
+        is_verified = getattr(profile, 'is_verified',
+                              True) if profile else True
         if not is_verified:
             raise AuthenticationFailed({
                 "detail": "Your email address is not verified. Please verify your email to gain full account access.",
@@ -96,11 +103,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         profile, _ = UserProfile.objects.get_or_create(user=self.user)
         if profile.avatar:
             if request:
-                data["avatar_url"] = request.build_absolute_uri(profile.avatar.url)
+                data["avatar_url"] = request.build_absolute_uri(
+                    profile.avatar.url)
             else:
                 data["avatar_url"] = profile.avatar.url
         else:
             data["avatar_url"] = None
+
+        data["theme_preference"] = profile.theme_preference
 
         if request:
             from .models import KnownDevice
@@ -112,7 +122,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
             known_devices = KnownDevice.objects.filter(user=self.user)
             has_existing = known_devices.exists()
-            device_exists = known_devices.filter(ip_address=ip, device_info=device).exists()
+            device_exists = known_devices.filter(
+                ip_address=ip, device_info=device).exists()
 
             if not device_exists:
                 if has_existing:
@@ -159,6 +170,7 @@ class ResumeAnalysisListSerializer(serializers.ModelSerializer):
         fields = ("id", "share_id", "file_name", "score", "job_match_score", "skills_found", "suggestions",
                   "matched_skills", "partial_skills", "missing_skills", "target_role", "experience_level", "created_at")
 
+
 class PublicSharedAnalysisSerializer(serializers.ModelSerializer):
     """What a share link is allowed to return.
 
@@ -182,7 +194,8 @@ class PublicSharedAnalysisSerializer(serializers.ModelSerializer):
 
     #: Present so a viewer can see the link will not last forever, which is the
     #: reassurance that makes sharing reasonable in the first place.
-    expires_at = serializers.DateTimeField(source="share_expires_at", read_only=True)
+    expires_at = serializers.DateTimeField(
+        source="share_expires_at", read_only=True)
 
     class Meta:
         model = ResumeAnalysis
@@ -253,17 +266,21 @@ class VersionComparisonSerializer(serializers.Serializer):
 
 class UserProfileSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(required=True, allow_blank=False)
-    weekly_digest_opt_in = serializers.BooleanField(required=False, default=False)
+    theme_preference = serializers.CharField(required=False, max_length=10)
+    weekly_digest_opt_in = serializers.BooleanField(
+        required=False, default=False)
     notification_preferences = serializers.JSONField(required=False)
 
     class Meta:
         model = User
-        fields = ("username", "email", "weekly_digest_opt_in", "notification_preferences")
+        fields = ("username", "email", "theme_preference",
+                  "weekly_digest_opt_in", "notification_preferences")
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         profile, _ = UserProfile.objects.get_or_create(user=instance)
         prefs = profile.notification_preferences or {}
+        ret["theme_preference"] = profile.theme_preference
         ret["weekly_digest_opt_in"] = profile.weekly_digest_opt_in
         ret["notification_preferences"] = {
             "in_app": prefs.get("in_app", True),
@@ -271,12 +288,37 @@ class UserProfileSerializer(serializers.ModelSerializer):
         }
         return ret
 
+    def validate_bio(self, value):
+        if not value:
+            return ""
+        import html
+        import re
+        from django.utils.html import strip_tags
+
+        # Basic content sanitization: strip HTML tags and unescape entities
+        cleaned = strip_tags(value)
+        cleaned = strip_tags(html.unescape(cleaned))
+        # Normalize whitespace (replace newlines/tabs with space and collapse spaces)
+        cleaned = re.sub(r'[\r\n\t]+', ' ', cleaned)
+        cleaned = re.sub(r' +', ' ', cleaned).strip()
+        if len(cleaned) > 250:
+            raise serializers.ValidationError("Bio/headline cannot exceed 250 characters.")
+        return cleaned
+
+    def validate_headline(self, value):
+        return self.validate_bio(value)
+
     def update(self, instance, validated_data):
+        theme_preference = validated_data.pop("theme_preference", None)
         weekly_digest_opt_in = validated_data.pop("weekly_digest_opt_in", None)
-        notification_preferences = validated_data.pop("notification_preferences", None)
+        notification_preferences = validated_data.pop(
+            "notification_preferences", None)
         user = super().update(instance, validated_data)
         profile, _ = UserProfile.objects.get_or_create(user=user)
         changed = False
+        if theme_preference is not None:
+            profile.theme_preference = theme_preference
+            changed = True
         if weekly_digest_opt_in is not None:
             profile.weekly_digest_opt_in = weekly_digest_opt_in
             changed = True
@@ -299,7 +341,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if user:
             qs = qs.exclude(pk=user.pk)
         if qs.exists():
-            raise serializers.ValidationError("A user with this email already exists.")
+            raise serializers.ValidationError(
+                "A user with this email already exists.")
         return value
 
     def validate_username(self, value):
@@ -310,23 +353,19 @@ class UserProfileSerializer(serializers.ModelSerializer):
         if user:
             qs = qs.exclude(pk=user.pk)
         if qs.exists():
-            raise serializers.ValidationError("A user with this username already exists.")
+            raise serializers.ValidationError(
+                "A user with this username already exists.")
         return value
 
-
-from .models import SuggestionFeedback
 
 class SuggestionFeedbackSerializer(serializers.ModelSerializer):
     """Read representation of one stored vote."""
 
     class Meta:
         model = SuggestionFeedback
-        fields = ("id", "analysis", "suggestion_text", "vote", "comment", "updated_at")
+        fields = ("id", "analysis", "suggestion_text",
+                  "vote", "comment", "updated_at")
         read_only_fields = fields
-
-
-from .models import Webhook
-from .url_safety import UnsafeURLError, assert_url_is_safe
 
 
 class WebhookSerializer(serializers.ModelSerializer):

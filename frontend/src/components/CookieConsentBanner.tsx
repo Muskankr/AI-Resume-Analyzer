@@ -38,8 +38,8 @@ export default function CookieConsentBanner() {
       <div className="cookie-consent-banner__copy">
         <h2>Data Collection & Privacy Preferences</h2>
         <p>
-          We use strictly essential local storage by default. Optional features such as usage analytics
-          and alternate "Resume Roast" feedback require your explicit consent.
+          We use strictly essential local storage by default. Optional features such as usage
+          analytics and alternate "Resume Roast" feedback require your explicit consent.
         </p>
 
         {showDetails && (
@@ -62,12 +62,25 @@ export default function CookieConsentBanner() {
                   Authentication, resume parsing, and essential session states.
                 </p>
               </div>
-              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4ade80' }}>Always Active</span>
+              <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4ade80' }}>
+                Always Active
+              </span>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '8px' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                paddingTop: '8px',
+              }}
+            >
               <div>
-                <label htmlFor="consent-analytics-toggle" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff', cursor: 'pointer' }}>
+                <label
+                  htmlFor="consent-analytics-toggle"
+                  style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff', cursor: 'pointer' }}
+                >
                   📊 Analytics & Performance Telemetry
                 </label>
                 <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.7)' }}>
@@ -83,13 +96,25 @@ export default function CookieConsentBanner() {
               />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(255, 255, 255, 0.1)', paddingTop: '8px' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                borderTop: '1px solid rgba(255, 255, 255, 0.1)',
+                paddingTop: '8px',
+              }}
+            >
               <div>
-                <label htmlFor="consent-roast-toggle" style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff', cursor: 'pointer' }}>
+                <label
+                  htmlFor="consent-roast-toggle"
+                  style={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff', cursor: 'pointer' }}
+                >
                   🔥 AI Resume Roast Feedback Processing
                 </label>
                 <p style={{ margin: 0, fontSize: '0.8rem', color: 'rgba(255, 255, 255, 0.7)' }}>
-                  Enables humorously spicy feedback mode and alternate prompt analysis (Off by default).
+                  Enables humorously spicy feedback mode and alternate prompt analysis (Off by
+                  default).
                 </p>
               </div>
               <input

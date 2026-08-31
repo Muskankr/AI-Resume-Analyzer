@@ -94,7 +94,8 @@ DEFAULT_LEVEL = MID_LEVEL
 #: another stays safe.
 LEVEL_KEYWORDS = (
     (JUNIOR, ("junior", "entry", "intern", "graduate", "trainee", "associate")),
-    (SENIOR, ("senior", "lead", "staff", "principal", "architect", "head of", "director")),
+    (SENIOR, ("senior", "lead", "staff", "principal",
+     "architect", "head of", "director")),
     (MID_LEVEL, ("mid", "intermediate", "regular")),
 )
 
@@ -278,7 +279,8 @@ def apply_level(baseline: Sequence[str], added: Sequence[str], removed) -> List[
     what matters: the list is shown to the user and each entry is worth one over
     its length, so two runs of the same resume must read the same way.
     """
-    result = [skill for skill in normalise_skills(baseline) if skill not in removed]
+    result = [skill for skill in normalise_skills(
+        baseline) if skill not in removed]
     known = set(result)
 
     for skill in normalise_skills(added):
@@ -322,7 +324,8 @@ def resolve(
     source = SOURCE_DATABASE
 
     if not baseline:
-        baseline = _lookup(default_roles_by_level.get(BASELINE_LEVEL, {}), canonical)
+        baseline = _lookup(default_roles_by_level.get(
+            BASELINE_LEVEL, {}), canonical)
         source = SOURCE_DEFAULTS
 
     if not baseline:
@@ -335,7 +338,8 @@ def resolve(
             level_as_requested=requested,
         )
 
-    added, removed = level_delta(canonical, resolved_level, default_roles_by_level)
+    added, removed = level_delta(
+        canonical, resolved_level, default_roles_by_level)
 
     return RoleSkillSet(
         role=canonical,

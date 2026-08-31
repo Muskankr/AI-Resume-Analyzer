@@ -1,0 +1,122 @@
+name: Stale assignment nudge and unassign
+
+# Nudges assignees on inactive issues, then unassigns after a grace period.
+#
+# Thresholds (calendar days):
+#   INACTIVITY_DAYS = 14  -> after this much inactivity, post a friendly check-in.
+#   GRACE_DAYS      = 7   -> if still inactive this long after the nudge, unassign.
+# These are intentionally generous so slow-but-active contributors are not pushed out.
+on:
+  schedule:
+    # Runs once a day at 06:00 UTC.
+    - cron: '0 6 * * *'
+  # Allows manual runs from the Actions tab for testing.
+  workflow_dispatch:
+
+permissions:
+  issues: write
+
+env:
+  INACTIVITY_DAYS: '14'
+  GRACE_DAYS: '7'
+  # Hidden marker so the workflow can recognise its own nudge comments.
+  NUDGE_MARKER: '<!-- stale-assignment-nudge -->'
+
+jobs:
+  stale-assignments:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Nudge or unassign stale assigned issues
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const inactivityDays = Number(process.env.INACTIVITY_DAYS);
+            const graceDays = Number(process.env.GRACE_DAYS);
+            const marker = process.env.NUDGE_MARKER;
+            const now = Date.now();
+            const dayMs = 24 * 60 * 60 * 1000;
+
+            // All open issues that have at least one assignee (excludes PRs below).
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner,
+              repo,
+              state: 'open',
+              assignee: '*',
+              per_page: 100,
+            });
+
+            for (const issue of issues) {
+              // listForRepo returns PRs too; skip them.
+              if (issue.pull_request) continue;
+
+              const assignees = (issue.assignees || []).map(a => a.login);
+              if (assignees.length === 0) continue;
+
+              const daysSinceUpdate = (now - new Date(issue.updated_at).getTime()) / dayMs;
+
+              // Find our most recent nudge comment, if any.
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner,
+                repo,
+                issue_number: issue.number,
+                per_page: 100,
+              });
+              const nudges = comments.filter(c => (c.body || '').includes(marker));
+              const lastNudge = nudges.length ? nudges[nudges.length - 1] : null;
+
+              if (!lastNudge) {
+                // No nudge yet: post one once the issue has been inactive long enough.
+                if (daysSinceUpdate >= inactivityDays) {
+                  const mentions = assignees.map(a => `@${a}`).join(', ');
+                  await github.rest.issues.createComment({
+                    owner,
+                    repo,
+                    issue_number: issue.number,
+                    body:
+                      `${marker}\n` +
+                      `👋 ${mentions}, this issue has had no activity for ${inactivityDays} days. ` +
+                      `Are you still working on it? A quick comment keeps it assigned to you.\n\n` +
+                      `If we don't hear back within ${graceDays} days, we'll unassign it so someone else can pick it up. ` +
+                      `No pressure — just keeping things moving. 🙂`,
+                  });
+                  console.log(`Nudged #${issue.number}`);
+                }
+                continue;
+              }
+
+              // A nudge already exists. Has the assignee responded since it was posted?
+              const nudgeTime = new Date(lastNudge.created_at).getTime();
+              const daysSinceNudge = (now - nudgeTime) / dayMs;
+
+              const responded = comments.some(c =>
+                new Date(c.created_at).getTime() > nudgeTime &&
+                assignees.includes(c.user.login)
+              );
+
+              if (responded) {
+                console.log(`#${issue.number}: assignee responded after nudge; leaving assigned.`);
+                continue;
+              }
+
+              // No response within the grace period -> unassign and explain.
+              if (daysSinceNudge >= graceDays) {
+                await github.rest.issues.removeAssignees({
+                  owner,
+                  repo,
+                  issue_number: issue.number,
+                  assignees,
+                });
+                const mentions = assignees.map(a => `@${a}`).join(', ');
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: issue.number,
+                  body:
+                    `${marker}\n` +
+                    `Unassigning ${mentions} due to inactivity (no response for ${graceDays} days after the check-in). ` +
+                    `This issue is now open for anyone to claim. Thanks for your interest — feel free to pick it back up anytime! 🙌`,
+                });
+                console.log(`Unassigned #${issue.number}`);
+              }
+            }

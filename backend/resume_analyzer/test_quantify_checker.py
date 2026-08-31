@@ -22,11 +22,13 @@ SHOULD_NOT_FLAG = [
     "",
 ]
 
+
 class TestFlagUnquantifiedBullets:
     def test_flags_accomplishment_without_number(self):
         for bullet in SHOULD_FLAG:
             nudges = flag_unquantified_bullets([bullet])
-            assert len(nudges) == 1, f"Expected flag for: '{bullet}', got {len(nudges)}"
+            assert len(
+                nudges) == 1, f"Expected flag for: '{bullet}', got {len(nudges)}"
 
     def test_does_not_flag_already_quantified(self):
         for bullet in SHOULD_NOT_FLAG:
@@ -47,6 +49,7 @@ class TestFlagUnquantifiedBullets:
 
     def test_empty_list(self):
         assert flag_unquantified_bullets([]) == []
+
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

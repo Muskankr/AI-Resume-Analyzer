@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  locust:
+    image: locustio/locust:latest
+    container_name: locust-master
+    ports:
+      - "8089:8089"
+    volumes:
+      - ./:/mnt/locust
+      - ./results:/mnt/results
+    environment:
+      - TEST_USER=${TEST_USER:-testuser}
+      - TEST_PASSWORD=${TEST_PASSWORD:-testpass123}
+      - BASE_URL=${BASE_URL:-http://host.docker.internal:8000}
+    command: >
+      -f /mnt/locust/locustfile.py
+      --host ${BASE_URL:-http://host.docker.internal:8000}
+      --master
+      --headless
+      --users 100
+      --spawn-rate 10
+      --run-time 10m
+      --html /mnt/results/locust-report.html
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  locust-worker:
+    image: locustio/locust:latest
+    container_name: locust-worker
+    volumes:
+      - ./:/mnt/locust
+      - ./results:/mnt/results
+    environment:
+      - TEST_USER=${TEST_USER:-testuser}
+      - TEST_PASSWORD=${TEST_PASSWORD:-testpass123}
+    command: >
+      -f /mnt/locust/locustfile.py
+      --worker
+      --master-host locust-master
+    depends_on:
+      - locust
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

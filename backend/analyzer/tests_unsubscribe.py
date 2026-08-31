@@ -35,7 +35,8 @@ class UnsubscribeTokenTests(TestCase):
 
     def test_token_does_not_contain_the_email_address(self):
         """The whole point is to keep the address out of the URL."""
-        self.assertNotIn("token@example.com", make_unsubscribe_token(self.user))
+        self.assertNotIn("token@example.com",
+                         make_unsubscribe_token(self.user))
 
     def test_rejects_a_tampered_token(self):
         token = make_unsubscribe_token(self.user)
@@ -48,7 +49,8 @@ class UnsubscribeTokenTests(TestCase):
 
     def test_rejects_a_token_signed_with_a_different_salt(self):
         """A signed value from elsewhere in the project must not work here."""
-        foreign = signing.dumps({"uid": self.user.pk}, salt="some.other.purpose")
+        foreign = signing.dumps({"uid": self.user.pk},
+                                salt="some.other.purpose")
         self.assertIsNone(read_unsubscribe_token(foreign))
 
     def test_rejects_empty_and_malformed_input(self):
@@ -74,7 +76,8 @@ class UnsubscribeTokenTests(TestCase):
     @override_settings(FRONTEND_URL="https://resume.example.com")
     def test_builds_a_link_pointing_at_the_configured_frontend(self):
         url = build_unsubscribe_url(self.user)
-        self.assertTrue(url.startswith("https://resume.example.com/unsubscribe?token="))
+        self.assertTrue(url.startswith(
+            "https://resume.example.com/unsubscribe?token="))
         self.assertNotIn("email=", url)
 
     @override_settings(FRONTEND_URL="https://resume.example.com/")
@@ -101,7 +104,8 @@ class UnsubscribeEndpointTests(TestCase):
         self.other = User.objects.create_user(
             username="victim", password="password123", email="victim@example.com"
         )
-        self.other_profile, _ = UserProfile.objects.get_or_create(user=self.other)
+        self.other_profile, _ = UserProfile.objects.get_or_create(
+            user=self.other)
         self.other_profile.weekly_digest_opt_in = True
         self.other_profile.save()
 
@@ -124,14 +128,16 @@ class UnsubscribeEndpointTests(TestCase):
 
     def test_bare_email_no_longer_unsubscribes_anyone(self):
         """The reported problem: no proof of ownership was required."""
-        response = self.client.get("/api/unsubscribe/?email=victim@example.com")
+        response = self.client.get(
+            "/api/unsubscribe/?email=victim@example.com")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.other_profile.refresh_from_db()
         self.assertTrue(self.other_profile.weekly_digest_opt_in)
 
     def test_bare_username_no_longer_unsubscribes_anyone(self):
-        response = self.client.post("/api/unsubscribe/", {"username": "victim"})
+        response = self.client.post(
+            "/api/unsubscribe/", {"username": "victim"})
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.other_profile.refresh_from_db()
@@ -147,7 +153,8 @@ class UnsubscribeEndpointTests(TestCase):
     def test_response_is_identical_for_known_and_unknown_addresses(self):
         """No status-code oracle for whether an account exists."""
         known = self.client.get("/api/unsubscribe/?email=digest@example.com")
-        unknown = self.client.get("/api/unsubscribe/?email=nobody-here@example.com")
+        unknown = self.client.get(
+            "/api/unsubscribe/?email=nobody-here@example.com")
 
         self.assertEqual(known.status_code, unknown.status_code)
         self.assertEqual(known.data, unknown.data)

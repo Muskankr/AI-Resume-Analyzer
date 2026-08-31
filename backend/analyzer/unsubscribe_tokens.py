@@ -29,7 +29,8 @@ DEFAULT_MAX_AGE_DAYS = 90
 
 def get_max_age_seconds() -> int:
     """Token lifetime in seconds, overridable with ``UNSUBSCRIBE_TOKEN_MAX_AGE_DAYS``."""
-    days = getattr(settings, "UNSUBSCRIBE_TOKEN_MAX_AGE_DAYS", DEFAULT_MAX_AGE_DAYS)
+    days = getattr(settings, "UNSUBSCRIBE_TOKEN_MAX_AGE_DAYS",
+                   DEFAULT_MAX_AGE_DAYS)
     return int(days) * 24 * 60 * 60
 
 
@@ -71,6 +72,7 @@ def read_unsubscribe_token(token: str, max_age: int = None):
 
 def build_unsubscribe_url(user, frontend_url: str = None) -> str:
     """Build the unsubscribe link that goes into a digest email."""
-    base = frontend_url or getattr(settings, "FRONTEND_URL", "http://localhost:5173")
+    base = frontend_url or getattr(
+        settings, "FRONTEND_URL", "http://localhost:5173")
     query = urlencode({"token": make_unsubscribe_token(user)})
     return f"{base.rstrip('/')}/unsubscribe?{query}"

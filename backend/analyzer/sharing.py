@@ -129,7 +129,9 @@ def _redact_phones(text):
         text,
     )
 
-_URL_RE = re.compile(r"\bhttps?://\S+|\bwww\.[\w-]+(?:\.[\w-]+)+\S*", re.IGNORECASE)
+
+_URL_RE = re.compile(
+    r"\bhttps?://\S+|\bwww\.[\w-]+(?:\.[\w-]+)+\S*", re.IGNORECASE)
 
 #: ``linkedin.com/in/jane-doe`` without a scheme, and the same for the handful
 #: of profile hosts that show up on nearly every resume.

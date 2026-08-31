@@ -1,0 +1,535 @@
+/* ------------------------------------------------------------------ */
+/*  Application Tracker — Pipeline Dashboard                           */
+/* ------------------------------------------------------------------ */
+
+.app-tracker {
+  width: 100%;
+}
+
+/* ── Header ───────────────────────────────────────────────────────── */
+
+.app-tracker__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.app-tracker__title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #e2e8f0);
+  margin: 0;
+}
+
+.app-tracker__subtitle {
+  font-size: 0.82rem;
+  color: var(--color-text-muted, #94a3b8);
+  margin-top: 0.15rem;
+}
+
+/* ── Add Button ───────────────────────────────────────────────────── */
+
+.app-tracker__add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.app-tracker__add-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+}
+
+/* ── Stats Cards ──────────────────────────────────────────────────── */
+
+.app-tracker__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.app-tracker__stat-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  backdrop-filter: blur(12px);
+  transition: border-color 0.2s;
+}
+
+.app-tracker__stat-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.app-tracker__stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #f1f5f9);
+  line-height: 1.2;
+}
+
+.app-tracker__stat-value--accent {
+  background: linear-gradient(135deg, #60a5fa, #a78bfa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.app-tracker__stat-label {
+  font-size: 0.75rem;
+  color: var(--color-text-muted, #94a3b8);
+  margin-top: 0.25rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── Funnel / Pipeline View ───────────────────────────────────────── */
+
+.app-tracker__funnel {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.app-tracker__funnel-stage {
+  flex: 1;
+  padding: 0.75rem 0.5rem;
+  text-align: center;
+  position: relative;
+  cursor: default;
+  transition: background 0.2s;
+}
+
+.app-tracker__funnel-stage:hover {
+  filter: brightness(1.15);
+}
+
+.app-tracker__funnel-stage:not(:last-child)::after {
+  content: '›';
+  position: absolute;
+  right: -0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: rgba(255, 255, 255, 0.3);
+  z-index: 1;
+}
+
+.app-tracker__funnel-count {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.app-tracker__funnel-label {
+  font-size: 0.68rem;
+  color: rgba(255, 255, 255, 0.85);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-top: 0.15rem;
+}
+
+.app-tracker__funnel-bar {
+  height: 4px;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 2px;
+  margin-top: 0.4rem;
+  overflow: hidden;
+}
+
+.app-tracker__funnel-bar-fill {
+  height: 100%;
+  background: rgba(255, 255, 255, 0.8);
+  border-radius: 2px;
+  transition: width 0.5s ease;
+}
+
+/* ── Kanban Board ─────────────────────────────────────────────────── */
+
+.app-tracker__kanban {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.app-tracker__column {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 0.75rem;
+  min-height: 120px;
+}
+
+.app-tracker__column-header {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.6rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid var(--column-color, rgba(255, 255, 255, 0.1));
+}
+
+.app-tracker__column-icon {
+  font-size: 1rem;
+}
+
+.app-tracker__column-title {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #e2e8f0);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.app-tracker__column-count {
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--column-color, #60a5fa);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.1rem 0.45rem;
+}
+
+/* ── Application Card ─────────────────────────────────────────────── */
+
+.app-tracker__card {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 0.65rem 0.75rem;
+  margin-bottom: 0.5rem;
+  transition: transform 0.12s, border-color 0.15s;
+  cursor: default;
+}
+
+.app-tracker__card:hover {
+  transform: translateY(-1px);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.app-tracker__card-company {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #f1f5f9);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.app-tracker__card-title {
+  font-size: 0.73rem;
+  color: var(--color-text-muted, #94a3b8);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 0.1rem;
+}
+
+.app-tracker__card-date {
+  font-size: 0.65rem;
+  color: var(--color-text-muted, #64748b);
+  margin-top: 0.3rem;
+}
+
+.app-tracker__card-actions {
+  display: flex;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+
+.app-tracker__card-action-btn {
+  padding: 0.2rem 0.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-muted, #94a3b8);
+  font-size: 0.68rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.app-tracker__card-action-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: var(--color-text-primary, #e2e8f0);
+}
+
+.app-tracker__card-action-btn--delete:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.app-tracker__card-action-btn--next {
+  background: rgba(99, 102, 241, 0.15);
+  color: #818cf8;
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.app-tracker__card-action-btn--next:hover {
+  background: rgba(99, 102, 241, 0.3);
+  color: #a5b4fc;
+}
+
+.app-tracker__card-notes {
+  font-size: 0.7rem;
+  color: var(--color-text-muted, #64748b);
+  margin-top: 0.25rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Add / Edit Modal ─────────────────────────────────────────────── */
+
+.app-tracker__modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1050;
+  animation: fadeIn 0.15s ease;
+}
+
+.app-tracker__modal {
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 1.5rem;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  animation: slideUp 0.2s ease;
+}
+
+.app-tracker__modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #f1f5f9);
+  margin: 0 0 1rem;
+}
+
+.app-tracker__form-group {
+  margin-bottom: 0.85rem;
+}
+
+.app-tracker__form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #94a3b8);
+  margin-bottom: 0.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.app-tracker__form-input,
+.app-tracker__form-select,
+.app-tracker__form-textarea {
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text-primary, #e2e8f0);
+  font-size: 0.85rem;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.app-tracker__form-input:focus,
+.app-tracker__form-select:focus,
+.app-tracker__form-textarea:focus {
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.app-tracker__form-textarea {
+  resize: vertical;
+  min-height: 60px;
+  font-family: inherit;
+}
+
+.app-tracker__modal-actions {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.app-tracker__btn {
+  padding: 0.5rem 1.1rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.12s, opacity 0.15s;
+}
+
+.app-tracker__btn:hover {
+  transform: translateY(-1px);
+}
+
+.app-tracker__btn--primary {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+}
+
+.app-tracker__btn--secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--color-text-muted, #94a3b8);
+}
+
+/* ── Empty State ──────────────────────────────────────────────────── */
+
+.app-tracker__empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.app-tracker__empty-icon {
+  font-size: 2.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.app-tracker__empty-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+  color: var(--color-text-primary, #94a3b8);
+}
+
+.app-tracker__empty-hint {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+/* ── Loading ──────────────────────────────────────────────────────── */
+
+.app-tracker__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  color: var(--color-text-muted, #64748b);
+  font-size: 0.85rem;
+}
+
+.app-tracker__spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  margin-right: 0.5rem;
+}
+
+/* ── Transitions Section ──────────────────────────────────────────── */
+
+.app-tracker__transitions {
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+}
+
+.app-tracker__transitions-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.5rem;
+}
+
+.app-tracker__transition-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.app-tracker__transition-item {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.72rem;
+  color: var(--color-text-muted, #94a3b8);
+}
+
+.app-tracker__transition-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Animations ───────────────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .app-tracker__kanban {
+    grid-template-columns: 1fr;
+  }
+
+  .app-tracker__funnel {
+    flex-direction: column;
+    border-radius: 12px;
+  }
+
+  .app-tracker__funnel-stage:not(:last-child)::after {
+    content: '↓';
+    right: 50%;
+    bottom: -0.4rem;
+    top: auto;
+    transform: translateX(50%);
+  }
+
+  .app-tracker__stats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .app-tracker__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
