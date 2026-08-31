@@ -2449,3 +2449,90 @@ def batch_status(request, batch_id):
         })
     except BatchUpload.DoesNotExist:
         return Response({"error": "Batch not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+# ── Resume Content Quality Rewriter ───────────────────────────────────────
+
+class ContentRewriteThrottle(AnonRateThrottle):
+    """Rate-limit the content rewrite endpoint."""
+
+    scope = "content_rewrite"
+
+
+@extend_schema(
+    summary="Analyse resume content and suggest rewrites",
+    description=(
+        "Accepts either an ``analysis_id`` (loads resume text from DB) "
+        "or raw ``resume_text``. Returns prioritised rewrite suggestions "
+        "with before/after text and impact scores."
+    ),
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "analysis_id": {
+                    "type": "integer",
+                    "description": "ResumeAnalysis id.",
+                },
+                "resume_text": {
+                    "type": "string",
+                    "description": "Raw resume text to analyse.",
+                },
+            },
+        }
+    },
+    responses={
+        200: OpenApiResponse(description="Rewrite analysis result."),
+        400: OpenApiResponse(description="Invalid input."),
+    },
+)
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@throttle_classes([ContentRewriteThrottle])
+def rewrite_content_view(request):
+    """Analyse resume content and suggest rewrites.
+
+    Two modes:
+
+    1. **analysis_id** — loads resume_text from a stored analysis.
+    2. **resume_text** — accepts raw text directly.
+    """
+    from .content_rewriter import rewrite_content
+    from .content_rewriter_serializers import (
+        ContentRewriteRequestSerializer,
+        ContentRewriteResultSerializer,
+    )
+
+    serializer = ContentRewriteRequestSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    data = serializer.validated_data
+    analysis_id = data.get("analysis_id")
+
+    if analysis_id is not None:
+        try:
+            if request.user.is_authenticated:
+                analysis = ResumeAnalysis.objects.get(
+                    pk=analysis_id, user=request.user
+                )
+            else:
+                analysis = ResumeAnalysis.objects.get(pk=analysis_id)
+        except ResumeAnalysis.DoesNotExist:
+            return Response(
+                {"error": "Analysis not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+        resume_text = analysis.resume_text or ""
+    else:
+        resume_text = data.get("resume_text") or ""
+
+    if not resume_text.strip():
+        return Response(
+            {"error": "No resume text to analyse."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    result = rewrite_content(resume_text)
+    result_serializer = ContentRewriteResultSerializer(result.as_dict())
+    return Response(result_serializer.data, status=status.HTTP_200_OK)

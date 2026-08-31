@@ -1,0 +1,366 @@
+/* ─── Content Rewriter Panel Styles ─────────────────────────────────── */
+
+.cr-panel {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #e2e8f0;
+}
+
+/* Header */
+.cr-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.cr-header-icon {
+  font-size: 36px;
+  margin-bottom: 8px;
+}
+
+.cr-title {
+  font-size: 26px;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #f97316, #ef4444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.cr-subtitle {
+  font-size: 14px;
+  color: #94a3b8;
+  margin: 6px 0 0 0;
+  line-height: 1.5;
+}
+
+/* Metrics Row */
+.cr-metrics-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 32px;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cr-gauge {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  flex-shrink: 0;
+}
+
+.cr-gauge-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.cr-gauge-score {
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.cr-gauge-label {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.cr-metrics-grid {
+  display: flex;
+  gap: 24px;
+}
+
+.cr-metric {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.cr-metric-val {
+  font-size: 24px;
+  font-weight: 800;
+  color: #e2e8f0;
+}
+
+.cr-metric-lbl {
+  font-size: 11px;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Section Titles */
+.cr-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e2e8f0;
+  margin: 0 0 14px 0;
+}
+
+/* Category Breakdown */
+.cr-categories {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 14px;
+  padding: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 24px;
+}
+
+.cr-cat-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cr-cat-row {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cr-cat-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.cr-cat-name {
+  flex: 1;
+  color: #cbd5e1;
+}
+
+.cr-cat-count {
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.cr-cat-bar-bg {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.cr-cat-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* Top Priority Actions */
+.cr-top-actions {
+  margin-bottom: 24px;
+}
+
+.cr-top-actions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* All Suggestions */
+.cr-all-suggestions {
+  margin-bottom: 24px;
+}
+
+/* Filter Bar */
+.cr-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.cr-filter-btn {
+  padding: 5px 12px;
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  color: #94a3b8;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cr-filter-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.cr-filter-active {
+  background: rgba(249, 115, 22, 0.15);
+  border-color: rgba(249, 115, 22, 0.4);
+  color: #f97316;
+}
+
+.cr-suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cr-show-more-btn {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-top: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: #94a3b8;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.cr-show-more-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+/* Suggestion Card */
+.cr-suggestion-card {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  transition: border-color 0.2s;
+}
+
+.cr-suggestion-card:hover {
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+.cr-sug-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.cr-sug-icon {
+  font-size: 16px;
+}
+
+.cr-sug-type {
+  font-size: 13px;
+  font-weight: 700;
+  flex: 1;
+}
+
+.cr-sug-priority {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.cr-sug-impact {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 600;
+}
+
+/* Diff View */
+.cr-sug-diff {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+  align-items: stretch;
+}
+
+.cr-diff-before,
+.cr-diff-after {
+  flex: 1;
+}
+
+.cr-diff-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 4px;
+  color: #64748b;
+}
+
+.cr-diff-text {
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  line-height: 1.5;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.cr-diff-removed {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  text-decoration: line-through;
+  text-decoration-color: rgba(239, 68, 68, 0.4);
+}
+
+.cr-diff-added {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #86efac;
+}
+
+.cr-diff-arrow {
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+  color: #64748b;
+  flex-shrink: 0;
+}
+
+.cr-sug-explanation {
+  font-size: 13px;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.cr-sug-meta {
+  font-size: 11px;
+  color: #475569;
+}
+
+/* ─── Responsive ────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .cr-metrics-row {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .cr-metrics-grid {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+  }
+
+  .cr-sug-diff {
+    flex-direction: column;
+  }
+
+  .cr-diff-arrow {
+    transform: rotate(90deg);
+    justify-content: center;
+  }
+}
