@@ -1,0 +1,133 @@
+.lockout-banner {
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.3s ease;
+}
+
+.lockout-banner.warning {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fef08a;
+}
+
+.lockout-banner.locked {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  color: #fca5a5;
+}
+
+.banner-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+}
+
+.banner-icon {
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.banner-text strong {
+  display: block;
+  font-size: 0.95rem;
+  margin-bottom: 0.25rem;
+  color: #ffffff;
+}
+
+.banner-text p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.demo-unlock-hint {
+  margin-top: 0.5rem;
+  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.hint-label {
+  color: #94a3b8;
+}
+
+.token-code {
+  background: #0f172a;
+  color: #38bdf8;
+  border: 1px solid #334155;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-family: monospace;
+  font-weight: 700;
+  font-size: 0.85rem;
+}
+
+.banner-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.25rem;
+}
+
+.btn-unlock-toggle {
+  background: #334155;
+  color: #ffffff;
+  border: 1px solid #475569;
+  padding: 0.4rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  align-self: flex-start;
+  transition: background 0.2s ease;
+}
+
+.btn-unlock-toggle:hover {
+  background: #475569;
+}
+
+.unlock-token-form {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.unlock-token-form input {
+  background: #0f172a;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  padding: 0.4rem 0.65rem;
+  color: #ffffff;
+  font-size: 0.85rem;
+  width: 120px;
+}
+
+.btn-submit-unlock {
+  background: #22c55e;
+  color: #ffffff;
+  border: none;
+  padding: 0.4rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-cancel-unlock {
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.unlock-error-msg {
+  color: #f87171;
+  font-size: 0.75rem;
+  margin: 0;
+}

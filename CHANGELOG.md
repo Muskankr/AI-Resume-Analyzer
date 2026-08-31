@@ -7,6 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Added login rate limiting and temporary account lockout protection (5 failed attempts limit, 15-min cooldown timer, self-service unlock token) (#640).
 - Added database indexing and query performance review for history, leaderboard aggregation, and analysis retrieval (#979).
 - Unified reusable Button component with primary, secondary, ghost, outline, danger, and accent variants, size modifiers, pill shape, accessible loading spinner, and consistent hover/active/focus/disabled states (#102).
 - Added drag-and-drop resume upload functionality to compare tools allowing drag-and-drop directly on the file inputs (#20).
