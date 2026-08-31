@@ -26,6 +26,7 @@ urlpatterns = [
     ),
 
     # API
+    path("api/v1/", include("organizations.urls")),
     path("api/", include("analyzer.urls")),
 ]
 
