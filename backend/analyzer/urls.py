@@ -35,6 +35,7 @@ from .views import (
     webhook_detail,
     test_webhook,
     preview_experience_level_view,
+    generate_career_path_view,
 )
 from . import career_roadmap
 from .badge_views import manage_resume_badge, resume_score_badge
@@ -187,5 +188,12 @@ urlpatterns = [
         "sanitize-resume/",
         SanitizeResumeView.as_view(),
         name="sanitize_resume",
+    ),
+
+    # Career Path Recommendation Engine
+    path(
+        "career-path/",
+        generate_career_path_view,
+        name="generate_career_path",
     ),
 ]
