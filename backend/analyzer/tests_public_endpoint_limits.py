@@ -118,7 +118,8 @@ class ContactEndpointTests(TestCase):
         self.assertIn("jane@example.com", mail.outbox[0].body)
 
     def test_an_invalid_address_is_rejected_and_sends_nothing(self):
-        resp = self.client.post("/api/contact/", self._payload(email="not-an-email"))
+        resp = self.client.post(
+            "/api/contact/", self._payload(email="not-an-email"))
 
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("valid email", resp.data["error"])
@@ -145,12 +146,14 @@ class ContactEndpointTests(TestCase):
 
     def test_an_overlong_message_is_truncated_rather_than_rejected(self):
         resp = self.client.post(
-            "/api/contact/", self._payload(message="x" * (MAX_CONTACT_MESSAGE_LENGTH * 3))
+            "/api/contact/", self._payload(message="x" *
+                                           (MAX_CONTACT_MESSAGE_LENGTH * 3))
         )
 
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         # The whole email body is bounded, not just the message field.
-        self.assertLess(len(mail.outbox[0].body), MAX_CONTACT_MESSAGE_LENGTH + 1000)
+        self.assertLess(len(mail.outbox[0].body),
+                        MAX_CONTACT_MESSAGE_LENGTH + 1000)
 
     def test_an_unrecognised_category_is_filed_as_other(self):
         """Keeps caller-controlled text out of the subject header."""
@@ -158,7 +161,8 @@ class ContactEndpointTests(TestCase):
             "/api/contact/", self._payload(category="X-Injected: yes")
         )
 
-        self.assertEqual(mail.outbox[0].subject, "[Support - Other] Parser issue")
+        self.assertEqual(mail.outbox[0].subject,
+                         "[Support - Other] Parser issue")
 
     def test_the_endpoint_is_rate_limited(self):
         with throttled_at("contact", "3/hour"):
@@ -170,7 +174,8 @@ class ContactEndpointTests(TestCase):
 
             blocked = self.client.post("/api/contact/", self._payload())
 
-        self.assertEqual(blocked.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertEqual(blocked.status_code,
+                         status.HTTP_429_TOO_MANY_REQUESTS)
         # The throttled request must not have sent anything.
         self.assertEqual(len(mail.outbox), 3)
 
@@ -250,7 +255,8 @@ class MockInterviewEndpointTests(TestCase):
     def test_a_normal_answer_gets_feedback(self):
         resp = self.client.post(
             "/api/mock-interview/",
-            {"question": "Explain closures.", "answer": "A closure is " + "words " * 40},
+            {"question": "Explain closures.",
+                "answer": "A closure is " + "words " * 40},
         )
 
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
@@ -265,7 +271,8 @@ class MockInterviewEndpointTests(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_the_endpoint_is_rate_limited(self):
-        body = {"question": "Explain closures.", "answer": "A closure is a function."}
+        body = {"question": "Explain closures.",
+                "answer": "A closure is a function."}
 
         with throttled_at("mock_interview", "1/hour"):
             self.assertEqual(
@@ -297,9 +304,11 @@ class SignupThrottleTests(TestCase):
         with throttled_at("signup", "2/hour"):
             self.assertEqual(register(1).status_code, status.HTTP_201_CREATED)
             self.assertEqual(register(2).status_code, status.HTTP_201_CREATED)
-            self.assertEqual(register(3).status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+            self.assertEqual(register(3).status_code,
+                             status.HTTP_429_TOO_MANY_REQUESTS)
 
-        self.assertEqual(User.objects.filter(username__startswith="person").count(), 2)
+        self.assertEqual(User.objects.filter(
+            username__startswith="person").count(), 2)
 
 
 class UploadInputTests(TestCase):

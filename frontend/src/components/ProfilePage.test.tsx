@@ -75,11 +75,12 @@ describe('ProfilePage', () => {
     expect(screen.getByText(/Please log in to manage your account details/i)).toBeInTheDocument()
   })
 
-  it('fetches and displays the authenticated user profile', async () => {
+  it('fetches and displays the authenticated user profile with bio', async () => {
     mockedAxiosGet.mockResolvedValueOnce({
       data: {
         username: 'testuser',
         email: 'test@example.com',
+        bio: 'Senior Software Engineer | React & Python',
         weekly_digest_opt_in: true,
       },
     })
@@ -93,6 +94,7 @@ describe('ProfilePage', () => {
     })
 
     expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Senior Software Engineer | React & Python')).toBeInTheDocument()
 
     const digestToggle = screen.getByRole('switch', {
       name: /weekly resume-tips email digest/i,
@@ -107,6 +109,7 @@ describe('ProfilePage', () => {
       data: {
         username: 'testuser',
         email: 'test@example.com',
+        bio: 'Frontend Architect',
         weekly_digest_opt_in: false,
       },
     })
@@ -119,28 +122,32 @@ describe('ProfilePage', () => {
 
     const usernameInput = screen.getByLabelText('Username')
     const emailInput = screen.getByLabelText('Email Address')
+    const bioInput = screen.getByLabelText(/bio \/ headline/i)
     const digestToggle = screen.getByRole('switch', {
       name: /weekly resume-tips email digest/i,
     })
 
     expect(usernameInput).toBeDisabled()
     expect(emailInput).toBeDisabled()
+    expect(bioInput).toBeDisabled()
     expect(digestToggle).toBeDisabled()
 
     fireEvent.click(screen.getByRole('button', { name: /edit profile/i }))
 
     expect(usernameInput).not.toBeDisabled()
     expect(emailInput).not.toBeDisabled()
+    expect(bioInput).not.toBeDisabled()
     expect(digestToggle).not.toBeDisabled()
     expect(screen.getByRole('button', { name: /save changes/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /cancel/i })).toBeInTheDocument()
   })
 
-  it('updates the profile successfully', async () => {
+  it('updates the profile and bio successfully with sanitization', async () => {
     mockedAxiosGet.mockResolvedValueOnce({
       data: {
         username: 'testuser',
         email: 'test@example.com',
+        bio: 'Initial Headline',
         weekly_digest_opt_in: false,
       },
     })
@@ -149,6 +156,7 @@ describe('ProfilePage', () => {
       data: {
         username: 'updateduser',
         email: 'updated@example.com',
+        bio: 'Full-Stack Developer & Open Source Contributor',
         weekly_digest_opt_in: true,
       },
     })
@@ -162,7 +170,9 @@ describe('ProfilePage', () => {
     fireEvent.click(screen.getByRole('button', { name: /edit profile/i }))
 
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'updateduser' } })
-    fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'updated@example.com' } })
+    fireEvent.change(screen.getByLabelText('Email Address'), {
+      target: { value: 'updated@example.com' },
+    })
     fireEvent.click(screen.getByRole('switch', { name: /weekly resume-tips email digest/i }))
     fireEvent.click(screen.getByRole('button', { name: /save changes/i }))
 
@@ -171,13 +181,19 @@ describe('ProfilePage', () => {
     expect(mockedAxiosPut).toHaveBeenCalledWith(expect.stringContaining('/api/profile/'), {
       username: 'updateduser',
       email: 'updated@example.com',
+      bio: 'Full-Stack Developer & Open Source Contributor',
       weekly_digest_opt_in: true,
       notification_preferences: { browser: false, in_app: true },
     })
 
-    await waitFor(() => expect(screen.getByText('Profile and notification preferences updated successfully!')).toBeInTheDocument())
+    await waitFor(() =>
+      expect(
+        screen.getByText('Profile and notification preferences updated successfully!')
+      ).toBeInTheDocument()
+    )
     expect(screen.getByDisplayValue('updateduser')).toBeInTheDocument()
     expect(screen.getByDisplayValue('updated@example.com')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Full-Stack Developer & Open Source Contributor')).toBeInTheDocument()
     expect(mockUpdateProfileSession).toHaveBeenCalledWith('updateduser')
     expect(screen.getByRole('button', { name: /edit profile/i })).toBeInTheDocument()
   })
@@ -214,20 +230,23 @@ describe('ProfilePage', () => {
     expect(mockedAxiosPut).not.toHaveBeenCalled()
   })
 
-  it('cancels editing and restores the original values', async () => {
+  it('cancels editing and restores the original values including bio', async () => {
     mockedAxiosGet.mockResolvedValueOnce({
-      data: { username: 'testuser', email: 'test@example.com', weekly_digest_opt_in: false },
+      data: { username: 'testuser', email: 'test@example.com', bio: 'Original Bio Text', weekly_digest_opt_in: false },
     })
 
     render(<ProfilePage />)
     await waitFor(() => expect(screen.getByDisplayValue('testuser')).toBeInTheDocument())
     fireEvent.click(screen.getByRole('button', { name: /edit profile/i }))
     fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'changeduser' } })
-    fireEvent.change(screen.getByLabelText('Email Address'), { target: { value: 'changed@example.com' } })
+    fireEvent.change(screen.getByLabelText('Email Address'), {
+      target: { value: 'changed@example.com' },
+    })
     fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
 
     expect(screen.getByDisplayValue('testuser')).toBeInTheDocument()
     expect(screen.getByDisplayValue('test@example.com')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('Original Bio Text')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /edit profile/i })).toBeInTheDocument()
   })
 })

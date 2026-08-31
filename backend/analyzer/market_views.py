@@ -5,7 +5,11 @@ Views for Market Value Estimator.
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .market_value_estimator import calculate_salary_range, generate_negotiation_points
+from .market_value_estimator import (
+    calculate_salary_range,
+    find_high_value_skills,
+    generate_negotiation_points,
+)
 from .market_serializers import (
     MarketValueRequestSerializer,
     MarketValueResponseSerializer,
@@ -31,15 +35,12 @@ class MarketValueView(APIView):
             salary_range = calculate_salary_range(target_role, experience_level, skills)
             negotiation_points = generate_negotiation_points(experience_level, skills)
 
-            # Identify value driving skills
-            high_value = [
-                "machine learning",
-                "aws",
-                "kubernetes",
-                "leadership",
-                "system design",
-            ]
-            value_driving = [s for s in skills if s.lower() in high_value]
+            # Identify value driving skills. This used to be a five-entry copy
+            # of the list, while calculate_salary_range above priced against
+            # all sixteen -- so "Docker, Rust, Azure" earned an uplift and came
+            # back with an empty value_driving_skills, i.e. the response raised
+            # the number and then reported that nothing drove it.
+            value_driving = find_high_value_skills(skills)
 
             response_data = {
                 "salary_range": salary_range,

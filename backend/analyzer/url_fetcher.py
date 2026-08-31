@@ -21,7 +21,8 @@ def convert_to_direct_download_url(url: str) -> tuple[str, str]:
     url = url.strip()
 
     # Google Drive patterns
-    gdrive_match = re.search(r'(?:file/d/|open\?id=|document/d/)([a-zA-Z0-9_-]+)', url)
+    gdrive_match = re.search(
+        r'(?:file/d/|open\?id=|document/d/)([a-zA-Z0-9_-]+)', url)
     if gdrive_match:
         file_id = gdrive_match.group(1)
         direct_url = f"https://drive.google.com/uc?export=download&id={file_id}"
@@ -42,7 +43,8 @@ def convert_to_direct_download_url(url: str) -> tuple[str, str]:
 
     # Default direct URL
     path_filename = os.path.basename(url.split("?")[0])
-    filename = path_filename if path_filename.endswith(".pdf") else "imported_resume.pdf"
+    filename = path_filename if path_filename.endswith(
+        ".pdf") else "imported_resume.pdf"
     return url, filename
 
 
@@ -100,7 +102,8 @@ def download_and_validate_url(url: str, max_size_mb: int = 10) -> tuple[str, str
     :mod:`analyzer.url_safety` for what is rejected and why.
     """
     if not url or not url.strip().startswith(("http://", "https://")):
-        raise ValueError("Please provide a valid URL starting with http:// or https://")
+        raise ValueError(
+            "Please provide a valid URL starting with http:// or https://")
 
     direct_url, suggested_name = convert_to_direct_download_url(url)
 
@@ -113,14 +116,16 @@ def download_and_validate_url(url: str, max_size_mb: int = 10) -> tuple[str, str
     }
 
     try:
-        response = fetch_with_redirect_guard(direct_url, headers=headers, timeout=15)
+        response = fetch_with_redirect_guard(
+            direct_url, headers=headers, timeout=15)
     except UnsafeURLError:
         # Deliberately not re-raised with its reason attached: the reason says
         # what is reachable from the server, which is exactly what we do not
         # want to tell an anonymous caller.
         raise ValueError(GENERIC_REJECTION_MESSAGE)
     except requests.exceptions.Timeout:
-        raise ValueError("The request timed out while trying to fetch the file. Please check the URL and try again.")
+        raise ValueError(
+            "The request timed out while trying to fetch the file. Please check the URL and try again.")
     except requests.exceptions.RequestException:
         # The exception text carries the host and port that failed, which turns
         # a connection error into a scan result. Kept generic for the same
@@ -139,7 +144,8 @@ def download_and_validate_url(url: str, max_size_mb: int = 10) -> tuple[str, str
     if content_length and content_length.isdigit():
         size_bytes = int(content_length)
         if size_bytes > max_size_mb * 1024 * 1024:
-            raise ValueError(f"The file exceeds the maximum allowed size of {max_size_mb}MB.")
+            raise ValueError(
+                f"The file exceeds the maximum allowed size of {max_size_mb}MB.")
 
     temp_dir = os.path.join(settings.BASE_DIR, "tmp")
     os.makedirs(temp_dir, exist_ok=True)
@@ -158,7 +164,8 @@ def download_and_validate_url(url: str, max_size_mb: int = 10) -> tuple[str, str
                 f.close()
                 if os.path.exists(file_path):
                     os.remove(file_path)
-                raise ValueError(f"The file exceeds the maximum allowed size of {max_size_mb}MB.")
+                raise ValueError(
+                    f"The file exceeds the maximum allowed size of {max_size_mb}MB.")
             f.write(chunk)
 
     # Validate file content is not an HTML login/error page
@@ -167,6 +174,7 @@ def download_and_validate_url(url: str, max_size_mb: int = 10) -> tuple[str, str
         if b"<!doctype html" in lower_chunk or b"<html" in lower_chunk:
             if os.path.exists(file_path):
                 os.remove(file_path)
-            raise ValueError("The provided URL returned a web page instead of a document file. Please ensure the link is a direct share link with public access.")
+            raise ValueError(
+                "The provided URL returned a web page instead of a document file. Please ensure the link is a direct share link with public access.")
 
     return file_path, suggested_name

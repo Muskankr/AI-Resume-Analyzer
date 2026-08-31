@@ -7,10 +7,12 @@ import { optimizeBullets, type BulletAnalysisResult, saveDraftToLocal } from '..
 
 interface BulletPointOptimizerProps {
     targetRole?: string;
+    initialJobDescription?: string;
 }
 
-const BulletPointOptimizer: React.FC<BulletPointOptimizerProps> = ({ targetRole }: BulletPointOptimizerProps) => {
+const BulletPointOptimizer: React.FC<BulletPointOptimizerProps> = ({ targetRole, initialJobDescription = '' }: BulletPointOptimizerProps) => {
     const [inputText, setInputText] = useState<string>('');
+    const [jobDescription, setJobDescription] = useState<string>(initialJobDescription);
     const [results, setResults] = useState<BulletAnalysisResult[]>([]);
     const [isLoading, setIsLoading] = useState<boolean>(false);
     const [error, setError] = useState<string | null>(null);
@@ -23,7 +25,7 @@ const BulletPointOptimizer: React.FC<BulletPointOptimizerProps> = ({ targetRole 
 
         try {
             const bullets = inputText.split('\n').filter(b => b.trim().length > 0);
-            const response = await optimizeBullets(bullets, targetRole);
+            const response = await optimizeBullets(bullets, targetRole, jobDescription);
             setResults(response.results);
         } catch (err) {
             setError('Failed to optimize bullet points. Please try again.');
@@ -42,17 +44,32 @@ const BulletPointOptimizer: React.FC<BulletPointOptimizerProps> = ({ targetRole 
 
     return (
         <div className="card glassmorphic-card p-4 mb-4">
-            <h3 className="h5 mb-3 text-primary">Bullet Point Optimizer (STAR Method)</h3>
+            <h3 className="h5 mb-2 text-primary">Bullet Point Optimizer (STAR Method)</h3>
+            <p className="text-muted small mb-3">
+                💡 <strong>Review & Edit:</strong> These are AI-assisted suggestions tailored to mirror the Job Description's keywords and priorities without fabricating experience. Review and edit them before applying.
+            </p>
 
             <div className="mb-3">
                 <label htmlFor="bulletInput" className="form-label">Paste your resume bullet points (one per line):</label>
                 <textarea
                     id="bulletInput"
-                    className="form-control bg-dark text-light border-secondary"
-                    rows={5}
+                    className="form-control bg-dark text-light border-secondary mb-3"
+                    rows={4}
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     placeholder="e.g., Managed a team of developers."
+                />
+            </div>
+
+            <div className="mb-3">
+                <label htmlFor="jdInput" className="form-label">Paste Target Job Description (optional, for tailoring):</label>
+                <textarea
+                    id="jdInput"
+                    className="form-control bg-dark text-light border-secondary"
+                    rows={4}
+                    value={jobDescription}
+                    onChange={(e) => setJobDescription(e.target.value)}
+                    placeholder="Paste the job description here to tailor suggested rewrites to its requirements..."
                 />
             </div>
 
@@ -64,7 +81,7 @@ const BulletPointOptimizer: React.FC<BulletPointOptimizerProps> = ({ targetRole 
                 {isLoading ? (
                     <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                 ) : null}
-                {isLoading ? 'Analyzing...' : 'Optimize Bullet Points'}
+                {isLoading ? 'Analyzing & Tailoring...' : 'Optimize Bullet Points'}
             </button>
 
             {error && <div className="alert alert-danger">{error}</div>}

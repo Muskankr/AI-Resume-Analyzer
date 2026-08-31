@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { FaGithub, FaLinkedin, FaDiscord } from "react-icons/fa"
+import { FaGithub, FaLinkedin } from 'react-icons/fa'
 
 const DISCORD_URL = 'https://discord.gg/YOUR_INVITE_CODE'
 const REPO_URL = 'https://github.com/Muskankr/AI-Resume-Analyzer'
@@ -122,6 +122,20 @@ export const Footer: React.FC<FooterProps> = ({ onOpenWhatsNew }) => {
                 className="footer-link"
               >
                 🔒 Privacy Policy
+              </Link>
+            </li>
+            <li>
+              <Link
+                to="/contributors"
+                style={{
+                  color: '#94a3b8',
+                  fontSize: 'var(--font-size-sm)',
+                  textDecoration: 'none',
+                  transition: 'color 0.2s',
+                }}
+                className="footer-link"
+              >
+                🎖️ Contributor Certificate
               </Link>
             </li>
           </ul>
@@ -298,10 +312,10 @@ export const Footer: React.FC<FooterProps> = ({ onOpenWhatsNew }) => {
           </h5>
           <div style={{ display: 'flex', gap: '16px' }}>
             <a href={REPO_URL} target="_blank" rel="noopener noreferrer">
-              <FaGithub size={24} color='white' />
+              <FaGithub size={24} color="white" />
             </a>
             <a href={LINKEDIN_URL} target="_blank" rel="noopener noreferrer">
-              <FaLinkedin size={24} color='white' />
+              <FaLinkedin size={24} color="white" />
             </a>
             <a
               href={DISCORD_URL}

@@ -1,0 +1,300 @@
+/* ── Skills Progress Tracker ────────────────────────────────── */
+
+.spt {
+  width: 100%;
+}
+
+.spt__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.spt__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #e2e8f0);
+  margin: 0;
+}
+
+.spt__subtitle {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #94a3b8);
+  margin-top: 0.1rem;
+}
+
+/* ── Metrics Row ───────────────────────────────────────────── */
+
+.spt__metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+
+.spt__metric {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 0.7rem;
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.spt__metric-value {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #f1f5f9);
+  line-height: 1.2;
+}
+
+.spt__metric-value--accent {
+  background: linear-gradient(135deg, #34d399, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.spt__metric-label {
+  font-size: 0.65rem;
+  color: var(--color-text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.15rem;
+}
+
+/* ── Section Panel ─────────────────────────────────────────── */
+
+.spt__panel {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.85rem;
+}
+
+.spt__panel-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #e2e8f0);
+  margin: 0 0 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* ── Timeline ──────────────────────────────────────────────── */
+
+.spt__timeline {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.25rem;
+  height: 60px;
+  padding: 0 0.25rem;
+}
+
+.spt__timeline-bar {
+  flex: 1;
+  min-width: 8px;
+  border-radius: 3px 3px 0 0;
+  transition: height 0.3s ease;
+  position: relative;
+}
+
+.spt__timeline-bar:hover {
+  opacity: 0.85;
+}
+
+.spt__timeline-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6rem;
+  color: var(--color-text-muted, #64748b);
+  padding: 0.2rem 0.25rem 0;
+}
+
+/* ── Skill Row ─────────────────────────────────────────────── */
+
+.spt__skill-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.spt__skill-row {
+  display: grid;
+  grid-template-columns: 1fr auto 80px auto;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.spt__skill-row:last-child {
+  border-bottom: none;
+}
+
+.spt__skill-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--color-text-primary, #e2e8f0);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.spt__skill-pct {
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  min-width: 32px;
+  text-align: right;
+}
+
+.spt__skill-bar {
+  height: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.spt__skill-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.4s ease;
+}
+
+.spt__skill-bar-fill--high {
+  background: #34d399;
+}
+
+.spt__skill-bar-fill--mid {
+  background: #fbbf24;
+}
+
+.spt__skill-bar-fill--low {
+  background: #f87171;
+}
+
+/* ── Trend Badge ───────────────────────────────────────────── */
+
+.spt__trend-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 6px;
+  font-size: 0.6rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
+.spt__trend-badge--new {
+  background: rgba(52, 211, 153, 0.12);
+  color: #34d399;
+}
+
+.spt__trend-badge--stable {
+  background: rgba(96, 165, 250, 0.12);
+  color: #60a5fa;
+}
+
+.spt__trend-badge--lost {
+  background: rgba(248, 113, 113, 0.12);
+  color: #f87171;
+}
+
+.spt__trend-badge--declining {
+  background: rgba(251, 191, 36, 0.12);
+  color: #fbbf24;
+}
+
+/* ── Empty State ───────────────────────────────────────────── */
+
+.spt__empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.spt__empty-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.spt__empty-text {
+  font-size: 0.85rem;
+  color: var(--color-text-primary, #94a3b8);
+  font-weight: 500;
+}
+
+/* ── Top / Loss cards ──────────────────────────────────────── */
+
+.spt__highlights {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.6rem;
+}
+
+.spt__highlight-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.65rem;
+}
+
+.spt__highlight-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.4rem;
+}
+
+.spt__highlight-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+}
+
+.spt__highlight-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.7rem;
+  font-weight: 500;
+}
+
+.spt__highlight-chip--gain {
+  background: rgba(52, 211, 153, 0.1);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.2);
+}
+
+.spt__highlight-chip--loss {
+  background: rgba(248, 113, 113, 0.1);
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.2);
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .spt__metrics {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .spt__highlights {
+    grid-template-columns: 1fr;
+  }
+
+  .spt__skill-row {
+    grid-template-columns: 1fr auto 60px auto;
+  }
+}

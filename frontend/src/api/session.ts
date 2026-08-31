@@ -18,6 +18,7 @@ export interface StoredSession {
   token: string
   refresh?: string
   avatarUrl?: string
+  themePreference?: string
 }
 
 const STORAGE_KEY = 'auth_user'

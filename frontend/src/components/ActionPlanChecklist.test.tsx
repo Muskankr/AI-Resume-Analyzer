@@ -36,7 +36,9 @@ describe('ActionPlanChecklist Component', () => {
 
     expect(screen.getByText('Prioritized Action Plan Checklist')).toBeInTheDocument()
     expect(screen.getAllByText(/Backend Developer/i)[0]).toBeInTheDocument()
-    expect(screen.getByText(/Top Priority Rule: Focus on the top 3 items first!/i)).toBeInTheDocument()
+    expect(
+      screen.getByText(/Top Priority Rule: Focus on the top 3 items first!/i)
+    ).toBeInTheDocument()
   })
 
   it('allows user to check off completed checklist items', () => {

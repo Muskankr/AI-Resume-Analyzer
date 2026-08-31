@@ -36,9 +36,19 @@ from .views import (
     test_webhook,
     preview_experience_level_view,
     generate_career_path_view,
+    export_pdf_view,
+    upload_batch_resumes,
+    batch_status,
+    import_jd_url_view,
+    UserDashboardViewSet,
 )
 from . import career_roadmap
 from .badge_views import manage_resume_badge, resume_score_badge
+from .application_tracker_views import (
+    ApplicationLogListView,
+    ApplicationLogDetailView,
+    application_stats_view,
+)
 
 # The feature modules below were written with views, serializers and tests, and
 # were never given a path. Everything under `analyzer/` matches the URLs the
@@ -56,16 +66,23 @@ from .multilingual_views import LanguageDetectionView, TranslationView
 from .ab_testing_views import ABTestingStatsView, LogApplicationView
 from .accessibility_views import AccessibilityCheckView
 from .cliche_views import ClicheDetectorView
-from .linkedin_views import LinkedInOptimizationView
+from .linkedin_views import LinkedInOptimizationView, LinkedInConsistencyView
 from .sanitizer_views import FileMetadataView, SanitizeResumeView
+from .ats_simulator_views import list_ats_profiles, simulate_ats
+from .cover_letter_views import generate_cover_letter_view
+from .job_board_views import suggest_roles
+from .contributor_views import ContributorCertificateView
 
 urlpatterns = [
     path("upload/", upload_resume),
-    path("preview-level/", preview_experience_level_view),
+    path("batch-upload/", upload_batch_resumes),
+    path("import-jd-url/", import_jd_url_view),
     path("status/<str:task_id>/", task_status),
+    path("batch-status/<str:batch_id>/", batch_status),
     path("mock-interview/", mock_interview_view),
     path("compare-uploads/", compare_uploads),
     path("analyze-jd/", analyze_jd_view),
+    path("export-pdf/", export_pdf_view, name="export_pdf"),
     path("compare-bulk-jds/", compare_bulk_jds_view),
     path("compare-bulk-resumes/", compare_bulk_resumes_view),
     path("profile/", user_profile_view),
@@ -82,6 +99,9 @@ urlpatterns = [
     path("auth/oauth/", social_auth_view, name="social_auth"),
     path("auth/refresh/", TokenRefreshView.as_view()),
 
+    path("dashboard/", UserDashboardViewSet.as_view({'get': 'list'}), name='dashboard_list'),
+    path("dashboard/<int:pk>/", UserDashboardViewSet.as_view({'get': 'retrieve', 'delete': 'destroy'}), name='dashboard_detail'),
+
     path("history/", analysis_history),
     path("history/clear/", clear_user_history),
     path("history/<int:pk>/", history_detail),
@@ -90,6 +110,10 @@ urlpatterns = [
         manage_analysis_share,
         name="manage_analysis_share",
     ),
+
+    path("ats-simulator/profiles/", list_ats_profiles, name="list_ats_profiles"),
+    path("history/<int:analysis_id>/ats-simulate/", simulate_ats, name="simulate_ats"),
+    path("generate-cover-letter/", generate_cover_letter_view, name="generate_cover_letter"),
 
     path("webhooks/", manage_webhooks, name="manage_webhooks"),
     path("webhooks/<int:pk>/", webhook_detail, name="webhook_detail"),

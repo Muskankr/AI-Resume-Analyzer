@@ -17,16 +17,39 @@ PROJECT_HEADERS = [
     r"side projects",
 ]
 
+# (label, pattern). The label is what goes back in ``metrics_found``, which is
+# part of the API response -- deriving it from the regex source, as this used
+# to, produced strings like "X%" and "X users" and could not survive a pattern
+# gaining a group.
 METRIC_PATTERNS = [
-    r"\d+%",
-    r"\d+\s+users?",
-    r"\d+\s+million",
-    r"\d+x",
-    r"\$\d+",
-    r"\d+\s+team members?",
-    r"reduced by \d+",
-    r"increased by \d+",
+    ("percentage", r"\d+(?:\.\d+)?\s*%"),
+    # "10k users", "2.5M requests", "1B rows". The old r"\d+\s+users?" required
+    # whitespace between the number and the noun, so "10k users" never matched:
+    # \d+ consumed "10" and \s+ then hit "k". Abbreviated magnitudes are the
+    # common way to write these on a resume.
+    ("scale", r"\d+(?:\.\d+)?\s*[kKmMbB]\b"),
+    ("scale", r"\d+\s+(?:users?|customers?|requests?|records?|rows?|downloads?)"),
+    ("scale", r"\d+\s+(?:million|billion|thousand)"),
+    ("multiplier", r"\d+(?:\.\d+)?x\b"),
+    ("monetary", r"\$\s?\d+(?:[.,]\d+)?\s*[kKmMbB]?"),
+    ("team size", r"\d+\s+(?:team members?|engineers?|developers?|people)"),
+    # Any tense, and allowing an object between the verb and "by":
+    # "increasing sales by 20%", "reduced latency by 40ms", "cut build times by
+    # half". The old patterns were the two literals "reduced by" and
+    # "increased by", so the participle forms people actually write were missed.
+    (
+        "improvement",
+        r"\b(?:increas|reduc|decreas|improv|boost|rais|lower|cut|grew|grow|"
+        r"accelerat|boost|boosted|shrank|shrink|optimi[sz])\w*\s+"
+        r"(?:\w+\s+){0,3}by\s+\d+",
+    ),
+    ("duration", r"\d+\s*(?:ms|seconds?|minutes?|hours?)\b"),
 ]
+
+# Ceiling on the metric contribution. Each distinct kind of metric is worth 15,
+# but one bullet quoting a percentage, a scale and a dollar figure describes one
+# achievement, not three, and should not be able to carry the whole score.
+MAX_METRIC_SCORE = 45
 
 ACTION_VERBS = [
     r"\barchitected\b",
@@ -116,12 +139,11 @@ def score_project_impact(project: Dict[str, Any]) -> Dict[str, Any]:
     tech_found = []
 
     # Check for metrics
-    for pattern in METRIC_PATTERNS:
-        if re.search(pattern, desc, re.IGNORECASE):
-            score += 15
-            metrics_found.append(
-                pattern.replace("\\", "").replace("d+", "X").replace("s+", " ")
-            )
+    for label, pattern in METRIC_PATTERNS:
+        if re.search(pattern, desc, re.IGNORECASE) and label not in metrics_found:
+            metrics_found.append(label)
+
+    score += min(len(metrics_found) * 15, MAX_METRIC_SCORE)
 
     if not metrics_found:
         suggestions.append(
@@ -152,7 +174,7 @@ def score_project_impact(project: Dict[str, Any]) -> Dict[str, Any]:
         "name": project["name"],
         "description": desc,
         "impact_score": min(100, score),
-        "metrics_found": list(set(metrics_found)),
+        "metrics_found": metrics_found,
         "technologies": list(set(tech_found)),
         "suggestions": suggestions,
     }

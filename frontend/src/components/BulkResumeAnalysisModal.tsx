@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { X, Layers, Loader2, Trash2, ChevronRight, FileText, CheckCircle2, AlertCircle, ArrowLeft } from 'lucide-react'
 import axios from 'axios'
+import Papa from 'papaparse'
 import { ScoreBreakdown, type ScoreBreakdownData } from './ScoreBreakdown'
 
 interface BulkResumeAnalysisModalProps {
@@ -51,25 +52,53 @@ export const BulkResumeAnalysisModal: React.FC<BulkResumeAnalysisModalProps> = (
   const [results, setResults] = useState<BulkApiResponse | null>(null)
   const [selectedResume, setSelectedResume] = useState<ResumeAnalysisResult | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const [hasConsent, setHasConsent] = useState(false)
 
-  const handleFileSelection = (newFiles: FileList | null) => {
+  const handleFileSelection = async (newFiles: FileList | null) => {
     if (!newFiles) return
     const validArray: File[] = []
     for (let i = 0; i < newFiles.length; i++) {
       const f = newFiles[i]
       const ext = f.name.toLowerCase()
-      if (ext.endsWith('.pdf') || ext.endsWith('.docx') || ext.endsWith('.txt')) {
+      if (ext.endsWith('.csv')) {
+        try {
+          const csvText = await f.text()
+          const parsed = Papa.parse(csvText, { header: true, skipEmptyLines: true })
+          if (parsed.errors.length === 0 && parsed.data.length > 0) {
+            parsed.data.forEach((row: any, idx: number) => {
+              const nameKey = Object.keys(row).find(
+                (k) => k.toLowerCase().includes('name') || k.toLowerCase().includes('candidate')
+              ) || Object.keys(row)[0]
+              const textKey = Object.keys(row).find(
+                (k) => k.toLowerCase().includes('resume') || k.toLowerCase().includes('text') || k.toLowerCase().includes('content')
+              ) || Object.keys(row)[1]
+
+              const name = row[nameKey] ? String(row[nameKey]).trim() : `Candidate_${idx + 1}`
+              const content = row[textKey] ? String(row[textKey]).trim() : ''
+
+              if (content) {
+                const textFile = new File([content], `${name.replace(/[^a-zA-Z0-9]/g, '_')}.txt`, {
+                  type: 'text/plain',
+                })
+                validArray.push(textFile)
+              }
+            })
+          }
+        } catch (e) {
+          console.error('Error parsing CSV', e)
+        }
+      } else if (ext.endsWith('.pdf') || ext.endsWith('.docx') || ext.endsWith('.txt')) {
         validArray.push(f)
       }
     }
     if (validArray.length === 0) {
-      setError('Please select valid resume files (.pdf, .docx, or .txt).')
+      setError('Please select valid resume files (.pdf, .docx, .txt, or .csv).')
       return
     }
     setError(null)
     setFiles((prev) => {
       const combined = [...prev, ...validArray]
-      return combined.slice(0, 10)
+      return combined.slice(0, 50)
     })
   }
 
@@ -136,7 +165,7 @@ export const BulkResumeAnalysisModal: React.FC<BulkResumeAnalysisModalProps> = (
         {!results ? (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginTop: '16px' }}>
             <p style={{ fontSize: '14.5px', opacity: 0.85, margin: 0 }}>
-              Upload and analyze multiple candidate resumes or variations at once (up to 10 files).
+              Upload and analyze multiple candidate resumes or variations at once (up to 50 files).
             </p>
 
             {/* Target Role & Level configuration */}
@@ -222,7 +251,7 @@ export const BulkResumeAnalysisModal: React.FC<BulkResumeAnalysisModalProps> = (
                 id="bulkFileUpload"
                 multiple
                 className="sr-only"
-                accept=".pdf,.docx,.txt"
+                accept=".pdf,.docx,.txt,.csv"
                 onChange={(e) => handleFileSelection(e.target.files)}
               />
               <label htmlFor="bulkFileUpload" className="upload-label" style={{ cursor: 'pointer' }}>
@@ -230,10 +259,10 @@ export const BulkResumeAnalysisModal: React.FC<BulkResumeAnalysisModalProps> = (
                   📁
                 </span>
                 <span className="upload-text-primary">
-                  Drag &amp; Drop Multiple Resumes or <span className="upload-text-browse">Browse Files</span>
+                  Drag &amp; Drop Multiple Resumes, CSV or <span className="upload-text-browse">Browse Files</span>
                 </span>
                 <span className="upload-text-secondary">
-                  Supports PDF, DOCX or TXT (up to 10 resumes at once)
+                  Supports PDF, DOCX, TXT or CSV (up to 50 resumes at once)
                 </span>
               </label>
             </div>
@@ -242,7 +271,7 @@ export const BulkResumeAnalysisModal: React.FC<BulkResumeAnalysisModalProps> = (
             {files.length > 0 && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <h4 style={{ margin: '0 0 4px', fontSize: '14px', fontWeight: '600' }}>
-                  Selected Files ({files.length}/10):
+                  Selected Files ({files.length}/50):
                 </h4>
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                   {files.map((file, i) => (
@@ -285,11 +314,25 @@ export const BulkResumeAnalysisModal: React.FC<BulkResumeAnalysisModalProps> = (
 
             {error && <div style={{ color: '#ef4444', fontSize: '14px', fontWeight: '500' }}>⚠️ {error}</div>}
 
-            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.05)', padding: '12px 16px', borderRadius: '6px', marginTop: '8px' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                <input
+                  type="checkbox"
+                  checked={hasConsent}
+                  onChange={(e) => setHasConsent(e.target.checked)}
+                  style={{ marginTop: '4px', accentColor: 'var(--color-primary, #6366f1)', width: '16px', height: '16px' }}
+                />
+                <span style={{ fontSize: '13px', lineHeight: '1.5', opacity: 0.85 }}>
+                  I confirm that I have permission from these candidates to upload their resume data for analysis, and I understand this data will be processed per the platform's privacy guidelines.
+                </span>
+              </label>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '16px' }}>
               <button
                 className="app-btn app-btn--accent"
                 onClick={handleAnalyzeBulk}
-                disabled={loading || files.length === 0}
+                disabled={loading || files.length === 0 || !hasConsent}
                 style={{ minWidth: '180px' }}
               >
                 {loading ? <Loader2 size={16} className="spin" /> : <Layers size={16} />}
@@ -403,11 +446,43 @@ export const BulkResumeAnalysisModal: React.FC<BulkResumeAnalysisModalProps> = (
                   setResults(null)
                   setFiles([])
                   setSelectedResume(null)
+                  setHasConsent(false)
                 }}
               >
                 Upload New Batch
               </button>
             </div>
+
+            {results.resumes.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', marginBottom: '8px' }}>
+                <div style={{ flex: 1, background: 'rgba(255, 255, 255, 0.05)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                  <p style={{ margin: '0 0 4px', fontSize: '13px', opacity: 0.8 }}>Average ATS Score</p>
+                  <div style={{ fontSize: '24px', fontWeight: '800', color: '#22c55e' }}>
+                    {Math.round(results.resumes.reduce((acc, curr) => acc + curr.score, 0) / results.resumes.length)}%
+                  </div>
+                </div>
+                <div style={{ flex: 2, background: 'rgba(255, 255, 255, 0.05)', padding: '16px', borderRadius: '8px', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                  <p style={{ margin: '0 0 8px', fontSize: '13px', opacity: 0.8 }}>Common Missing Skills</p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {(() => {
+                      const gaps: Record<string, number> = {}
+                      results.resumes.forEach(r => {
+                        r.missing_skills.forEach(s => {
+                          gaps[s] = (gaps[s] || 0) + 1
+                        })
+                      })
+                      const sortedGaps = Object.entries(gaps).sort((a, b) => b[1] - a[1]).slice(0, 5)
+                      if (sortedGaps.length === 0) return <span style={{ fontSize: '13px', color: '#22c55e' }}>None across the batch!</span>
+                      return sortedGaps.map(([skill, count], i) => (
+                        <span key={i} style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '4px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444' }}>
+                          {skill} <span style={{ opacity: 0.7, marginLeft: '2px' }}>({count})</span>
+                        </span>
+                      ))
+                    })()}
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div style={{ overflowX: 'auto', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '8px' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '13.5px' }}>

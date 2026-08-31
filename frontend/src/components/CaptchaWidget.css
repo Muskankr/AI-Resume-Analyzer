@@ -1,0 +1,178 @@
+.captcha-widget-container {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1rem;
+  margin: 1rem 0;
+  color: #f8fafc;
+}
+
+.captcha-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #1e293b;
+}
+
+.captcha-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.btn-switch-provider {
+  background: transparent;
+  color: #a5b4fc;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 0.2rem 0.5rem;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-switch-provider:hover {
+  background: #1e293b;
+  color: #ffffff;
+}
+
+.captcha-verified-box {
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  border-radius: 8px;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.verified-icon {
+  background: #22c55e;
+  color: white;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.8rem;
+}
+
+.verified-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4ade80;
+}
+
+.hcaptcha-placeholder-box {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.hcaptcha-placeholder-box:hover {
+  border-color: #6366f1;
+}
+
+.hcaptcha-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.hcaptcha-checkbox {
+  width: 26px;
+  height: 26px;
+  background: #0f172a;
+  border: 2px solid #475569;
+  border-radius: 4px;
+}
+
+.checkbox-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #f8fafc;
+}
+
+.hcaptcha-branding {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.brand-logo {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: #38bdf8;
+}
+
+.brand-terms {
+  font-size: 0.65rem;
+  color: #64748b;
+}
+
+.captcha-fallback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.math-question-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.math-question-text {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #f8fafc;
+  flex: 1;
+}
+
+.btn-refresh-math {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.math-input-row {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.math-answer-input {
+  flex: 1;
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 0.5rem 0.75rem;
+  color: #ffffff;
+  font-size: 0.85rem;
+}
+
+.btn-verify-math {
+  background: #6366f1;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.captcha-error-text {
+  color: #f87171;
+  font-size: 0.75rem;
+  margin: 0;
+}

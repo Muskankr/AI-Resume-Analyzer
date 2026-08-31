@@ -1,12 +1,12 @@
-'use client';
+'use client'
 
-import React from 'react';
-import { SUPPORTED_CURRENCIES, CurrencyCode } from '@/utils/currencyConverter';
-import { Globe } from 'lucide-react';
+import React from 'react'
+import { SUPPORTED_CURRENCIES, CurrencyCode } from '@/utils/currencyConverter'
+import { Globe } from 'lucide-react'
 
 interface SalaryCurrencySelectorProps {
-  currentCurrency: CurrencyCode;
-  onCurrencyChange: (currency: CurrencyCode) => void;
+  currentCurrency: CurrencyCode
+  onCurrencyChange: (currency: CurrencyCode) => void
 }
 
 export const SalaryCurrencySelector: React.FC<SalaryCurrencySelectorProps> = ({
@@ -30,5 +30,5 @@ export const SalaryCurrencySelector: React.FC<SalaryCurrencySelectorProps> = ({
         ))}
       </select>
     </div>
-  );
-};
+  )
+}

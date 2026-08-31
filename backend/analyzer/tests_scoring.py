@@ -51,7 +51,8 @@ Git GitHub HTML CSS TypeScript Node.js MongoDB Excel Pandas NumPy
 
 class FactorTests(TestCase):
     def test_keyword_match_scales_with_coverage(self):
-        full = score_keyword_match(["python", "sql"], ["python", "sql"], ["python", "sql"])
+        full = score_keyword_match(
+            ["python", "sql"], ["python", "sql"], ["python", "sql"])
         half = score_keyword_match(["python"], ["python", "sql"], ["python"])
         none = score_keyword_match([], ["python", "sql"], [])
 
@@ -71,7 +72,8 @@ class FactorTests(TestCase):
         self.assertEqual(factor.earned, WEIGHTS["keyword_match"])
 
     def test_sections_counts_the_four_expected_headings(self):
-        self.assertEqual(score_sections(STRONG_RESUME).earned, WEIGHTS["sections"])
+        self.assertEqual(score_sections(
+            STRONG_RESUME).earned, WEIGHTS["sections"])
 
         partial = score_sections("Experience\nSkills\nPython developer")
         self.assertEqual(partial.earned, round(WEIGHTS["sections"] * 0.5))
@@ -86,7 +88,8 @@ class FactorTests(TestCase):
         nothing = score_contact_details("Jane Doe\nBackend engineer")
 
         self.assertEqual(nothing.earned, 0)
-        self.assertGreaterEqual(email_only.earned, WEIGHTS["contact_details"] * 0.5)
+        self.assertGreaterEqual(
+            email_only.earned, WEIGHTS["contact_details"] * 0.5)
         self.assertIn("discards the resume", nothing.detail)
 
     def test_contact_details_full_marks_with_email_phone_and_link(self):
@@ -96,7 +99,8 @@ class FactorTests(TestCase):
 
     def test_impact_language_rewards_action_verbs(self):
         strong = score_impact_language(STRONG_RESUME.splitlines())
-        self.assertGreaterEqual(strong.earned, WEIGHTS["impact_language"] * 0.5)
+        self.assertGreaterEqual(
+            strong.earned, WEIGHTS["impact_language"] * 0.5)
 
     def test_impact_language_calls_out_duty_phrasing(self):
         duties = [
@@ -180,8 +184,10 @@ class BreakdownTests(TestCase):
         self.assertEqual(TOTAL_POINTS, 100)
 
     def test_overall_is_the_sum_of_the_factors(self):
-        breakdown = self._breakdown(STRONG_RESUME, ["python"], ["python"], ["python"])
-        self.assertEqual(breakdown.overall, sum(f.earned for f in breakdown.factors))
+        breakdown = self._breakdown(
+            STRONG_RESUME, ["python"], ["python"], ["python"])
+        self.assertEqual(breakdown.overall, sum(
+            f.earned for f in breakdown.factors))
 
     def test_every_weighted_factor_is_reported(self):
         breakdown = self._breakdown(STRONG_RESUME)
@@ -191,7 +197,8 @@ class BreakdownTests(TestCase):
         """The point of the issue: full keyword coverage alone should not win."""
         skills = ["python", "django", "sql", "docker"]
 
-        stuffed = self._breakdown(KEYWORD_STUFFED_RESUME, skills, skills, skills)
+        stuffed = self._breakdown(
+            KEYWORD_STUFFED_RESUME, skills, skills, skills)
         rounded = self._breakdown(STRONG_RESUME, skills, skills, skills)
 
         self.assertEqual(
@@ -209,7 +216,8 @@ class BreakdownTests(TestCase):
                 self.assertLessEqual(breakdown.overall, 100)
 
     def test_each_factor_stays_inside_its_own_weight(self):
-        breakdown = self._breakdown(STRONG_RESUME, ["python"], ["python"], ["python"])
+        breakdown = self._breakdown(
+            STRONG_RESUME, ["python"], ["python"], ["python"])
         for factor in breakdown.factors:
             with self.subTest(factor=factor.key):
                 self.assertGreaterEqual(factor.earned, 0)
@@ -228,7 +236,8 @@ class BreakdownTests(TestCase):
         self.assertIsInstance(payload["overall"], int)
         for factor in payload["factors"]:
             self.assertEqual(
-                set(factor), {"key", "label", "earned", "possible", "status", "detail"}
+                set(factor), {"key", "label", "earned",
+                              "possible", "status", "detail"}
             )
             self.assertIn(factor["status"], {"strong", "partial", "weak"})
 
@@ -259,7 +268,8 @@ class AnalyzeResumeIntegrationTests(TestCase):
         result = analyze_resume("dummy.pdf", "Backend Developer")
 
         breakdown = result["score_breakdown"]
-        self.assertEqual(breakdown["overall"], sum(f["earned"] for f in breakdown["factors"]))
+        self.assertEqual(breakdown["overall"], sum(
+            f["earned"] for f in breakdown["factors"]))
         self.assertEqual(len(breakdown["factors"]), len(WEIGHTS))
 
     @patch("analyzer.services.pdfplumber.open")

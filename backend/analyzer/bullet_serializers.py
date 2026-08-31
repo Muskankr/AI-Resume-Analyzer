@@ -20,6 +20,11 @@ class BulletOptimizationRequestSerializer(serializers.Serializer):
         allow_blank=True,
         help_text="Optional target job role for context-aware optimization.",
     )
+    job_description = serializers.CharField(
+        required=False,
+        allow_blank=True,
+        help_text="Optional target job description to suggest tailored rewritten bullet points.",
+    )
 
 
 class StarComponentSerializer(serializers.Serializer):

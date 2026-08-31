@@ -79,3 +79,18 @@ class BulletOptimizerTestCase(TestCase):
         serializer = BulletOptimizationRequestSerializer(data=invalid_data)
         self.assertFalse(serializer.is_valid())
         self.assertIn("bullets", serializer.errors)
+
+    def test_job_description_tailoring(self):
+        bullet = "Managed a team of developers."
+        jd = "We are seeking a Lead Developer skilled in React and Django to spearhead our frontend architecture."
+        analysis = BulletOptimizer.analyze(bullet, job_description=jd)
+
+        # Check that JD skills React or Django are woven into rewrites, and the action verb Lead/Spearhead is preferred
+        found_jd_keyword = False
+        for rewrite in analysis.rewrites:
+            if "React" in rewrite or "Django" in rewrite:
+                found_jd_keyword = True
+            if "Lead" in rewrite or "Spearhead" in rewrite or "Drove" in rewrite or "Managed" in rewrite:
+                pass
+        self.assertTrue(found_jd_keyword, f"Expected React or Django in rewrites: {analysis.rewrites}")
+

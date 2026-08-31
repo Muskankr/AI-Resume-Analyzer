@@ -1,9 +1,9 @@
-import React from 'react';
-import type { ResumeVersionRecord } from './types';
+import React from 'react'
+import type { ResumeVersionRecord } from './types'
 
 interface VersionCardProps {
-  version: ResumeVersionRecord;
-  onSelect: (version: ResumeVersionRecord) => void;
+  version: ResumeVersionRecord
+  onSelect: (version: ResumeVersionRecord) => void
 }
 
 export const VersionCard: React.FC<VersionCardProps> = ({ version, onSelect }) => {
@@ -27,11 +27,15 @@ export const VersionCard: React.FC<VersionCardProps> = ({ version, onSelect }) =
         <div className="grid grid-cols-2 gap-3 bg-slate-950/60 p-3.5 rounded-xl border border-slate-800 mb-5">
           <div>
             <span className="text-[11px] text-slate-400 block">ATS Score</span>
-            <span className="text-lg font-extrabold text-emerald-400">{version.atsScore} / 100</span>
+            <span className="text-lg font-extrabold text-emerald-400">
+              {version.atsScore} / 100
+            </span>
           </div>
           <div>
             <span className="text-[11px] text-slate-400 block">Score Gain</span>
-            <span className="text-lg font-extrabold text-blue-400">+{version.atsScoreDelta} pts</span>
+            <span className="text-lg font-extrabold text-blue-400">
+              +{version.atsScoreDelta} pts
+            </span>
           </div>
         </div>
       </div>
@@ -43,5 +47,5 @@ export const VersionCard: React.FC<VersionCardProps> = ({ version, onSelect }) =
         <span>Compare Version Diff</span>
       </button>
     </div>
-  );
-};
+  )
+}

@@ -58,6 +58,7 @@ export function useAuth() {
         // Was discarded. Without it a session cannot outlive its access token.
         refresh: res.data.refresh,
         avatarUrl: res.data.avatar_url,
+        themePreference: res.data.theme_preference,
       },
       true
     )
@@ -81,6 +82,7 @@ export function useAuth() {
           token: res.data.access,
           refresh: res.data.refresh,
           avatarUrl: res.data.avatar_url,
+          themePreference: res.data.theme_preference,
         },
         rememberMe
       )
@@ -112,6 +114,7 @@ export function useAuth() {
           token: res.data.access,
           refresh: res.data.refresh,
           avatarUrl: res.data.avatar_url,
+          themePreference: res.data.theme_preference,
         },
         true
       )

@@ -8,7 +8,8 @@ from analyzer.models import KnownDevice
 class KnownDeviceAlertsTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username="alertsuser", password="password123", email="alerts@example.com")
+        self.user = User.objects.create_user(
+            username="alertsuser", password="password123", email="alerts@example.com")
 
     def test_first_login_registered_silently(self):
         # Verify no known devices exist initially
