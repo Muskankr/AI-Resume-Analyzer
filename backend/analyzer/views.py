@@ -2450,3 +2450,62 @@ def batch_status(request, batch_id):
         })
     except BatchUpload.DoesNotExist:
         return Response({"error": "Batch not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+# ── Resume Achievement Quantifier ─────────────────────────────────────────
+
+@extend_schema(
+    summary="Quantify resume achievements and suggest metrics",
+    description=(
+        "Analyses resume bullet points, detects unquantified achievements, "
+        "and generates specific metric templates with examples."
+    ),
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "resume_text": {"type": "string"},
+                "analysis_id": {"type": "integer"},
+            },
+        }
+    },
+    responses={
+        200: OpenApiResponse(description="Quantification analysis."),
+        400: OpenApiResponse(description="Invalid input."),
+    },
+)
+@api_view(["POST"])
+@permission_classes([AllowAny])
+def quantify_achievements_view(request):
+    """Analyse resume bullets and suggest quantification metrics."""
+    from .achievement_quantifier import quantify_achievements
+    from .achievement_quantifier_serializers import (
+        QuantificationRequestSerializer,
+        QuantificationResultSerializer,
+    )
+
+    serializer = QuantificationRequestSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    data = serializer.validated_data
+    analysis_id = data.get("analysis_id")
+
+    if analysis_id is not None:
+        try:
+            if request.user.is_authenticated:
+                analysis = ResumeAnalysis.objects.get(pk=analysis_id, user=request.user)
+            else:
+                analysis = ResumeAnalysis.objects.get(pk=analysis_id)
+        except ResumeAnalysis.DoesNotExist:
+            return Response({"error": "Analysis not found."}, status=status.HTTP_404_NOT_FOUND)
+        resume_text = analysis.resume_text or ""
+    else:
+        resume_text = data.get("resume_text") or ""
+
+    if not resume_text.strip():
+        return Response({"error": "No resume text to analyse."}, status=status.HTTP_400_BAD_REQUEST)
+
+    result = quantify_achievements(resume_text)
+    result_serializer = QuantificationResultSerializer(result.as_dict())
+    return Response(result_serializer.data, status=status.HTTP_200_OK)

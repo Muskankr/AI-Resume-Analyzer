@@ -35,6 +35,7 @@ from .views import (
     webhook_detail,
     test_webhook,
     preview_experience_level_view,
+    quantify_achievements_view,
 )
 from . import career_roadmap
 from .badge_views import manage_resume_badge, resume_score_badge
@@ -187,5 +188,12 @@ urlpatterns = [
         "sanitize-resume/",
         SanitizeResumeView.as_view(),
         name="sanitize_resume",
+    ),
+
+    # Resume Achievement Quantifier
+    path(
+        "quantify-achievements/",
+        quantify_achievements_view,
+        name="quantify_achievements",
     ),
 ]
