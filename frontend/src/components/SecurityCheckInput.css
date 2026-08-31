@@ -1,0 +1,118 @@
+.security-check-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1rem 0;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.security-check-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.security-check-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+}
+
+.btn-refresh-question {
+  background: transparent;
+  border: none;
+  color: #818cf8;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+.btn-refresh-question:hover {
+  text-decoration: underline;
+}
+
+.security-check-question-banner {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 0.6rem 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.question-badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+}
+
+.question-prompt {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.security-check-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.security-check-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  color: #ffffff;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  outline: none;
+  transition: all 0.2s ease;
+
+  /* Explicit fix for placeholder clipping */
+  text-overflow: clip;
+  min-width: 0;
+}
+
+.security-check-input::placeholder {
+  color: #64748b;
+  opacity: 1;
+  font-size: 0.85rem;
+  white-space: normal;
+}
+
+.security-check-field-group.focused .security-check-input {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+}
+
+.security-check-field-group.has-error .security-check-input {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2);
+}
+
+.security-check-error-text {
+  color: #f87171;
+  font-size: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+/* Global modal overflow prevention audit rule */
+.auth-modal-form-field {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.auth-modal-form-field input {
+  min-width: 0;
+  text-overflow: ellipsis;
+}

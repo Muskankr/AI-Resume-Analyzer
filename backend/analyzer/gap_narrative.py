@@ -7,6 +7,7 @@ positive narrative explanations for various gap reasons.
 
 import re
 from datetime import datetime
+from string import Formatter
 from typing import List, Dict, Any, Optional
 
 MONTH_MAP = {
@@ -35,84 +36,152 @@ MONTH_MAP = {
     "december": 12,
 }
 
+# A break shorter than this is ordinary notice-period/handover slack, not
+# something a candidate needs a story for.
+GAP_THRESHOLD_MONTHS = 3
+
+# Every template is rendered with the same key set (see NARRATIVE_FIELDS), so
+# any template may use any placeholder. Previously "job_market" referenced
+# {certifications}, which was never supplied, and str.format raised KeyError on
+# every gap that reached it.
 NARRATIVE_TEMPLATES = {
     "upskilling": [
-        "During this period, I dedicated my time to intensive upskilling, completing certifications in {skills} to stay current with industry advancements.",
-        "I took a strategic career pause to focus on professional development, acquiring new competencies in {skills} that directly enhance my value in {target_role} roles.",
+        "During this period I focused on deliberate upskilling, completing certifications in {skills} and staying hands-on through {activities}, all of which I bring directly to the {role_after} role.",
+        "I took a strategic career pause to concentrate on professional development, acquiring new competencies in {skills} that map onto what a {target_role} is expected to do on day one.",
     ],
     "caregiving": [
-        "I stepped away from the workforce to provide essential caregiving for a family member. This experience honed my crisis management, empathy, and organizational skills, and I am now fully prepared to re-engage in my career.",
-        "This timeframe was dedicated to family caregiving responsibilities. I maintained my industry knowledge through {activities} and am now eager to bring my refined soft skills and renewed focus to a new role.",
+        "I stepped away from full-time work to provide essential caregiving for a family member. It sharpened my crisis management, prioritisation and organisational skills, and I kept current with {skills} so that I could return to a {role_after} role without a ramp-up period.",
+        "This timeframe was dedicated to family caregiving responsibilities. I maintained my industry knowledge through {activities} and am ready to bring that refined judgement to the {role_after} role.",
     ],
     "freelance": [
-        "I operated as an independent consultant during this time, delivering {deliverables} for various clients. This allowed me to broaden my expertise in {skills} and manage end-to-end project lifecycles.",
-        "This period reflects my work as a freelance professional, where I successfully {achievements}, demonstrating adaptability and self-directed project management.",
+        "I operated as an independent consultant through this period, delivering {deliverables} for a range of clients. It broadened my depth in {skills} and put me across the whole project lifecycle rather than one slice of it.",
+        "This period reflects freelance work, during which I {achievements}. It demanded self-directed planning and client communication, both of which carry straight into the {role_after} role.",
     ],
     "health": [
-        "I took a necessary medical leave to address a health matter, which is now fully resolved. I used part of this time to {activities}, and I am excited to return to the workforce with renewed energy.",
-        "This gap was due to a temporary health situation that has been completely resolved. I remained engaged with the industry through {activities} and am ready to contribute immediately.",
+        "I took a necessary medical leave to address a health matter that is now fully resolved. I used part of that time to {activities}, and I am returning with full capacity for a {role_after} role.",
+        "This gap was a temporary health situation, since completely resolved. I stayed engaged with the field through {activities} and with {skills} in particular, and can contribute immediately.",
     ],
     "job_market": [
-        "I have been strategically evaluating opportunities to ensure my next role aligns with my long-term career goals in {target_role}, while actively maintaining my skills through {activities}.",
-        "Due to broader market conditions, I have been selectively pursuing roles that match my expertise in {skills}, using this time to refine my portfolio and complete {certifications}.",
+        "I have been deliberately selective about my next move, holding out for a {role_after} role that fits my longer-term direction in {target_role}, and keeping my skills sharp through {activities}.",
+        "Broader market conditions lengthened my search, so I used the time to deepen my expertise in {skills}, rebuild my portfolio and complete {certifications}.",
     ],
 }
+
+# Defaults for anything the caller does not supply. Keys are the union of every
+# placeholder used across NARRATIVE_TEMPLATES; keeping them in one place is what
+# makes "add a template" a safe change.
+NARRATIVE_FIELDS = {
+    "skills": "new technologies",
+    "target_role": "this field",
+    "activities": "independent study and industry reading",
+    "deliverables": "scalable software solutions",
+    "achievements": "streamlined client workflows",
+    "certifications": "additional professional certifications",
+    "role_after": "next",
+    "role_before": "previous",
+}
+
+
+class _DefaultingFormatter(Formatter):
+    """``str.format`` that substitutes a placeholder name instead of raising.
+
+    A template is content, and content gets edited by people who are not
+    looking at the call site. Losing the whole response to a ``KeyError``
+    because someone added ``{mentors}`` to a sentence is not a reasonable
+    failure mode for a text generator.
+    """
+
+    def get_value(self, key, args, kwargs):
+        if isinstance(key, str):
+            return kwargs.get(key, NARRATIVE_FIELDS.get(key, ""))
+        return super().get_value(key, args, kwargs)
+
+
+_FORMATTER = _DefaultingFormatter()
 
 
 def parse_date(date_str: str) -> Optional[datetime]:
     """Parses various date string formats into a datetime object."""
+    if not date_str:
+        return None
+
     date_str = date_str.strip().lower()
     if date_str in ["present", "now", "current"]:
         return datetime.now()
 
-    parts = date_str.split()
+    parts = re.split(r"[\s\-/]+", date_str)
     if len(parts) >= 2:
         month_str, year_str = parts[0], parts[1]
         month = MONTH_MAP.get(month_str[:3])
         if month and year_str.isdigit():
             return datetime(year=int(year_str), month=month, day=1)
+        # Numeric "2021-03" / "2021/03" order, as well as "03-2021".
+        if month_str.isdigit() and year_str.isdigit():
+            a, b = int(month_str), int(year_str)
+            if 1 <= b <= 12 and a > 12:
+                return datetime(year=a, month=b, day=1)
+            if 1 <= a <= 12 and b > 12:
+                return datetime(year=b, month=a, day=1)
     elif len(parts) == 1 and parts[0].isdigit():
         return datetime(year=int(parts[0]), month=1, day=1)
 
     return None
 
 
+def months_between(earlier: datetime, later: datetime) -> int:
+    """Whole months from ``earlier`` to ``later``. Negative if they overlap."""
+    return (later.year - earlier.year) * 12 + (later.month - earlier.month)
+
+
 def detect_gaps(timeline_data: List[Dict[str, str]]) -> List[Dict[str, Any]]:
-    """Detects employment gaps greater than 3 months between roles."""
-    gaps = []
+    """Detects employment gaps longer than ``GAP_THRESHOLD_MONTHS`` between roles.
+
+    A gap is the stretch between the end of the earlier role and the start of
+    the one that follows it. The previous implementation measured the later
+    role's *end* back to the earlier role's *start*, which is the span covering
+    both jobs rather than the space between them: it reported 79 months for a
+    13-month gap, grew by a month every month whenever the later role was still
+    "Present", and reported a gap for back-to-back roles that had none.
+    """
+    gaps: List[Dict[str, Any]] = []
     if not timeline_data or len(timeline_data) < 2:
         return gaps
 
-    # Sort by start date descending (most recent first)
+    # Most recent first.
     sorted_timeline = sorted(
         timeline_data,
-        key=lambda x: parse_date(x.get("start_date", "2000-01")) or datetime.min,
+        key=lambda x: parse_date(x.get("start_date", "")) or datetime.min,
         reverse=True,
     )
 
     for i in range(len(sorted_timeline) - 1):
-        current_role = sorted_timeline[i]
-        prev_role = sorted_timeline[i + 1]
+        later_role = sorted_timeline[i]
+        earlier_role = sorted_timeline[i + 1]
 
-        current_end = parse_date(current_role.get("end_date", "present"))
-        prev_start = parse_date(prev_role.get("start_date", "2000-01"))
+        # The gap runs from when the earlier role ended to when the later one
+        # began -- not the other two endpoints.
+        gap_start = parse_date(earlier_role.get("end_date", "")) or None
+        gap_end = parse_date(later_role.get("start_date", "")) or None
 
-        if current_end and prev_start:
-            # Calculate difference in months
-            diff_months = (current_end.year - prev_start.year) * 12 + (
-                current_end.month - prev_start.month
-            )
+        if not gap_start or not gap_end:
+            continue
 
-            if diff_months > 3:
-                gaps.append(
-                    {
-                        "role_before": prev_role.get("role", "Previous Role"),
-                        "role_after": current_role.get("role", "Current Role"),
-                        "start_date": current_end.strftime("%b %Y"),
-                        "end_date": prev_start.strftime("%b %Y"),
-                        "duration_months": diff_months,
-                    }
-                )
+        duration = months_between(gap_start, gap_end)
+
+        # <= 0 means the roles overlap (concurrent or contiguous work), which is
+        # not a gap at all.
+        if duration <= GAP_THRESHOLD_MONTHS:
+            continue
+
+        gaps.append(
+            {
+                "role_before": earlier_role.get("role", "Previous Role"),
+                "role_after": later_role.get("role", "Current Role"),
+                "start_date": gap_start.strftime("%b %Y"),
+                "end_date": gap_end.strftime("%b %Y"),
+                "duration_months": duration,
+            }
+        )
 
     return gaps
 
@@ -122,23 +191,27 @@ def generate_narratives(
 ) -> List[Dict[str, Any]]:
     """Generates narrative options for each detected gap."""
     results = []
-    skills = context.get("skills", "new technologies")
-    target_role = context.get("target_role", "this field")
-    activities = context.get("activities", "independent study and industry reading")
+    context = context or {}
 
     for gap in gaps:
+        # Per-gap, so the narrative can name the role the candidate returned to
+        # instead of being generic. Caller-supplied context wins; the gap
+        # supplies role_before/role_after; NARRATIVE_FIELDS backs both.
+        fields = dict(NARRATIVE_FIELDS)
+        fields["role_before"] = gap.get("role_before") or fields["role_before"]
+        fields["role_after"] = gap.get("role_after") or fields["role_after"]
+        for key, value in context.items():
+            if value:
+                fields[key] = value
+
         narratives = []
         for category, templates in NARRATIVE_TEMPLATES.items():
             for template in templates[:2]:  # Take top 2 templates per category
-                narrative = template.format(
-                    skills=skills,
-                    target_role=target_role,
-                    activities=activities,
-                    deliverables="scalable software solutions",
-                    achievements="streamlined client workflows",
-                )
                 narratives.append(
-                    {"category": category.capitalize(), "text": narrative}
+                    {
+                        "category": category.replace("_", " ").title(),
+                        "text": _FORMATTER.vformat(template, (), fields),
+                    }
                 )
 
         results.append({**gap, "narratives": narratives})

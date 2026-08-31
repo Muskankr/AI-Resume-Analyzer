@@ -1,31 +1,31 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import { User, Lock, AlertCircle, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react'
+import { User, Lock, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 export const LoginForm: React.FC = () => {
-  const [identifier, setIdentifier] = useState(''); // Can be username or email
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [identifier, setIdentifier] = useState('') // Can be username or email
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
+    e.preventDefault()
+    setError(null)
 
     if (!identifier.trim()) {
-      setError('Please enter your username or email address.');
-      return;
+      setError('Please enter your username or email address.')
+      return
     }
 
     if (!password) {
-      setError('Please enter your password.');
-      return;
+      setError('Please enter your password.')
+      return
     }
 
     // Submit login request with the flexible identifier
-    setSuccess(true);
-  };
+    setSuccess(true)
+  }
 
   return (
     <div className="max-w-md mx-auto p-6 bg-slate-900 border border-slate-800 rounded-2xl text-slate-100 shadow-xl">
@@ -87,5 +87,5 @@ export const LoginForm: React.FC = () => {
         </form>
       )}
     </div>
-  );
-};
+  )
+}

@@ -1,71 +1,93 @@
 import React from 'react'
-import { UploadCloud, Cpu, CheckCircle } from 'lucide-react'
+import { UploadCloud, Cpu, CheckCircle2, ArrowRight, Sparkles, ShieldCheck } from 'lucide-react'
+import './HowItWorks.css'
 
-const steps = [
+export interface StepItem {
+  id: number
+  title: string
+  subtitle: string
+  description: string
+  icon: React.ReactNode
+  badgeText: string
+}
+
+const stepsData: StepItem[] = [
   {
-    icon: <UploadCloud size={36} />,
-    color: '#eeeff5',
-    title: '1. Upload',
-    description: 'Upload your resume in PDF format.',
+    id: 1,
+    badgeText: 'Step 01',
+    title: '1. Upload Resume',
+    subtitle: 'PDF, DOCX, or TXT format',
+    description: 'Upload your resume in PDF, DOCX, or TXT format. Drag & drop directly or choose a saved file.',
+    icon: <UploadCloud size={32} aria-hidden="true" />,
   },
   {
-    icon: <Cpu size={36} />,
-    title: '2. We analyze',
-    description: 'Our system scans your skills against your target role.',
+    id: 2,
+    badgeText: 'Step 02',
+    title: '2. We Analyze',
+    subtitle: 'AI & ATS Parser Engine',
+    description: 'Our system scans your skills, experience, and formatting against target job description requirements.',
+    icon: <Cpu size={32} aria-hidden="true" />,
   },
   {
-    icon: <CheckCircle size={36} />,
-    title: '3. Get suggestions',
-    description: 'Receive actionable insights to improve your score.',
+    id: 3,
+    badgeText: 'Step 03',
+    title: '3. Get Suggestions',
+    subtitle: 'Actionable Insights',
+    description: 'Receive actionable insights, missing keyword alerts, and tailored suggestions to boost your ATS score.',
+    icon: <CheckCircle2 size={32} aria-hidden="true" />,
   },
 ]
 
 export const HowItWorks: React.FC = () => {
   return (
-    <div
-      style={{
-        marginTop: '2.5rem',
-        paddingTop: '2rem',
-        borderTop: '1px solid var(--border-color, rgba(128, 128, 128, 0.2))',
-      }}
+    <section
+      className="how-it-works-section"
+      aria-labelledby="how-it-works-heading"
+      data-testid="how-it-works"
     >
-      <h3 style={{ color: 'var(--text-primary)', textAlign: 'center', marginBottom: '2rem' }}>
-        How It Works
-      </h3>
+      <div className="how-it-works-header">
+        <div className="how-it-works-pill">
+          <Sparkles size={14} />
+          <span>Simple 3-Step Process</span>
+        </div>
+        <h3 id="how-it-works-heading" className="how-it-works-title">
+          How It Works
+        </h3>
+        <p className="how-it-works-subtitle">
+          Optimize your resume for applicant tracking systems (ATS) in seconds with automated AI analysis.
+        </p>
+      </div>
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', justifyContent: 'center' }}>
-        {steps.map((step, index) => (
-          <div
-            key={index}
-            style={{
-              flex: '1 1 250px',
-              minWidth: '250px',
-              padding: '24px 20px',
-              background: 'var(--card-bg, rgba(128, 128, 128, 0.05))',
-              borderRadius: 'var(--radius-md, 8px)',
-              border: '1px solid var(--border-color, rgba(128, 128, 128, 0.1))',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-            }}
-          >
-            <div style={{ color: '#818cf8', marginBottom: '16px' }}>{step.icon}</div>
-            <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', fontWeight: '600' }}>
-              {step.title}
-            </h4>
-            <p
-              style={{
-                margin: 0,
-                fontSize: 'var(--font-size-sm, 0.875rem)',
-                lineHeight: '1.5',
-              }}
-            >
-              {step.description}
-            </p>
+      <div className="how-it-works-grid">
+        {stepsData.map((step, idx) => (
+          <div key={step.id} className="how-it-works-card" data-testid={`step-card-${step.id}`}>
+            <div className="step-card-header">
+              <div className="step-icon-wrapper" aria-hidden="true">
+                {step.icon}
+              </div>
+              <span className="step-badge">{step.badgeText}</span>
+            </div>
+
+            <h4 className="step-card-title">{step.title}</h4>
+            <span className="step-card-subtitle">{step.subtitle}</span>
+
+            <p className="step-card-description">{step.description}</p>
+
+            {idx < stepsData.length - 1 && (
+              <div className="step-connector" aria-hidden="true">
+                <ArrowRight size={18} />
+              </div>
+            )}
           </div>
         ))}
       </div>
-    </div>
+
+      <div className="how-it-works-footer">
+        <div className="security-guarantee">
+          <ShieldCheck size={16} className="text-emerald-400" />
+          <span>Your data is encrypted and deleted immediately after session analysis.</span>
+        </div>
+      </div>
+    </section>
   )
 }

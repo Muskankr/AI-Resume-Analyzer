@@ -1,3 +1,4 @@
+from datetime import timedelta
 from pathlib import Path
 import os
 import sentry_sdk
@@ -16,7 +17,8 @@ if _env_path.exists():
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 if not SECRET_KEY:
-    raise ValueError("SECRET_KEY environment variable is not set. Add it to your .env file.")
+    raise ValueError(
+        "SECRET_KEY environment variable is not set. Add it to your .env file.")
 
 DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
@@ -41,7 +43,7 @@ INSTALLED_APPS = [
     'rest_framework_simplejwt',
     'drf_spectacular',
     'analyzer',
-    
+
 ]
 
 MIDDLEWARE = [
@@ -106,7 +108,7 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_SETTINGS": {
         "persistAuthorization": True,
     },
-    
+
 }
 
 DATABASES = {
@@ -242,16 +244,22 @@ REST_FRAMEWORK = {
         # request body to disk before it does anything else.
         'file_metadata': os.environ.get('FILE_METADATA_RATE', '20/hour'),
         'sanitize_resume': os.environ.get('SANITIZE_RESUME_RATE', '60/hour'),
+        'cover_letter_gen': os.environ.get('COVER_LETTER_GEN_RATE', '20/hour'),
     },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+
+# Fraud / Abuse Detection settings for Signup
+SIGNUP_ABUSE_ENABLED = os.environ.get('SIGNUP_ABUSE_ENABLED', 'True') == 'True'
+SIGNUP_ABUSE_THRESHOLD = int(os.environ.get('SIGNUP_ABUSE_THRESHOLD', '50'))
+SIGNUP_ABUSE_WINDOW_MINUTES = int(os.environ.get('SIGNUP_ABUSE_WINDOW_MINUTES', '60'))
+SIGNUP_ABUSE_COOLDOWN_MINUTES = int(os.environ.get('SIGNUP_ABUSE_COOLDOWN_MINUTES', '60'))
 
 # JWT lifetimes. These were previously inherited from SimpleJWT's defaults
 # rather than chosen, which meant a 5-minute access token — fine in itself, but
 # the frontend was discarding the refresh token, so a session simply stopped
 # working after five minutes. Stated explicitly so the values are visible and
 # reviewable rather than implied.
-from datetime import timedelta
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(
@@ -291,7 +299,8 @@ FRONTEND_URL = os.environ.get('FRONTEND_URL', 'http://localhost:5173')
 
 # How long a signed unsubscribe link stays usable. Digests are weekly and
 # people read email late, so this is deliberately generous.
-UNSUBSCRIBE_TOKEN_MAX_AGE_DAYS = int(os.environ.get('UNSUBSCRIBE_TOKEN_MAX_AGE_DAYS', '90'))
+UNSUBSCRIBE_TOKEN_MAX_AGE_DAYS = int(
+    os.environ.get('UNSUBSCRIBE_TOKEN_MAX_AGE_DAYS', '90'))
 
 SENTRY_DSN = os.environ.get('SENTRY_DSN')
 
@@ -300,20 +309,21 @@ if SENTRY_DSN:
         # Redact sensitive request bodies (resume text, uploaded PDFs, auth tokens)
         if 'request' in event:
             request = event['request']
-            
+
             # Redact data (request body/form parameters)
             if 'data' in request and isinstance(request['data'], dict):
-                redact_keys = ['file', 'resume', 'target_role', 'email', 'phone', 'address']
+                redact_keys = ['file', 'resume',
+                               'target_role', 'email', 'phone', 'address']
                 for key in redact_keys:
                     if key in request['data']:
                         request['data'][key] = '[Filtered]'
-            
+
             # Redact auth headers
             if 'headers' in request and isinstance(request['headers'], dict):
                 for header_name in list(request['headers'].keys()):
                     if header_name.lower() in ('authorization', 'cookie'):
                         request['headers'][header_name] = '[Filtered]'
-                        
+
         return event
 
     sentry_sdk.init(
@@ -327,4 +337,3 @@ SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
 X_FRAME_OPTIONS = 'DENY'
-

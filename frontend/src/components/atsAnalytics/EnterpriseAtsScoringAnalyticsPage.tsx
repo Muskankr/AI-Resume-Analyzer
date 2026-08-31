@@ -1,30 +1,30 @@
-import React, { useState } from 'react';
-import type { AtsCandidateAnalyticsReport, AtsAnalyticsFilterQuery } from './types';
-import { AtsScoringAnalyticsEngine } from './AtsScoringAnalyticsEngine';
-import { AtsReportCard } from './AtsReportCard';
-import { AtsAnalyticsAuditTimeline } from './AtsAnalyticsAuditTimeline';
+import React, { useState } from 'react'
+import type { AtsCandidateAnalyticsReport, AtsAnalyticsFilterQuery } from './types'
+import { AtsScoringAnalyticsEngine } from './AtsScoringAnalyticsEngine'
+import { AtsReportCard } from './AtsReportCard'
+import { AtsAnalyticsAuditTimeline } from './AtsAnalyticsAuditTimeline'
 
 export const EnterpriseAtsScoringAnalyticsPage: React.FC = () => {
   const [filters, setFilters] = useState<AtsAnalyticsFilterQuery>({
     scoringTier: 'All',
     search: '',
-  });
+  })
 
-  const [selectedReport, setSelectedReport] = useState<AtsCandidateAnalyticsReport | null>(null);
-  const [reports, setReports] = useState(AtsScoringAnalyticsEngine.getReports(filters));
-  const [auditLogs] = useState(AtsScoringAnalyticsEngine.getAuditLogs());
+  const [selectedReport, setSelectedReport] = useState<AtsCandidateAnalyticsReport | null>(null)
+  const [reports, setReports] = useState(AtsScoringAnalyticsEngine.getReports(filters))
+  const [auditLogs] = useState(AtsScoringAnalyticsEngine.getAuditLogs())
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    setFilters((prev) => ({ ...prev, search: val }));
-    setReports(AtsScoringAnalyticsEngine.getReports({ ...filters, search: val }));
-  };
+    const val = e.target.value
+    setFilters((prev) => ({ ...prev, search: val }))
+    setReports(AtsScoringAnalyticsEngine.getReports({ ...filters, search: val }))
+  }
 
   const handleTierChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setFilters((prev) => ({ ...prev, scoringTier: val }));
-    setReports(AtsScoringAnalyticsEngine.getReports({ ...filters, scoringTier: val }));
-  };
+    const val = e.target.value
+    setFilters((prev) => ({ ...prev, scoringTier: val }))
+    setReports(AtsScoringAnalyticsEngine.getReports({ ...filters, scoringTier: val }))
+  }
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 p-6 md:p-10 font-sans">
@@ -44,7 +44,8 @@ export const EnterpriseAtsScoringAnalyticsPage: React.FC = () => {
               Enterprise ATS Scoring & Analytics Suite
             </h1>
             <p className="text-sm text-slate-400 mt-1 max-w-3xl">
-              High-precision ATS scoring breakdown, keyword gap matrix, formatting parser compliance, and pass probability metrics tailored for enterprise hiring pipelines.
+              High-precision ATS scoring breakdown, keyword gap matrix, formatting parser
+              compliance, and pass probability metrics tailored for enterprise hiring pipelines.
             </p>
           </div>
         </div>
@@ -52,7 +53,9 @@ export const EnterpriseAtsScoringAnalyticsPage: React.FC = () => {
         {/* Filter Bar */}
         <div className="bg-slate-900/80 backdrop-blur-md border border-slate-800 rounded-2xl p-5 shadow-xl grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="md:col-span-2">
-            <label className="block text-xs font-bold text-slate-300 mb-1">Search Candidate, Role, or Email</label>
+            <label className="block text-xs font-bold text-slate-300 mb-1">
+              Search Candidate, Role, or Email
+            </label>
             <input
               type="text"
               value={filters.search}
@@ -63,7 +66,9 @@ export const EnterpriseAtsScoringAnalyticsPage: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-300 mb-1">Filter by Scoring Tier</label>
+            <label className="block text-xs font-bold text-slate-300 mb-1">
+              Filter by Scoring Tier
+            </label>
             <select
               value={filters.scoringTier}
               onChange={handleTierChange}
@@ -104,18 +109,29 @@ export const EnterpriseAtsScoringAnalyticsPage: React.FC = () => {
                 <span className="text-xs font-mono text-blue-400 bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
                   Report ID: {selectedReport.reportId}
                 </span>
-                <h2 className="text-2xl font-black text-white mt-2">{selectedReport.candidateName}</h2>
-                <p className="text-xs text-slate-400">{selectedReport.targetRoleTitle} • {selectedReport.candidateEmail}</p>
+                <h2 className="text-2xl font-black text-white mt-2">
+                  {selectedReport.candidateName}
+                </h2>
+                <p className="text-xs text-slate-400">
+                  {selectedReport.targetRoleTitle} • {selectedReport.candidateEmail}
+                </p>
               </div>
 
               {/* Category Breakdown */}
               <div className="space-y-3">
-                <h3 className="text-sm font-bold text-white uppercase tracking-wider">ATS Category Breakdown</h3>
+                <h3 className="text-sm font-bold text-white uppercase tracking-wider">
+                  ATS Category Breakdown
+                </h3>
                 {selectedReport.categoryBreakdown.map((cat, idx) => (
-                  <div key={idx} className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2">
+                  <div
+                    key={idx}
+                    className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-2"
+                  >
                     <div className="flex justify-between items-center text-xs font-bold">
                       <span className="text-blue-400">{cat.categoryName}</span>
-                      <span className="text-emerald-400">{cat.score} / 100 (Percentile: {cat.benchmarkPercentile}%)</span>
+                      <span className="text-emerald-400">
+                        {cat.score} / 100 (Percentile: {cat.benchmarkPercentile}%)
+                      </span>
                     </div>
                     <p className="text-xs text-slate-300">{cat.recommendations[0]}</p>
                   </div>
@@ -136,5 +152,5 @@ export const EnterpriseAtsScoringAnalyticsPage: React.FC = () => {
         <AtsAnalyticsAuditTimeline logs={auditLogs} />
       </div>
     </div>
-  );
-};
+  )
+}

@@ -35,12 +35,70 @@ HIGH_VALUE_SKILLS = [
     "management",
 ]
 
+# Display spelling for the skills we recognise. matched_skills used to be
+# rendered with ``", ".join(...).title()``, which rewrites the caller's casing
+# and turns every acronym into sentence case -- AWS became "Aws", SQL "Sql",
+# GCP "Gcp". These are talking points a candidate reads out in a salary
+# conversation, so the spelling is the deliverable.
+CANONICAL_SKILL_NAMES = {
+    "machine learning": "Machine Learning",
+    "artificial intelligence": "Artificial Intelligence",
+    "aws": "AWS",
+    "azure": "Azure",
+    "kubernetes": "Kubernetes",
+    "docker": "Docker",
+    "tensorflow": "TensorFlow",
+    "pytorch": "PyTorch",
+    "blockchain": "Blockchain",
+    "rust": "Rust",
+    "go": "Go",
+    "golang": "Go",
+    "system design": "System Design",
+    "architecture": "Architecture",
+    "leadership": "Leadership",
+    "management": "Management",
+}
+
 NEGOTIATION_TEMPLATES = {
     "high_experience": "Emphasize your {years} years of experience and proven track record of {achievements} to justify the upper end of the range.",
     "high_value_skills": "Highlight your expertise in high-demand areas like {skills}, which command a premium in the current market.",
     "leadership": "Focus on your leadership experience and ability to mentor teams, as these soft skills significantly increase market value.",
     "general": "Research the specific company's compensation bands and be prepared to discuss your total compensation expectations, including equity and benefits.",
 }
+
+
+def display_skill_name(skill: str) -> str:
+    """How a skill should be spelled back to the user.
+
+    Known skills use their canonical spelling. Anything else keeps the casing
+    the caller supplied when they cased it themselves (``PyTorch``, ``CI/CD``),
+    since that is more likely right than anything we would impose, and is only
+    title-cased when it arrives entirely lowercase.
+    """
+    canonical = CANONICAL_SKILL_NAMES.get(skill.strip().lower())
+    if canonical:
+        return canonical
+    if any(character.isupper() for character in skill):
+        return skill
+    return skill.title()
+
+
+def find_high_value_skills(skills: List[str]) -> List[str]:
+    """The caller's skills that HIGH_VALUE_SKILLS recognises, canonically spelled.
+
+    Single source of truth for "which of these skills are worth money".
+    MarketValueView kept its own five-entry copy of the list while
+    calculate_salary_range priced against all sixteen, so a candidate could get
+    an uplift and an empty value_driving_skills in the same response.
+    """
+    seen = set()
+    matched = []
+    for skill in skills:
+        key = skill.strip().lower()
+        if key in HIGH_VALUE_SKILLS and key not in seen:
+            seen.add(key)
+            matched.append(display_skill_name(skill))
+    return matched
 
 
 def normalize_role(role: str) -> str:
@@ -102,11 +160,11 @@ def generate_negotiation_points(level: str, skills: List[str]) -> List[str]:
         )
         points.append(NEGOTIATION_TEMPLATES["leadership"])
 
-    matched_skills = [s for s in skills if s.lower() in HIGH_VALUE_SKILLS][:3]
+    matched_skills = find_high_value_skills(skills)[:3]
     if matched_skills:
         points.append(
             NEGOTIATION_TEMPLATES["high_value_skills"].format(
-                skills=", ".join(matched_skills).title()
+                skills=", ".join(matched_skills)
             )
         )
 

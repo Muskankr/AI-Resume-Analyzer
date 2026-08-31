@@ -102,7 +102,8 @@ class AssertUrlIsSafeTests(TestCase):
         ):
             with self.subTest(url=url):
                 with self.assertRaises(UnsafeURLError):
-                    assert_url_is_safe(url, resolver=resolver_returning(PUBLIC_IP))
+                    assert_url_is_safe(
+                        url, resolver=resolver_returning(PUBLIC_IP))
 
     def test_rejects_internal_service_ports(self):
         """Restricting the port is what keeps the fetcher away from Redis etc."""
@@ -189,7 +190,7 @@ class FakeResponse:
 
     def iter_content(self, chunk_size=8192):
         for start in range(0, len(self._body), chunk_size):
-            yield self._body[start : start + chunk_size]
+            yield self._body[start: start + chunk_size]
 
     def close(self):
         self.closed = True
@@ -205,7 +206,8 @@ class RedirectGuardTests(TestCase):
         ]
 
         with patch("analyzer.url_fetcher.requests.get", side_effect=responses) as mock_get:
-            result = fetch_with_redirect_guard(f"http://{PUBLIC_IP}/start.pdf", headers={})
+            result = fetch_with_redirect_guard(
+                f"http://{PUBLIC_IP}/start.pdf", headers={})
 
         self.assertEqual(result.status_code, 200)
         self.assertEqual(mock_get.call_count, 2)
@@ -215,13 +217,15 @@ class RedirectGuardTests(TestCase):
     def test_blocks_a_redirect_into_the_metadata_service(self):
         """Public host on hop 1, 169.254.169.254 on hop 2."""
         responses = [
-            FakeResponse(302, {"Location": "http://169.254.169.254/latest/meta-data/"}),
+            FakeResponse(
+                302, {"Location": "http://169.254.169.254/latest/meta-data/"}),
             FakeResponse(200, body=b"secret-credentials"),
         ]
 
         with patch("analyzer.url_fetcher.requests.get", side_effect=responses) as mock_get:
             with self.assertRaises(UnsafeURLError):
-                fetch_with_redirect_guard(f"http://{PUBLIC_IP}/start.pdf", headers={})
+                fetch_with_redirect_guard(
+                    f"http://{PUBLIC_IP}/start.pdf", headers={})
 
         # The second request must never have been made.
         self.assertEqual(mock_get.call_count, 1)
@@ -231,7 +235,8 @@ class RedirectGuardTests(TestCase):
 
         with patch("analyzer.url_fetcher.requests.get", side_effect=responses):
             with self.assertRaises(UnsafeURLError):
-                fetch_with_redirect_guard(f"http://{PUBLIC_IP}/start.pdf", headers={})
+                fetch_with_redirect_guard(
+                    f"http://{PUBLIC_IP}/start.pdf", headers={})
 
     def test_resolves_a_relative_redirect_against_the_current_url(self):
         responses = [
@@ -240,7 +245,8 @@ class RedirectGuardTests(TestCase):
         ]
 
         with patch("analyzer.url_fetcher.requests.get", side_effect=responses) as mock_get:
-            fetch_with_redirect_guard(f"http://{PUBLIC_IP}/start.pdf", headers={})
+            fetch_with_redirect_guard(
+                f"http://{PUBLIC_IP}/start.pdf", headers={})
 
         self.assertEqual(
             mock_get.call_args_list[1].args[0], f"http://{PUBLIC_IP}/elsewhere.pdf"
@@ -254,13 +260,15 @@ class RedirectGuardTests(TestCase):
 
         with patch("analyzer.url_fetcher.requests.get", side_effect=looping):
             with self.assertRaises(UnsafeURLError):
-                fetch_with_redirect_guard(f"http://{PUBLIC_IP}/loop", headers={})
+                fetch_with_redirect_guard(
+                    f"http://{PUBLIC_IP}/loop", headers={})
 
     def test_redirect_without_a_location_is_rejected(self):
         with patch("analyzer.url_fetcher.requests.get", return_value=FakeResponse(302)):
             # No Location header, so is_redirect is False and it is treated as a
             # plain response rather than followed into nowhere.
-            result = fetch_with_redirect_guard(f"http://{PUBLIC_IP}/x.pdf", headers={})
+            result = fetch_with_redirect_guard(
+                f"http://{PUBLIC_IP}/x.pdf", headers={})
         self.assertEqual(result.status_code, 302)
 
 
@@ -297,7 +305,8 @@ class DownloadEntryPointTests(TestCase):
 
         with patch(
             "analyzer.url_fetcher.requests.get",
-            side_effect=requests_lib.exceptions.ConnectionError("port 6379 refused"),
+            side_effect=requests_lib.exceptions.ConnectionError(
+                "port 6379 refused"),
         ):
             with self.assertRaises(ValueError) as refused:
                 download_and_validate_url(f"http://{PUBLIC_IP}/missing.pdf")

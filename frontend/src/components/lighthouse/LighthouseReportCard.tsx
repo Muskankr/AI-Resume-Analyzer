@@ -1,9 +1,9 @@
-import React from 'react';
-import type { LighthouseReportSuite } from './types';
+import React from 'react'
+import type { LighthouseReportSuite } from './types'
 
 interface LighthouseCardProps {
-  report: LighthouseReportSuite;
-  onSelect: (report: LighthouseReportSuite) => void;
+  report: LighthouseReportSuite
+  onSelect: (report: LighthouseReportSuite) => void
 }
 
 export const LighthouseReportCard: React.FC<LighthouseCardProps> = ({ report, onSelect }) => {
@@ -50,5 +50,5 @@ export const LighthouseReportCard: React.FC<LighthouseCardProps> = ({ report, on
         <span>View Full Lighthouse Audit Scorecard</span>
       </button>
     </div>
-  );
-};
+  )
+}

@@ -115,7 +115,8 @@ def read_claim(request):
     if header:
         return header.strip()
 
-    param = request.query_params.get("token") if hasattr(request, "query_params") else None
+    param = request.query_params.get("token") if hasattr(
+        request, "query_params") else None
     return param.strip() if param else None
 
 

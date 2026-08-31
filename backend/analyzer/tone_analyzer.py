@@ -11,19 +11,46 @@ from typing import List, Dict, Any
 # Pronoun and phrasing indicators
 FIRST_PERSON_SINGULAR = [r"\bi\b", r"\bmy\b", r"\bmine\b", r"\bme\b"]
 FIRST_PERSON_PLURAL = [r"\bwe\b", r"\bour\b", r"\bours\b", r"\bus\b"]
+# Both lists used to anchor every entry to a literal leading "i" -- r"\bi led\b",
+# r"\bi was responsible for\b". Resume bullets are written as bare past-tense
+# verbs ("Led a team of 12"), which is the accepted convention, so the resumes
+# that followed best practice scored a flat 50 and were told to "add more
+# confident language". The "I" form also loses the second verb of any compound
+# clause: "I spearheaded the initiative and delivered a 20% improvement" reads
+# "and delivered", not "I delivered".
+#
+# Matching the verb itself covers both: "\bled\b" is in "I led" and in "Led".
 PASSIVE_WEAK_PHRASES = [
     r"\bi think\b",
     r"\bi believe\b",
     r"\bi feel like\b",
-    r"\bi tried to\b",
-    r"\bi was responsible for\b",
-    r"\bi helped with\b",
+    r"\btried to\b",
+    r"\bresponsible for\b",
+    r"\bhelped with\b",
+    r"\bassisted with\b",
+    r"\bworked on\b",
+    r"\binvolved in\b",
+    r"\bparticipated in\b",
+    r"\bduties included\b",
+    r"\btasked with\b",
+    r"\bfamiliar with\b",
 ]
 STRONG_CONFIDENT_PHRASES = [
-    r"\bi led\b",
-    r"\bi architected\b",
-    r"\bi spearheaded\b",
-    r"\bi delivered\b",
+    r"\bled\b",
+    r"\barchitected\b",
+    r"\bspearheaded\b",
+    r"\bdelivered\b",
+    r"\blaunched\b",
+    r"\bshipped\b",
+    r"\bdrove\b",
+    r"\bowned\b",
+    r"\bfounded\b",
+    r"\bpioneered\b",
+    r"\bestablished\b",
+    r"\borchestrated\b",
+    r"\boverhauled\b",
+    r"\bnegotiated\b",
+    r"\bsecured\b",
     r"\bi am confident\b",
     r"\bproven track record\b",
 ]
@@ -36,6 +63,13 @@ COLLABORATION_PHRASES = [
     r"\bmentored\b",
     r"\bcoordinated\b",
 ]
+
+# "You do not mention collaboration enough" and "add more confident language"
+# are judgements about a whole resume. Below this many words there is not
+# enough text to support either, and emitting them on a fragment produces
+# advice the input cannot justify. analyze_sentiment_and_confidence is called
+# both on whole resumes and on individual sections, so the guard lives here.
+MIN_WORDS_FOR_CORPUS_ADVICE = 40
 
 
 def analyze_pronoun_usage(text: str) -> Dict[str, Any]:
@@ -89,15 +123,17 @@ def analyze_sentiment_and_confidence(text: str) -> Dict[str, Any]:
     clarity_score = max(0, min(100, 100 - (weak_count * 10)))
 
     suggestions = []
+    long_enough = len(text.split()) >= MIN_WORDS_FOR_CORPUS_ADVICE
+
     if weak_count > 2:
         suggestions.append(
-            "Replace weak phrases like 'I tried to' or 'I helped with' with strong action verbs like 'I delivered' or 'I executed'."
+            "Replace weak phrases like 'tried to' or 'helped with' with strong action verbs like 'delivered' or 'executed'."
         )
-    if strong_count == 0 and weak_count == 0:
+    if long_enough and strong_count == 0 and weak_count == 0:
         suggestions.append(
             "Add more confident, results-oriented language to highlight your achievements."
         )
-    if collab_count < 2:
+    if long_enough and collab_count < 2:
         suggestions.append(
             "Incorporate more collaboration keywords (e.g., 'partnered', 'cross-functional') to demonstrate teamwork."
         )

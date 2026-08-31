@@ -1,0 +1,319 @@
+.ff-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 1rem;
+}
+
+.ff-modal-container {
+  background: #1e293b;
+  color: #f8fafc;
+  width: 100%;
+  max-width: 720px;
+  max-height: 85vh;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ff-modal-header {
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ff-modal-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ff-modal-header-title h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.ff-modal-icon {
+  font-size: 1.5rem;
+}
+
+.ff-modal-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.ff-modal-close-btn:hover {
+  color: #f8fafc;
+  background: #334155;
+}
+
+.ff-modal-toolbar {
+  padding: 1rem 1.5rem;
+  background: #0f172a;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-bottom: 1px solid #334155;
+}
+
+.ff-search-input {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  background: #1e293b;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  font-size: 0.9rem;
+  outline: none;
+}
+
+.ff-search-input:focus {
+  border-color: #6366f1;
+}
+
+.ff-category-filters {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  padding-bottom: 0.25rem;
+}
+
+.ff-category-chip {
+  background: #1e293b;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  border-radius: 20px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.ff-category-chip.active,
+.ff-category-chip:hover {
+  background: #6366f1;
+  color: #ffffff;
+  border-color: #6366f1;
+}
+
+.ff-modal-body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.ff-flag-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.ff-flag-card {
+  background: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  transition: all 0.2s ease;
+}
+
+.ff-flag-card.enabled {
+  border-left: 4px solid #22c55e;
+}
+
+.ff-flag-card.disabled {
+  border-left: 4px solid #64748b;
+  opacity: 0.85;
+}
+
+.ff-flag-main {
+  flex: 1;
+}
+
+.ff-flag-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.35rem;
+}
+
+.ff-flag-name {
+  font-weight: 600;
+  font-size: 1rem;
+  color: #f8fafc;
+}
+
+.ff-flag-key {
+  font-family: monospace;
+  font-size: 0.75rem;
+  background: #1e293b;
+  color: #a5b4fc;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+}
+
+.ff-badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.ff-badge.experimental {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.ff-badge.category {
+  background: rgba(99, 102, 241, 0.2);
+  color: #c7d2fe;
+}
+
+.ff-flag-description {
+  margin: 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.ff-flag-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.ff-toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 44px;
+  height: 24px;
+}
+
+.ff-toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.ff-slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #475569;
+  transition: 0.3s;
+  border-radius: 24px;
+}
+
+.ff-slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: 0.3s;
+  border-radius: 50%;
+}
+
+input:checked + .ff-slider {
+  background-color: #22c55e;
+}
+
+input:checked + .ff-slider:before {
+  transform: translateX(20px);
+}
+
+.ff-reset-single-btn {
+  background: transparent;
+  color: #f87171;
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: 6px;
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.ff-reset-single-btn:hover {
+  background: rgba(248, 113, 113, 0.1);
+}
+
+.ff-modal-footer {
+  padding: 1rem 1.5rem;
+  background: #0f172a;
+  border-top: 1px solid #334155;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ff-override-count {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.ff-footer-actions {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.ff-btn-primary {
+  background: #6366f1;
+  color: white;
+  border: none;
+  padding: 0.5rem 1.25rem;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.ff-btn-primary:hover {
+  background: #4f46e5;
+}
+
+.ff-btn-secondary {
+  background: transparent;
+  color: #94a3b8;
+  border: 1px solid #334155;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.ff-btn-secondary:hover {
+  background: #1e293b;
+  color: #f8fafc;
+}

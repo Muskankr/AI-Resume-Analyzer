@@ -57,3 +57,34 @@ class LinkedInOptimizationResponseSerializer(serializers.Serializer):
     experiences = LinkedInExperienceResponseSerializer(many=True)
     skills = serializers.ListField(child=serializers.CharField())
     limits = serializers.DictField(child=serializers.IntegerField())
+
+class LinkedInConsistencyRequestSerializer(serializers.Serializer):
+    resume_text = serializers.CharField(required=True, allow_blank=True)
+    linkedin_text = serializers.CharField(required=False, allow_blank=True)
+    linkedin_url = serializers.URLField(required=False, allow_blank=True)
+
+    def validate(self, data):
+        if not data.get('linkedin_text') and not data.get('linkedin_url'):
+            raise serializers.ValidationError(" Either linkedin_text or linkedin_url must be provided.")
+
+
+class LinkedInConsistencyRequestSerializer(serializers.Serializer):
+    resume_text = serializers.CharField(required=True, allow_blank=True)
+    linkedin_text = serializers.CharField(required=False, allow_blank=True)
+    linkedin_url = serializers.URLField(required=False, allow_blank=True)
+
+    def validate(self, data):
+        if not data.get('linkedin_text') and not data.get('linkedin_url'):
+            raise serializers.ValidationError('Either linkedin_text or linkedin_url must be provided.')
+        return data
+
+class LinkedInConsistencyMismatchSerializer(serializers.Serializer):
+    type = serializers.CharField()
+    resume_evidence = serializers.CharField()
+    linkedin_evidence = serializers.CharField()
+    message = serializers.CharField()
+
+class LinkedInConsistencyResponseSerializer(serializers.Serializer):
+    mismatches = LinkedInConsistencyMismatchSerializer(many=True)
+    resume_roles_found = serializers.IntegerField()
+    linkedin_roles_found = serializers.IntegerField()

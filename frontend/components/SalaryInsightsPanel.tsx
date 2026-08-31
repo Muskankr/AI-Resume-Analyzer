@@ -1,21 +1,21 @@
-'use client';
+'use client'
 
-import React, { useState } from 'react';
-import { CurrencyCode } from '@/utils/currencyConverter';
-import { formatSalary } from '@/utils/currencyConverter';
-import { SalaryCurrencySelector } from '@/components/SalaryCurrencySelector';
-import { DollarSign, TrendingUp } from 'lucide-react';
+import React, { useState } from 'react'
+import { CurrencyCode } from '@/utils/currencyConverter'
+import { formatSalary } from '@/utils/currencyConverter'
+import { SalaryCurrencySelector } from '@/components/SalaryCurrencySelector'
+import { DollarSign, TrendingUp } from 'lucide-react'
 
 interface SalaryInsightsProps {
-  baseSalaryUSD: number; // Assuming internal data is indexed in USD
-  marketAverageUSD: number;
+  baseSalaryUSD: number // Assuming internal data is indexed in USD
+  marketAverageUSD: number
 }
 
 export const SalaryInsightsPanel: React.FC<SalaryInsightsProps> = ({
   baseSalaryUSD,
   marketAverageUSD,
 }) => {
-  const [currency, setCurrency] = useState<CurrencyCode>('USD');
+  const [currency, setCurrency] = useState<CurrencyCode>('USD')
 
   return (
     <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 space-y-6 text-slate-100 shadow-xl">
@@ -29,18 +29,22 @@ export const SalaryInsightsPanel: React.FC<SalaryInsightsProps> = ({
             Based on your resume profile and current market benchmarks.
           </p>
         </div>
-        
+
         {/* Currency Selector Control */}
         <SalaryCurrencySelector currentCurrency={currency} onCurrencyChange={setCurrency} />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1">
-          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Estimated Match Salary</span>
+          <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
+            Estimated Match Salary
+          </span>
           <div className="text-2xl font-black text-teal-400">
             {formatSalary(baseSalaryUSD, currency)}
           </div>
-          <span className="text-[10px] text-slate-500">Displayed in {currency} (converted from base model data)</span>
+          <span className="text-[10px] text-slate-500">
+            Displayed in {currency} (converted from base model data)
+          </span>
         </div>
 
         <div className="bg-slate-950 p-4 rounded-xl border border-slate-800 space-y-1">
@@ -50,9 +54,11 @@ export const SalaryInsightsPanel: React.FC<SalaryInsightsProps> = ({
           <div className="text-2xl font-black text-white">
             {formatSalary(marketAverageUSD, currency)}
           </div>
-          <span className="text-[10px] text-slate-500">Industry baseline for matched role requirements</span>
+          <span className="text-[10px] text-slate-500">
+            Industry baseline for matched role requirements
+          </span>
         </div>
       </div>
     </div>
-  );
-};
+  )
+}

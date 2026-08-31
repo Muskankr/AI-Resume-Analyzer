@@ -79,29 +79,10 @@ MONTHS = {
     "dec": 12, "december": 12,
 }
 
-#: Words that mean "still there".
-#:
-#: ``date`` is in here on its own, and that is not a mistake. ``_SEPARATOR``
-#: below lists ``to`` and ``till`` as range separators and is applied *before*
-#: this alternation, so in "Jan 2020 to date" the separator has already
-#: consumed the "to" and only "date" is left to match. Listing the full phrase
-#: alone meant it could never match, and a resume whose only role ended "to
-#: date" parsed as having no dates at all. The phrases stay for the case where
-#: the separator was a dash — "Jan 2020 – to date".
-#:
-#: A bare "date" is only ever reached after a parsed start endpoint and a
-#: separator, so it cannot match a stray word elsewhere in the line.
-PRESENT_WORDS = (
-    "present",
-    "current",
-    "currently",
-    "now",
-    "ongoing",
-    "to date",
-    "till date",
-    "today",
-    "date",
-)
+#: Words that mean "still there". ``to date`` is included because it is common
+#: and is otherwise parsed as a stray preposition.
+PRESENT_WORDS = ("present", "current", "currently",
+                 "now", "ongoing", "to date", "today")
 
 #: Separators between the two ends of a range: hyphen, en dash, em dash,
 #: "to", "until", "through". Written out rather than as a character class so the
@@ -118,6 +99,7 @@ MAX_YEAR = 2100
 _YEAR = r"(?:19\d{2}|20\d{2}|21\d{2})"
 
 _MONTH_NAMES = "|".join(sorted(MONTHS, key=len, reverse=True))
+
 
 def _endpoint(prefix):
     """Return an alternation matching one end of a range, with named groups.
@@ -574,7 +556,8 @@ def analyse(text, experience_level="", today=None) -> Timeline:
     # far-future range would poison the gap and total-experience arithmetic that
     # follows.
     usable = []
-    future_cutoff = today.year * 12 + (today.month - 1) + FUTURE_TOLERANCE_MONTHS
+    future_cutoff = today.year * 12 + \
+        (today.month - 1) + FUTURE_TOLERANCE_MONTHS
 
     for r in ranges:
         if not r.is_current and r.end_index(today) < r.start_index():
@@ -631,7 +614,8 @@ def analyse(text, experience_level="", today=None) -> Timeline:
 
         usable.append(r)
 
-    ordered = sorted(usable, key=lambda r: (r.start_index(), r.end_index(today)))
+    ordered = sorted(usable, key=lambda r: (
+        r.start_index(), r.end_index(today)))
 
     # --- Gaps and overlaps ------------------------------------------------
     largest_gap = 0

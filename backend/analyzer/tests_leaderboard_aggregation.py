@@ -47,13 +47,15 @@ class NormaliseTrackTests(TestCase):
 
     def test_a_known_track_resolves_to_its_canonical_name(self):
         self.assertEqual(
-            normalise_track("Backend Developer", KNOWN_TRACKS), "Backend Developer"
+            normalise_track("Backend Developer",
+                            KNOWN_TRACKS), "Backend Developer"
         )
 
     def test_casing_and_whitespace_do_not_create_a_second_track(self):
         for spelling in ("backend developer", "  BACKEND DEVELOPER  ", "Backend developer"):
             with self.subTest(spelling=spelling):
-                self.assertEqual(normalise_track(spelling, KNOWN_TRACKS), "Backend Developer")
+                self.assertEqual(normalise_track(
+                    spelling, KNOWN_TRACKS), "Backend Developer")
 
     def test_an_empty_track_means_everything(self):
         self.assertEqual(normalise_track("", KNOWN_TRACKS), "")
@@ -62,8 +64,10 @@ class NormaliseTrackTests(TestCase):
 
     def test_an_unknown_track_collapses_onto_one_name(self):
         """This is what stops a caller minting a cache entry per request."""
-        self.assertEqual(normalise_track("Astronaut", KNOWN_TRACKS), UNKNOWN_TRACK)
-        self.assertEqual(normalise_track("x" * 5000, KNOWN_TRACKS), UNKNOWN_TRACK)
+        self.assertEqual(normalise_track(
+            "Astronaut", KNOWN_TRACKS), UNKNOWN_TRACK)
+        self.assertEqual(normalise_track(
+            "x" * 5000, KNOWN_TRACKS), UNKNOWN_TRACK)
 
 
 class CacheKeyTests(TestCase):
@@ -94,7 +98,8 @@ class CacheKeyTests(TestCase):
     def test_the_limit_and_denominator_are_part_of_the_key(self):
         base = cache_key_for("Backend Developer", 10, False)
 
-        self.assertNotEqual(base, cache_key_for("Backend Developer", 25, False))
+        self.assertNotEqual(base, cache_key_for(
+            "Backend Developer", 25, False))
         self.assertNotEqual(base, cache_key_for("Backend Developer", 10, True))
 
 
@@ -115,14 +120,18 @@ class ClampLimitTests(TestCase):
 
 class AggregateSkillCountsTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="a", password="password123")
-        self.other = User.objects.create_user(username="b", password="password123")
+        self.user = User.objects.create_user(
+            username="a", password="password123")
+        self.other = User.objects.create_user(
+            username="b", password="password123")
 
     def test_counts_across_rows(self):
         make_analysis(self.user, matched=["python", "sql"], missing=["docker"])
-        make_analysis(self.other, matched=["python"], missing=["docker", "redis"])
+        make_analysis(self.other, matched=[
+                      "python"], missing=["docker", "redis"])
 
-        matched, missing, total = aggregate_skill_counts(ResumeAnalysis.objects.all())
+        matched, missing, total = aggregate_skill_counts(
+            ResumeAnalysis.objects.all())
 
         self.assertEqual(total, 2)
         self.assertEqual(matched["python"], 2)
@@ -141,9 +150,11 @@ class AggregateSkillCountsTests(TestCase):
     def test_a_non_list_json_value_is_skipped_not_counted(self):
         """`Counter.update` on a dict counts its keys, which is silently wrong."""
         analysis = make_analysis(self.user, matched=["python"])
-        ResumeAnalysis.objects.filter(pk=analysis.pk).update(missing_skills={"docker": 1})
+        ResumeAnalysis.objects.filter(pk=analysis.pk).update(
+            missing_skills={"docker": 1})
 
-        matched, missing, total = aggregate_skill_counts(ResumeAnalysis.objects.all())
+        matched, missing, total = aggregate_skill_counts(
+            ResumeAnalysis.objects.all())
 
         self.assertEqual(total, 1)
         self.assertEqual(missing, {})
@@ -164,7 +175,8 @@ class AggregateSkillCountsTests(TestCase):
             make_analysis(self.user, matched=["python"])
         make_analysis(self.other, matched=["python"])
 
-        by_row, _, row_total = aggregate_skill_counts(ResumeAnalysis.objects.all())
+        by_row, _, row_total = aggregate_skill_counts(
+            ResumeAnalysis.objects.all())
         by_user, _, user_total = aggregate_skill_counts(
             ResumeAnalysis.objects.all(), per_user=True
         )
@@ -184,7 +196,8 @@ class AggregateSkillCountsTests(TestCase):
         self.assertEqual(missing["python"], 1)
 
     def test_an_empty_queryset_gives_a_zero_denominator(self):
-        matched, missing, total = aggregate_skill_counts(ResumeAnalysis.objects.none())
+        matched, missing, total = aggregate_skill_counts(
+            ResumeAnalysis.objects.none())
 
         self.assertEqual((dict(matched), dict(missing), total), ({}, {}, 0))
 
@@ -194,7 +207,8 @@ class TopSkillsTests(TestCase):
         from collections import Counter
 
         self.assertEqual(top_skills(Counter(), 0), [])
-        self.assertEqual(top_skills(Counter({"python": 1}), 0)[0]["percentage"], 0)
+        self.assertEqual(top_skills(Counter({"python": 1}), 0)[
+                         0]["percentage"], 0)
 
     def test_the_limit_is_honoured(self):
         from collections import Counter
@@ -221,10 +235,12 @@ class AggregationIsStreamedTests(TestCase):
             return self._queryset.iterator(*args, **kwargs)
 
         def __iter__(self):
-            self._testcase.fail("aggregation iterated the queryset instead of streaming it")
+            self._testcase.fail(
+                "aggregation iterated the queryset instead of streaming it")
 
         def __len__(self):
-            self._testcase.fail("aggregation called len() on the queryset, loading every row")
+            self._testcase.fail(
+                "aggregation called len() on the queryset, loading every row")
 
     def test_rows_are_streamed_not_loaded(self):
         user = User.objects.create_user(username="s", password="password123")
@@ -252,9 +268,12 @@ class LeaderboardEndpointTests(TestCase):
     def setUp(self):
         cache.clear()
         self.client = APIClient()
-        self.user = User.objects.create_user(username="lb", password="password123")
-        make_analysis(self.user, role="Backend Developer", matched=["python"], missing=["docker"])
-        make_analysis(self.user, role="Frontend Developer", matched=["react"], missing=["css"])
+        self.user = User.objects.create_user(
+            username="lb", password="password123")
+        make_analysis(self.user, role="Backend Developer",
+                      matched=["python"], missing=["docker"])
+        make_analysis(self.user, role="Frontend Developer",
+                      matched=["react"], missing=["css"])
 
     def tearDown(self):
         cache.clear()
@@ -269,19 +288,25 @@ class LeaderboardEndpointTests(TestCase):
     def test_skills_are_titled_for_display(self):
         response = self.client.get("/api/skills-leaderboard/")
 
-        self.assertIn("Python", [row["skill"] for row in response.data["matched_skills"]])
+        self.assertIn("Python", [row["skill"]
+                      for row in response.data["matched_skills"]])
 
     def test_filtering_by_track(self):
-        response = self.client.get("/api/skills-leaderboard/?track=Backend Developer")
+        response = self.client.get(
+            "/api/skills-leaderboard/?track=Backend Developer")
 
         self.assertEqual(response.data["total_analyses"], 1)
-        self.assertEqual([r["skill"] for r in response.data["matched_skills"]], ["Python"])
+        self.assertEqual([r["skill"]
+                         for r in response.data["matched_skills"]], ["Python"])
 
     def test_a_differently_cased_track_hits_the_same_entry(self):
-        first = self.client.get("/api/skills-leaderboard/?track=Backend Developer")
-        second = self.client.get("/api/skills-leaderboard/?track=backend developer")
+        first = self.client.get(
+            "/api/skills-leaderboard/?track=Backend Developer")
+        second = self.client.get(
+            "/api/skills-leaderboard/?track=backend developer")
 
-        self.assertEqual(first.data["matched_skills"], second.data["matched_skills"])
+        self.assertEqual(first.data["matched_skills"],
+                         second.data["matched_skills"])
 
     def test_an_unknown_track_returns_an_empty_board_without_scanning(self):
         response = self.client.get("/api/skills-leaderboard/?track=Astronaut")
@@ -308,19 +333,23 @@ class LeaderboardEndpointTests(TestCase):
 
     def test_a_track_with_a_space_does_not_crash_the_cache_backend(self):
         with self.assertNoLogs("django.core.cache", level="WARNING"):
-            response = self.client.get("/api/skills-leaderboard/?track=Backend Developer")
+            response = self.client.get(
+                "/api/skills-leaderboard/?track=Backend Developer")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_the_limit_is_honoured_and_bounded(self):
-        self.assertEqual(self.client.get("/api/skills-leaderboard/?limit=1").data["limit"], 1)
+        self.assertEqual(self.client.get(
+            "/api/skills-leaderboard/?limit=1").data["limit"], 1)
         self.assertEqual(
-            self.client.get("/api/skills-leaderboard/?limit=99999").data["limit"], MAX_LIMIT
+            self.client.get(
+                "/api/skills-leaderboard/?limit=99999").data["limit"], MAX_LIMIT
         )
 
     def test_per_user_changes_the_denominator(self):
         for _ in range(4):
-            make_analysis(self.user, role="Backend Developer", matched=["python"])
+            make_analysis(self.user, role="Backend Developer",
+                          matched=["python"])
 
         by_row = self.client.get("/api/skills-leaderboard/")
         by_user = self.client.get("/api/skills-leaderboard/?per_user=true")
@@ -328,7 +357,8 @@ class LeaderboardEndpointTests(TestCase):
         self.assertEqual(by_row.data["counted_by"], "analysis")
         self.assertEqual(by_user.data["counted_by"], "user")
         self.assertEqual(by_user.data["total_analyses"], 1)
-        self.assertGreater(by_row.data["total_analyses"], by_user.data["total_analyses"])
+        self.assertGreater(
+            by_row.data["total_analyses"], by_user.data["total_analyses"])
 
     def test_results_are_cached(self):
         self.client.get("/api/skills-leaderboard/")

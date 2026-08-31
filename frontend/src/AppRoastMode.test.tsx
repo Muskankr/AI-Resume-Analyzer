@@ -63,8 +63,10 @@ const ANALYSIS_RESULT = {
   missing_skills: ['Python'],
   resume_text: 'Sample Resume Content',
 }
-
 describe('Resume Roast Mode (#497)', () => {
+  vi.mock('./theme/ThemeContext', () => ({
+    useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }),
+  }))
   beforeEach(() => {
     // "Try Sample Resume" does `fetch('/sample-resume.pdf')`. Under jsdom there
     // is no origin to resolve a root-relative path against, so the real fetch
@@ -74,9 +76,10 @@ describe('Resume Roast Mode (#497)', () => {
       'fetch',
       vi.fn().mockResolvedValue({
         ok: true,
-        blob: async () => new Blob([new Uint8Array([0x25, 0x50, 0x44, 0x46])], {
-          type: 'application/pdf',
-        }),
+        blob: async () =>
+          new Blob([new Uint8Array([0x25, 0x50, 0x44, 0x46])], {
+            type: 'application/pdf',
+          }),
       })
     )
     // App reports failures with window.alert, which jsdom does not implement.

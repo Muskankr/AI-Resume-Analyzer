@@ -3,7 +3,11 @@ import { FileText } from 'lucide-react'
 export default function EmptyState() {
   return (
     <div className="empty-state-container">
-      <div className="empty-state-icon-wrapper" aria-hidden="true" style={{ marginBottom: '16px', color: 'var(--text-primary)' }}>
+      <div
+        className="empty-state-icon-wrapper"
+        aria-hidden="true"
+        style={{ marginBottom: '16px', color: 'var(--text-primary)' }}
+      >
         <FileText size={30} />
       </div>
 
