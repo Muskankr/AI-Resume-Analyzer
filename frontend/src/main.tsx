@@ -52,6 +52,7 @@ import { TermsOfService } from './pages/TermsOfService'
 import { ProfilePage } from './components/ProfilePage'
 import { CareerRoadmap } from './pages/CareerRoadmap'
 import { RecruiterDashboard } from './pages/Recruiter/RecruiterDashboard'
+import EmbedWidget from './pages/EmbedWidget'
 
 
 createRoot(document.getElementById('root')!).render(
@@ -61,6 +62,7 @@ createRoot(document.getElementById('root')!).render(
         <Routes>
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/recruiter" element={<RecruiterDashboard />} />
+          <Route path="/embed" element={<EmbedWidget />} />
           <Route path="/*" element={<App />} />
           <Route path="/docs" element={<ApiDocs />} />
           <Route path="/profile" element={<ProfilePage />} />
