@@ -52,6 +52,7 @@ import { TermsOfService } from './pages/TermsOfService'
 import { ProfilePage } from './components/ProfilePage'
 import { CareerRoadmap } from './pages/CareerRoadmap'
 import { RecruiterDashboard } from './pages/Recruiter/RecruiterDashboard'
+import { CareerPathSimulator } from './components/CareerPathSimulator'
 import { ResumeVersionHistory } from './components/ResumeVersionHistory'
 import { ATSCompatibilityScanner } from './components/ATSCompatibilityScanner'
 import { ContributorCertificate } from './components/ContributorCertificate'
@@ -68,6 +69,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/docs" element={<ApiDocs />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/career-roadmap" element={<CareerRoadmap />} />
+          <Route path="/career-path" element={<CareerPathSimulator />} />
           <Route path="/version-history" element={<ResumeVersionHistory />} />
           <Route path="/ats-scanner" element={<ATSCompatibilityScanner />} />
           <Route path="/contributors" element={<ContributorCertificate />} />
