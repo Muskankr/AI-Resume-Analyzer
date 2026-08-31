@@ -1,4 +1,6 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+
+import { loadSession, subscribeToSession } from '../api/session'
 
 export interface PartialSkillItem {
   skill: string
@@ -24,6 +26,7 @@ export interface AnalysisEntry {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   coverLetterFeedback?: any
   interviewQuestions?: string[]
+  jobMatchScore?: number | null
 }
 
 const STORAGE_KEY = 'resume_analysis_history'
@@ -43,9 +46,34 @@ function loadHistory(): AnalysisEntry[] {
 
 function saveHistory(entries: AnalysisEntry[]): void {
   try {
+    if (entries.length === 0) {
+      // Remove the key rather than writing `[]`. An empty array is not a leak,
+      // but leaving the key behind means "signed out and cleared" and "never
+      // used this browser" look different in storage for no reason, and it is
+      // one more thing for the next reader to wonder about.
+      localStorage.removeItem(STORAGE_KEY)
+      return
+    }
     localStorage.setItem(STORAGE_KEY, JSON.stringify(entries))
   } catch {
     // localStorage may be unavailable in restricted modes
+  }
+}
+
+/**
+ * Remove every trace of the browser-local history.
+ *
+ * Exported because signing out has to be able to do this even from code that
+ * is not rendering the hook, and because it is the thing worth asserting on in
+ * a test — the observable claim is "storage is empty", not "some state
+ * variable was reset".
+ */
+export function clearStoredHistory(): void {
+  try {
+    localStorage.removeItem(STORAGE_KEY)
+    localStorage.removeItem(LAST_VIEWED_KEY)
+  } catch {
+    // Nothing to clean up if storage was never reachable.
   }
 }
 
@@ -76,6 +104,51 @@ export function useAnalysisHistory() {
   useEffect(() => {
     saveHistory(entries)
   }, [entries])
+
+  /**
+   * Drop the history from memory and from storage.
+   *
+   * Both halves matter. Clearing storage alone leaves the sidebar rendering
+   * the rows until the page is reloaded; clearing state alone lets the mirror
+   * effect below write them straight back.
+   */
+  const resetHistory = useCallback(() => {
+    setEntries([])
+    setLastViewedTimestamp(0)
+    clearStoredHistory()
+  }, [])
+
+  /**
+   * Signing out has to take the history with it.
+   *
+   * `App` fills `entries` from `/api/history/` for a signed-in user, and the
+   * effect above mirrors whatever is in `entries` into localStorage so the
+   * sidebar renders instantly on the next load. That is fine while the account
+   * is signed in and not fine afterwards: `clearSession()` only removes the
+   * `auth_user` key, so the previous account's file names, scores, target
+   * roles and skill lists stayed in the browser and were rendered to whoever
+   * opened the app next (#864).
+   *
+   * Subscribing to the session rather than taking an `onLogout` callback
+   * covers the other way a session ends: the axios interceptor calls
+   * `clearSession()` itself when a token refresh fails, and that path never
+   * goes near the Logout button.
+   *
+   * The transition is what triggers the reset, not the absence of a session.
+   * A visitor who has never signed in is signed out too, and their locally
+   * held history is theirs to keep.
+   */
+  const hadSessionRef = useRef(loadSession() !== null)
+
+  useEffect(() => {
+    return subscribeToSession((session) => {
+      const hasSession = session !== null
+      if (hadSessionRef.current && !hasSession) {
+        resetHistory()
+      }
+      hadSessionRef.current = hasSession
+    })
+  }, [resetHistory])
 
   const markAllAsViewed = useCallback(() => {
     const now = Date.now()
@@ -117,6 +190,7 @@ export function useAnalysisHistory() {
     addEntry,
     deleteEntry,
     clearHistory,
+    resetHistory,
     setEntries,
   }
 }

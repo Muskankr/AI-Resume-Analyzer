@@ -5,6 +5,7 @@ import secrets
 import uuid
 from datetime import timedelta
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
@@ -73,6 +74,10 @@ class ResumeAnalysis(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+        indexes = [
+            models.Index(fields=["user", "-created_at", "-id"]),
+            models.Index(fields=["target_role"]),
+        ]
 
     def __str__(self):
         return f"{self.user.username} — {self.file_name} ({self.score}%)"
@@ -388,3 +393,25 @@ def invalidate_role_skills_cache(sender, **kwargs):
 @receiver(m2m_changed, sender=Role.skills.through)
 def invalidate_m2m_cache(sender, **kwargs):
     cache.delete("role_skills_dict")
+
+
+@receiver(post_delete, sender=ResumeAnalysis)
+def delete_resume_analysis_file(sender, instance, **kwargs):
+    """
+    Safely handles removing old resume files from the resumes/ directory
+    when a ResumeAnalysis record is deleted to prevent storage bloat.
+    """
+    try:
+        from django.core.files.storage import default_storage
+        import os
+        
+        # In a generic case, we can try to delete files in the default storage that match this file_name
+        # If the file_name is just the basename, we might need to look for it in resumes/
+        file_path = f"resumes/{instance.file_name}"
+        if default_storage.exists(file_path):
+            default_storage.delete(file_path)
+            
+        # Also, check if there's an associated Resume object and delete it
+        Resume.objects.filter(file__contains=instance.file_name).delete()
+    except Exception:
+        pass

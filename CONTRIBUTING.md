@@ -19,8 +19,12 @@ Please read this guide before contributing.
 - Commit Message Guidelines
 - Coding Standards
 - Reporting Issues
+- Claiming an Issue
+- Issue Assignment Activity
 - Pull Request Process
+- Semantic Versioning
 - Contributor Checklist
+- Mentorship Program
 - Need Help?
 
 ---
@@ -49,6 +53,8 @@ You can contribute by:
 ---
 
 # Getting Started
+
+> 🌱 New to Git and GitHub? Start with our [Your First Pull Request Ever](docs/FIRST_PULL_REQUEST.md) guide — a step-by-step walkthrough with real commands that assumes zero prior experience.
 
 ## 1. Fork the repository
 
@@ -250,6 +256,30 @@ This searches for open issues labeled `bug` containing the keyword `login`. You 
 
 ---
 
+# Claiming an Issue
+
+Before you start working on something, please claim the issue so others don't duplicate your effort.
+
+The **preferred way to claim an issue** is to comment `/assign-me` on it. A GitHub Action handles the rest:
+
+- If the issue is **open and unassigned**, it is assigned to you automatically and the bot confirms with a comment.
+- If the issue is **already claimed**, the bot replies letting you know who has it, so you can pick another one.
+
+Only work on issues that are assigned to you, and please avoid claiming more issues than you can actively work on at once.
+
+---
+
+# Issue Assignment Activity
+
+To keep assigned issues from getting stuck, an automated workflow checks for inactivity on assigned issues:
+
+- **After 14 days** with no activity on an assigned issue, the bot posts a friendly check-in comment asking whether you're still working on it. A quick reply keeps it assigned to you.
+- **After a further 7-day grace period** with no response, the bot automatically unassigns the issue so it's free for others to pick up.
+
+These thresholds are intentionally generous so slow-but-active contributors aren't pushed out — just leave a short comment if you're still on it. You can always claim an unassigned issue again later.
+
+---
+
 # Pull Request Process
 
 Before submitting a PR:
@@ -260,6 +290,16 @@ Before submitting a PR:
 - Keep the PR focused on one issue.
 - Link the related issue.
 - Update 'CHANGELOG.md' if you pull request introduces a notable feature, bug fix, enhancement, or other user-visible change.
+
+### Review Requirements
+
+All pull requests targeting the `main` branch require at least **one approving review** from a contributor before they can be merged. This ensures a human check alongside automated tests to maintain code quality.
+
+#### Exception Process for Urgent Fixes
+In genuinely urgent situations (e.g., critical production bug fixes or security patches), maintainers may bypass the review requirement. To do so, the maintainer should:
+1. Clearly state the urgency and reason for bypassing the review in the PR description.
+2. Ensure all automated tests and CI checks pass.
+3. Post-merge, ideally have another contributor review the merged changes as soon as possible.
 
 ### Updating the Changelog
 
@@ -281,6 +321,12 @@ Example:
 ```
 Closes #129
 ```
+
+---
+
+# Semantic Versioning
+
+This project follows **Semantic Versioning (SemVer) 2.0.0**. For guidelines on when to bump version numbers, the release checklist protocol, and Git release tagging mechanics, refer to the [Semantic Versioning Guide](docs/VERSIONING.md).
 
 ---
 
@@ -316,8 +362,35 @@ Make sure all commands complete successfully and coverage meets defined threshol
 
 ---
 
+# Mentorship Program
+
+New to open source or making your first pull request here? You don't have to do it alone. Our mentorship pairing program pairs newcomers with an experienced contributor (a "buddy") who can answer questions, review early drafts, and help you land your first PR.
+
+## How Pairing Requests Work
+
+1. **Ask for a buddy.** Open a request in the dedicated mentorship space (GitHub Discussions or the pinned mentorship channel on our [Discord Community](YOUR_DISCORD_URL)). Include:
+   - The issue you'd like to work on (link it if one exists).
+   - Your experience level and what you'd like help with (e.g., setup, Git workflow, review).
+2. **Get paired.** An available mentor will respond and claim your request. If no one responds within a couple of days, feel free to bump the thread.
+3. **Work together.** Your mentor can help you scope the issue, review your branch before you open a PR, and guide you through the [Pull Request Process](#pull-request-process).
+4. **Wrap up.** Once your PR is merged, the pairing is complete. You're always welcome to request another buddy for your next contribution.
+
+Mentorship is lightweight and asynchronous — mentors are volunteers, so please be patient and respectful of their time.
+
+## Becoming a Mentor
+
+Experienced contributors who'd like to help newcomers can opt in by adding their name to the mentors list in the mentorship space. Mentors typically:
+
+- Respond to pairing requests when they have capacity.
+- Answer setup and workflow questions.
+- Give friendly, constructive reviews on a mentee's first PRs.
+
+There's no minimum commitment — help when you can.
+
+---
+
 # Need Help?
 
-If you have questions, feel free to open a discussion or issue.
+If you have questions, ideas, or want to share something, start a conversation in [GitHub Discussions](https://github.com/Muskankr/AI-Resume-Analyzer/discussions) (Q&A, Ideas, Show and Tell). For actionable bugs or scoped work, open an issue.
 
 Happy Contributing! 🚀

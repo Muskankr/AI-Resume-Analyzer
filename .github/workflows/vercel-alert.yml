@@ -1,0 +1,25 @@
+name: Vercel Deployment Alert
+
+on:
+  deployment_status:
+
+jobs:
+  notify-on-failure:
+    # Only run if the deployment fails or errors out (ignores successes so it doesn't spam)
+    if: github.event.deployment_status.state == 'failure' || github.event.deployment_status.state == 'error'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord Notification
+        uses: sarisia/actions-status-discord@v1
+        with:
+          webhook: ${{ secrets.DISCORD_WEBHOOK_URL }}
+          status: failure
+          title: "🚨 Vercel Deployment Failed!"
+          description: |
+            **Repository:** ${{ github.repository }}
+            **Environment:** ${{ github.event.deployment_status.environment }}
+            **Creator:** ${{ github.event.deployment.creator.login }}
+            
+            [View Failed Build Logs](${{ github.event.deployment_status.log_url }})
+          color: 0xff0000
+          username: Vercel Alerts

@@ -664,11 +664,17 @@ class UserProfileTests(TestCase):
 
     def test_get_profile_success(self):
         from rest_framework import status
+        self.profile = UserProfile.objects.get_or_create(user=self.user)[0]
+        self.profile.bio = "Senior Backend Engineer | Python & Django"
+        self.profile.save()
+
         self.client.force_authenticate(user=self.user)
         resp = self.client.get("/api/profile/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data["username"], "testuser")
         self.assertEqual(resp.data["email"], "test@example.com")
+        self.assertEqual(resp.data["bio"], "Senior Backend Engineer | Python & Django")
+        self.assertEqual(resp.data["headline"], "Senior Backend Engineer | Python & Django")
 
     def test_put_profile_success(self):
         from rest_framework import status
@@ -678,10 +684,45 @@ class UserProfileTests(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data["username"], "newusername")
         self.assertEqual(resp.data["email"], "newemail@example.com")
+        self.assertEqual(resp.data["bio"], "Full-Stack Developer passionate about AI")
 
         self.user.refresh_from_db()
         self.assertEqual(self.user.username, "newusername")
         self.assertEqual(self.user.email, "newemail@example.com")
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertEqual(profile.bio, "Full-Stack Developer passionate about AI")
+
+    def test_put_profile_headline_alias(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.put("/api/profile/", {
+            "headline": "Lead DevOps Architect",
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["bio"], "Lead DevOps Architect")
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertEqual(profile.bio, "Lead DevOps Architect")
+
+    def test_put_profile_sanitizes_bio(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.put("/api/profile/", {
+            "bio": "<script>alert('xss')</script><b>Senior Engineer</b> \n\t  at <i>OpenSource</i>  ",
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["bio"], "alert('xss')Senior Engineer at OpenSource")
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertEqual(profile.bio, "alert('xss')Senior Engineer at OpenSource")
+
+    def test_put_profile_bio_length_limit(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        long_bio = "a" * 251
+        resp = self.client.put("/api/profile/", {
+            "bio": long_bio,
+        })
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("bio", resp.data)
 
     def test_put_profile_duplicate_username(self):
         from rest_framework import status
@@ -1047,6 +1088,7 @@ class ExportUserDataTests(TestCase):
         self.assertEqual(data["account"]["last_name"], "User")
         self.assertTrue(data["account"]["weekly_digest_opt_in"])
         self.assertIsNone(data["account"]["avatar"])
+        self.assertEqual(data["account"]["bio"], "")
 
         self.assertEqual(len(data["analysis_history"]), 1)
 
@@ -1149,3 +1191,33 @@ class ExperienceLevelTests(TestCase):
         record = ResumeAnalysis.objects.get(id=res["id"])
         self.assertEqual(record.experience_level, "Senior")
         self.assertEqual(record.target_role, "Data Analyst")
+
+
+class BulkResumeAnalysisTests(TestCase):
+    @patch("analyzer.services.pdfplumber.open")
+    def test_compare_bulk_resumes_endpoint(self, mock_open):
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        mock_open.return_value = _fake_pdf("HTML CSS JavaScript React TypeScript")
+
+        # Fake valid PDF files with %PDF magic header
+        file1 = SimpleUploadedFile("alice.pdf", b"%PDF-1.4 dummy content 1", content_type="application/pdf")
+        file2 = SimpleUploadedFile("bob.pdf", b"%PDF-1.4 dummy content 2", content_type="application/pdf")
+
+        response = self.client.post(
+            "/api/compare-bulk-resumes/",
+            {
+                "files": [file1, file2],
+                "role": "Frontend Developer",
+                "experience_level": "Junior",
+            },
+            format="multipart",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        data = response.json()
+        self.assertEqual(data["total_resumes"], 2)
+        self.assertEqual(len(data["resumes"]), 2)
+        self.assertEqual(data["target_role"], "Frontend Developer")
+        self.assertIn("score", data["resumes"][0])
+        self.assertIn("file_name", data["resumes"][0])
+

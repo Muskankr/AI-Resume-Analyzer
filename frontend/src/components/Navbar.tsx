@@ -92,6 +92,20 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogin, onLogout, onProfi
           <Link to="/leaderboard" onClick={() => setMobileOpen(false)}>
             🏆 Leaderboard
           </Link>
+          <Link
+            to="/linkedin-consistency"
+            className={location.pathname === '/linkedin-consistency' ? 'active' : ''}
+            onClick={() => setMobileOpen(false)}
+          >
+            🔗 LinkedIn Consistency
+          </Link>
+          <Link
+            to="/contributors"
+            className={location.pathname === '/contributors' || location.pathname === '/contributor-certificate' ? 'active' : ''}
+            onClick={() => setMobileOpen(false)}
+          >
+            🎖️ Contributors
+          </Link>
           <a
             href="#ats-score"
             className={isAtsActive ? 'active' : ''}
@@ -126,9 +140,9 @@ export const Navbar: React.FC<NavbarProps> = ({ user, onLogin, onLogout, onProfi
               closeMenu()
             }}
             aria-label="Toggle theme"
-            aria-pressed={theme === 'dark'}
+            aria-pressed={theme !== 'light'}
           >
-            {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+            {theme === 'light' ? '🌙 Dark Mode' : theme === 'dark' ? '👁️ High Contrast' : '☀️ Light Mode'}
           </button>
 
           {user ? (

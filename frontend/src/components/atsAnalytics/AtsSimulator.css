@@ -1,0 +1,149 @@
+.ats-simulator-container {
+  background: var(--bg-card, #ffffff);
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.ats-sim-header h3 {
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ats-sim-header h3 span {
+  font-size: 0.8rem;
+  background: #f0ad4e;
+  color: #fff;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: normal;
+}
+
+.ats-sim-header p {
+  color: var(--text-muted, #666);
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.ats-sim-error {
+  background: #ffebee;
+  color: #c62828;
+  padding: 0.75rem;
+  border-radius: 4px;
+  margin-bottom: 1rem;
+}
+
+.ats-sim-controls h4 {
+  margin-bottom: 1rem;
+}
+
+.ats-sim-profiles {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.ats-profile-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 6px;
+  transition: background-color 0.2s;
+}
+
+.ats-profile-checkbox:hover {
+  background-color: var(--bg-hover, #f9f9f9);
+}
+
+.ats-profile-checkbox input {
+  margin-top: 0.2rem;
+}
+
+.ats-profile-info strong {
+  display: block;
+  margin-bottom: 0.2rem;
+}
+
+.ats-profile-info span {
+  font-size: 0.85rem;
+  color: var(--text-muted, #666);
+}
+
+.ats-sim-results {
+  margin-top: 2.5rem;
+  border-top: 1px solid var(--border-color, #e0e0e0);
+  padding-top: 1.5rem;
+}
+
+.ats-sim-results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.ats-sim-card {
+  border: 1px solid var(--border-color, #e0e0e0);
+  border-radius: 8px;
+  padding: 1.5rem;
+  background: var(--bg-secondary, #fafafa);
+}
+
+.ats-sim-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  padding-bottom: 0.5rem;
+}
+
+.ats-sim-card-header h5 {
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+.ats-sim-score {
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.ats-sim-score.high { background: #e8f5e9; color: #2e7d32; }
+.ats-sim-score.medium { background: #fff8e1; color: #f57f17; }
+.ats-sim-score.low { background: #ffebee; color: #c62828; }
+
+.ats-sim-section {
+  margin-bottom: 1rem;
+}
+
+.ats-sim-section h6 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary, #333);
+  font-size: 0.9rem;
+}
+
+.ats-sim-section ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.85rem;
+}
+
+.ats-sim-section.warnings ul { color: #d32f2f; }
+.ats-sim-section.recommendations ul { color: #1976d2; }
+
+.ats-sim-disclaimer {
+  font-size: 0.75rem;
+  color: #999;
+  text-align: right;
+  margin-top: 1rem;
+}

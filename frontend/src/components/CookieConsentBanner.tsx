@@ -6,6 +6,7 @@ import {
   saveConsentPreferences,
   type CookieConsentChoice,
 } from '../utils/cookieConsent'
+import { Button } from './Button'
 
 export default function CookieConsentBanner() {
   const [choice, setChoice] = useState<CookieConsentChoice | null>(() => getCookieConsentChoice())
@@ -131,44 +132,49 @@ export default function CookieConsentBanner() {
       <div className="cookie-consent-banner__actions">
         {!showDetails ? (
           <>
-            <button
-              type="button"
-              className="app-btn app-btn--secondary cookie-consent-banner__button"
+            <Button
+              variant="secondary"
+              size="sm"
+              className="cookie-consent-banner__button"
               onClick={() => setShowDetails(true)}
             >
               Customize
-            </button>
-            <button
-              type="button"
-              className="app-btn app-btn--secondary cookie-consent-banner__button"
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="cookie-consent-banner__button"
               onClick={() => handleChoice('declined')}
             >
               Decline Optional
-            </button>
-            <button
-              type="button"
-              className="app-btn app-btn--accent cookie-consent-banner__button"
+            </Button>
+            <Button
+              variant="accent"
+              size="sm"
+              className="cookie-consent-banner__button"
               onClick={() => handleChoice('accepted')}
             >
               Accept All
-            </button>
+            </Button>
           </>
         ) : (
           <>
-            <button
-              type="button"
-              className="app-btn app-btn--secondary cookie-consent-banner__button"
+            <Button
+              variant="secondary"
+              size="sm"
+              className="cookie-consent-banner__button"
               onClick={() => handleChoice('declined')}
             >
               Decline All
-            </button>
-            <button
-              type="button"
-              className="app-btn app-btn--accent cookie-consent-banner__button"
+            </Button>
+            <Button
+              variant="accent"
+              size="sm"
+              className="cookie-consent-banner__button"
               onClick={handleSaveCustom}
             >
               Save Preferences
-            </button>
+            </Button>
           </>
         )}
       </div>

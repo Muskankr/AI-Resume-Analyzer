@@ -172,6 +172,60 @@
   --glass-border: rgba(255, 255, 255, 0.15);
 }
 
+[data-theme='high-contrast'] {
+  color-scheme: dark;
+  --body-bg: #000000;
+  --card-bg: #000000;
+  --card-text: #ffffff;
+  --score-track: #333333;
+  --score-accent: #00ff00;
+  --upload-border: #ffffff;
+  --upload-bg: #000000;
+  --upload-bg-hover: #1a1a1a;
+  --upload-text: #ffffff;
+  --upload-text-secondary: #e0e0e0;
+  --upload-icon-color: #ffffff;
+  --upload-file-name: #00ffff;
+  --btn-bg: #000000;
+  --btn-text: #ffffff;
+  --analysis-done: #00ff00;
+  --skill-bg: #000000;
+  --skill-text: #ffffff;
+  --suggestion-bg: #1a1a1a;
+  --theme-toggle-bg: #1a1a1a;
+  --theme-toggle-text: #ffffff;
+  --banner-bg: #000000;
+  --banner-border: #ffffff;
+  --banner-text: #ffffff;
+  --btn-secondary-bg: #000000;
+  --btn-secondary-text: #ffffff;
+  --btn-secondary-border: #ffffff;
+  --btn-secondary-hover-bg: #333333;
+  --btn-accent-bg: #ffff00;
+  --btn-accent-hover-bg: #cccc00;
+  --btn-success-bg: #00ff00;
+  --btn-accent-text: #000000;
+  --footer-text: #ffffff;
+  --footer-link: #ffff00;
+  --body-text: #ffffff;
+  --heading-text: #ffffff;
+  --muted-text: #e0e0e0;
+  --surface-bg: #000000;
+  --surface-border: #ffffff;
+  --surface-soft-bg: #1a1a1a;
+  --surface-strong-bg: #333333;
+  --tooltip-bg: #ffffff;
+  --tooltip-text: #000000;
+  --control-text: #ffffff;
+  --control-bg: #000000;
+  --control-border: #ffffff;
+  --select-focus-shadow: #ffffff;
+  --bs-body-color: var(--body-text);
+  --bs-heading-color: var(--heading-text);
+  --icon-color: #ffffff;
+  --icon-hover-color: #ffff00;
+}
+
 svg.app-icon,
 .icon-adaptive {
   color: var(--icon-color);
@@ -812,6 +866,34 @@ h3 {
   background: rgba(59, 130, 246, 0.25);
   border-color: rgba(59, 130, 246, 0.5);
   color: #60a5fa;
+}
+
+/* One-line summary of where the history has got to, above the score chart.
+ * The three tones differ by icon and by the word/sign in the label as well as
+ * by colour, so the direction survives a greyscale render. */
+.resume-streak-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 10px;
+  padding: 4px 10px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-size: var(--text-xs, 0.75rem);
+  font-weight: 600;
+  line-height: 1.6;
+}
+
+.resume-streak-badge.is-up {
+  color: var(--success-color, #16a34a);
+}
+
+.resume-streak-badge.is-down {
+  color: var(--danger-color, #b91c1c);
+}
+
+.resume-streak-badge.is-flat {
+  color: var(--muted-text, #94a3b8);
 }
 
 .history-empty {
@@ -2246,6 +2328,42 @@ input {
     opacity: 1;
     transform: translateX(-50%) translateY(-8px);
   }
+}
+
+/* ── Career Track + Experience Level selector ───────────────── */
+/*
+   One responsive grid rather than a flex row of fixed-width controls. The two
+   dropdowns sit side by side wherever there is room for both at a usable
+   width, and stack below that instead of squeezing to the point where the
+   longest option ("Mid-Level (2-5 yrs)") is clipped.
+*/
+.career-track-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 14px;
+}
+
+.career-track-selector__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* Grid items default to min-width:auto, which lets a long <option> push the
+     column wider than its track and overflow the card. */
+  min-width: 0;
+}
+
+.career-track-selector__label {
+  font-weight: 600;
+  font-size: var(--text-sm, 0.85rem);
+  /* Themed, not hardcoded white: the duplicated copy of this markup set
+     `color: #fff` inline, which disappeared against a light background. */
+  color: var(--heading-text, #fff);
+  margin-bottom: 0;
+}
+
+.career-track-selector .custom-select-element:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
 /* ── Target Career Track Custom Select (#261) ───────────────── */

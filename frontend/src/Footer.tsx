@@ -1,8 +1,7 @@
-import { MessageCircle } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { FaGithub, FaLinkedin } from 'react-icons/fa'
 
-const DISCORD_URL = 'YOUR_DISCORD_URL'
+const DISCORD_URL = 'https://discord.gg/YOUR_INVITE_CODE'
 const REPO_URL = 'https://github.com/Muskankr/AI-Resume-Analyzer'
 const LINKEDIN_URL = 'https://www.linkedin.com/in/muskan-kumari-76361b378'
 
@@ -125,6 +124,20 @@ export const Footer: React.FC<FooterProps> = ({ onOpenWhatsNew }) => {
                 🔒 Privacy Policy
               </Link>
             </li>
+            <li>
+              <Link
+                to="/contributors"
+                style={{
+                  color: '#94a3b8',
+                  fontSize: 'var(--font-size-sm)',
+                  textDecoration: 'none',
+                  transition: 'color 0.2s',
+                }}
+                className="footer-link"
+              >
+                🎖️ Contributor Certificate
+              </Link>
+            </li>
           </ul>
         </div>
 
@@ -189,9 +202,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenWhatsNew }) => {
                 </button>
               ) : (
                 <a
-                  href={`${REPO_URL}/blob/main/CHANGELOG.md`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  href="/release-notes"
                   style={{
                     color: '#94a3b8',
                     fontSize: 'var(--font-size-sm)',
@@ -319,7 +330,7 @@ export const Footer: React.FC<FooterProps> = ({ onOpenWhatsNew }) => {
               }}
               className="footer-icon-link"
             >
-              <MessageCircle size={20} />
+              <FaDiscord size={24} color='white' />
             </a>
           </div>
         </div>

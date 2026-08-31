@@ -18,6 +18,12 @@
   color: var(--card-text, #e2e8f0);
 }
 
+[data-theme='high-contrast'] .compare-modal {
+  background: #000000;
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
 .compare-modal__header {
   display: flex;
   align-items: center;
@@ -31,6 +37,70 @@
   gap: 8px;
   margin: 0;
   font-size: 18px;
+}
+
+/* Tab bar -------------------------------------------------------------------
+ *
+ * These rules were inline `style={{ ... }}` objects repeated across three
+ * buttons, with `#6366f1` and `#94a3b8` hardcoded as fallbacks. That put the
+ * one part of the modal that changes on interaction outside the theme, and
+ * outside the reach of `:hover` and `:focus-visible`, which inline styles
+ * cannot express at all.
+ */
+
+.compare-tablist {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-bottom: 1px solid var(--surface-border);
+  margin-bottom: 16px;
+}
+
+.compare-tab {
+  padding: 8px 12px;
+  border: none;
+  /* Transparent rather than `none` when unselected: toggling the border
+   * between none and 2px moved the whole row by two pixels on every tab
+   * change. */
+  border-bottom: 2px solid transparent;
+  background: none;
+  color: var(--text-secondary, #94a3b8);
+  font-weight: 600;
+  font-size: 13.5px;
+  cursor: pointer;
+  transition:
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.compare-tab:hover {
+  color: var(--body-text);
+}
+
+/* Selected state is driven by the ARIA attribute rather than a second class,
+ * so the styling cannot drift out of step with what a screen reader is told. */
+.compare-tab[aria-selected='true'] {
+  color: var(--color-primary, #6366f1);
+  border-bottom-color: var(--color-primary, #6366f1);
+}
+
+.compare-tab:focus-visible {
+  outline: 2px solid var(--color-primary, #6366f1);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* The panel takes focus when arrowing out of the tablist, and a focus ring
+ * around the entire panel is noise -- the tab that controls it already has
+ * one. */
+.compare-tabpanel:focus {
+  outline: none;
+}
+
+.compare-tabpanel:focus-visible {
+  outline: 2px solid var(--color-primary, #6366f1);
+  outline-offset: 4px;
+  border-radius: 6px;
 }
 
 .compare-close-btn {

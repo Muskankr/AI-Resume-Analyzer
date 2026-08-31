@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  # k6 with Grafana and Prometheus for monitoring
+  k6:
+    image: grafana/k6:latest
+    container_name: k6-load-test
+    volumes:
+      - ./scripts:/scripts
+      - ./reports:/reports
+    environment:
+      - BASE_URL=${BASE_URL:-http://host.docker.internal:8000}
+      - TEST_USER=${TEST_USER:-testuser}
+      - TEST_PASSWORD=${TEST_PASSWORD:-testpass123}
+      - TEST_TYPE=${TEST_TYPE:-load}
+    command: run /scripts/analysis-test.js
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - load-test-network
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - load-test-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana-dashboards:/etc/grafana/provisioning/dashboards
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - load-test-network
+
+networks:
+  load-test-network:
+    driver: bridge
+
+volumes:
+  prometheus_data:
+  grafana_data:

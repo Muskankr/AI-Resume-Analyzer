@@ -1,0 +1,130 @@
+.tracks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 1.25rem;
+}
+
+.track-admin-card {
+  background: #1e293b;
+  border: 1px solid #334155;
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.track-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.track-title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.track-icon {
+  font-size: 1.8rem;
+}
+
+.track-name {
+  margin: 0 0 0.2rem 0;
+  font-size: 1.15rem;
+  color: #f8fafc;
+}
+
+.track-meta {
+  font-size: 0.75rem;
+  color: #a5b4fc;
+}
+
+.custom-track-badge {
+  background: rgba(168, 85, 247, 0.2);
+  color: #e9d5ff;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  padding: 0.15rem 0.5rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.track-description {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  margin: 0 0 1rem 0;
+  line-height: 1.4;
+}
+
+.track-skills-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.group-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  text-transform: uppercase;
+}
+
+.group-label.required {
+  color: #f87171;
+}
+
+.group-label.optional {
+  color: #60a5fa;
+}
+
+.skill-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.skill-chip {
+  padding: 0.2rem 0.55rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.skill-chip.required-chip {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.skill-chip.optional-chip {
+  background: rgba(59, 130, 246, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.track-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #334155;
+  padding-top: 0.75rem;
+}
+
+.form-row-dual {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.form-row-dual .form-group {
+  flex: 1;
+}
+
+.form-row-dual .form-group.short {
+  flex: 0 0 100px;
+}

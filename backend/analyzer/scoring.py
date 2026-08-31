@@ -20,6 +20,8 @@ import re
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Sequence
 
+from .section_headings import SECTIONS, find_section_keys
+
 #: Factor weights, in points out of 100.
 WEIGHTS = {
     "keyword_match": 40,
@@ -44,19 +46,14 @@ FACTOR_LABELS = {
     "length_format": "Length & formatting",
 }
 
-#: Headings we expect to find, and the words that introduce them. Resumes label
-#: these inconsistently, so each section lists its common variants.
+#: Headings we expect to find. The variants live in
+#: :mod:`analyzer.section_headings` alongside the two other copies of this list
+#: they were drifting from — see the module docstring there.
+EXPECTED_SECTION_KEYS = ("experience", "education", "skills", "projects")
+
+#: Kept for callers that read it. Derived rather than hand-maintained.
 EXPECTED_SECTIONS = {
-    "experience": (
-        "experience",
-        "employment",
-        "work history",
-        "professional background",
-        "career history",
-    ),
-    "education": ("education", "academic", "qualification", "degree"),
-    "skills": ("skills", "technical skills", "technologies", "competencies", "toolkit"),
-    "projects": ("projects", "portfolio", "personal projects", "selected work"),
+    key: SECTIONS[key][1] for key in EXPECTED_SECTION_KEYS
 }
 
 #: Verbs that open a strong accomplishment bullet. Deliberately overlapping
@@ -91,15 +88,67 @@ WEAK_OPENERS = (
 )
 
 EMAIL_PATTERN = re.compile(r"[\w.+-]+@[\w-]+\.[\w.-]+")
+#: A run of digits that *could* be a phone number. Every group but the first
+#: is optional-ish, so this is deliberately loose; :func:`_find_phone` decides.
 PHONE_PATTERN = re.compile(
-    r"(?:\+\d{1,3}[\s.-]?)?(?:\(\d{2,4}\)[\s.-]?)?\d{3,5}[\s.-]?\d{3,4}[\s.-]?\d{0,4}"
+    r"(?:\+\d{1,3}[\s.\-–—]?)?(?:\(\d{2,4}\)[\s.\-–—]?)?"
+    r"\d{2,5}(?:[\s.\-–—]?\d{2,4}){1,3}"
 )
+
+#: Two four-digit years joined by a dash or slash — "2019-2023", "1998 – 2002".
+#:
+#: The old pattern matched these and counted them as a phone number. It is
+#: searched against the first fifteen lines of the resume, which is exactly
+#: where a graduation year range lives, so a resume with no phone number at all
+#: was awarded the points for having one and told "Found: email address, phone
+#: number" — so the person never added the number the ATS is actually keying on.
+YEAR_RANGE_PATTERN = re.compile(
+    r"^(?:19|20)\d{2}\s*[-–—/]\s*(?:(?:19|20)\d{2}|present|current|now)$",
+    re.IGNORECASE,
+)
+
+#: E.164 allows at most 15 digits. Seven is the shortest real subscriber number.
+PHONE_DIGIT_RANGE = (7, 15)
+
+
+def _find_phone(text: str) -> Optional[str]:
+    """The first digit run in ``text`` that plausibly is a phone number.
+
+    Length alone does not separate a phone number from a year range —
+    "2019-2023" is eight digits — so the year-range shape is rejected
+    explicitly rather than by counting.
+    """
+    low, high = PHONE_DIGIT_RANGE
+
+    for match in PHONE_PATTERN.finditer(text):
+        candidate = match.group(0).strip()
+
+        digits = re.sub(r"\D", "", candidate)
+        if not low <= len(digits) <= high:
+            continue
+
+        if YEAR_RANGE_PATTERN.match(candidate):
+            continue
+
+        return candidate
+
+    return None
 PROFILE_LINK_PATTERN = re.compile(
     r"(linkedin\.com/\S+|github\.com/\S+|gitlab\.com/\S+|"
     r"[\w-]+\.(?:dev|io|me|com)/\S*portfolio\S*)",
     re.IGNORECASE,
 )
-BULLET_PATTERN = re.compile(r"^\s*(?:[-*•▪▸●o]|\d+[.)])\s+")
+#: Characters people actually start a bullet with.
+#:
+#: The en dash (U+2013) and em dash (U+2014) are the important additions: Word
+#: and Google Docs autoformat a leading "-" into "–", so the glyph in the file
+#: is usually not the one that was typed. Leaving them out meant the same four
+#: bullets scored 12/12 written with "-" and 0/12 written with "–", because
+#: ``score_impact_language`` strips the marker with this pattern and then reads
+#: the first word — with the dash left in place, the first word is "".
+#:
+#: ``-`` is first in the class so it is a literal rather than a range.
+BULLET_PATTERN = re.compile(r"^\s*(?:[-–—*•▪▫▸▹●○◦‣∙·]|\d+[.)])\s+")
 
 #: A resume in this word range reads as complete without being a wall of text.
 IDEAL_WORD_RANGE = (350, 900)
@@ -162,16 +211,42 @@ def _make_factor(key: str, earned: float, detail: str) -> FactorScore:
     )
 
 
-def _bullet_lines(lines: Sequence[str]) -> List[str]:
-    """Lines that read as accomplishment bullets rather than headings or contact rows."""
-    bullets = []
-    for raw in lines:
+def _bullet_line_indices(lines: Sequence[str]) -> List[int]:
+    """Indices of the lines that read as accomplishment bullets.
+
+    Indices rather than text, because ``quantify_checker`` reports its findings
+    by line index and the two have to be compared. See
+    :func:`score_quantification`.
+    """
+    indices = []
+    for index, raw in enumerate(lines):
         line = raw.strip()
         if len(line) < 25:
             continue
         if BULLET_PATTERN.match(raw) or len(line.split()) >= 6:
-            bullets.append(line)
-    return bullets
+            indices.append(index)
+    return indices
+
+
+def _bullet_lines(lines: Sequence[str]) -> List[str]:
+    """Lines that read as accomplishment bullets rather than headings or contact rows."""
+    return [lines[index].strip() for index in _bullet_line_indices(lines)]
+
+
+def _nudged_line_indices(quantify_nudges: Sequence[Dict]) -> set:
+    """Line indices from ``quantify_checker.flag_unquantified_bullets``.
+
+    Tolerant of a nudge without a usable ``line_index``: the caller may be an
+    older code path, and a missing index should cost the user nothing.
+    """
+    indices = set()
+    for nudge in quantify_nudges or []:
+        if not isinstance(nudge, dict):
+            continue
+        index = nudge.get("line_index")
+        if isinstance(index, int) and not isinstance(index, bool):
+            indices.add(index)
+    return indices
 
 
 def score_keyword_match(matched: Sequence[str], required: Sequence[str],
@@ -203,22 +278,34 @@ def score_keyword_match(matched: Sequence[str], required: Sequence[str],
 
 
 def score_sections(text: str) -> FactorScore:
-    """Points for having the sections a recruiter scans for."""
-    lowered = text.lower()
-    found = [
-        name
-        for name, variants in EXPECTED_SECTIONS.items()
-        if any(variant in lowered for variant in variants)
-    ]
-    missing = [name for name in EXPECTED_SECTIONS if name not in found]
+    """Points for having the sections a recruiter scans for.
 
-    earned = (len(found) / len(EXPECTED_SECTIONS)) * WEIGHTS["sections"]
+    This asked ``variant in text.lower()``, which is a question about the whole
+    document rather than about its headings. A resume with no headings at all
+    scored the full 15: "years of experience" supplied *experience*, "improved
+    my skills" supplied *skills*, "a degree from a good academic program"
+    supplied *education*, and "a portfolio of small projects" supplied
+    *projects*.
+
+    That is the worst way for this factor to be wrong. Adding headings is the
+    single cheapest thing most people can do to get past an ATS, and they were
+    being told it was already done.
+    """
+    present = set(find_section_keys(text))
+    found = [key for key in EXPECTED_SECTION_KEYS if key in present]
+    missing = [key for key in EXPECTED_SECTION_KEYS if key not in present]
+
+    earned = (len(found) / len(EXPECTED_SECTION_KEYS)) * WEIGHTS["sections"]
 
     if not missing:
         detail = "All four expected sections are present: experience, education, skills and projects."
     else:
         readable = ", ".join(sorted(missing))
-        detail = f"Found {len(found)} of 4 expected sections. Missing: {readable}."
+        detail = (
+            f"Found {len(found)} of 4 expected section headings. Missing: {readable}. "
+            "An ATS splits a resume on its headings — text under no heading at "
+            "all often lands in the wrong field or is dropped."
+        )
 
     return _make_factor("sections", earned, detail)
 
@@ -228,7 +315,7 @@ def score_contact_details(text: str) -> FactorScore:
     head = "\n".join(text.splitlines()[:15]) or text
 
     has_email = bool(EMAIL_PATTERN.search(text))
-    has_phone = bool(PHONE_PATTERN.search(head))
+    has_phone = _find_phone(head) is not None
     has_link = bool(PROFILE_LINK_PATTERN.search(text))
 
     present = [
@@ -313,28 +400,61 @@ def score_quantification(quantify_nudges: Sequence[Dict], lines: Sequence[str]) 
     """Points for achievements backed by a number.
 
     ``quantify_nudges`` comes from ``quantify_checker.flag_unquantified_bullets``:
-    one entry per bullet that describes an accomplishment without a metric.
-    """
-    bullets = _bullet_lines(lines)
-    unquantified = len(quantify_nudges)
+    one entry per line that describes an accomplishment without a metric.
 
-    if not bullets:
+    The two halves of this factor used to be counted over different sets of
+    lines. ``_bullet_lines`` keeps lines of 25 characters or more;
+    ``quantify_checker.is_exempt`` skips lines under 15. So the numerator was
+    ``len(bullets) - len(nudges)`` where the two counts came from different
+    populations, and the subtraction was not a count of anything.
+
+    In the worst case the sets are disjoint. A resume with three long,
+    fully-quantified bullets and three short unquantified ones scored **0/10**
+    and was told three bullets had no metric — while every bullet the factor
+    was actually looking at had one. ``max(0, ...)`` hid the negative rather
+    than surfacing it.
+
+    Both counts are now over the same set: every line that *either* check calls
+    an accomplishment bullet. That is also the set the user sees, since the
+    nudge panel lists exactly the lines ``quantify_checker`` flagged — so the
+    score and the advice beside it now describe the same lines.
+    """
+    bullet_indices = set(_bullet_line_indices(lines))
+    reported_indices = _nudged_line_indices(quantify_nudges)
+
+    # Ignore an index that does not point at a line we were given, rather than
+    # letting it inflate the denominator.
+    nudged_indices = {i for i in reported_indices if 0 <= i < len(lines)}
+
+    considered = bullet_indices | nudged_indices
+
+    if not considered:
         return _make_factor(
             "quantification",
             0,
             "No accomplishment bullets were found to check for metrics.",
         )
 
-    quantified = max(0, len(bullets) - unquantified)
-    ratio = quantified / len(bullets)
+    unquantified = len(considered & nudged_indices)
+
+    if quantify_nudges and not reported_indices:
+        # A caller that reported nudges without any line index at all. Fall
+        # back to the old count, clamped to the denominator so it cannot go
+        # negative. Note this checks `reported_indices`, not `nudged_indices`:
+        # indices that were given but point outside `lines` have already been
+        # judged and discarded, and must not re-enter through here.
+        unquantified = min(len(quantify_nudges), len(considered))
+
+    quantified = len(considered) - unquantified
+    ratio = quantified / len(considered)
     earned = ratio * WEIGHTS["quantification"]
 
     if unquantified == 0:
         detail = "Every accomplishment bullet includes a number, percentage or other metric."
     else:
         detail = (
-            f"{unquantified} accomplishment bullet(s) have no metric. Numbers make "
-            "the same work measurably more convincing."
+            f"{unquantified} of {len(considered)} accomplishment bullets have no "
+            "metric. Numbers make the same work measurably more convincing."
         )
 
     return _make_factor("quantification", earned, detail)

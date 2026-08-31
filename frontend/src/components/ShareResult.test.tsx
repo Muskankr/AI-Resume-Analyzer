@@ -112,6 +112,14 @@ describe('ShareResult (#705)', () => {
     expect(screen.getByText(/4 views/)).toBeInTheDocument()
   })
 
+  it('renders a QR code for the live share URL', async () => {
+    vi.mocked(api.get).mockResolvedValue({ data: LIVE })
+    render(<ShareResult analysisId={12} />)
+
+    expect(await screen.findByRole('img', { name: /qr code for this analysis/i })).toBeInTheDocument()
+    expect(screen.getByText(/scan to open this shared analysis/i)).toBeInTheDocument()
+  })
+
   it('revokes through the API and drops back to the private state', async () => {
     const user = userEvent.setup()
     vi.mocked(api.get).mockResolvedValue({ data: LIVE })

@@ -9,14 +9,14 @@ import {
 // Mock jsPDF
 vi.mock('jspdf', () => {
   return {
-    jsPDF: vi.fn().mockImplementation(() => ({
+    jsPDF: vi.fn().mockImplementation(function() { return {
       setFontSize: vi.fn(),
       setFont: vi.fn(),
       splitTextToSize: vi.fn((text: string) => [text]),
       text: vi.fn(),
       addPage: vi.fn(),
       output: vi.fn().mockReturnValue(new ArrayBuffer(8)),
-    })),
+    }; }),
   }
 })
 

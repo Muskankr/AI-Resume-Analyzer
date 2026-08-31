@@ -2,10 +2,20 @@ import React, { useState, useEffect, useRef } from 'react'
 import { X, ClipboardList, BookOpen, Trash2, GitCompare, Archive, Check } from 'lucide-react'
 import type { AnalysisEntry } from './hooks/useAnalysisHistory'
 import { ScoreHistoryChart } from './components/ScoreHistoryChart'
+import { ResumeStreakBadge } from './components/ResumeStreakBadge'
 import { downloadBulkReportsZip, type BulkReportItem } from './utils/exportZipReports'
 const PAGE_SIZE = 10
 
 type SortMode = 'recent' | 'most-matched' | 'most-missing'
+
+export interface JobBookmark {
+  id: string
+  name: string
+  role: string
+  experienceLevel: string
+  jobDescription: string
+  timestamp: number
+}
 
 interface HistorySidebarProps {
   entries: AnalysisEntry[]
@@ -23,6 +33,10 @@ interface HistorySidebarProps {
   hasMoreOnServer?: boolean
   /** Fetches the next page from the server; resolves once entries are appended. */
   onLoadMoreFromServer?: () => Promise<void> | void
+  isLoggedIn?: boolean
+  bookmarks?: JobBookmark[]
+  onSelectBookmark?: (bookmark: JobBookmark) => void
+  onDeleteBookmark?: (id: string) => void
 }
 
 const SORT_MODE_STORAGE_KEY = 'history_sort_mode'
@@ -41,6 +55,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   onCompare,
   hasMoreOnServer = false,
   onLoadMoreFromServer,
+  isLoggedIn = false,
+  bookmarks = [],
+  onSelectBookmark = () => {},
+  onDeleteBookmark = () => {},
 }) => {
   const [confirmClear, setConfirmClear] = useState(false)
   const [downloadingZip, setDownloadingZip] = useState(false)
@@ -98,6 +116,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   }, [sortMode])
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const loadMoreTimeoutRef = useRef<any>(null);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -114,6 +133,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [isOpen, onToggle])
 
+  useEffect(() => {
+    return () => {
+      if (loadMoreTimeoutRef.current) {
+        clearTimeout(loadMoreTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleToggleClick = () => {
     onToggle()
   }
@@ -123,7 +150,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     // once every locally held entry is on screen.
     if (visibleCount < entries.length) {
       setIsLoadingMore(true)
-      setTimeout(() => {
+      loadMoreTimeoutRef.current = setTimeout(() => {
         setVisibleCount((prev) => prev + PAGE_SIZE)
         setIsLoadingMore(false)
       }, 300)
@@ -276,15 +303,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           </div>
         </div>
 
-        {/* Sort mode toggle */}
-        {entries.length > 0 && (
-          <div className="history-sort-controls">
+        {isLoggedIn && (
+          <div style={{ display: 'flex', borderBottom: '1px solid var(--surface-border)', padding: '0 16px', gap: '8px' }}>
             <button
               className={`history-sort-btn ${sortMode === 'recent' ? 'history-sort-btn--active' : ''}`}
               onClick={() => setSortMode('recent')}
               title="Sort by most recent"
             >
-              Recent
+              History ({entries.length})
             </button>
             <button
               className={`history-sort-btn ${sortMode === 'most-matched' ? 'history-sort-btn--active' : ''}`}
@@ -303,48 +329,60 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           </div>
         )}
 
-        {entries.length === 0 ? (
-          <div className="history-empty">
-            <ClipboardList size={32} style={{ marginBottom: '12px', opacity: 0.45 }} />
-            <p style={{ margin: '0 0 6px', fontWeight: 600, opacity: 0.75 }}>No analyses yet</p>
-            <p style={{ margin: 0, fontSize: 'var(--text-sm)', opacity: 0.5 }}>
-              Upload a resume to see your history here.
-            </p>
-          </div>
-        ) : (
-          <>
-            <ScoreHistoryChart entries={entries} />
-            <ul className="history-list">
-              {sortedEntries.slice(0, visibleCount).map((entry) => {
-                const isNew = entry.timestamp > lastViewedTimestamp
+        {sidebarTab === 'bookmarks' ? (
+          bookmarks.length === 0 ? (
+            <div className="history-empty">
+              <ClipboardList size={32} style={{ marginBottom: '12px', opacity: 0.45 }} />
+              <p style={{ margin: '0 0 6px', fontWeight: 600, opacity: 0.75 }}>No saved jobs yet</p>
+              <p style={{ margin: 0, fontSize: 'var(--text-sm)', opacity: 0.5 }}>
+                Use the "Save this job" button near the Job Description box to bookmark target jobs.
+              </p>
+            </div>
+          ) : (
+            <ul className="history-list" style={{ padding: '16px', listStyle: 'none', margin: 0 }}>
+              {bookmarks.map((bookmark) => {
+                const label = bookmark.jobDescription.replace(/[\r\n\t]+/g, ' ').trim()
+                const jdSnippet = label.length > 80 ? label.slice(0, 80) + '...' : label
                 return (
                   <li
-                    key={entry.id}
-                    role="button"
-                    tabIndex={0}
-                    aria-current={activeFileName === entry.fileName ? 'true' : undefined}
-                    className={`history-item ${activeFileName === entry.fileName ? 'history-item--active' : ''}`}
-                    onClick={() => onSelect(entry)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' || e.key === ' ') {
-                        e.preventDefault()
-                        onSelect(entry)
-                      }
+                    key={bookmark.id}
+                    className="history-item"
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px',
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid var(--surface-border)',
+                      borderRadius: '8px',
+                      padding: '12px',
+                      marginBottom: '10px',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      position: 'relative'
+                    }}
+                    onClick={() => {
+                      onSelectBookmark(bookmark)
+                      onToggle() // Close sidebar on selection
                     }}
                   >
-                    <div className="history-item-top">
-                      <div className="history-item-badges">
-                        <span className="history-item-score">{entry.score}%</span>
-                        {isNew && <span className="history-item-new-badge">NEW</span>}
-                      </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%' }}>
+                      <span style={{ fontWeight: '700', fontSize: '13.5px', color: '#fff', maxWidth: '82%', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        📌 {bookmark.name}
+                      </span>
                       <button
-                        className="history-item-delete"
                         onClick={(e) => {
-                          e.stopPropagation()
-                          onDelete(entry.id)
+                          e.stopPropagation() // Don't trigger select
+                          onDeleteBookmark(bookmark.id)
                         }}
-                        aria-label="Delete analysis notification"
-                        title="Delete notification entry"
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: '#ef4444',
+                          cursor: 'pointer',
+                          padding: '2px',
+                          opacity: 0.75
+                        }}
+                        title="Delete Bookmark"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -359,28 +397,127 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                       {entry.skills.slice(0, 4).join(' · ')}
                       {entry.skills.length > 4 && ` +${entry.skills.length - 4} more`}
                     </div>
+                    {bookmark.jobDescription && (
+                      <p style={{ margin: 0, fontSize: '12px', opacity: 0.6, fontStyle: 'italic', lineHeight: '1.4' }}>
+                        "{jdSnippet}"
+                      </p>
+                    )}
                   </li>
                 )
               })}
             </ul>
-            {(visibleCount < entries.length || hasMoreOnServer) && (
-              <div
-                className="history-load-more-container"
-                style={{ textAlign: 'center', margin: '1rem 0' }}
-              >
+          )
+        ) : (
+          <>
+            {/* Sort mode toggle */}
+            {entries.length > 0 && (
+              <div className="history-sort-controls">
                 <button
-                  className="app-btn"
-                  onClick={handleLoadMore}
-                  disabled={isLoadingMore}
-                  style={{
-                    fontSize: '0.9rem',
-                    padding: '0.4rem 0.8rem',
-                    opacity: isLoadingMore ? 0.7 : 1,
-                  }}
+                  className={`history-sort-btn ${sortMode === "recent" ? "history-sort-btn--active" : ""}`}
+                  onClick={() => setSortMode("recent")}
+                  title="Sort by most recent"
                 >
-                  {isLoadingMore ? 'Loading...' : 'Load More'}
+                  Recent
+                </button>
+                <button
+                  className={`history-sort-btn ${sortMode === "most-matched" ? "history-sort-btn--active" : ""}`}
+                  onClick={() => setSortMode("most-matched")}
+                  title="Sort by most matched skills"
+                >
+                  Most Matched
+                </button>
+                <button
+                  className={`history-sort-btn ${sortMode === "most-missing" ? "history-sort-btn--active" : ""}`}
+                  onClick={() => setSortMode("most-missing")}
+                  title="Sort by most missing skills"
+                >
+                  Most Missing
                 </button>
               </div>
+            )}
+
+            {entries.length === 0 ? (
+              <div className="history-empty">
+                <ClipboardList size={32} style={{ marginBottom: '12px', opacity: 0.45 }} />
+                <p style={{ margin: '0 0 6px', fontWeight: 600, opacity: 0.75 }}>No analyses yet</p>
+                <p style={{ margin: 0, fontSize: 'var(--text-sm)', opacity: 0.5 }}>
+                  Upload a resume to see your history here.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* The chart shows the shape of the history; this says what it
+                  * adds up to. Both read the same `entries`. */}
+                <ResumeStreakBadge analysisHistory={entries} />
+                <ScoreHistoryChart entries={entries} />
+                <ul className="history-list">
+                  {sortedEntries.slice(0, visibleCount).map((entry) => {
+                    const isNew = entry.timestamp > lastViewedTimestamp
+                    return (
+                      <li
+                        key={entry.id}
+                        role="button"
+                        tabIndex={0}
+                        aria-current={activeFileName === entry.fileName ? 'true' : undefined}
+                        className={`history-item ${activeFileName === entry.fileName ? 'history-item--active' : ''}`}
+                        onClick={() => onSelect(entry)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault()
+                            onSelect(entry)
+                          }
+                        }}
+                      >
+                        <div className="history-item-top">
+                          <div className="history-item-badges">
+                            <span className="history-item-score">{entry.score}%</span>
+                            {isNew && <span className="history-item-new-badge">NEW</span>}
+                          </div>
+                          <button
+                            className="history-item-delete"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              onDelete(entry.id)
+                            }}
+                            aria-label="Delete analysis notification"
+                            title="Delete notification entry"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                        <div className="history-item-role">
+                          {entry.targetRole}{entry.experienceLevel ? ` • ${entry.experienceLevel}` : ''}
+                        </div>
+                        <div className="history-item-file">{entry.fileName}</div>
+                        <div className="history-item-time">{formatDate(entry.timestamp)}</div>
+                        <div className="history-item-skills">
+                          {entry.skills.slice(0, 4).join(' · ')}
+                          {entry.skills.length > 4 && ` +${entry.skills.length - 4} more`}
+                        </div>
+                      </li>
+                    )
+                  })}
+                </ul>
+                {(visibleCount < entries.length || hasMoreOnServer) && (
+                  <div
+                    className="history-load-more-container"
+                    style={{ textAlign: 'center', margin: '1rem 0' }}
+                  >
+                    <button
+                      className="app-btn"
+                      onClick={handleLoadMore}
+                      disabled={isLoadingMore}
+                      style={{
+                        fontSize: '0.9rem',
+                        padding: '0.4rem 0.8rem',
+                        opacity: isLoadingMore ? 0.7 : 1,
+                      }}
+                    >
+                      {isLoadingMore ? 'Loading...' : 'Load More'}
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

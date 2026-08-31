@@ -1,5 +1,6 @@
 // @vitest-environment jsdom
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { CompareVersions } from './CompareVersions'
 import type { AnalysisEntry } from '../../hooks/useAnalysisHistory'
@@ -62,6 +63,9 @@ describe('CompareVersions diff viewer (#543)', () => {
     expect(older).toBeInTheDocument()
     expect(newer).toBeInTheDocument()
     expect(screen.getAllByRole('option')).toHaveLength(4)
+    // Unambiguous only because the three view switchers are tabs, not buttons.
+    // Before that they were plain <button>s and "Compare Local Files" matched
+    // this query too, which is what made the suite red.
     expect(screen.getByRole('button', { name: /compare/i })).toBeInTheDocument()
   })
 
@@ -107,5 +111,114 @@ describe('CompareVersions diff viewer (#543)', () => {
 
     expect(removedLine).toHaveClass('compare-diff-line--removed')
     expect(addedLine).toHaveClass('compare-diff-line--added')
+  })
+})
+
+describe('CompareVersions tab bar (#863)', () => {
+  const renderDialog = () =>
+    render(<CompareVersions entries={mockEntries} token="test-token" onClose={() => {}} />)
+
+  it('exposes the three views as a labelled tablist, not as buttons', () => {
+    renderDialog()
+
+    const tablist = screen.getByRole('tablist', { name: 'Comparison view' })
+    const tabs = within(tablist).getAllByRole('tab')
+
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      'Versions History',
+      'Compare Local Files',
+      'Bulk Job Descriptions',
+    ])
+
+    // The regression this guards: while these were <button>s, the action
+    // button and the "Compare Local Files" switcher shared an accessible name.
+    expect(screen.queryByRole('button', { name: 'Compare Local Files' })).toBeNull()
+  })
+
+  it('marks exactly one tab selected and points it at the visible panel', () => {
+    renderDialog()
+
+    const tabs = screen.getAllByRole('tab')
+    const selected = tabs.filter((tab) => tab.getAttribute('aria-selected') === 'true')
+
+    expect(selected).toHaveLength(1)
+    expect(selected[0]).toHaveTextContent('Versions History')
+
+    const panel = screen.getByRole('tabpanel')
+    expect(panel).toHaveAttribute('id', selected[0].getAttribute('aria-controls'))
+    expect(panel).toHaveAttribute('aria-labelledby', selected[0].id)
+  })
+
+  it('keeps the whole tablist to a single tab stop', () => {
+    renderDialog()
+
+    const tabs = screen.getAllByRole('tab')
+
+    expect(tabs[0]).toHaveAttribute('tabindex', '0')
+    expect(tabs[1]).toHaveAttribute('tabindex', '-1')
+    expect(tabs[2]).toHaveAttribute('tabindex', '-1')
+  })
+
+  it('moves between tabs with the arrow keys and wraps at both ends', async () => {
+    const user = userEvent.setup()
+    renderDialog()
+
+    const [versions, uploads, bulkJds] = screen.getAllByRole('tab')
+    versions.focus()
+
+    await user.keyboard('{ArrowRight}')
+    expect(uploads).toHaveAttribute('aria-selected', 'true')
+    expect(uploads).toHaveFocus()
+
+    await user.keyboard('{ArrowRight}')
+    expect(bulkJds).toHaveAttribute('aria-selected', 'true')
+
+    // Wraps forward off the end...
+    await user.keyboard('{ArrowRight}')
+    expect(versions).toHaveAttribute('aria-selected', 'true')
+
+    // ...and backward off the start.
+    await user.keyboard('{ArrowLeft}')
+    expect(bulkJds).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('jumps to the first and last tab with Home and End', async () => {
+    const user = userEvent.setup()
+    renderDialog()
+
+    const [versions, , bulkJds] = screen.getAllByRole('tab')
+    versions.focus()
+
+    await user.keyboard('{End}')
+    expect(bulkJds).toHaveAttribute('aria-selected', 'true')
+    expect(bulkJds).toHaveFocus()
+
+    await user.keyboard('{Home}')
+    expect(versions).toHaveAttribute('aria-selected', 'true')
+    expect(versions).toHaveFocus()
+  })
+
+  it('leaves other keys to the browser', async () => {
+    const user = userEvent.setup()
+    renderDialog()
+
+    const [versions] = screen.getAllByRole('tab')
+    versions.focus()
+
+    await user.keyboard('{ArrowDown}')
+
+    expect(versions).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('swaps the panel contents when a tab is clicked', async () => {
+    const user = userEvent.setup()
+    renderDialog()
+
+    expect(screen.getByLabelText('Older version')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('tab', { name: 'Bulk Job Descriptions' }))
+
+    expect(screen.queryByLabelText('Older version')).toBeNull()
+    expect(screen.getByRole('tabpanel')).toHaveAttribute('id', 'compare-tabpanel-bulk_jds')
   })
 })

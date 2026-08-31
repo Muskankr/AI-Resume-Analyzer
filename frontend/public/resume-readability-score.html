@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Readability Score — AI Resume Analyzer</title>
+  <style>
+    /* ===== Variables & Reset ===== */
+    :root {
+      --bg: #0f172a; --card: #1e293b; --card-hover: #253349;
+      --input-bg: #0f172a; --border: #334155; --border-focus: #8b5cf6;
+      --text: #f1f5f9; --text-sec: #94a3b8; --text-muted: #64748b;
+      --violet: #8b5cf6; --violet-light: #a78bfa;
+      --emerald: #10b981; --emerald-light: #34d399;
+      --amber: #f59e0b; --amber-light: #fbbf24;
+      --rose: #f43f5e; --rose-light: #fb7185;
+      --cyan: #06b6d4; --blue: #3b82f6;
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+      --radius-sm: 6px; --radius-md: 10px; --radius-lg: 14px; --radius-xl: 20px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; min-height: 100vh; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* ===== Layout ===== */
+    .rrs-container { max-width: 1000px; margin: 0 auto; padding: 32px 24px; }
+    .rrs-header { text-align: center; margin-bottom: 36px; }
+    .rrs-header h1 {
+      font-size: 2rem; font-weight: 800;
+      background: linear-gradient(135deg, #8b5cf6, #6366f1, #3b82f6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 8px;
+    }
+    .rrs-header p { color: var(--text-sec); font-size: 0.95rem; max-width: 620px; margin: 0 auto; }
+    .rrs-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em; background: rgba(139,92,246,0.15);
+      color: var(--violet-light); border: 1px solid rgba(139,92,246,0.3);
+      margin-top: 10px;
+    }
+    .back-link { display: inline-flex; align-items: center; gap: 6px; color: var(--text-sec); text-decoration: none; font-size: 0.85rem; margin-bottom: 20px; transition: 0.2s; }
+    .back-link:hover { color: var(--violet-light); }
+
+    /* ===== Textarea ===== */
+    .rrs-input-section {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-xl); padding: 22px; margin-bottom: 28px;
+    }
+    .rrs-textarea {
+      width: 100%; min-height: 200px; padding: 14px;
+      background: rgba(0,0,0,0.3); border: 1px solid var(--border);
+      border-radius: var(--radius-md); color: var(--text);
+      font-size: 0.9rem; line-height: 1.7; resize: vertical;
+      outline: none; font-family: inherit; transition: 0.2s;
+    }
+    .rrs-textarea:focus { border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(139,92,246,0.12); }
+    .rrs-textarea::placeholder { color: var(--text-muted); }
+    .rrs-input-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; flex-wrap: wrap; gap: 8px; }
+    .rrs-stats { font-size: 0.75rem; color: var(--text-muted); display: flex; gap: 12px; flex-wrap: wrap; }
+    .rrs-analyze-btn {
+      padding: 11px 28px; background: linear-gradient(135deg, #8b5cf6, #6366f1);
+      color: #fff; border: none; border-radius: var(--radius-md);
+      font-size: 0.95rem; font-weight: 700; cursor: pointer;
+      transition: 0.25s; box-shadow: 0 0 18px rgba(139,92,246,0.25);
+    }
+    .rrs-analyze-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 0 28px rgba(139,92,246,0.4); }
+    .rrs-analyze-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* ===== Score Gauges ===== */
+    .rrs-gauges { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 28px; }
+    .rrs-gauge {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px; text-align: center;
+      transition: 0.2s;
+    }
+    .rrs-gauge:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .rrs-gauge-ring { position: relative; width: 120px; height: 120px; margin: 0 auto 12px; }
+    .rrs-gauge-ring svg { width: 120px; height: 120px; transform: rotate(-90deg); }
+    .rrs-gauge-bg { fill: none; stroke: var(--border); stroke-width: 8; }
+    .rrs-gauge-fill { fill: none; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 314; stroke-dashoffset: 314; transition: stroke-dashoffset 1s cubic-bezier(0.4,0,0.2,1); }
+    .rrs-gauge-label { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .rrs-gauge-val { font-size: 1.5rem; font-weight: 800; line-height: 1; }
+    .rrs-gauge-name { font-size: 0.72rem; color: var(--text-muted); margin-top: 2px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .rrs-gauge-level { font-size: 0.78rem; font-weight: 600; margin-top: 8px; padding: 3px 10px; border-radius: 12px; display: inline-block; }
+
+    /* ===== Stats Grid ===== */
+    .rrs-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 12px; margin-bottom: 28px; }
+    .rrs-stat-card {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-md); padding: 16px; text-align: center;
+    }
+    .rrs-stat-val { font-size: 1.3rem; font-weight: 800; line-height: 1.2; }
+    .rrs-stat-lbl { font-size: 0.7rem; color: var(--text-muted); margin-top: 3px; text-transform: uppercase; letter-spacing: 0.03em; }
+
+    /* ===== Two Column ===== */
+    .rrs-two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; }
+    @media (max-width: 768px) { .rrs-two-col { grid-template-columns: 1fr; } }
+
+    .rrs-panel {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); padding: 20px;
+    }
+    .rrs-section-title {
+      font-size: 1.05rem; font-weight: 700; margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    /* ===== Suggestions ===== */
+    .rrs-suggestions { display: flex; flex-direction: column; gap: 8px; }
+    .rrs-sug-item {
+      display: flex; align-items: flex-start; gap: 9px;
+      padding: 10px 14px; background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: var(--radius-md); font-size: 0.84rem;
+    }
+
+    /* ===== Word Length Dist ===== */
+    .rrs-word-dist { display: flex; flex-direction: column; gap: 6px; }
+    .rrs-dist-row { display: flex; align-items: center; gap: 10px; }
+    .rrs-dist-label { width: 60px; font-size: 0.78rem; font-weight: 600; color: var(--text-sec); text-align: right; flex-shrink: 0; }
+    .rrs-dist-track { flex: 1; height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; }
+    .rrs-dist-fill { height: 100%; border-radius: 4px; transition: width 0.6s ease; min-width: 2px; }
+    .rrs-dist-count { width: 36px; font-size: 0.75rem; font-weight: 600; color: var(--text-sec); text-align: right; }
+
+    /* ===== History ===== */
+    .rrs-history {
+      background: var(--card); border: 1px solid var(--border);
+      border-radius: var(--radius-lg); margin-bottom: 28px; overflow: hidden;
+    }
+    .rrs-history-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 20px; cursor: pointer; transition: 0.2s;
+    }
+    .rrs-history-header:hover { background: rgba(255,255,255,0.03); }
+    .rrs-history-list { padding: 0 20px 16px; max-height: 300px; overflow-y: auto; }
+    .rrs-history-empty { text-align: center; padding: 20px; color: var(--text-muted); font-size: 0.85rem; }
+    .rrs-history-item {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 10px 14px; background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-md);
+      margin-bottom: 6px; font-size: 0.82rem; cursor: pointer; transition: 0.2s;
+    }
+    .rrs-history-item:hover { background: rgba(0,0,0,0.35); }
+    .rrs-history-score { font-weight: 800; font-size: 1.1rem; }
+    .rrs-history-meta { color: var(--text-muted); font-size: 0.72rem; }
+    .rrs-history-date { color: var(--text-muted); font-size: 0.72rem; }
+
+    .rrs-footer {
+      text-align: center; padding: 24px 0; color: var(--text-muted);
+      font-size: 0.78rem; border-top: 1px solid var(--border); margin-top: 20px;
+    }
+
+    .hidden { display: none !important; }
+  </style>
+</head>
+<body>
+<div class="rrs-container">
+  <a href="/" class="back-link">← Back to Resume Analyzer</a>
+
+  <header class="rrs-header">
+    <h1>📖 Resume Readability Score</h1>
+    <p>Analyze your resume's readability using Flesch-Kincaid, Gunning Fog, Coleman-Liau, and SMOG indices. Get actionable tips to improve clarity.</p>
+    <span class="rrs-badge">Readability Intelligence Engine v1.0</span>
+  </header>
+
+  <!-- Input -->
+  <div class="rrs-input-section">
+    <textarea class="rrs-textarea" id="inputText" placeholder="Paste your resume text here for readability analysis..."></textarea>
+    <div class="rrs-input-footer">
+      <div class="rrs-stats">
+        <span id="charCount">0 chars</span>
+        <span id="wordCount">0 words</span>
+        <span id="sentenceCount">0 sentences</span>
+        <span id="syllableCount">0 syllables</span>
+      </div>
+      <button class="rrs-analyze-btn" id="analyzeBtn" disabled>📊 Analyze Readability</button>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="results" class="hidden">
+    <!-- Gauges -->
+    <div class="rrs-gauges" id="gauges"></div>
+
+    <!-- Text Stats -->
+    <div class="rrs-stats-grid" id="statsGrid"></div>
+
+    <!-- Two Column: Suggestions + Word Length -->
+    <div class="rrs-two-col">
+      <div class="rrs-panel">
+        <h3 class="rrs-section-title">💡 Readability Suggestions</h3>
+        <div class="rrs-suggestions" id="suggestions"></div>
+      </div>
+      <div class="rrs-panel">
+        <h3 class="rrs-section-title">📏 Word Length Distribution</h3>
+        <div class="rrs-word-dist" id="wordDist"></div>
+      </div>
+    </div>
+
+    <!-- Sentence Length Analysis -->
+    <div class="rrs-panel" style="margin-bottom:28px;">
+      <h3 class="rrs-section-title">📐 Sentence Length Analysis</h3>
+      <div id="sentenceAnalysis"></div>
+    </div>
+
+    <!-- Readability Grade Scale -->
+    <div class="rrs-panel" style="margin-bottom:28px;">
+      <h3 class="rrs-section-title">🎯 Grade Level Scale</h3>
+      <div id="gradeScale"></div>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="rrs-history">
+    <div class="rrs-history-header" id="historyToggle">
+      <h3 class="rrs-section-title" style="margin:0;">📚 Analysis History (<span id="histCount">0</span>)</h3>
+      <span id="histArrow">▼</span>
+    </div>
+    <div class="rrs-history-list hidden" id="historyList">
+      <div class="rrs-history-empty">No analyses yet.</div>
+    </div>
+  </div>
+
+  <footer class="rrs-footer">Resume Readability Score · Part of AI Resume Analyzer · Built with ❤️</footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ================================================================
+   * READABILITY ENGINE
+   * Flesch Reading Ease, Flesch-Kincaid Grade, Gunning Fog,
+   * Coleman-Liau Index, SMOG Index, Automated Readability Index
+   * ================================================================ */
+
+  var VOWELS = 'aeiouy';
+  var HISTORY_KEY = 'rrs_history';
+
+  function countSyllables(word) {
+    word = word.toLowerCase().replace(/[^a-z]/g, '');
+    if (!word || word.length === 0) return 0;
+    if (word.length <= 3) return 1;
+    var count = 0;
+    var prevVowel = false;
+    for (var i = 0; i < word.length; i++) {
+      var isV = VOWELS.indexOf(word[i]) !== -1;
+      if (isV && !prevVowel) count++;
+      prevVowel = isV;
+    }
+    if (word[word.length - 1] === 'e' && count > 1) count--;
+    if (word[word.length - 1] === 'l' && word.length > 2 && word[word.length - 2] === 'e') count++;
+    if (word.indexOf('ia') !== -1 || word.indexOf('io') !== -1) count++;
+    return Math.max(1, count);
+  }
+
+  function countSyllablesInText(text) {
+    return text.split(/\s+/).reduce(function (sum, w) { return sum + countSyllables(w); }, 0);
+  }
+
+  function countSentences(text) {
+    var s = text.replace(/[^.!?;:]+[.!?;:]+/g, '!');
+    var count = (s.match(/!/g) || []).length;
+    return Math.max(1, count);
+  }
+
+  function countComplexWords(text) {
+    return text.split(/\s+/).filter(function (w) { return countSyllables(w) >= 3; }).length;
+  }
+
+  function countPolysyllabic(text) {
+    return text.split(/\s+/).filter(function (w) { return countSyllables(w) >= 4; }).length;
+  }
+
+  function getLetterCount(text) {
+    return text.replace(/[^a-zA-Z]/g, '').length;
+  }
+
+  function getSentenceLengths(text) {
+    var sentences = text.split(/[.!?;]+/).filter(function (s) { return s.trim().length > 0; });
+    return sentences.map(function (s) { return s.trim().split(/\s+/).filter(function (w) { return w.length > 0; }).length; });
+  }
+
+  /* --- Individual Index Calculators --- */
+
+  function fleschReadingEase(words, sentences, syllables) {
+    var score = 206.835 - 1.015 * (words / sentences) - 84.6 * (syllables / words);
+    return Math.max(0, Math.min(100, Math.round(score * 10) / 10));
+  }
+
+  function fleschKincaidGrade(words, sentences, syllables) {
+    var grade = 0.39 * (words / sentences) + 11.8 * (syllables / words) - 15.59;
+    return Math.max(0, Math.round(grade * 10) / 10);
+  }
+
+  function gunningFog(words, sentences, complexWords) {
+    var grade = 0.4 * ((words / sentences) + 100 * (complexWords / words));
+    return Math.max(0, Math.round(grade * 10) / 10);
+  }
+
+  function colemanLiau(text, words, sentences) {
+    var L = (getLetterCount(text) / words) * 100;
+    var S = (sentences / words) * 100;
+    var index = 0.0588 * L - 0.296 * S - 15.8;
+    return Math.max(0, Math.round(index * 10) / 10);
+  }
+
+  function smogIndex(text, sentences, poly) {
+    var grade = 1.0430 * Math.sqrt(poly * (30 / sentences)) + 3.1291;
+    return Math.max(0, Math.round(grade * 10) / 10);
+  }
+
+  function automatedReadability(words, sentences, chars) {
+    var score = 4.71 * (chars / words) + 0.5 * (words / sentences) - 21.43;
+    return Math.max(0, Math.round(score * 10) / 10);
+  }
+
+  function readingTime(words) {
+    var minutes = words / 200;
+    return minutes < 1 ? '<1 min' : Math.ceil(minutes) + ' min';
+  }
+
+  function getLevelLabel(score) {
+    if (score <= 30) return { text: 'Very Difficult', color: 'var(--rose)' };
+    if (score <= 50) return { text: 'Difficult', color: 'var(--amber)' };
+    if (score <= 60) return { text: 'Standard', color: 'var(--cyan)' };
+    if (score <= 70) return { text: 'Fairly Easy', color: 'var(--emerald)' };
+    if (score <= 80) return { text: 'Easy', color: 'var(--emerald-light)' };
+    return { text: 'Very Easy', color: 'var(--emerald)' };
+  }
+
+  function getGradeLabel(grade) {
+    if (grade <= 5) return { text: 'Elementary', color: 'var(--emerald)' };
+    if (grade <= 8) return { text: 'Middle School', color: 'var(--cyan)' };
+    if (grade <= 10) return { text: 'High School', color: 'var(--blue)' };
+    if (grade <= 12) return { text: 'High School Senior', color: 'var(--amber)' };
+    if (grade <= 14) return { text: 'College Freshman', color: 'var(--amber-light)' };
+    if (grade <= 16) return { text: 'College Graduate', color: 'var(--violet)' };
+    return { text: 'Graduate Level', color: 'var(--rose)' };
+  }
+
+  function analyze(text) {
+    var words = text.split(/\s+/).filter(function (w) { return w.length > 0; });
+    var wordCount = words.length;
+    var syllableCount = countSyllablesInText(text);
+    var sentenceCount = countSentences(text);
+    var complexCount = countComplexWords(text);
+    var polyCount = countPolysyllabic(text);
+    var charCount = getLetterCount(text);
+
+    var fre = fleschReadingEase(wordCount, sentenceCount, syllableCount);
+    var fkg = fleschKincaidGrade(wordCount, sentenceCount, syllableCount);
+    var fog = gunningFog(wordCount, sentenceCount, complexCount);
+    var cl = colemanLiau(text, wordCount, sentenceCount);
+    var smog = smogIndex(text, sentenceCount, polyCount);
+    var ari = automatedReadability(wordCount, sentenceCount, charCount);
+
+    var avgSyllablesPerWord = Math.round((syllableCount / wordCount) * 100) / 100;
+    var avgWordsPerSentence = Math.round((wordCount / sentenceCount) * 10) / 10;
+    var complexRatio = Math.round((complexCount / wordCount) * 1000) / 10;
+
+    // Word length distribution
+    var lenBuckets = { '1-3': 0, '4-5': 0, '6-7': 0, '8-9': 0, '10+': 0 };
+    words.forEach(function (w) {
+      var l = w.replace(/[^a-zA-Z]/g, '').length;
+      if (l <= 3) lenBuckets['1-3']++;
+      else if (l <= 5) lenBuckets['4-5']++;
+      else if (l <= 7) lenBuckets['6-7']++;
+      else if (l <= 9) lenBuckets['8-9']++;
+      else lenBuckets['10+']++;
+    });
+
+    var suggestions = [];
+    if (fre < 50) suggestions.push({ icon: '🔴', text: 'Your resume is very hard to read (Flesch score ' + fre + '). Shorten sentences and replace complex words with simpler alternatives.' });
+    else if (fre < 60) suggestions.push({ icon: '🟡', text: 'Readability is below average. Aim for shorter sentences and more common vocabulary.' });
+
+    if (fkg > 12) suggestions.push({ icon: '🔴', text: 'Grade level is ' + fkg + ' — too complex for most recruiters. Target grade 8-10 for maximum accessibility.' });
+    else if (fkg > 10) suggestions.push({ icon: '🟡', text: 'Grade level ' + fkg + ' is acceptable but could be simpler. Consider breaking long sentences.' });
+
+    if (complexRatio > 20) suggestions.push({ icon: '🟡', text: complexRatio + '% of words have 3+ syllables. Replace jargon with plain language where possible.' });
+
+    if (avgWordsPerSentence > 25) suggestions.push({ icon: '🔴', text: 'Average sentence length is ' + avgWordsPerSentence + ' words. Keep sentences under 20 words for better scannability.' });
+    else if (avgWordsPerSentence > 18) suggestions.push({ icon: '🟡', text: 'Average sentence length (' + avgWordsPerSentence + ' words) is a bit long. Aim for 12-18 words.' });
+
+    if (wordCount < 200) suggestions.push({ icon: '🟡', text: 'Resume text is quite short (' + wordCount + ' words). Add more detail about experience and achievements.' });
+    if (wordCount > 800) suggestions.push({ icon: '🟡', text: 'Resume is lengthy (' + wordCount + ' words). Consider trimming to improve scannability.' });
+
+    var shortSentences = getSentenceLengths(text).filter(function (l) { return l <= 5; });
+    if (shortSentences.length > 3) suggestions.push({ icon: '🟡', text: shortSentences.length + ' sentences have fewer than 5 words — these may feel abrupt or lack context.' });
+
+    if (fre >= 60 && fkg <= 10 && avgWordsPerSentence <= 20) {
+      suggestions.push({ icon: '🟢', text: 'Excellent readability! Your resume is clear and easy to scan.' });
+    }
+
+    suggestions.push({ icon: '🟢', text: 'Estimated reading time: ' + readingTime(wordCount) + '. Recruiters typically spend 6-7 seconds on initial scan.' });
+
+    return {
+      wordCount: wordCount,
+      sentenceCount: sentenceCount,
+      syllableCount: syllableCount,
+      charCount: text.length,
+      fre: fre, fkg: fkg, fog: fog, cl: cl, smog: smog, ari: ari,
+      avgSyllablesPerWord: avgSyllablesPerWord,
+      avgWordsPerSentence: avgWordsPerSentence,
+      complexRatio: complexRatio,
+      complexCount: complexCount,
+      lenBuckets: lenBuckets,
+      suggestions: suggestions,
+      timestamp: Date.now()
+    };
+  }
+
+  /* ================================================================
+   * RENDERING
+   * ================================================================ */
+
+  var inputEl = document.getElementById('inputText');
+  var analyzeBtn = document.getElementById('analyzeBtn');
+  var resultsEl = document.getElementById('results');
+  var historyOpen = false;
+  var history = loadHistory();
+
+  inputEl.addEventListener('input', function () {
+    var text = inputEl.value;
+    var words = text.split(/\s+/).filter(function (w) { return w.length > 0; });
+    document.getElementById('charCount').textContent = text.length + ' chars';
+    document.getElementById('wordCount').textContent = words.length + ' words';
+    document.getElementById('sentenceCount').textContent = countSentences(text) + ' sentences';
+    document.getElementById('syllableCount').textContent = countSyllablesInText(text) + ' syllables';
+    analyzeBtn.disabled = !text.trim();
+  });
+
+  analyzeBtn.addEventListener('click', function () {
+    if (!inputEl.value.trim()) return;
+    var result = analyze(inputEl.value);
+    renderResults(result);
+    saveToHistory(result);
+    resultsEl.classList.remove('hidden');
+    resultsEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+
+  function renderResults(r) {
+    renderGauges(r);
+    renderStats(r);
+    renderSuggestions(r);
+    renderWordDist(r);
+    renderSentenceAnalysis(r);
+    renderGradeScale(r);
+    renderHistory();
+  }
+
+  function renderGauges(r) {
+    var gaugesData = [
+      { name: 'Flesch Reading Ease', val: r.fre, max: 100, label: getLevelLabel(r.fre).text, color: getLevelLabel(r.fre).color },
+      { name: 'F-K Grade Level', val: r.fkg, max: 20, label: getGradeLabel(r.fkg).text, color: getGradeLabel(r.fkg).color },
+      { name: 'Gunning Fog', val: r.fog, max: 20, label: getGradeLabel(r.fog).text, color: getGradeLabel(r.fog).color },
+      { name: 'Coleman-Liau', val: r.cl, max: 20, label: getGradeLabel(r.cl).text, color: getGradeLabel(r.cl).color },
+    ];
+    var container = document.getElementById('gauges');
+    container.innerHTML = gaugesData.map(function (g) {
+      var pct = Math.min(100, (g.val / g.max) * 100);
+      var offset = 314 - (pct / 100) * 314;
+      return (
+        '<div class="rrs-gauge">' +
+        '<div class="rrs-gauge-ring">' +
+        '<svg viewBox="0 0 120 120">' +
+        '<circle class="rrs-gauge-bg" cx="60" cy="60" r="50"/>' +
+        '<circle class="rrs-gauge-fill" cx="60" cy="60" r="50" stroke="' + g.color + '" style="stroke-dashoffset:' + offset + '"/>' +
+        '</svg>' +
+        '<div class="rrs-gauge-label">' +
+        '<span class="rrs-gauge-val" style="color:' + g.color + '">' + g.val + '</span>' +
+        '<span class="rrs-gauge-name">' + g.name + '</span>' +
+        '</div></div>' +
+        '<div class="rrs-gauge-level" style="background:' + g.color + '22;color:' + g.color + '">' + g.label + '</div>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function renderStats(r) {
+    var stats = [
+      { val: r.wordCount, lbl: 'Words', color: 'var(--violet)' },
+      { val: r.sentenceCount, lbl: 'Sentences', color: 'var(--cyan)' },
+      { val: r.avgWordsPerSentence, lbl: 'Avg Words/Sentence', color: 'var(--amber)' },
+      { val: r.avgSyllablesPerWord, lbl: 'Avg Syllables/Word', color: 'var(--emerald)' },
+      { val: r.complexCount, lbl: 'Complex Words (3+)', color: 'var(--rose)' },
+      { val: r.complexRatio + '%', lbl: 'Complex Word %', color: r.complexRatio > 20 ? 'var(--rose)' : 'var(--emerald)' },
+      { val: r.syllableCount, lbl: 'Total Syllables', color: 'var(--blue)' },
+      { val: r.charCount, lbl: 'Characters', color: 'var(--text-sec)' },
+    ];
+    document.getElementById('statsGrid').innerHTML = stats.map(function (s) {
+      return '<div class="rrs-stat-card"><div class="rrs-stat-val" style="color:' + s.color + '">' + s.val + '</div><div class="rrs-stat-lbl">' + s.lbl + '</div></div>';
+    }).join('');
+  }
+
+  function renderSuggestions(r) {
+    document.getElementById('suggestions').innerHTML = r.suggestions.map(function (s) {
+      return '<div class="rrs-sug-item"><span>' + s.icon + '</span><span>' + s.text + '</span></div>';
+    }).join('');
+  }
+
+  function renderWordDist(r) {
+    var buckets = r.lenBuckets;
+    var maxVal = Math.max.apply(null, Object.keys(buckets).map(function (k) { return buckets[k]; }));
+    var colors = ['var(--emerald)', 'var(--cyan)', 'var(--blue)', 'var(--violet)', 'var(--rose)'];
+    var i = 0;
+    document.getElementById('wordDist').innerHTML = Object.keys(buckets).map(function (k) {
+      var pct = maxVal > 0 ? (buckets[k] / maxVal) * 100 : 0;
+      var c = colors[i] || 'var(--text-muted)';
+      i++;
+      return (
+        '<div class="rrs-dist-row">' +
+        '<span class="rrs-dist-label">' + k + ' chars</span>' +
+        '<div class="rrs-dist-track"><div class="rrs-dist-fill" style="width:' + pct + '%;background:' + c + '"></div></div>' +
+        '<span class="rrs-dist-count">' + buckets[k] + '</span>' +
+        '</div>'
+      );
+    }).join('');
+  }
+
+  function renderSentenceAnalysis(r) {
+    var sLens = getSentenceLengths(inputEl.value);
+    var buckets = { '1-5': 0, '6-10': 0, '11-15': 0, '16-20': 0, '21+': 0 };
+    sLens.forEach(function (l) {
+      if (l <= 5) buckets['1-5']++;
+      else if (l <= 10) buckets['6-10']++;
+      else if (l <= 15) buckets['11-15']++;
+      else if (l <= 20) buckets['16-20']++;
+      else buckets['21+']++;
+    });
+    var maxVal = Math.max.apply(null, Object.keys(buckets).map(function (k) { return buckets[k]; }));
+    var colors = ['var(--emerald)', 'var(--cyan)', 'var(--blue)', 'var(--amber)', 'var(--rose)'];
+    var i = 0;
+    document.getElementById('sentenceAnalysis').innerHTML =
+      '<div class="rrs-word-dist">' +
+      Object.keys(buckets).map(function (k) {
+        var pct = maxVal > 0 ? (buckets[k] / maxVal) * 100 : 0;
+        var c = colors[i] || 'var(--text-muted)';
+        i++;
+        return (
+          '<div class="rrs-dist-row">' +
+          '<span class="rrs-dist-label">' + k + ' words</span>' +
+          '<div class="rrs-dist-track"><div class="rrs-dist-fill" style="width:' + pct + '%;background:' + c + '"></div></div>' +
+          '<span class="rrs-dist-count">' + buckets[k] + '</span>' +
+          '</div>'
+        );
+      }).join('') +
+      '</div>';
+  }
+
+  function renderGradeScale(r) {
+    var scales = [
+      { name: 'Flesch-Kincaid', val: r.fkg },
+      { name: 'Gunning Fog', val: r.fog },
+      { name: 'Coleman-Liau', val: r.cl },
+      { name: 'SMOG', val: r.smog },
+      { name: 'ARI', val: r.ari },
+    ];
+    document.getElementById('gradeScale').innerHTML =
+      '<div style="display:flex;flex-direction:column;gap:10px;">' +
+      scales.map(function (s) {
+        var pct = Math.min(100, (s.val / 18) * 100);
+        var gl = getGradeLabel(s.val);
+        return (
+          '<div style="display:flex;align-items:center;gap:12px;">' +
+          '<span style="width:110px;font-size:0.82rem;font-weight:600;color:var(--text-sec);text-align:right;flex-shrink:0;">' + s.name + '</span>' +
+          '<div style="flex:1;height:10px;background:rgba(0,0,0,0.3);border-radius:5px;overflow:hidden;position:relative;">' +
+          '<div style="height:100%;width:' + pct + '%;background:' + gl.color + ';border-radius:5px;transition:width 0.6s ease;"></div>' +
+          '<div style="position:absolute;left:50%;top:-2px;width:1px;height:14px;background:rgba(255,255,255,0.15);"></div>' +
+          '</div>' +
+          '<span style="width:60px;font-size:0.82rem;font-weight:700;color:' + gl.color + '">' + s.val + '</span>' +
+          '<span style="width:100px;font-size:0.72rem;color:' + gl.color + '">' + gl.text + '</span>' +
+          '</div>'
+        );
+      }).join('') +
+      '</div>';
+  }
+
+  /* ================================================================
+   * HISTORY
+   * ================================================================ */
+
+  function loadHistory() {
+    try { var s = localStorage.getItem(HISTORY_KEY); return s ? JSON.parse(s) : []; }
+    catch (e) { return []; }
+  }
+
+  function saveHistory(h) {
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(h.slice(-20))); } catch (e) {}
+  }
+
+  function saveToHistory(r) {
+    history.unshift({
+      fre: r.fre, fkg: r.fkg, fog: r.fog, wordCount: r.wordCount,
+      timestamp: r.timestamp
+    });
+    history = history.slice(0, 20);
+    saveHistory(history);
+  }
+
+  function renderHistory() {
+    document.getElementById('histCount').textContent = history.length;
+    var list = document.getElementById('historyList');
+    list.innerHTML = '';
+    if (history.length === 0) {
+      list.innerHTML = '<div class="rrs-history-empty">No analyses yet.</div>';
+      return;
+    }
+    history.forEach(function (h) {
+      var el = document.createElement('div');
+      el.className = 'rrs-history-item';
+      var color = getLevelLabel(h.fre).color;
+      el.innerHTML =
+        '<div><span class="rrs-history-score" style="color:' + color + '">' + h.fre + '</span> <span style="font-size:0.8rem;color:var(--text-sec)">Flesch</span></div>' +
+        '<div style="font-size:0.78rem;color:var(--text-sec)">FK Grade: ' + h.fkg + ' · Fog: ' + h.fog + ' · ' + h.wordCount + ' words</div>' +
+        '<div class="rrs-history-date">' + new Date(h.timestamp).toLocaleDateString() + '</div>';
+      list.appendChild(el);
+    });
+  }
+
+  document.getElementById('historyToggle').addEventListener('click', function () {
+    historyOpen = !historyOpen;
+    document.getElementById('historyList').classList.toggle('hidden', !historyOpen);
+    document.getElementById('histArrow').textContent = historyOpen ? '▲' : '▼';
+  });
+
+  renderHistory();
+})();
+</script>
+</body>
+</html>

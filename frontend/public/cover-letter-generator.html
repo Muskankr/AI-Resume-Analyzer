@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cover Letter Generator — AI Resume Analyzer</title>
+  <style>
+    :root {
+      --bg-primary: #0f172a;
+      --bg-card: #1e293b;
+      --bg-card-hover: #253349;
+      --bg-input: #0f172a;
+      --border-color: #334155;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-emerald: #10b981;
+      --accent-emerald-light: #34d399;
+      --accent-indigo: #6366f1;
+      --accent-indigo-light: #818cf8;
+      --accent-cyan: #06b6d4;
+      --accent-rose: #f43f5e;
+      --accent-rose-light: #fb7185;
+      --accent-amber: #f59e0b;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.3);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.4);
+      --shadow-glow: 0 0 20px rgba(16,185,129,0.3);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 20px;
+      --transition: 0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+
+    .clg-container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+    .clg-header { text-align: center; margin-bottom: 36px; }
+
+    .clg-header h1 {
+      font-size: 1.9rem; font-weight: 800;
+      background: linear-gradient(135deg, #10b981, #06b6d4, #3b82f6);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text; margin-bottom: 8px;
+    }
+
+    .clg-header p { color: var(--text-secondary); font-size: 0.95rem; max-width: 620px; margin: 0 auto; }
+
+    .clg-badge {
+      display: inline-block; padding: 3px 10px; border-radius: 20px;
+      font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(16,185,129,0.15); color: var(--accent-emerald-light);
+      border: 1px solid rgba(16,185,129,0.3); margin-top: 10px;
+    }
+
+    .back-link {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--text-secondary); text-decoration: none;
+      font-size: 0.85rem; margin-bottom: 20px; transition: var(--transition);
+    }
+    .back-link:hover { color: var(--accent-emerald-light); }
+
+    .clg-config-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px; margin-bottom: 24px;
+    }
+
+    .clg-config-field label {
+      display: block; font-size: 0.78rem; font-weight: 600;
+      color: var(--text-muted); margin-bottom: 5px;
+      text-transform: uppercase; letter-spacing: 0.04em;
+    }
+
+    .clg-config-field select,
+    .clg-config-field input {
+      width: 100%; padding: 9px 12px;
+      background: var(--bg-input); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); color: var(--text-primary);
+      font-size: 0.88rem; outline: none; transition: 0.2s;
+    }
+
+    .clg-config-field select:focus,
+    .clg-config-field input:focus {
+      border-color: var(--accent-emerald);
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.12);
+    }
+
+    .clg-two-col {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 20px; margin-bottom: 24px;
+    }
+
+    @media (max-width: 768px) { .clg-two-col { grid-template-columns: 1fr; } }
+
+    .clg-panel {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); padding: 18px;
+    }
+
+    .clg-section-title {
+      font-size: 1.05rem; font-weight: 700; margin-bottom: 12px;
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .clg-textarea {
+      width: 100%; min-height: 200px; padding: 12px;
+      background: rgba(0,0,0,0.3); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); color: var(--text-primary);
+      font-size: 0.88rem; line-height: 1.6; resize: vertical;
+      outline: none; font-family: inherit; transition: 0.2s;
+    }
+
+    .clg-textarea:focus {
+      border-color: var(--accent-emerald);
+      box-shadow: 0 0 0 3px rgba(16,185,129,0.1);
+    }
+
+    .clg-textarea::placeholder { color: var(--text-muted); }
+
+    .clg-char-count {
+      text-align: right; font-size: 0.72rem;
+      color: var(--text-muted); margin-top: 6px;
+    }
+
+    .clg-generate-btn {
+      padding: 13px 32px;
+      background: linear-gradient(135deg, #10b981, #06b6d4);
+      color: #fff; border: none; border-radius: var(--radius-md);
+      font-size: 1rem; font-weight: 700; cursor: pointer;
+      transition: var(--transition); box-shadow: var(--shadow-glow);
+      width: 100%; margin-bottom: 28px;
+    }
+
+    .clg-generate-btn:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 0 30px rgba(16,185,129,0.4);
+    }
+
+    .clg-generate-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    .clg-spinner {
+      display: inline-block; width: 18px; height: 18px;
+      border: 3px solid rgba(255,255,255,0.2);
+      border-top-color: #fff; border-radius: 50%;
+      animation: clgSpin 0.8s linear infinite;
+      margin-right: 8px; vertical-align: middle;
+    }
+
+    @keyframes clgSpin { to { transform: rotate(360deg); } }
+
+    .clg-output-section { margin-bottom: 28px; }
+
+    .clg-output-header {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
+    }
+
+    .clg-output-actions { display: flex; gap: 8px; }
+
+    .clg-action-btn {
+      padding: 6px 14px; background: rgba(255,255,255,0.06);
+      border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+      color: var(--text-primary); font-size: 0.82rem; font-weight: 600;
+      cursor: pointer; transition: 0.2s;
+    }
+
+    .clg-action-btn:hover { background: rgba(255,255,255,0.12); }
+
+    .clg-output-text {
+      width: 100%; padding: 16px;
+      background: rgba(0,0,0,0.3); border: 1px solid var(--border-color);
+      border-radius: var(--radius-md); color: var(--text-primary);
+      font-size: 0.88rem; line-height: 1.7; resize: vertical;
+      outline: none; font-family: Georgia, 'Times New Roman', serif;
+      white-space: pre-wrap; min-height: 280px;
+    }
+
+    .clg-output-meta {
+      display: flex; gap: 8px; align-items: center; justify-content: center;
+      font-size: 0.75rem; color: var(--text-muted); margin-top: 10px;
+    }
+
+    .clg-history-section {
+      background: var(--bg-card); border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg); margin-bottom: 28px; overflow: hidden;
+    }
+
+    .clg-history-header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 16px 18px; cursor: pointer; transition: 0.2s;
+    }
+
+    .clg-history-header:hover { background: rgba(255,255,255,0.03); }
+
+    .clg-history-toggle { color: var(--text-secondary); font-size: 0.85rem; }
+
+    .clg-history-list { padding: 0 18px 16px; }
+
+    .clg-history-empty {
+      text-align: center; padding: 24px;
+      color: var(--text-muted); font-size: 0.85rem;
+    }
+
+    .clg-history-item {
+      padding: 12px 14px; background: rgba(0,0,0,0.2);
+      border: 1px solid rgba(255,255,255,0.06); border-radius: var(--radius-md);
+      margin-bottom: 8px; cursor: pointer; transition: 0.2s;
+    }
+
+    .clg-history-item:hover { background: rgba(0,0,0,0.35); }
+
+    .clg-history-item-header {
+      display: flex; gap: 10px; align-items: center;
+      margin-bottom: 6px; flex-wrap: wrap;
+    }
+
+    .clg-history-role { font-size: 0.8rem; font-weight: 700; color: var(--accent-indigo-light); }
+    .clg-history-company { font-size: 0.78rem; color: var(--text-secondary); }
+    .clg-history-time { font-size: 0.72rem; color: var(--text-muted); margin-left: auto; }
+
+    .clg-history-preview {
+      font-size: 0.78rem; color: var(--text-muted); line-height: 1.4;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+
+    .clg-clear-btn {
+      display: block; width: 100%; padding: 8px;
+      background: rgba(244,63,94,0.1); border: 1px solid rgba(244,63,94,0.2);
+      border-radius: var(--radius-sm); color: var(--accent-rose-light);
+      font-size: 0.8rem; font-weight: 600; cursor: pointer;
+      transition: 0.2s; margin-top: 8px;
+    }
+
+    .clg-clear-btn:hover { background: rgba(244,63,94,0.2); }
+
+    .clg-footer {
+      text-align: center; padding: 24px 0;
+      color: var(--text-muted); font-size: 0.78rem;
+      border-top: 1px solid var(--border-color); margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="clg-container">
+  <a href="/" class="back-link">← Back to Resume Analyzer</a>
+
+  <header class="clg-header">
+    <h1>✉️ Cover Letter Generator</h1>
+    <p>Paste your resume and a job description to generate a tailored, role-specific cover letter in seconds.</p>
+    <span class="clg-badge">AI-Powered Template Engine v1.0</span>
+  </header>
+
+  <!-- Config -->
+  <div class="clg-config-row">
+    <div class="clg-config-field">
+      <label for="targetRole">Target Role</label>
+      <select id="targetRole">
+        <option>Software Engineer</option>
+        <option>Data Analyst</option>
+        <option>Product Manager</option>
+        <option>Frontend Developer</option>
+        <option>Backend Developer</option>
+        <option>DevOps Engineer</option>
+        <option>Full Stack Developer</option>
+        <option>Machine Learning Engineer</option>
+        <option>Data Scientist</option>
+        <option>Mobile Developer</option>
+      </select>
+    </div>
+    <div class="clg-config-field">
+      <label for="tone">Tone</label>
+      <select id="tone">
+        <option value="professional">Professional — Balanced and polished</option>
+        <option value="enthusiastic">Enthusiastic — High energy and passionate</option>
+        <option value="concise">Concise — Short and direct</option>
+      </select>
+    </div>
+    <div class="clg-config-field">
+      <label for="companyName">Company Name (optional)</label>
+      <input type="text" id="companyName" placeholder="e.g. Google, Stripe, Acme Inc." />
+    </div>
+  </div>
+
+  <!-- Input Panels -->
+  <div class="clg-two-col">
+    <div class="clg-panel">
+      <h3 class="clg-section-title">📄 Your Resume Text</h3>
+      <textarea class="clg-textarea" id="resumeText" placeholder="Paste your resume text here...&#10;&#10;Include your skills, experience, education, and projects." rows="12"></textarea>
+      <div class="clg-char-count" id="resumeCharCount">0 characters</div>
+    </div>
+    <div class="clg-panel">
+      <h3 class="clg-section-title">💼 Job Description (optional)</h3>
+      <textarea class="clg-textarea" id="jobDesc" placeholder="Paste the job description here...&#10;&#10;This helps tailor the cover letter to the specific role." rows="12"></textarea>
+      <div class="clg-char-count" id="jdCharCount">0 characters</div>
+    </div>
+  </div>
+
+  <!-- Generate Button -->
+  <button class="clg-generate-btn" id="generateBtn" disabled>✨ Generate Cover Letter</button>
+
+  <!-- Output -->
+  <div class="clg-output-section hidden" id="outputSection">
+    <div class="clg-output-header">
+      <h3 class="clg-section-title" style="margin:0;">📝 Generated Cover Letter</h3>
+      <div class="clg-output-actions">
+        <button class="clg-action-btn" id="copyBtn">📋 Copy</button>
+        <button class="clg-action-btn" id="downloadBtn">⬇ Download .txt</button>
+      </div>
+    </div>
+    <textarea class="clg-output-text" id="outputText" readonly rows="20"></textarea>
+    <div class="clg-output-meta" id="outputMeta"></div>
+  </div>
+
+  <!-- History -->
+  <div class="clg-history-section">
+    <div class="clg-history-header" id="historyToggle">
+      <h3 class="clg-section-title" style="margin:0;">📚 Generation History (<span id="historyCount">0</span>)</h3>
+      <span class="clg-history-toggle" id="historyArrow">▼</span>
+    </div>
+    <div class="clg-history-list hidden" id="historyList">
+      <div class="clg-history-empty" id="historyEmpty">No generated letters yet.</div>
+    </div>
+  </div>
+
+  <footer class="clg-footer">
+    Cover Letter Generator · Part of AI Resume Analyzer · Built with ❤️
+  </footer>
+</div>
+
+<script>
+/**
+ * Cover Letter Generator — Pure JS standalone version
+ */
+
+(function () {
+  'use strict';
+
+  // ===== Template Data =====
+  var ROLE_TEMPLATES = {
+    'Software Engineer': {
+      greetings: ['Dear Hiring Manager,', 'To the Engineering Team,', 'Dear [Company] Engineering Team,'],
+      opener: [
+        'I am writing to express my strong interest in the {role} position at {company}.',
+        'I am excited to apply for the {role} opportunity at {company}.',
+        'When I saw the {role} opening at {company}, I knew I had to apply.',
+      ],
+      body1: [
+        'With my background in {skills}, I am well-prepared to contribute to your engineering team from day one.',
+        'My experience with {skills} aligns closely with the requirements of this role, and I am eager to bring this expertise to {company}.',
+        'Throughout my career, I have developed deep proficiency in {skills}, which I believe makes me an excellent fit.',
+      ],
+      body2: [
+        'I am particularly drawn to {company} because of your commitment to building scalable, impactful technology.',
+        'What excites me most about {company} is the opportunity to work on challenging problems at scale.',
+        'I admire {company}\'s approach to innovation and engineering excellence.',
+      ],
+      closing: [
+        'I would welcome the opportunity to discuss how my skills can contribute to your team\'s success.',
+        'I am confident that my technical background and passion would make me a valuable addition.',
+        'I look forward to the possibility of contributing to {company}\'s continued success.',
+      ],
+      signoffs: ['Best regards,', 'Sincerely,', 'Thank you for your consideration,'],
+    },
+    'Data Analyst': {
+      greetings: ['Dear Hiring Manager,', 'To the Data Team,', 'Dear [Company] Analytics Team,'],
+      opener: [
+        'I am writing to express my interest in the {role} position at {company}.',
+        'I am thrilled to apply for the {role} role at {company}.',
+        'The {role} opportunity at {company} caught my attention immediately.',
+      ],
+      body1: [
+        'My expertise in {skills} has equipped me to transform complex datasets into actionable business insights.',
+        'With hands-on experience in {skills}, I have a proven track record of delivering data-driven solutions.',
+        'I have leveraged {skills} to uncover trends, build dashboards, and influence company strategy.',
+      ],
+      body2: [
+        'I am drawn to {company} because of your data-driven culture and commitment to evidence-based decisions.',
+        'What excites me about {company} is the scale of data challenges you tackle.',
+        'I admire {company}\'s commitment to leveraging data for impact.',
+      ],
+      closing: [
+        'I would love to discuss how my data expertise can contribute to {company}\'s analytics goals.',
+        'I am excited about joining your team and contributing to data-driven decision-making.',
+        'I look forward to exploring how my background aligns with your team\'s needs.',
+      ],
+      signoffs: ['Best regards,', 'Sincerely,', 'Thank you for your time,'],
+    },
+    'Product Manager': {
+      greetings: ['Dear Hiring Manager,', 'To the Product Team,', 'Dear [Company] Product Leadership,'],
+      opener: [
+        'I am writing to express my enthusiasm for the {role} position at {company}.',
+        'I am excited to apply for the {role} opportunity at {company}.',
+        'The {role} role at {company} represents the exact kind of challenge I am looking for.',
+      ],
+      body1: [
+        'My experience in {skills} has given me a strong foundation in translating user needs into product strategies.',
+        'With expertise in {skills}, I have successfully launched and iterated on products that drove business growth.',
+        'I bring a unique combination of technical understanding and business acumen, with experience in {skills}.',
+      ],
+      body2: [
+        'I am drawn to {company} because of your mission to solve meaningful problems through technology.',
+        'What excites me about {company} is the opportunity to work on products that impact millions.',
+        'I admire {company}\'s product-led approach to building great products.',
+      ],
+      closing: [
+        'I would welcome the chance to discuss how my product management experience can drive impact.',
+        'I am confident that my user-centric, data-informed approach would be a strong asset.',
+        'I look forward to contributing to {company}\'s product roadmap and user experience.',
+      ],
+      signoffs: ['Best regards,', 'Sincerely,', 'Thank you for your consideration,'],
+    },
+    'Default': {
+      greetings: ['Dear Hiring Manager,', 'To the Recruitment Team,', 'Dear [Company] Team,'],
+      opener: [
+        'I am writing to express my interest in the {role} position at {company}.',
+        'I am excited to apply for the {role} opportunity at {company}.',
+        'The {role} role at {company} is a perfect match for my skills and experience.',
+      ],
+      body1: [
+        'My background in {skills} has prepared me to make meaningful contributions to your team.',
+        'With proficiency in {skills}, I am confident in my ability to excel in this role.',
+        'I have developed strong capabilities in {skills} that align with this position\'s requirements.',
+      ],
+      body2: [
+        'I am drawn to {company} because of your reputation for excellence and innovation.',
+        'What excites me about {company} is the opportunity to work on challenging problems.',
+        'I admire {company}\'s values and approach to building great products.',
+      ],
+      closing: [
+        'I would welcome the opportunity to discuss how my qualifications align with your needs.',
+        'I am confident that my skills would make me a strong addition to your team.',
+        'I look forward to contributing to {company}\'s continued success.',
+      ],
+      signoffs: ['Best regards,', 'Sincerely,', 'Thank you for your consideration,'],
+    },
+  };
+
+  var ROLE_LIST = [
+    'Software Engineer', 'Data Analyst', 'Product Manager', 'Frontend Developer',
+    'Backend Developer', 'DevOps Engineer', 'Full Stack Developer',
+    'Machine Learning Engineer', 'Data Scientist', 'Mobile Developer',
+  ];
+
+  // ===== Utility =====
+  function rand(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+  function extractKeywords(text) {
+    var stopWords = new Set([
+      'the','a','an','is','are','was','were','be','been','being','have','has','had',
+      'do','does','did','will','would','could','should','may','might','can','shall',
+      'to','of','in','for','on','with','at','by','from','as','into','through',
+      'during','before','after','above','below','between','out','off','over',
+      'under','again','further','then','once','here','there','when','where',
+      'why','how','all','each','every','both','few','more','most','other','some',
+      'such','no','nor','not','only','own','same','so','than','too','very','just',
+      'because','but','and','or','if','while','about','up','it','its','this',
+      'that','these','those','i','me','my','myself','we','our','ours','you',
+      'your','yours','he','him','his','she','her','hers','they','them','their',
+      'what','which','who','whom',
+    ]);
+    var words = text.toLowerCase().split(/\s+/);
+    var freq = {};
+    words.forEach(function (w) {
+      var clean = w.replace(/[^a-z0-9+#]/g, '');
+      if (clean.length > 2 && !stopWords.has(clean)) {
+        freq[clean] = (freq[clean] || 0) + 1;
+      }
+    });
+    return Object.keys(freq).sort(function (a, b) { return freq[b] - freq[a]; }).slice(0, 12);
+  }
+
+  function extractCompany(jd) {
+    var patterns = [
+      /at\s+([A-Z][A-Za-z&\s]{2,20}?)(?:\s|,|\.|:)/,
+      /join\s+([A-Z][A-Za-z&\s]{2,20}?)(?:\s|,|\.|:)/,
+      /([A-Z][A-Za-z]{2,20})\s+is\s+looking/,
+    ];
+    for (var i = 0; i < patterns.length; i++) {
+      var m = jd.match(patterns[i]);
+      if (m && m[1]) return m[1].trim();
+    }
+    return 'your company';
+  }
+
+  function generateLetter(resumeText, jd, role, tone, company) {
+    var templates = ROLE_TEMPLATES[role] || ROLE_TEMPLATES['Default'];
+    var resumeKw = extractKeywords(resumeText);
+    var jdKw = jd ? extractKeywords(jd) : [];
+    var allKw = [];
+    var seen = {};
+    resumeKw.concat(jdKw).forEach(function (k) {
+      if (!seen[k]) { allKw.push(k); seen[k] = true; }
+    });
+    var skillsPhrase = allKw.slice(0, 5).join(', ') || 'software development, problem-solving, and teamwork';
+
+    var companyLabel = company || extractCompany(jd) || 'your company';
+
+    var greeting = rand(templates.greetings);
+    var opener = rand(templates.opener).replace('{role}', role).replace('{company}', companyLabel);
+    var body1 = rand(templates.body1).replace('{skills}', skillsPhrase);
+    var body2 = rand(templates.body2).replace('{company}', companyLabel).replace('{skills}', skillsPhrase);
+
+    if (tone === 'concise') {
+      body1 = body1.replace(/\.\s.*$/, '.');
+      body2 = body2.replace(/\.\s.*$/, '.');
+    } else if (tone === 'enthusiastic') {
+      body1 = body1.replace('I am confident', 'I am genuinely excited');
+      body2 = body2.replace('I admire', 'I am truly inspired by');
+    }
+
+    var closing = rand(templates.closing).replace('{company}', companyLabel);
+    var signoff = rand(templates.signoffs);
+
+    var jdParagraph = '';
+    if (jd.length > 100 && jdKw.length >= 3) {
+      jdParagraph = '\n\nI noticed your emphasis on ' + jdKw.slice(0, 3).join(', ') +
+        ' in the job description, and I am particularly excited about these areas.';
+    }
+
+    return [
+      greeting, '', opener, '', body1, '', body2, jdParagraph,
+      '', closing, '', signoff, '[Your Name]', '[Your Email] | [Your Phone]',
+      '[Your LinkedIn / Portfolio]',
+    ].join('\n').trim();
+  }
+
+  // ===== History =====
+  function loadHistory() {
+    try {
+      var s = localStorage.getItem('clg_history');
+      return s ? JSON.parse(s) : [];
+    } catch (e) { return []; }
+  }
+
+  function saveHistory(h) {
+    try { localStorage.setItem('clg_history', JSON.stringify(h.slice(-20))); } catch (e) {}
+  }
+
+  // ===== Init =====
+  var resumeEl = document.getElementById('resumeText');
+  var jdEl = document.getElementById('jobDesc');
+  var generateBtn = document.getElementById('generateBtn');
+  var outputSection = document.getElementById('outputSection');
+  var outputText = document.getElementById('outputText');
+  var outputMeta = document.getElementById('outputMeta');
+  var copyBtn = document.getElementById('copyBtn');
+  var downloadBtn = document.getElementById('downloadBtn');
+  var historyList = document.getElementById('historyList');
+  var historyToggle = document.getElementById('historyToggle');
+  var historyCount = document.getElementById('historyCount');
+  var historyArrow = document.getElementById('historyArrow');
+  var historyEmpty = document.getElementById('historyEmpty');
+  var currentLetter = '';
+  var historyOpen = false;
+  var history = loadHistory();
+
+  resumeEl.addEventListener('input', function () {
+    document.getElementById('resumeCharCount').textContent = resumeEl.value.length + ' characters';
+    generateBtn.disabled = !resumeEl.value.trim();
+  });
+
+  jdEl.addEventListener('input', function () {
+    document.getElementById('jdCharCount').textContent = jdEl.value.length + ' characters';
+  });
+
+  generateBtn.addEventListener('click', function () {
+    if (!resumeEl.value.trim()) return;
+    generateBtn.innerHTML = '<span class="clg-spinner"></span>Generating...';
+    generateBtn.disabled = true;
+
+    setTimeout(function () {
+      var role = document.getElementById('targetRole').value;
+      var tone = document.getElementById('tone').value;
+      var company = document.getElementById('companyName').value.trim();
+      var letter = generateLetter(resumeEl.value, jdEl.value, role, tone, company);
+      currentLetter = letter;
+      outputText.value = letter;
+
+      var words = letter.split(/\s+/).length;
+      var paras = letter.split('\n').filter(function (l) { return l.trim(); }).length;
+      outputMeta.innerHTML = '<span>' + words + ' words</span><span>·</span><span>' + paras + ' paragraphs</span><span>·</span><span>' + role + '</span>';
+
+      outputSection.classList.remove('hidden');
+      outputSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      // Save to history
+      var entry = {
+        id: Date.now().toString(36),
+        timestamp: Date.now(),
+        role: role,
+        tone: tone,
+        company: company || 'Unknown',
+        preview: letter.substring(0, 120) + '...',
+        full: letter,
+      };
+      history.unshift(entry);
+      history = history.slice(0, 20);
+      saveHistory(history);
+      renderHistory();
+
+      generateBtn.innerHTML = '✨ Re-Generate';
+      generateBtn.disabled = false;
+    }, 500);
+  });
+
+  copyBtn.addEventListener('click', function () {
+    if (!currentLetter) return;
+    navigator.clipboard.writeText(currentLetter).then(function () {
+      copyBtn.textContent = '✓ Copied!';
+      setTimeout(function () { copyBtn.textContent = '📋 Copy'; }, 2000);
+    });
+  });
+
+  downloadBtn.addEventListener('click', function () {
+    if (!currentLetter) return;
+    var blob = new Blob([currentLetter], { type: 'text/plain' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'cover-letter-' + document.getElementById('targetRole').value.toLowerCase().replace(/\s+/g, '-') + '.txt';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  historyToggle.addEventListener('click', function () {
+    historyOpen = !historyOpen;
+    historyList.classList.toggle('hidden', !historyOpen);
+    historyArrow.textContent = historyOpen ? '▲' : '▼';
+  });
+
+  function renderHistory() {
+    historyCount.textContent = history.length;
+    if (history.length === 0) {
+      historyEmpty.style.display = '';
+      return;
+    }
+    historyEmpty.style.display = 'none';
+    // Remove old items
+    var oldItems = historyList.querySelectorAll('.clg-history-item');
+    oldItems.forEach(function (el) { el.remove(); });
+
+    history.forEach(function (entry) {
+      var div = document.createElement('div');
+      div.className = 'clg-history-item';
+      div.innerHTML =
+        '<div class="clg-history-item-header">' +
+        '<span class="clg-history-role">' + entry.role + '</span>' +
+        '<span class="clg-history-company">' + entry.company + '</span>' +
+        '<span class="clg-history-time">' + new Date(entry.timestamp).toLocaleDateString() + '</span>' +
+        '</div>' +
+        '<div class="clg-history-preview">' + entry.preview + '</div>';
+      div.addEventListener('click', function () {
+        outputText.value = entry.full;
+        currentLetter = entry.full;
+        outputSection.classList.remove('hidden');
+        document.getElementById('targetRole').value = entry.role;
+        document.getElementById('tone').value = entry.tone;
+        document.getElementById('companyName').value = entry.company === 'Unknown' ? '' : entry.company;
+      });
+      historyList.appendChild(div);
+    });
+  }
+
+  renderHistory();
+})();
+</script>
+
+</body>
+</html>

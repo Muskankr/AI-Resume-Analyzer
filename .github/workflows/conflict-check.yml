@@ -1,0 +1,83 @@
+name: CI — Check for Git merge conflict markers
+
+on:
+  pull_request:
+  push:
+    branches:
+      - '**'
+
+jobs:
+  check-conflict-markers:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine files to scan
+        run: |
+          set -euo pipefail
+          echo "Event: $GITHUB_EVENT_NAME"
+          if [ "${GITHUB_EVENT_NAME}" = "pull_request" ]; then
+            BASE_REF="${{ github.event.pull_request.base.ref }}"
+            git fetch origin "$BASE_REF" --depth=1 || true
+            git diff --name-only "origin/$BASE_REF"...HEAD > files_to_scan.txt || true
+          else
+            git diff --name-only HEAD~1..HEAD > files_to_scan.txt || true
+          fi
+
+          if [ ! -s files_to_scan.txt ]; then
+            echo "No changed files detected; scanning all tracked files."
+            git ls-files > files_to_scan.txt
+          fi
+          echo "Files to scan:"
+          sed -n '1,200p' files_to_scan.txt || true
+
+      - name: Scan for merge-conflict markers and fail fast
+        run: |
+          set -euo pipefail
+          found=0
+          while IFS= read -r file; do
+            case "$file" in
+              .git/*|node_modules/*|dist/*|build/*) continue ;;
+              # These two describe the patterns, so they contain them.
+              .github/workflows/conflict-check.yml) continue ;;
+              frontend/src/__tests__/conflictResidue.test.ts) continue ;;
+            esac
+            [ -f "$file" ] || continue
+            # Full markers, including the diff3 `|||||||` form that appears
+            # when merge.conflictstyle is diff3 and which the original list
+            # did not cover.
+            if grep -nH -E '^(<{7}|={7}|>{7}|\|{7})([[:space:]]|$)' "$file"; then
+              found=1
+            fi
+
+            # What a *half* resolution leaves behind.
+            #
+            # 58e2d84 resolved its conflicts by deleting the `<<<<<<< ` and
+            # `>>>>>>> ` prefixes rather than the whole line, so `main` ended
+            # up with a bare ` main` and ` feature/document-semver-process-756`
+            # in App.tsx and in a migration (#872). The grep above cannot see
+            # that: the prefixes are exactly what was removed.
+            #
+            # The pattern is deliberately narrow -- the single leading space
+            # git puts there, then a ref that is either a well-known merge
+            # target or contains a `/` the way branch names do. Restricted to
+            # source files, because a line like " main" is meaningful in
+            # Markdown prose and in fixture data.
+            case "$file" in
+              *.ts|*.tsx|*.js|*.jsx|*.mjs|*.cjs|*.py|*.css|*.scss|*.json|*.yml|*.yaml)
+                if grep -nH -E '^ (main|master|HEAD|origin/[A-Za-z0-9._/-]+|[A-Za-z0-9._-]+/[A-Za-z0-9._/-]+)$' "$file"; then
+                  echo "::error file=$file::Looks like a conflict marker was stripped of its prefix rather than removed."
+                  found=1
+                fi
+                ;;
+            esac
+          done < files_to_scan.txt
+
+          if [ "$found" -eq 1 ]; then
+            echo "::error ::Merge conflict markers detected. Please resolve them and push again."
+            exit 1
+          fi
+          echo "No merge conflict markers found."

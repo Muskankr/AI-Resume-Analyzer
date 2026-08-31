@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ATS Compliance Checker — AI Resume Analyzer</title>
+  <style>
+    :root {
+      --bg:#0f172a;--card:#1e293b;--card-hover:#253349;--input:#0f172a;
+      --border:#334155;--border-focus:#22d3ee;--text:#f1f5f9;--text-sec:#94a3b8;
+      --text-muted:#64748b;--emerald:#10b981;--emerald-light:#34d399;
+      --amber:#f59e0b;--amber-light:#fbbf24;--rose:#f43f5e;--rose-light:#fb7185;
+      --cyan:#22d3ee;--violet:#8b5cf6;--blue:#3b82f6;
+      --shadow:0 4px 12px rgba(0,0,0,0.4);--r-sm:6px;--r-md:10px;--r-lg:14px;--r-xl:20px;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;min-height:100vh}
+    ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+
+    .c-container{max-width:1060px;margin:0 auto;padding:32px 24px}
+    .c-header{text-align:center;margin-bottom:36px}
+    .c-header h1{font-size:2rem;font-weight:800;background:linear-gradient(135deg,#22d3ee,#06b6d4,#0891b2);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px}
+    .c-header p{color:var(--text-sec);font-size:.95rem;max-width:640px;margin:0 auto}
+    .c-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.05em;background:rgba(34,211,238,.15);color:var(--cyan);border:1px solid rgba(34,211,238,.3);margin-top:10px}
+    .back-link{display:inline-flex;align-items:center;gap:6px;color:var(--text-sec);text-decoration:none;font-size:.85rem;margin-bottom:20px;transition:.2s}
+    .back-link:hover{color:var(--cyan)}
+
+    /* Upload */
+    .c-upload{background:var(--card);border:2px dashed var(--border);border-radius:var(--r-xl);padding:44px 28px;text-align:center;cursor:pointer;transition:.25s;margin-bottom:28px}
+    .c-upload:hover,.c-upload.dragover{border-color:var(--cyan);box-shadow:0 0 20px rgba(34,211,238,.15)}
+    .c-upload h3{font-size:1.05rem;font-weight:700;margin-bottom:4px}
+    .c-upload p{color:var(--text-sec);font-size:.82rem}
+    .c-upload input[type=file]{display:none}
+
+    /* OR divider */
+    .c-or{text-align:center;color:var(--text-muted);font-size:.82rem;margin:16px 0;position:relative}
+    .c-or::before,.c-or::after{content:'';position:absolute;top:50%;width:calc(50% - 24px);height:1px;background:var(--border)}
+    .c-or::before{left:0}.c-or::after{right:0}
+
+    /* Textarea */
+    .c-ta-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:18px;margin-bottom:20px}
+    .c-ta{width:100%;min-height:180px;padding:12px;background:rgba(0,0,0,.3);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-size:.88rem;line-height:1.6;resize:vertical;outline:none;font-family:inherit;transition:.2s}
+    .c-ta:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px rgba(34,211,238,.1)}
+    .c-ta::placeholder{color:var(--text-muted)}
+
+    /* Config row */
+    .c-config{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:20px}
+    .c-config label{display:block;font-size:.75rem;font-weight:600;color:var(--text-muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.04em}
+    .c-config select,.c-config input{width:100%;padding:8px 12px;background:var(--input);border:1px solid var(--border);border-radius:var(--r-md);color:var(--text);font-size:.86rem;outline:none;transition:.2s}
+    .c-config select:focus,.c-config input:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px rgba(34,211,238,.1)}
+
+    /* Buttons */
+    .c-btn{padding:12px 28px;border:none;border-radius:var(--r-md);font-size:.95rem;font-weight:700;cursor:pointer;transition:.25s;width:100%;margin-bottom:28px}
+    .c-btn-primary{background:linear-gradient(135deg,#22d3ee,#06b6d4);color:#fff;box-shadow:0 0 18px rgba(34,211,238,.25)}
+    .c-btn-primary:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 0 28px rgba(34,211,238,.4)}
+    .c-btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none}
+    .c-btn-secondary{background:rgba(255,255,255,.06);border:1px solid var(--border);color:var(--text);font-size:.82rem;padding:7px 16px;width:auto;margin:0 6px 0 0}
+    .c-btn-secondary:hover{background:rgba(255,255,255,.12)}
+
+    /* Score overview */
+    .c-score-row{display:flex;justify-content:center;gap:24px;margin-bottom:28px;flex-wrap:wrap}
+    .c-score-ring{position:relative;width:160px;height:160px}
+    .c-score-ring svg{width:160px;height:160px;transform:rotate(-90deg)}
+    .c-ring-bg{fill:none;stroke:var(--border);stroke-width:10}
+    .c-ring-fill{fill:none;stroke-width:10;stroke-linecap:round;stroke-dasharray:408;stroke-dashoffset:408;transition:stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)}
+    .c-score-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+    .c-score-val{font-size:2.5rem;font-weight:800;line-height:1}
+    .c-score-text{font-size:.72rem;color:var(--text-muted);margin-top:4px}
+
+    /* Category scores */
+    .c-cat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:28px}
+    .c-cat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:14px;text-align:center;transition:.2s}
+    .c-cat-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+    .c-cat-val{font-size:1.3rem;font-weight:800;line-height:1.2}
+    .c-cat-lbl{font-size:.7rem;color:var(--text-muted);margin-top:3px;text-transform:uppercase;letter-spacing:.03em}
+    .c-cat-icon{font-size:1.2rem;margin-bottom:4px}
+
+    /* Rules panel */
+    .c-panel{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:20px;margin-bottom:20px}
+    .c-section-title{font-size:1.05rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+    .c-rule-list{display:flex;flex-direction:column;gap:6px;max-height:500px;overflow-y:auto}
+    .c-rule{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:var(--r-md);font-size:.84rem;border:1px solid rgba(255,255,255,.04);transition:.15s}
+    .c-rule:hover{background:rgba(255,255,255,.02)}
+    .c-rule-pass{border-left:3px solid var(--emerald);background:rgba(16,185,129,.04)}
+    .c-rule-fail{border-left:3px solid var(--rose);background:rgba(244,63,94,.04)}
+    .c-rule-warn{border-left:3px solid var(--amber);background:rgba(245,158,11,.04)}
+    .c-rule-icon{flex-shrink:0;font-size:1rem;margin-top:1px}
+    .c-rule-text{flex:1}
+    .c-rule-name{font-weight:600;display:block}
+    .c-rule-desc{color:var(--text-sec);font-size:.78rem;margin-top:2px}
+
+    /* Filter tabs */
+    .c-filter{display:flex;gap:4px;background:rgba(255,255,255,.04);padding:4px;border-radius:var(--r-sm);width:fit-content;margin-bottom:14px}
+    .c-filter-btn{padding:5px 12px;border:none;border-radius:4px;background:transparent;color:var(--text-sec);font-size:.76rem;font-weight:600;cursor:pointer;transition:.2s}
+    .c-filter-btn.active{background:var(--cyan);color:#0f172a}
+
+    /* Tips */
+    .c-tips{background:rgba(34,211,238,.05);border:1px solid rgba(34,211,238,.2);border-radius:var(--r-md);padding:14px 16px;margin-bottom:20px}
+    .c-tips h4{font-size:.88rem;font-weight:700;color:var(--cyan);margin-bottom:8px}
+    .c-tips ul{padding-left:18px;font-size:.82rem;color:var(--text-sec)}
+    .c-tips li{margin-bottom:4px}
+
+    /* History */
+    .c-history{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);margin-bottom:28px;overflow:hidden}
+    .c-history-header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;cursor:pointer;transition:.2s}
+    .c-history-header:hover{background:rgba(255,255,255,.03)}
+    .c-history-list{padding:0 18px 14px;max-height:260px;overflow-y:auto}
+    .c-history-item{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.06);border-radius:var(--r-md);margin-bottom:6px;font-size:.82rem;cursor:pointer;transition:.2s}
+    .c-history-item:hover{background:rgba(0,0,0,.35)}
+    .c-history-empty{text-align:center;padding:20px;color:var(--text-muted);font-size:.84rem}
+    .c-footer{text-align:center;padding:24px 0;color:var(--text-muted);font-size:.78rem;border-top:1px solid var(--border);margin-top:20px}
+    .hidden{display:none!important}
+    @media(max-width:600px){.c-score-row{gap:16px}.c-score-ring{width:130px;height:130px}.c-score-ring svg{width:130px;height:130px}.c-score-val{font-size:2rem}}
+  </style>
+</head>
+<body>
+<div class="c-container">
+  <a href="/" class="back-link">← Back to Resume Analyzer</a>
+  <header class="c-header">
+    <h1>🛡️ ATS Compliance Checker</h1>
+    <p>Verify your resume passes Applicant Tracking Systems with 30+ automated compliance rules across formatting, structure, keywords, and contact information.</p>
+    <span class="c-badge">ATS Rules Engine v1.0</span>
+  </header>
+
+  <!-- Upload Zone -->
+  <div class="c-upload" id="uploadZone">
+    <span style="font-size:2.8rem;display:block;margin-bottom:10px">📄</span>
+    <h3 id="uploadTitle">Drop your Resume here</h3>
+    <p id="uploadDesc">PDF or TXT · Max 5 MB · Analysis runs locally</p>
+    <input type="file" id="fileInput" accept=".pdf,.txt" />
+  </div>
+  <div class="c-or">— or paste text —</div>
+
+  <!-- Config + Textarea -->
+  <div class="c-config">
+    <div><label for="targetRole">Target Role</label>
+      <select id="targetRole">
+        <option>Software Engineer</option><option>Frontend Developer</option><option>Backend Developer</option>
+        <option>Full Stack Developer</option><option>Data Analyst</option><option>Data Scientist</option>
+        <option>DevOps Engineer</option><option>Mobile Developer</option><option>Product Manager</option>
+      </select></div>
+    <div><label for="expLevel">Experience Level</label>
+      <select id="expLevel"><option>Junior</option><option selected>Mid-Level</option><option>Senior</option></select></div>
+    <div><label for="jdKeywords">Key JD Keywords (comma-separated)</label>
+      <input type="text" id="jdKeywords" placeholder="react, python, aws, docker..." /></div>
+  </div>
+
+  <div class="c-ta-wrap">
+    <textarea class="c-ta" id="resumeText" placeholder="Paste your full resume text here for ATS compliance analysis..."></textarea>
+  </div>
+
+  <button class="c-btn c-btn-primary" id="analyzeBtn" disabled>🛡️ Run ATS Compliance Check</button>
+
+  <!-- Results -->
+  <div id="results" class="hidden">
+    <!-- Score Ring -->
+    <div class="c-score-row">
+      <div class="c-score-ring">
+        <svg viewBox="0 0 150 150">
+          <defs><linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%"><stop offset="0%" stop-color="#22d3ee"/><stop offset="100%" stop-color="#10b981"/></linearGradient></defs>
+          <circle class="c-ring-bg" cx="75" cy="75" r="65"/>
+          <circle class="c-ring-fill" id="scoreRing" cx="75" cy="75" r="65" stroke="url(#ringGrad)"/>
+        </svg>
+        <div class="c-score-label">
+          <span class="c-score-val" id="scoreVal">0</span>
+          <span class="c-score-text">ATS Score</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Category Cards -->
+    <div class="c-cat-grid" id="catGrid"></div>
+
+    <!-- Filter + Rules -->
+    <div class="c-panel">
+      <h3 class="c-section-title">📋 Detailed Compliance Rules</h3>
+      <div class="c-filter" id="filterTabs"></div>
+      <div class="c-rule-list" id="ruleList"></div>
+    </div>
+
+    <!-- Tips -->
+    <div class="c-tips" id="tipsPanel"></div>
+
+    <!-- Export -->
+    <div style="text-align:center;margin-bottom:28px;display:flex;justify-content:center;flex-wrap:wrap">
+      <button class="c-btn c-btn-secondary" id="exportBtn">⬇ Export Report (.txt)</button>
+      <button class="c-btn c-btn-secondary" id="copyBtn">📋 Copy Summary</button>
+    </div>
+  </div>
+
+  <!-- History -->
+  <div class="c-history">
+    <div class="c-history-header" id="histToggle">
+      <h3 class="c-section-title" style="margin:0">📚 Check History (<span id="histCount">0</span>)</h3>
+      <span id="histArrow">▼</span>
+    </div>
+    <div class="c-history-list hidden" id="histList"><div class="c-history-empty">No checks yet.</div></div>
+  </div>
+
+  <footer class="c-footer">ATS Compliance Checker · Part of AI Resume Analyzer · Built with ❤️</footer>
+</div>
+
+<script>
+(function(){
+'use strict';
+
+/* ================================================================
+ * ATS RULES ENGINE — 35+ rules across 5 categories
+ * ================================================================ */
+
+var SECTION_HEADERS = {
+  contact: ['contact','email','phone','address','linkedin'],
+  summary: ['summary','objective','profile','about me','professional summary'],
+  experience: ['experience','employment','work history','professional experience','positions'],
+  education: ['education','degree','university','college','bachelor','master','phd','gpa'],
+  skills: ['skills','competencies','technologies','technical skills','proficiencies','tools'],
+  projects: ['projects','portfolio','open source','side projects','personal projects'],
+  certifications: ['certification','certified','certificate','license'],
+};
+
+var CONTACT_PATTERNS = {
+  email: /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/,
+  phone: /(\+?\d{1,3}[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}/,
+  linkedin: /linkedin\.com\/in\/[a-zA-Z0-9_-]+/i,
+  location: /\b([A-Z][a-z]+(?:\s[A-Z][a-z]+)*),\s*([A-Z]{2}|[A-Z][a-z]+)\b/,
+};
+
+var BULLET_PATTERNS = /^[\s]*[•\-*▪▸►→\d.)]+\s/m;
+var DATE_PATTERN = /\b(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\w*\s*\d{4}\b|\b\d{4}\s*[-–—]\s*(?:Present|Current|\d{4})\b|\b\d{1,2}\/\d{4}\b|\b\d{1,2}-\d{4}\b/gi;
+var ACTION_VERBS = /^(led|built|designed|implemented|developed|created|launched|managed|improved|increased|reduced|optimized|delivered|spearheaded|orchestrated|architected|migrated|automated|streamlined|negotiated|mentored|trained|analyzed|configured|deployed|integrated|refactored|established|pioneered|directed|coordinated|facilitated|achieved|generated)/i;
+
+function detectSections(text) {
+  var lines = text.split('\n');
+  var found = {};
+  lines.forEach(function(line) {
+    var t = line.trim().toLowerCase().replace(/[:.]+$/,'');
+    if (t.length > 40) return;
+    Object.keys(SECTION_HEADERS).forEach(function(cat) {
+      SECTION_HEADERS[cat].forEach(function(h) {
+        if (t === h || t.startsWith(h)) { found[cat] = true; }
+      });
+    });
+  });
+  return found;
+}
+
+function runRules(text, role, level, jdKeywords) {
+  var rules = [];
+  var sections = detectSections(text);
+  var lines = text.split('\n').filter(function(l){return l.trim().length > 0;});
+  var wordCount = text.split(/\s+/).filter(function(w){return w.length > 0;}).length;
+  var charCount = text.length;
+  var contactInfo = text.match(CONTACT_PATTERNS.email);
+  var hasPhone = CONTACT_PATTERNS.phone.test(text);
+  var hasLinkedin = CONTACT_PATTERNS.linkedin.test(text);
+  var hasLocation = CONTACT_PATTERNS.location.test(text);
+  var bulletCount = (text.match(/^[\s]*[•\-*▪▸►→]/gm)||[]).length;
+  var dateMatches = text.match(DATE_PATTERN)||[];
+  var sentences = text.split(/[.!?]+/).filter(function(s){return s.trim().length > 0;});
+  var avgSentLen = sentences.reduce(function(s,se){return s+se.trim().split(/\s+/).length;},0)/Math.max(1,sentences.length);
+  var capsWords = (text.match(/\b[A-Z]{2,}\b/g)||[]).length;
+  var hasNumbers = /\d/.test(text);
+  var paragraphs = text.split(/\n\s*\n/).filter(function(p){return p.trim().length > 0;});
+
+  // Category: Contact (rules 1-6)
+  rules.push({cat:'Contact',name:'Email Address',pass:!!contactInfo,desc:contactInfo?'Email found: '+contactInfo[0]:'No email address detected. Add a professional email.'});
+  rules.push({cat:'Contact',name:'Phone Number',pass:hasPhone,desc:hasPhone?'Phone number detected.':'No phone number found. Include a reachable phone.'});
+  rules.push({cat:'Contact',name:'LinkedIn Profile',pass:hasLinkedin,desc:hasLinkedin?'LinkedIn URL detected.':'No LinkedIn URL found. Recruiters often check LinkedIn.'});
+  rules.push({cat:'Contact',name:'Location / Address',pass:hasLocation,desc:hasLocation?'Location detected.':'No location found. Adding city/state helps recruiters.'});
+  rules.push({cat:'Contact',name:'Contact in Header',pass:text.substring(0,300).match(/@|linkedin|\d{3}[-.\s]?\d{3}/)!==null,desc:'Contact info should appear in the first 300 characters.'});
+  rules.push({cat:'Contact',name:'No Personal Info Leaks',pass:!/\b(age|gender|birth|marital|religion|race)\b/i.test(text),desc:'Avoid personal details (age, gender, etc.) that can trigger bias.'});
+
+  // Category: Structure (rules 7-13)
+  rules.push({cat:'Structure',name:'Skills Section Present',pass:!!sections.skills,desc:sections.skills?'Skills section detected.':'No skills section found — ATS systems heavily rely on this.'});
+  rules.push({cat:'Structure',name:'Experience Section Present',pass:!!sections.experience,desc:sections.experience?'Experience section detected.':'No experience section found. This is critical for ATS.'});
+  rules.push({cat:'Structure',name:'Education Section Present',pass:!!sections.education,desc:sections.education?'Education section detected.':'No education section found. Many ATS filter by degree.'});
+  rules.push({cat:'Structure',name:'Summary/Objective Present',pass:!!sections.summary,desc:sections.summary?'Summary section detected.':'Consider adding a professional summary for better ATS ranking.'});
+  rules.push({cat:'Structure',name:'Projects Section',pass:!!sections.projects,desc:sections.projects?'Projects section found.':'No projects section. Adding one can showcase practical skills.',warn:true});
+  rules.push({cat:'Structure',name:'Certifications Section',pass:!!sections.certifications,desc:sections.certifications?'Certifications found.':'No certifications listed. Relevant certs boost ATS scores.',warn:true});
+  rules.push({cat:'Structure',name:'Section Headers are Clear',pass:Object.keys(sections).length >= 3,desc:'Found '+Object.keys(sections).length+' recognizable section headers. ATS needs clear structure.'});
+
+  // Category: Formatting (rules 14-20)
+  rules.push({cat:'Formatting',name:'Bullet Points Used',pass:bulletCount >= 5,desc:bulletCount+' bullet points found. Use bullets (not paragraphs) for ATS-friendly formatting.'+(bulletCount<5?' Add more bullets to list achievements.':'')});
+  rules.push({cat:'Formatting',name:'Date Ranges Included',pass:dateMatches.length >= 2,desc:dateMatches.length+' date ranges found. Each role should have start/end dates for ATS parsing.'});
+  rules.push({cat:'Formatting',name:'Consistent Date Format',pass:dateMatches.length<2||/^\w+\s\d{4}/.test(dateMatches[0])||/^\d{4}/.test(dateMatches[0]),desc:'Ensure dates follow a consistent format (e.g., "Jan 2020 – Present").'});
+  rules.push({cat:'Formatting',name:'Appropriate Length',pass:wordCount >= 200 && wordCount <= 800,desc:wordCount+' words. ATS and recruiters prefer 200-800 words for optimal parsing.'});
+  rules.push({cat:'Formatting',name:'No Tables or Columns',pass:!/\|.*\|.*\|/.test(text)&&!/\t.*\t/.test(text),desc:'Avoid tables, columns, and tabs — ATS cannot parse them reliably.'});
+  rules.push({cat:'Formatting',name:'No Special Characters',pass:!/[©®™°±×÷√∞∑∏∫]/.test(text),desc:'Special characters like ©, ™, or ± can confuse ATS parsers.'});
+  rules.push({cat:'Formatting',name:'Action Verbs Start Bullets',pass:bulletCount === 0 || (text.split('\n').filter(function(l){return /^[•\-*▪▸►→]/.test(l.trim())}).filter(function(l){return ACTION_VERBS.test(l.trim().replace(/^[•\-*▪▸►→\s]+/,''))}).length / Math.max(1,bulletCount)) > 0.5,desc:'Start bullet points with strong action verbs (led, built, designed, etc.).'});
+
+  // Category: Keywords (rules 21-27)
+  var textLower = text.toLowerCase();
+  var jdKwList = jdKeywords.split(',').map(function(k){return k.trim().toLowerCase()}).filter(function(k){return k.length > 0;});
+  var matchedJdKw = jdKwList.filter(function(k){return textLower.indexOf(k)!==-1});
+  var missingJdKw = jdKwList.filter(function(k){return textLower.indexOf(k)===-1});
+  rules.push({cat:'Keywords',name:'JD Keywords Matched',pass:jdKwList.length===0||matchedJdKw.length >= Math.ceil(jdKwList.length*0.5),desc:matchedJdKw.length+'/'+jdKwList.length+' job description keywords matched. Match at least 50%.'});
+  rules.push({cat:'Keywords',name:'No Keyword Stuffing',pass:jdKwList.length===0||!jdKwList.some(function(k){var re=new RegExp('\\b'+k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','gi');return (textLower.match(re)||[]).length > 8}),desc:'Ensure keywords appear naturally (max ~8 times each). Stuffing triggers ATS penalties.'});
+  rules.push({cat:'Keywords',name:'Industry Keywords Present',pass:/\b(agile|scrum|ci\/cd|devops|cloud|microservice|api|rest|scalab|performance|testing|agile|sprint|backlog|kanban)\b/i.test(text),desc:'Include industry-relevant terms that ATS systems scan for.'});
+  rules.push({cat:'Keywords',name:'Technical Skill Keywords',pass:/\b(javascript|python|java|react|node|sql|docker|kubernetes|aws|git|typescript|html|css|linux|mongodb|redis|c\+\+|ruby|go|rust)\b/i.test(text),desc:'Include at least 3 technical skill keywords relevant to your target role.'});
+  rules.push({cat:'Keywords',name:'Soft Skill Keywords',pass:/\b(communication|leadership|collaboration|teamwork|problem.solving|analytical|creative|adaptable|mentoring|presenting)\b/i.test(text),desc:'Include 2+ soft skill keywords. ATS often scans for these in mid/senior roles.'});
+  rules.push({cat:'Keywords',name:'Measurable Achievements',pass:/\d+%|\$\d|revenue|growth|increase|decrease|reduced|improved|saved|generated|\d+\s*(users?|clients?|projects?|team|members)/i.test(text),desc:'Include quantified achievements (%, $, numbers) to pass ATS scoring.'});
+  rules.push({cat:'Keywords',name:'Role-Appropriate Terms',pass:(function(){var jr=['intern','junior','entry','assistant'];var sr=['senior','lead','principal','staff','architect','director'];if(level==='Junior')return jr.some(function(k){return textLower.indexOf(k)!==-1})||true;if(level==='Senior')return sr.some(function(k){return textLower.indexOf(k)!==-1})||true;return true;})(),desc:'Ensure your resume uses terminology matching your '+level+' experience level.'});
+
+  // Category: Quality (rules 28-35)
+  rules.push({cat:'Quality',name:'Sentence Length (avg)',pass:avgSentLen <= 25,desc:'Average sentence length: '+Math.round(avgSentLen)+' words. Keep under 25 for ATS readability.'});
+  rules.push({cat:'Quality',name:'No Abbreviations Without Context',pass:(text.match(/\b[A-Z]{2,4}\b/g)||[]).filter(function(a){return !/^(I|II|III|IV|BS|MS|BA|MA|GPA|CEO|CTO|VP|HR|AP|QA|UX|UI|API|SQL|CSS|HTML|PDF|ATF|ATS)$/.test(a)}).length <= 5,desc:'Too many unexplained abbreviations can confuse ATS. Spell out acronyms on first use.'});
+  rules.push({cat:'Quality',name:'Professional Tone',pass:!/\b(love|hate|awesome|cool|lol|omg|btw|ngl|tbh)\b/i.test(text),desc:'Avoid casual language. Maintain a professional tone throughout.'});
+  rules.push({cat:'Quality',name:'No Pronouns in First Person',pass:!/^[\s]*(I |I'm |My |Me )/mi.test(text.split('\n').join(' ')),desc:'Minimize first-person pronouns (I, my, me). ATS prefers third-person or implicit voice.'});
+  rules.push({cat:'Quality',name:'No Typos (Basic Check)',pass:!/\b(teh|recieve|occured|seperate|definately|accomodate|occurence|acheive|adres|adn)\b/i.test(text),desc:'Basic typo check passed. Review for domain-specific spelling.'});
+  rules.push({cat:'Quality',name:'White Space Adequate',pass:paragraphs.length >= 3,desc:'Resume has '+paragraphs.length+' distinct paragraphs/sections. Adequate spacing improves parsing.'});
+  rules.push({cat:'Quality',name:'File-Safe Characters',pass:!/[^\x00-\x7F]/.test(text) || (text.match(/[^\x00-\x7F]/g)||[]).length < 10,desc:'Some non-ASCII characters detected. Ensure they are intentional (e.g., accents in names).'});
+  rules.push({cat:'Quality',name:'Role Targeting Clear',pass:new RegExp(role.split(' ')[0],'i').test(text),desc:role+'-relevant content detected. Tailor your resume to the specific target role.'});
+
+  return {rules:rules, sections:sections, wordCount:wordCount, charCount:charCount,
+    matchedJdKw:matchedJdKw, missingJdKw:missingJdKw, bulletCount:bulletCount,
+    dateCount:dateMatches.length, contactEmail:contactInfo?contactInfo[0]:''
+  };
+}
+
+/* ================================================================
+ * RENDERING
+ * ================================================================ */
+var resumeEl=document.getElementById('resumeText');
+var analyzeBtn=document.getElementById('analyzeBtn');
+var resultsEl=document.getElementById('results');
+var uploadZone=document.getElementById('uploadZone');
+var fileInput=document.getElementById('fileInput');
+var currentResult=null;
+var activeFilter='ALL';
+var history=loadHistory();
+
+resumeEl.addEventListener('input',function(){
+  analyzeBtn.disabled=!resumeEl.value.trim();
+});
+
+uploadZone.addEventListener('click',function(){fileInput.click()});
+uploadZone.addEventListener('dragover',function(e){e.preventDefault();uploadZone.classList.add('dragover')});
+uploadZone.addEventListener('dragleave',function(){uploadZone.classList.remove('dragover')});
+uploadZone.addEventListener('drop',function(e){
+  e.preventDefault();uploadZone.classList.remove('dragover');
+  if(e.dataTransfer.files.length>0) handleFile(e.dataTransfer.files[0]);
+});
+fileInput.addEventListener('change',function(e){if(e.target.files.length>0)handleFile(e.target.files[0])});
+
+function handleFile(f){
+  var reader=new FileReader();
+  reader.onload=function(e){
+    resumeEl.value=e.target.result||'';
+    resumeEl.dispatchEvent(new Event('input'));
+    document.getElementById('uploadTitle').textContent='✓ '+f.name;
+    document.getElementById('uploadDesc').textContent=(f.size/1024).toFixed(1)+' KB — Loaded';
+    uploadZone.style.borderColor='var(--emerald)';
+  };
+  reader.readAsText(f);
+}
+
+analyzeBtn.addEventListener('click',function(){
+  if(!resumeEl.value.trim())return;
+  var role=document.getElementById('targetRole').value;
+  var level=document.getElementById('expLevel').value;
+  var jdKw=document.getElementById('jdKeywords').value;
+  var result=runRules(resumeEl.value,role,level,jdKw);
+  currentResult=result;
+  activeFilter='ALL';
+  renderResults(result);
+  resultsEl.classList.remove('hidden');
+  saveHistory(result,role);
+  resultsEl.scrollIntoView({behavior:'smooth',block:'start'});
+});
+
+function renderResults(r){
+  var passed=r.rules.filter(function(x){return x.pass}).length;
+  var score=Math.round((passed/r.rules.length)*100);
+  renderScore(score);
+  renderCategories(r.rules);
+  renderFilterTabs();
+  renderRules(r.rules);
+  renderTips(r);
+}
+
+function renderScore(score){
+  var circ=408;
+  var off=circ-(score/100)*circ;
+  document.getElementById('scoreRing').style.strokeDashoffset=off;
+  var el=document.getElementById('scoreVal');
+  el.textContent=score;
+  el.style.color=score>=80?'var(--emerald)':score>=60?'var(--amber)':'var(--rose)';
+}
+
+function renderCategories(rules){
+  var cats={};
+  rules.forEach(function(r){
+    if(!cats[r.cat])cats[r.cat]={pass:0,total:0};
+    cats[r.cat].total++;
+    if(r.pass)cats[r.cat].pass++;
+  });
+  var icons={Contact:'📧',Structure:'🏗️',Formatting:'📐',Keywords:'🔑',Quality:'✨'};
+  document.getElementById('catGrid').innerHTML=Object.keys(cats).map(function(c){
+    var pct=Math.round((cats[c].pass/cats[c].total)*100);
+    var color=pct>=80?'var(--emerald)':pct>=50?'var(--amber)':'var(--rose)';
+    return '<div class="c-cat-card"><div class="c-cat-icon">'+(icons[c]||'📋')+'</div><div class="c-cat-val" style="color:'+color+'">'+cats[c].pass+'/'+cats[c].total+'</div><div class="c-cat-lbl">'+c+' ('+pct+'%)</div></div>';
+  }).join('');
+}
+
+function renderFilterTabs(){
+  var cats=['ALL','Contact','Structure','Formatting','Keywords','Quality'];
+  document.getElementById('filterTabs').innerHTML=cats.map(function(c){
+    return '<button class="c-filter-btn'+(activeFilter===c?' active':'')+'" data-cat="'+c+'">'+c+'</button>';
+  }).join('');
+  document.querySelectorAll('.c-filter-btn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      activeFilter=btn.dataset.cat;
+      if(currentResult)renderRules(currentResult.rules);
+      renderFilterTabs();
+    });
+  });
+}
+
+function renderRules(rules){
+  var filtered=activeFilter==='ALL'?rules:rules.filter(function(r){return r.cat===activeFilter});
+  document.getElementById('ruleList').innerHTML=filtered.map(function(r){
+    var cls=r.pass?'c-rule-pass':r.warn?'c-rule-warn':'c-rule-fail';
+    var icon=r.pass?'✅':r.warn?'⚠️':'❌';
+    return '<div class="c-rule '+cls+'"><span class="c-rule-icon">'+icon+'</span><div class="c-rule-text"><span class="c-rule-name">'+r.name+'</span><span class="c-rule-desc">'+r.desc+'</span></div></div>';
+  }).join('');
+}
+
+function renderTips(r){
+  var tips=[];
+  var failed=r.rules.filter(function(x){return !x.pass&&!x.warn});
+  if(failed.length===0)tips.push('🎉 Your resume passes all critical ATS rules!');
+  if(r.missingJdKw.length>0)tips.push('Add these missing JD keywords: <strong>'+r.missingJdKw.join(', ')+'</strong>');
+  if(r.bulletCount<5)tips.push('Use more bullet points (aim for 5-8 per role) to improve ATS readability.');
+  if(r.dateCount<2)tips.push('Add date ranges to each position for ATS timeline parsing.');
+  document.getElementById('tipsPanel').innerHTML='<h4>💡 Priority Recommendations</h4><ul>'+tips.map(function(t){return '<li>'+t+'</li>'}).join('')+'</ul>';
+}
+
+/* Export */
+document.getElementById('exportBtn').addEventListener('click',function(){
+  if(!currentResult)return;
+  var passed=currentResult.rules.filter(function(x){return x.pass}).length;
+  var score=Math.round((passed/currentResult.rules.length)*100);
+  var txt='ATS COMPLIANCE REPORT\n';
+  txt+='=' .repeat(50)+'\n';
+  txt+='Score: '+score+'/100 ('+passed+'/'+currentResult.rules.length+' rules passed)\n';
+  txt+='Word Count: '+currentResult.wordCount+'\n\n';
+  txt+='DETAILED RULES\n'+ '-'.repeat(50)+'\n';
+  currentResult.rules.forEach(function(r){
+    txt+=(r.pass?'✅ PASS':'❌ FAIL')+' | '+r.name+'\n  '+r.desc+'\n\n';
+  });
+  var blob=new Blob([txt],{type:'text/plain'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='ats-compliance-report.txt';a.click();
+});
+
+document.getElementById('copyBtn').addEventListener('click',function(){
+  if(!currentResult)return;
+  var passed=currentResult.rules.filter(function(x){return x.pass}).length;
+  var score=Math.round((passed/currentResult.rules.length)*100);
+  var txt='ATS Compliance Score: '+score+'/100 ('+passed+'/'+currentResult.rules.length+' rules passed)';
+  navigator.clipboard.writeText(txt).then(function(){
+    document.getElementById('copyBtn').textContent='✓ Copied!';
+    setTimeout(function(){document.getElementById('copyBtn').textContent='📋 Copy Summary'},2000);
+  });
+});
+
+/* History */
+function loadHistory(){try{var s=localStorage.getItem('atsc_history');return s?JSON.parse(s):[]}catch(e){return[]}}
+function saveHistory(r,role){
+  var passed=r.rules.filter(function(x){return x.pass}).length;
+  var score=Math.round((passed/r.rules.length)*100);
+  history.unshift({score:score,passed:passed,total:r.rules.length,role:role,words:r.wordCount,ts:Date.now()});
+  history=history.slice(0,20);
+  try{localStorage.setItem('atsc_history',JSON.stringify(history))}catch(e){}
+  renderHistory();
+}
+function renderHistory(){
+  document.getElementById('histCount').textContent=history.length;
+  var list=document.getElementById('histList');list.innerHTML='';
+  if(history.length===0){list.innerHTML='<div class="c-history-empty">No checks yet.</div>';return}
+  history.forEach(function(h){
+    var color=h.score>=80?'var(--emerald)':h.score>=60?'var(--amber)':'var(--rose)';
+    var el=document.createElement('div');el.className='c-history-item';
+    el.innerHTML='<div><span style="font-weight:800;font-size:1.1rem;color:'+color+'">'+h.score+'</span> <span style="font-size:.78rem;color:var(--text-sec)">/100</span></div>'+
+      '<div style="font-size:.78rem;color:var(--text-sec)">'+h.role+' · '+h.passed+'/'+h.total+' rules · '+h.words+' words</div>'+
+      '<div style="font-size:.72rem;color:var(--text-muted)">'+new Date(h.ts).toLocaleDateString()+'</div>';
+    list.appendChild(el);
+  });
+}
+document.getElementById('histToggle').addEventListener('click',function(){
+  var open=!document.getElementById('histList').classList.contains('hidden');
+  document.getElementById('histList').classList.toggle('hidden',open);
+  document.getElementById('histArrow').textContent=open?'▼':'▲';
+});
+renderHistory();
+})();
+</script>
+</body>
+</html>

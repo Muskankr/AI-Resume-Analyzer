@@ -51,7 +51,12 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 import { Routes, Route } from 'react-router-dom'
 import { TermsOfService } from './pages/TermsOfService'
 import { ProfilePage } from './components/ProfilePage'
+import { CareerRoadmap } from './pages/CareerRoadmap'
+import { SkillGapAnalyzer } from './components/SkillGapAnalyzer'
 import { RecruiterDashboard } from './pages/Recruiter/RecruiterDashboard'
+import { ResumeVersionHistory } from './components/ResumeVersionHistory'
+import { ATSCompatibilityScanner } from './components/ATSCompatibilityScanner'
+import { ContributorCertificate } from './components/ContributorCertificate'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

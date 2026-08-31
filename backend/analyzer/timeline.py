@@ -128,7 +128,15 @@ def _endpoint(prefix):
     return "(?:" + "|".join((iso, month_year, numeric, bare)) + ")"
 
 
-_PRESENT = r"(?P<present>" + "|".join(PRESENT_WORDS) + r")"
+#: Longest first. Python's alternation takes the first branch that matches, so
+#: an unsorted list lets "current" win over "currently" and "to date" over
+#: "today". The trailing lookahead in RANGE_PATTERN currently rescues those by
+#: forcing a backtrack, but relying on that is a trap for the next word added.
+_PRESENT = (
+    r"(?P<present>"
+    + "|".join(sorted(PRESENT_WORDS, key=len, reverse=True))
+    + r")"
+)
 
 RANGE_PATTERN = re.compile(
     r"(?<![\w/])"
@@ -358,6 +366,28 @@ def extract_ranges(text: str) -> List[DateRange]:
     return ranges
 
 
+def _shares_only_a_boundary_year(earlier: DateRange, later: DateRange) -> bool:
+    """Do two ranges meet at a year whose precision hides where in it they met?
+
+    Only true when *both* endpoints at the join are year-only and name the same
+    year. In that case the twelve months the arithmetic produces are an artefact
+    of the two conventions in :meth:`DateRange.end_index` and
+    :meth:`DateRange.start_index`, not something the resume claimed.
+
+    Deliberately narrow. A mixed pair — "Jan 2018 - Dec 2021" followed by
+    "2021 - 2023" — really does overlap by somewhere between one and twelve
+    months, and that is worth saying even though the exact figure is unknown.
+    Widening this rule to cover that case would suppress a real signal.
+    """
+    return (
+        not earlier.is_current
+        and earlier.end_format == "year-only"
+        and later.start_format == "year-only"
+        and earlier.end_year is not None
+        and earlier.end_year == later.start_year
+    )
+
+
 def _describe_months(months: int) -> str:
     """Render a month count the way a person would say it."""
     if months < 12:
@@ -559,6 +589,29 @@ def analyse(text, experience_level="", today=None) -> Timeline:
             )
             continue
 
+        # Only the *start* used to be checked against the cutoff. A typo in the
+        # end year sailed through and was counted in full: "Jan 2020 - Dec 2029"
+        # read on a 2024 resume reported 10.0 years of experience with no
+        # finding raised at all, and total_months is what the seniority
+        # cross-check below reads — so it would confirm a Senior claim on
+        # fabricated time. _YEAR accepts up to 21xx, so "2015 - 2099" parses
+        # cleanly too.
+        if not r.is_current and r.end_index(today) > future_cutoff:
+            findings.append(
+                Finding(
+                    code="future_end_date",
+                    severity=SEVERITY_MEDIUM,
+                    message=(
+                        f"\"{r.label()}\" ends in the future. If the role is ongoing, "
+                        "write \"Present\" rather than a future year — an end year that "
+                        "has not happened yet is usually a typo, and it silently adds "
+                        "the difference to your total experience."
+                    ),
+                    evidence=r.line or r.label(),
+                )
+            )
+            continue
+
         usable.append(r)
 
     ordered = sorted(usable, key=lambda r: (
@@ -589,6 +642,19 @@ def analyse(text, experience_level="", today=None) -> Timeline:
                 )
 
             overlap = furthest_end - current.start_index() + 1
+            if _shares_only_a_boundary_year(previous, current):
+                # Both ends are year-only and name the same year. That is not a
+                # claimed overlap, it is the precision of the dates: a year-only
+                # end reads as December (deliberately — see DateRange.end_index)
+                # and a year-only start reads as January, so "2019 - 2021" then
+                # "2021 - 2023" always produced a phantom twelve months.
+                #
+                # That is the single most common way to write a promotion, and
+                # the module's own union arithmetic disagreed with the finding:
+                # merged_months returned 60, while the finding claimed a year of
+                # overlap on top.
+                overlap -= 12
+
             if overlap >= OVERLAP_THRESHOLD_MONTHS:
                 findings.append(
                     Finding(

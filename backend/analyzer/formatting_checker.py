@@ -10,6 +10,12 @@ Performs structural checks beyond keyword matching:
 import re
 from typing import Dict, List, Any, Optional
 
+from .section_headings import SECTION_KEYS, SECTIONS, find_headings
+
+#: Derived from :mod:`analyzer.section_headings` rather than hand-maintained.
+#: This was one of three copies of the same list, and they had already drifted
+#: — ``qualifications`` was in two of them, ``toolkit`` in one, ``degrees``
+#: plural here and singular there.
 STANDARD_SECTIONS = [
     {"key": "summary", "name": "Summary / Objective",
         "variants": ["summary", "professional summary", "about me", "objective", "profile"]},
@@ -65,9 +71,14 @@ def check_resume_formatting(
         )
 
     # 2. Section order & presence check
-    lowered_text = text.lower()
-    found_sections = []
-    missing_sections = []
+    #
+    # This built a heading-anchored regex and then threw the result away with
+    # `or variant in lowered_text`, which matches a substring of any paragraph.
+    # The regex was dead code and every section was "found": "years of
+    # experience" counted as an Experience heading, "improved my skills" as a
+    # Skills heading, and a resume with no headings at all was told it had all
+    # five and scored 80 for structure.
+    headings = {heading.key: heading for heading in find_headings(text)}
 
     for section in STANDARD_SECTIONS:
         matched_variant = None

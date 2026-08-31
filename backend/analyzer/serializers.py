@@ -288,6 +288,26 @@ class UserProfileSerializer(serializers.ModelSerializer):
         }
         return ret
 
+    def validate_bio(self, value):
+        if not value:
+            return ""
+        import html
+        import re
+        from django.utils.html import strip_tags
+
+        # Basic content sanitization: strip HTML tags and unescape entities
+        cleaned = strip_tags(value)
+        cleaned = strip_tags(html.unescape(cleaned))
+        # Normalize whitespace (replace newlines/tabs with space and collapse spaces)
+        cleaned = re.sub(r'[\r\n\t]+', ' ', cleaned)
+        cleaned = re.sub(r' +', ' ', cleaned).strip()
+        if len(cleaned) > 250:
+            raise serializers.ValidationError("Bio/headline cannot exceed 250 characters.")
+        return cleaned
+
+    def validate_headline(self, value):
+        return self.validate_bio(value)
+
     def update(self, instance, validated_data):
         theme_preference = validated_data.pop("theme_preference", None)
         weekly_digest_opt_in = validated_data.pop("weekly_digest_opt_in", None)

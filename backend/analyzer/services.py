@@ -589,7 +589,11 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
             "skills_source": role_set.source,
         }
 
-    quantify_nudges = flag_unquantified_bullets(raw_text.split('\n'))
+    # splitlines(), not split('\n'): compute_score_breakdown splits the same
+    # text with splitlines(), and score_quantification compares the two by line
+    # index. The two disagree on a form feed (\x0c), which pdfplumber emits at
+    # a page break, and that would shift every index after the first page.
+    quantify_nudges = flag_unquantified_bullets(raw_text.splitlines())
 
     # Structural formatting & ATS-friendliness checks (#80)
     formatting_checks = check_resume_formatting(

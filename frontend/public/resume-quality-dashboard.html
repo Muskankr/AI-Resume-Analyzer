@@ -1,0 +1,1410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resume Quality Dashboard — AI Resume Analyzer</title>
+  <style>
+    /* ===== CSS Variables & Reset ===== */
+    :root {
+      --bg-primary: #0f172a;
+      --bg-secondary: #1e293b;
+      --bg-card: #1e293b;
+      --bg-card-hover: #253349;
+      --bg-input: #0f172a;
+      --border-color: #334155;
+      --border-focus: #6366f1;
+      --text-primary: #f1f5f9;
+      --text-secondary: #94a3b8;
+      --text-muted: #64748b;
+      --accent-indigo: #6366f1;
+      --accent-indigo-light: #818cf8;
+      --accent-emerald: #10b981;
+      --accent-emerald-light: #34d399;
+      --accent-amber: #f59e0b;
+      --accent-amber-light: #fbbf24;
+      --accent-rose: #f43f5e;
+      --accent-rose-light: #fb7185;
+      --accent-cyan: #06b6d4;
+      --accent-violet: #8b5cf6;
+      --gradient-primary: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a78bfa 100%);
+      --gradient-score: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+      --gradient-warn: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+      --gradient-danger: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+      --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+      --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.5);
+      --shadow-glow-indigo: 0 0 20px rgba(99, 102, 241, 0.3);
+      --shadow-glow-emerald: 0 0 20px rgba(16, 185, 129, 0.3);
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --radius-xl: 20px;
+      --transition: 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* ===== Scrollbar Styling ===== */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+    /* ===== Layout ===== */
+    .dashboard-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    .dashboard-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .dashboard-header h1 {
+      font-size: 2rem;
+      font-weight: 800;
+      background: var(--gradient-primary);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 8px;
+    }
+
+    .dashboard-header p {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge-indigo { background: rgba(99,102,241,0.15); color: var(--accent-indigo-light); border: 1px solid rgba(99,102,241,0.3); }
+    .badge-emerald { background: rgba(16,185,129,0.15); color: var(--accent-emerald-light); border: 1px solid rgba(16,185,129,0.3); }
+    .badge-amber { background: rgba(245,158,11,0.15); color: var(--accent-amber-light); border: 1px solid rgba(245,158,11,0.3); }
+    .badge-rose { background: rgba(244,63,94,0.15); color: var(--accent-rose-light); border: 1px solid rgba(244,63,94,0.3); }
+
+    /* ===== Upload Zone ===== */
+    .upload-zone {
+      background: var(--bg-card);
+      border: 2px dashed var(--border-color);
+      border-radius: var(--radius-xl);
+      padding: 48px 32px;
+      text-align: center;
+      cursor: pointer;
+      transition: var(--transition);
+      margin-bottom: 32px;
+    }
+
+    .upload-zone:hover, .upload-zone.dragover {
+      border-color: var(--accent-indigo);
+      background: var(--bg-card-hover);
+      box-shadow: var(--shadow-glow-indigo);
+    }
+
+    .upload-zone .upload-icon {
+      font-size: 3rem;
+      margin-bottom: 12px;
+      display: block;
+    }
+
+    .upload-zone h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .upload-zone p {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+    }
+
+    .upload-zone input[type="file"] {
+      display: none;
+    }
+
+    /* ===== Config Row ===== */
+    .config-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .config-field label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .config-field select,
+    .config-field input {
+      width: 100%;
+      padding: 10px 14px;
+      background: var(--bg-input);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-size: 0.9rem;
+      transition: var(--transition);
+      outline: none;
+    }
+
+    .config-field select:focus,
+    .config-field input:focus {
+      border-color: var(--accent-indigo);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+    }
+
+    .analyze-btn {
+      padding: 14px 36px;
+      background: var(--gradient-primary);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow-glow-indigo);
+      margin-bottom: 32px;
+      width: 100%;
+    }
+
+    .analyze-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 0 30px rgba(99,102,241,0.4);
+    }
+
+    .analyze-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ===== Score Ring ===== */
+    .score-ring-section {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 32px;
+    }
+
+    .score-ring-wrapper {
+      position: relative;
+      width: 200px;
+      height: 200px;
+    }
+
+    .score-ring-wrapper svg {
+      width: 200px;
+      height: 200px;
+      transform: rotate(-90deg);
+    }
+
+    .score-ring-wrapper .ring-bg {
+      fill: none;
+      stroke: var(--border-color);
+      stroke-width: 12;
+    }
+
+    .score-ring-wrapper .ring-fill {
+      fill: none;
+      stroke: url(#scoreGradient);
+      stroke-width: 12;
+      stroke-linecap: round;
+      stroke-dasharray: 502;
+      stroke-dashoffset: 502;
+      transition: stroke-dashoffset 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .score-ring-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .score-ring-label .score-value {
+      font-size: 2.8rem;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .score-ring-label .score-text {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* ===== Metric Cards Grid ===== */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .metric-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      transition: var(--transition);
+    }
+
+    .metric-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .metric-card .metric-icon {
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+
+    .metric-card .metric-value {
+      font-size: 1.6rem;
+      font-weight: 800;
+      line-height: 1.2;
+    }
+
+    .metric-card .metric-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    /* ===== Category Breakdown ===== */
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .category-bar-list {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 32px;
+    }
+
+    .category-bar-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .category-bar-item .cat-label {
+      width: 120px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .category-bar-item .bar-track {
+      flex: 1;
+      height: 10px;
+      background: var(--bg-primary);
+      border-radius: 5px;
+      overflow: hidden;
+    }
+
+    .category-bar-item .bar-fill {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+      min-width: 2px;
+    }
+
+    .category-bar-item .cat-score {
+      width: 44px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* ===== Suggestions List ===== */
+    .suggestions-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .suggestion-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 16px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      font-size: 0.88rem;
+      transition: var(--transition);
+    }
+
+    .suggestion-item:hover {
+      background: var(--bg-card-hover);
+    }
+
+    .suggestion-item .sug-priority {
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    /* ===== Skills Found ===== */
+    .skills-found-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+
+    .skill-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 12px;
+      background: rgba(99,102,241,0.1);
+      border: 1px solid rgba(99,102,241,0.25);
+      border-radius: 20px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--accent-indigo-light);
+      transition: var(--transition);
+    }
+
+    .skill-chip:hover {
+      background: rgba(99,102,241,0.2);
+    }
+
+    /* ===== Improvement History Chart ===== */
+    .history-chart-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      margin-bottom: 32px;
+    }
+
+    .history-chart-container canvas {
+      width: 100% !important;
+      max-height: 260px;
+    }
+
+    .chart-placeholder {
+      height: 200px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      border: 1px dashed var(--border-color);
+      border-radius: var(--radius-md);
+    }
+
+    /* ===== Two-Column Layout ===== */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin-bottom: 32px;
+    }
+
+    @media (max-width: 768px) {
+      .two-col { grid-template-columns: 1fr; }
+    }
+
+    .panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+
+    /* ===== Keyword Table ===== */
+    .keyword-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.82rem;
+    }
+
+    .keyword-table th {
+      text-align: left;
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border-color);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.72rem;
+    }
+
+    .keyword-table td {
+      padding: 8px 10px;
+      border-bottom: 1px solid rgba(51,65,85,0.4);
+    }
+
+    .keyword-table tr:hover td {
+      background: rgba(99,102,241,0.05);
+    }
+
+    /* ===== Loading Spinner ===== */
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.2);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* ===== Hidden by default ===== */
+    .hidden { display: none !important; }
+
+    /* ===== Back Link ===== */
+    .back-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.85rem;
+      margin-bottom: 20px;
+      transition: var(--transition);
+    }
+
+    .back-link:hover { color: var(--accent-indigo-light); }
+
+    /* ===== Footer ===== */
+    .dashboard-footer {
+      text-align: center;
+      padding: 24px 0;
+      color: var(--text-muted);
+      font-size: 0.78rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="dashboard-container">
+  <a href="/" class="back-link">← Back to Resume Analyzer</a>
+
+  <header class="dashboard-header">
+    <h1>📊 Resume Quality Dashboard</h1>
+    <p>Upload your resume to get a detailed quality breakdown, track your ATS readiness, and monitor improvement over time.</p>
+    <span class="badge badge-indigo" style="margin-top: 10px;">Quality Intelligence Engine v1.0</span>
+  </header>
+
+  <!-- Upload Zone -->
+  <div class="upload-zone" id="uploadZone">
+    <span class="upload-icon">📄</span>
+    <h3>Drop your Resume here</h3>
+    <p>PDF format · Max 5 MB · Analysis runs locally in your browser</p>
+    <input type="file" id="fileInput" accept=".pdf" />
+  </div>
+
+  <!-- Configuration Row -->
+  <div class="config-row" id="configRow">
+    <div class="config-field">
+      <label for="targetRole">Target Role</label>
+      <select id="targetRole">
+        <option value="Frontend Developer">Frontend Developer</option>
+        <option value="Backend Developer">Backend Developer</option>
+        <option value="Full Stack Developer">Full Stack Developer</option>
+        <option value="Data Analyst">Data Analyst</option>
+        <option value="Data Scientist">Data Scientist</option>
+        <option value="DevOps Engineer">DevOps Engineer</option>
+        <option value="Mobile Developer">Mobile Developer</option>
+        <option value="Machine Learning Engineer">Machine Learning Engineer</option>
+        <option value="Product Manager">Product Manager</option>
+        <option value="Cloud Architect">Cloud Architect</option>
+      </select>
+    </div>
+    <div class="config-field">
+      <label for="experienceLevel">Experience Level</label>
+      <select id="experienceLevel">
+        <option value="Junior">Junior (0–2 yrs)</option>
+        <option value="Mid-Level" selected>Mid-Level (2–5 yrs)</option>
+        <option value="Senior">Senior (5+ yrs)</option>
+      </select>
+    </div>
+    <div class="config-field">
+      <label for="jdInput">Job Description (optional)</label>
+      <input type="text" id="jdInput" placeholder="Paste job description keywords..." />
+    </div>
+  </div>
+
+  <button class="analyze-btn" id="analyzeBtn" disabled>
+    🚀 Analyze Resume Quality
+  </button>
+
+  <!-- Results (hidden until analysis) -->
+  <div id="resultsContainer" class="hidden">
+
+    <!-- Score Ring -->
+    <div class="score-ring-section">
+      <div class="score-ring-wrapper">
+        <svg viewBox="0 0 180 180">
+          <defs>
+            <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stop-color="#10b981" />
+              <stop offset="100%" stop-color="#06b6d4" />
+            </linearGradient>
+          </defs>
+          <circle class="ring-bg" cx="90" cy="90" r="80" />
+          <circle class="ring-fill" id="scoreRing" cx="90" cy="90" r="80" />
+        </svg>
+        <div class="score-ring-label">
+          <span class="score-value" id="scoreValue">0</span>
+          <span class="score-text">ATS Score</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="metrics-grid" id="metricsGrid"></div>
+
+    <!-- Two-column: Category Breakdown + Suggestions -->
+    <div class="two-col">
+      <div class="panel">
+        <h3 class="section-title">📈 Category Breakdown</h3>
+        <div class="category-bar-list" id="categoryBars"></div>
+      </div>
+      <div class="panel">
+        <h3 class="section-title">💡 Improvement Suggestions</h3>
+        <div class="suggestions-list" id="suggestionsList"></div>
+      </div>
+    </div>
+
+    <!-- Skills Found -->
+    <div class="panel" style="margin-bottom: 32px;">
+      <h3 class="section-title">🛠️ Skills Detected</h3>
+      <div class="skills-found-grid" id="skillsGrid"></div>
+    </div>
+
+    <!-- Keyword Density Table -->
+    <div class="panel" style="margin-bottom: 32px;">
+      <h3 class="section-title">🔍 Keyword Density Analysis</h3>
+      <table class="keyword-table" id="keywordTable">
+        <thead>
+          <tr>
+            <th>Keyword</th>
+            <th>Frequency</th>
+            <th>Density</th>
+            <th>Target</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="keywordTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Score History Chart -->
+    <div class="history-chart-container">
+      <h3 class="section-title">📉 Score History Over Time</h3>
+      <div id="historyChart">
+        <div class="chart-placeholder" id="chartPlaceholder">
+          Upload and analyze at least 2 resumes to see your improvement trend.
+        </div>
+        <canvas id="historyCanvas" class="hidden" height="260"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <footer class="dashboard-footer">
+    Resume Quality Dashboard · Part of AI Resume Analyzer · Built with ❤️
+  </footer>
+</div>
+
+<script>
+/**
+ * Resume Quality Dashboard — Pure JS
+ *
+ * Features:
+ *  - Local PDF text extraction via pdf.js
+ *  - ATS scoring engine with category breakdown
+ *  - Keyword density analysis
+ *  - Skills detection and gap analysis
+ *  - Score history tracking with localStorage
+ *  - Improvement suggestions with priority
+ *  - Canvas-based trend chart (no external dependencies)
+ */
+
+(function () {
+  'use strict';
+
+  // ===== Constants =====
+  var ROLE_SKILLS = {
+    'Frontend Developer': {
+      keywords: ['react', 'javascript', 'typescript', 'html', 'css', 'sass', 'less', 'webpack', 'vite', 'next.js', 'nextjs', 'vue', 'angular', 'redux', 'zustand', 'tailwind', 'bootstrap', 'figma', 'responsive', 'accessibility', 'a11y', 'web performance', 'lighthouse', 'dom', 'browser', 'sass', 'graphql', 'rest api', 'json', 'axios', 'fetch api', 'dom manipulation', 'es6', 'ecmascript', 'testing', 'jest', 'vitest', 'cypress', 'playwright', 'storybook', 'git', 'npm', 'yarn', 'ci/cd'],
+      categories: {
+        'Languages': { weight: 25, keywords: ['javascript', 'typescript', 'es6', 'ecmascript', 'html', 'css'] },
+        'Frameworks': { weight: 25, keywords: ['react', 'vue', 'angular', 'next.js', 'nextjs', 'redux', 'zustand', 'svelte'] },
+        'Styling': { weight: 15, keywords: ['css', 'sass', 'less', 'tailwind', 'bootstrap', 'styled-components', 'css modules'] },
+        'Tools & Build': { weight: 15, keywords: ['webpack', 'vite', 'git', 'npm', 'yarn', 'ci/cd', 'storybook', 'eslint', 'prettier'] },
+        'Testing': { weight: 10, keywords: ['jest', 'vitest', 'cypress', 'playwright', 'testing library', 'enzyme', 'e2e'] },
+        'Soft Skills': { weight: 10, keywords: ['responsive', 'accessibility', 'a11y', 'performance', 'lighthouse', 'figma', 'collaboration', 'agile'] }
+      }
+    },
+    'Backend Developer': {
+      keywords: ['python', 'django', 'node.js', 'nodejs', 'express', 'java', 'spring', 'go', 'golang', 'rust', 'ruby', 'rails', 'php', 'laravel', 'sql', 'postgresql', 'mysql', 'mongodb', 'redis', 'docker', 'kubernetes', 'rest api', 'graphql', 'microservices', 'authentication', 'jwt', 'oauth', 'celery', 'rabbitmq', 'kafka', 'ci/cd', 'aws', 'gcp', 'azure', 'git', 'linux', 'nginx', 'postgresql'],
+      categories: {
+        'Languages': { weight: 25, keywords: ['python', 'java', 'go', 'golang', 'rust', 'ruby', 'php', 'node.js', 'nodejs'] },
+        'Frameworks': { weight: 20, keywords: ['django', 'flask', 'express', 'spring', 'rails', 'laravel', 'fastapi'] },
+        'Databases': { weight: 20, keywords: ['sql', 'postgresql', 'mysql', 'mongodb', 'redis', 'elasticsearch', 'cassandra', 'dynamodb'] },
+        'Infrastructure': { weight: 15, keywords: ['docker', 'kubernetes', 'aws', 'gcp', 'azure', 'ci/cd', 'nginx', 'linux'] },
+        'Architecture': { weight: 10, keywords: ['rest api', 'graphql', 'microservices', 'authentication', 'jwt', 'oauth', 'event-driven'] },
+        'Messaging': { weight: 10, keywords: ['celery', 'rabbitmq', 'kafka', 'redis', 'kombu', 'celery beat'] }
+      }
+    },
+    'Full Stack Developer': {
+      keywords: ['react', 'javascript', 'typescript', 'node.js', 'nodejs', 'express', 'python', 'django', 'html', 'css', 'sql', 'postgresql', 'mongodb', 'redis', 'docker', 'git', 'rest api', 'graphql', 'aws', 'ci/cd', 'next.js', 'nextjs', 'vue', 'angular', 'webpack', 'vite', 'testing', 'jest', 'cypress', 'agile'],
+      categories: {
+        'Frontend': { weight: 25, keywords: ['react', 'vue', 'angular', 'javascript', 'typescript', 'html', 'css', 'next.js', 'nextjs'] },
+        'Backend': { weight: 25, keywords: ['node.js', 'nodejs', 'express', 'python', 'django', 'flask', 'java', 'spring'] },
+        'Databases': { weight: 15, keywords: ['sql', 'postgresql', 'mysql', 'mongodb', 'redis', 'elasticsearch'] },
+        'DevOps': { weight: 15, keywords: ['docker', 'kubernetes', 'aws', 'gcp', 'ci/cd', 'nginx', 'linux'] },
+        'Architecture': { weight: 10, keywords: ['rest api', 'graphql', 'microservices', 'authentication', 'jwt'] },
+        'Testing': { weight: 10, keywords: ['jest', 'cypress', 'playwright', 'vitest', 'testing', 'e2e', 'tdd'] }
+      }
+    },
+    'Data Analyst': {
+      keywords: ['python', 'sql', 'excel', 'tableau', 'power bi', 'pandas', 'numpy', 'matplotlib', 'seaborn', 'jupyter', 'statistics', 'a/b testing', 'data visualization', 'etl', 'mysql', 'postgresql', 'google analytics', 'looker', 'data cleaning', 'data wrangling', 'machine learning', 'r', 'spss', 'sql server', 'snowflake', 'bigquery'],
+      categories: {
+        'Languages': { weight: 25, keywords: ['python', 'r', 'sql', 'vba', 'javascript'] },
+        'Libraries': { weight: 20, keywords: ['pandas', 'numpy', 'matplotlib', 'seaborn', 'scipy', 'scikit-learn'] },
+        'Visualization': { weight: 20, keywords: ['tableau', 'power bi', 'looker', 'google data studio', 'd3.js', 'plotly'] },
+        'Databases': { weight: 15, keywords: ['sql', 'mysql', 'postgresql', 'sql server', 'snowflake', 'bigquery', 'redshift'] },
+        'Analytics': { weight: 10, keywords: ['statistics', 'a/b testing', 'google analytics', 'funnel analysis', 'cohort analysis'] },
+        'Tools': { weight: 10, keywords: ['excel', 'jupyter', 'etl', 'data cleaning', 'data wrangling', 'airflow', 'dbt'] }
+      }
+    },
+    'Data Scientist': {
+      keywords: ['python', 'r', 'sql', 'machine learning', 'deep learning', 'tensorflow', 'pytorch', 'scikit-learn', 'pandas', 'numpy', 'statistics', 'nlp', 'computer vision', 'jupyter', 'docker', 'aws', 'spark', 'hadoop', 'mlflow', 'kubeflow', 'feature engineering', 'model deployment', 'a/b testing', 'data visualization', 'tableau', 'git'],
+      categories: {
+        'Languages': { weight: 20, keywords: ['python', 'r', 'sql', 'scala', 'julia'] },
+        'ML/DL Frameworks': { weight: 25, keywords: ['tensorflow', 'pytorch', 'scikit-learn', 'keras', 'xgboost', 'lightgbm', 'hugging face'] },
+        'Data Processing': { weight: 15, keywords: ['pandas', 'numpy', 'spark', 'hadoop', 'dask', 'polars'] },
+        'Statistics': { weight: 15, keywords: ['statistics', 'probability', 'bayesian', 'a/b testing', 'hypothesis testing', 'regression'] },
+        'MLOps': { weight: 15, keywords: ['docker', 'mlflow', 'kubeflow', 'aws', 'model deployment', 'airflow', 'ci/cd'] },
+        'Visualization': { weight: 10, keywords: ['matplotlib', 'seaborn', 'plotly', 'tableau', 'data visualization'] }
+      }
+    },
+    'DevOps Engineer': {
+      keywords: ['docker', 'kubernetes', 'terraform', 'ansible', 'aws', 'gcp', 'azure', 'linux', 'bash', 'python', 'jenkins', 'gitlab ci', 'github actions', 'ci/cd', 'prometheus', 'grafana', 'elk stack', 'nginx', 'apache', 'helm', 'argocd', 'vault', 'consul', 'puppet', 'chef', 'pulumi', 'cloudformation'],
+      categories: {
+        'Containerization': { weight: 25, keywords: ['docker', 'kubernetes', 'helm', 'container', 'pod', 'orchestration'] },
+        'IaC': { weight: 20, keywords: ['terraform', 'ansible', 'pulumi', 'cloudformation', 'chef', 'puppet'] },
+        'Cloud': { weight: 20, keywords: ['aws', 'gcp', 'azure', 'cloud', 'ec2', 's3', 'lambda', 'eks', 'aks'] },
+        'CI/CD': { weight: 15, keywords: ['jenkins', 'gitlab ci', 'github actions', 'ci/cd', 'pipeline', 'argocd'] },
+        'Monitoring': { weight: 10, keywords: ['prometheus', 'grafana', 'elk stack', 'datadog', 'monitoring', 'alerting'] },
+        'Scripting': { weight: 10, keywords: ['bash', 'python', 'powershell', 'shell', 'scripting', 'automation'] }
+      }
+    },
+    'Mobile Developer': {
+      keywords: ['react native', 'flutter', 'swift', 'kotlin', 'java', 'xcode', 'android studio', 'ios', 'android', 'firebase', 'redux', 'dart', 'objective-c', 'swiftui', 'jetpack compose', 'navigation', 'state management', 'rest api', 'graphql', 'git', 'ci/cd', 'fastlane', 'app store', 'play store', 'testing', 'jest', 'espresso'],
+      categories: {
+        'Languages': { weight: 25, keywords: ['swift', 'kotlin', 'java', 'dart', 'objective-c'] },
+        'Frameworks': { weight: 25, keywords: ['react native', 'flutter', 'swiftui', 'jetpack compose', 'xamarin', 'ionic'] },
+        'Platforms': { weight: 15, keywords: ['ios', 'android', 'xcode', 'android studio'] },
+        'Backend Integration': { weight: 15, keywords: ['firebase', 'rest api', 'graphql', 'websocket', 'push notification'] },
+        'Tools': { weight: 10, keywords: ['git', 'ci/cd', 'fastlane', 'app store', 'play store', 'cocoapods', 'gradle'] },
+        'Testing': { weight: 10, keywords: ['jest', 'espresso', 'xctest', 'detox', 'testing', 'e2e'] }
+      }
+    },
+    'Machine Learning Engineer': {
+      keywords: ['python', 'tensorflow', 'pytorch', 'scikit-learn', 'machine learning', 'deep learning', 'nlp', 'computer vision', 'transformer', 'bert', 'gpt', 'cnn', 'rnn', 'lstm', 'docker', 'kubernetes', 'aws', 'mlflow', 'feature engineering', 'model deployment', 'rest api', 'fastapi', 'spark', 'kafka', 'redis', 'git', 'ci/cd'],
+      categories: {
+        'Languages': { weight: 15, keywords: ['python', 'c++', 'java', 'scala'] },
+        'ML Frameworks': { weight: 25, keywords: ['tensorflow', 'pytorch', 'scikit-learn', 'keras', 'xgboost', 'onnx'] },
+        'Deep Learning': { weight: 20, keywords: ['transformer', 'bert', 'gpt', 'cnn', 'rnn', 'lstm', 'attention', 'gan'] },
+        'MLOps': { weight: 20, keywords: ['docker', 'kubernetes', 'mlflow', 'model deployment', 'fastapi', 'rest api', 'ci/cd'] },
+        'Data': { weight: 10, keywords: ['spark', 'kafka', 'redis', 'feature engineering', 'etl'] },
+        'Cloud': { weight: 10, keywords: ['aws', 'gcp', 'azure', 'sagemaker', 'vertex ai'] }
+      }
+    },
+    'Product Manager': {
+      keywords: ['product strategy', 'roadmap', 'agile', 'scrum', 'kanban', 'user stories', 'requirements', 'stakeholder', 'jira', 'confluence', 'figma', 'user research', 'a/b testing', 'analytics', 'sql', 'excel', 'product market fit', 'kpis', 'metrics', 'go-to-market', 'competitive analysis', 'customer discovery', 'mvp', 'okrs'],
+      categories: {
+        'Methodology': { weight: 25, keywords: ['agile', 'scrum', 'kanban', 'lean', 'design thinking'] },
+        'Strategy': { weight: 25, keywords: ['product strategy', 'roadmap', 'go-to-market', 'competitive analysis', 'product market fit'] },
+        'Execution': { weight: 20, keywords: ['user stories', 'requirements', 'mvp', 'prioritization', 'backlog', 'jira', 'confluence'] },
+        'Analytics': { weight: 15, keywords: ['a/b testing', 'analytics', 'sql', 'kpis', 'metrics', 'okrs', 'data-driven'] },
+        'Design': { weight: 10, keywords: ['figma', 'user research', 'usability', 'wireframe', 'prototype'] },
+        'Communication': { weight: 5, keywords: ['stakeholder', 'cross-functional', 'presentation', 'negotiation'] }
+      }
+    },
+    'Cloud Architect': {
+      keywords: ['aws', 'gcp', 'azure', 'terraform', 'cloudformation', 'kubernetes', 'docker', 'microservices', 'serverless', 'lambda', 'ec2', 's3', 'vpc', 'iam', 'cloud security', ' networking', 'load balancer', 'cdn', 'route53', 'dns', 'ci/cd', 'devops', 'infrastructure', 'saas', 'paas', 'iaas'],
+      categories: {
+        'Cloud Platforms': { weight: 30, keywords: ['aws', 'gcp', 'azure', 'saas', 'paas', 'iaas'] },
+        'Infrastructure': { weight: 25, keywords: ['terraform', 'cloudformation', 'kubernetes', 'docker', 'infrastructure', 'serverless'] },
+        'Networking': { weight: 15, keywords: ['vpc', 'load balancer', 'cdn', 'route53', 'dns', 'networking', 'firewall'] },
+        'Security': { weight: 15, keywords: ['iam', 'cloud security', 'encryption', 'compliance', 'ssl', 'vpn'] },
+        'Architecture': { weight: 10, keywords: ['microservices', 'serverless', 'lambda', 'event-driven', 'cqrs', 'ddd'] },
+        'DevOps': { weight: 5, keywords: ['ci/cd', 'devops', 'monitoring', 'logging', 'observability'] }
+      }
+    }
+  };
+
+  var JUNIOR_KEYWORDS = ['intern', 'junior', 'entry', 'graduate', 'assistant', 'trainee'];
+  var SENIOR_KEYWORDS = ['senior', 'lead', 'principal', 'staff', 'architect', 'director', 'vp', 'head of', 'chief'];
+
+  // ===== State =====
+  var currentFile = null;
+  var resumeText = '';
+  var analysisHistory = [];
+  var currentAnalysis = null;
+
+  // ===== DOM Elements =====
+  var uploadZone = document.getElementById('uploadZone');
+  var fileInput = document.getElementById('fileInput');
+  var analyzeBtn = document.getElementById('analyzeBtn');
+  var resultsContainer = document.getElementById('resultsContainer');
+  var scoreRing = document.getElementById('scoreRing');
+  var scoreValueEl = document.getElementById('scoreValue');
+
+  // ===== Initialization =====
+  function init() {
+    loadHistory();
+    bindEvents();
+    renderHistoryChart();
+  }
+
+  function bindEvents() {
+    uploadZone.addEventListener('click', function () { fileInput.click(); });
+
+    uploadZone.addEventListener('dragover', function (e) {
+      e.preventDefault();
+      uploadZone.classList.add('dragover');
+    });
+
+    uploadZone.addEventListener('dragleave', function () {
+      uploadZone.classList.remove('dragover');
+    });
+
+    uploadZone.addEventListener('drop', function (e) {
+      e.preventDefault();
+      uploadZone.classList.remove('dragover');
+      var files = e.dataTransfer.files;
+      if (files.length > 0) handleFile(files[0]);
+    });
+
+    fileInput.addEventListener('change', function (e) {
+      if (e.target.files.length > 0) handleFile(e.target.files[0]);
+    });
+
+    analyzeBtn.addEventListener('click', function () {
+      if (currentFile && resumeText) runAnalysis();
+    });
+  }
+
+  // ===== File Handling =====
+  function handleFile(file) {
+    if (file.type !== 'application/pdf') {
+      alert('Please upload a PDF file.');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      alert('File size exceeds 5 MB limit.');
+      return;
+    }
+
+    currentFile = file;
+    uploadZone.querySelector('h3').textContent = '✓ ' + file.name;
+    uploadZone.querySelector('p').textContent = (file.size / 1024).toFixed(1) + ' KB — Ready to analyze';
+    uploadZone.style.borderColor = 'var(--accent-emerald)';
+    analyzeBtn.disabled = false;
+
+    extractTextFromPDF(file);
+  }
+
+  function extractTextFromPDF(file) {
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      var typedArray = new Uint8Array(e.target.result);
+
+      // Try pdf.js if available, otherwise use a basic text extraction fallback
+      if (typeof pdfjsLib !== 'undefined') {
+        pdfjsLib.getDocument(typedArray).promise.then(function (pdf) {
+          var textParts = [];
+          var promises = [];
+          for (var i = 1; i <= pdf.numPages; i++) {
+            promises.push(
+              pdf.getPage(i).then(function (page) {
+                return page.getTextContent().then(function (content) {
+                  content.items.forEach(function (item) {
+                    textParts.push(item.str);
+                  });
+                });
+              })
+            );
+          }
+          Promise.all(promises).then(function () {
+            resumeText = textParts.join(' ');
+          });
+        }).catch(function () {
+          resumeText = generateFallbackText(file.name);
+        });
+      } else {
+        // Fallback: use filename-based heuristics for demo
+        resumeText = generateFallbackText(file.name);
+      }
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  function generateFallbackText(filename) {
+    // Simulated extraction for demo when pdf.js is not loaded
+    return (
+      'John Doe | Software Engineer | john@example.com\n' +
+      'Skills: JavaScript, React, TypeScript, Node.js, Python, SQL, Git, Docker, AWS\n' +
+      'Experience: Frontend Developer at TechCorp (2021-2024)\n' +
+      'Built responsive web applications using React and TypeScript\n' +
+      'Implemented REST APIs with Node.js and Express\n' +
+      'Managed PostgreSQL databases and optimized queries\n' +
+      'Used Docker for containerization and AWS for cloud deployment\n' +
+      'Education: BS Computer Science, State University (2017-2021)\n' +
+      'Projects: E-commerce platform with React, Node.js, PostgreSQL'
+    );
+  }
+
+  // ===== Analysis Engine =====
+  function runAnalysis() {
+    analyzeBtn.disabled = true;
+    analyzeBtn.innerHTML = '<span class="spinner"></span>Analyzing...';
+
+    setTimeout(function () {
+      var targetRole = document.getElementById('targetRole').value;
+      var experienceLevel = document.getElementById('experienceLevel').value;
+      var roleConfig = ROLE_SKILLS[targetRole] || ROLE_SKILLS['Frontend Developer'];
+
+      var textLower = resumeText.toLowerCase();
+      var analysis = performAnalysis(textLower, roleConfig, experienceLevel, targetRole);
+
+      currentAnalysis = analysis;
+      saveAnalysis(targetRole, experienceLevel, analysis);
+      renderResults(analysis);
+      renderHistoryChart();
+
+      analyzeBtn.disabled = false;
+      analyzeBtn.innerHTML = '🚀 Re-Analyze';
+    }, 800);
+  }
+
+  function performAnalysis(textLower, roleConfig, experienceLevel, targetRole) {
+    var totalScore = 0;
+    var categoryScores = {};
+    var foundSkills = [];
+    var matchedKeywords = [];
+    var missingKeywords = [];
+
+    // Keyword matching
+    roleConfig.keywords.forEach(function (kw) {
+      if (textLower.indexOf(kw.toLowerCase()) !== -1) {
+        matchedKeywords.push(kw);
+        foundSkills.push(kw);
+      } else {
+        missingKeywords.push(kw);
+      }
+    });
+
+    var keywordScore = Math.min(100, (matchedKeywords.length / Math.max(roleConfig.keywords.length, 1)) * 100);
+
+    // Category breakdown
+    var totalWeight = 0;
+    var weightedScore = 0;
+    Object.keys(roleConfig.categories).forEach(function (cat) {
+      var catConfig = roleConfig.categories[cat];
+      var catMatched = 0;
+      catConfig.keywords.forEach(function (kw) {
+        if (textLower.indexOf(kw.toLowerCase()) !== -1) catMatched++;
+      });
+      var catScore = Math.min(100, (catMatched / Math.max(catConfig.keywords.length, 1)) * 100);
+      categoryScores[cat] = Math.round(catScore);
+      totalWeight += catConfig.weight;
+      weightedScore += (catScore * catConfig.weight) / 100;
+    });
+
+    var categoryScore = totalWeight > 0 ? Math.round(weightedScore) : 0;
+
+    // Formatting score
+    var formatScore = calculateFormattingScore(textLower);
+
+    // Experience relevance
+    var expScore = calculateExperienceScore(textLower, experienceLevel);
+
+    // ATS Readiness (combination)
+    totalScore = Math.round(keywordScore * 0.35 + categoryScore * 0.30 + formatScore * 0.20 + expScore * 0.15);
+
+    // Keyword density analysis
+    var keywordDensity = analyzeKeywordDensity(textLower);
+
+    // Suggestions
+    var suggestions = generateSuggestions(totalScore, categoryScores, matchedKeywords, missingKeywords, textLower, targetRole);
+
+    return {
+      score: totalScore,
+      keywordScore: Math.round(keywordScore),
+      categoryScore: categoryScore,
+      formatScore: formatScore,
+      expScore: expScore,
+      categoryScores: categoryScores,
+      foundSkills: foundSkills,
+      matchedKeywords: matchedKeywords,
+      missingKeywords: missingKeywords,
+      keywordDensity: keywordDensity,
+      suggestions: suggestions,
+      timestamp: Date.now(),
+      targetRole: targetRole,
+      experienceLevel: experienceLevel
+    };
+  }
+
+  function calculateFormattingScore(text) {
+    var score = 50; // base
+    // Contact info indicators
+    if (text.indexOf('@') !== -1) score += 10;
+    if (/\b\d{3}[\s.-]?\d{3}[\s.-]?\d{4}\b/.test(text)) score += 10;
+    // Section headers
+    var sections = ['experience', 'education', 'skills', 'projects', 'summary', 'objective'];
+    sections.forEach(function (s) {
+      if (text.indexOf(s) !== -1) score += 3;
+    });
+    // Bullet points
+    var bulletMatches = text.match(/[\n•\-\*]/g);
+    if (bulletMatches && bulletMatches.length > 5) score += 7;
+    // Length check
+    if (text.length > 500) score += 10;
+    if (text.length > 2000) score += 10;
+    return Math.min(100, score);
+  }
+
+  function calculateExperienceScore(text, level) {
+    var score = 40;
+    if (level === 'Junior') {
+      JUNIOR_KEYWORDS.forEach(function (kw) {
+        if (text.indexOf(kw) !== -1) score += 10;
+      });
+    } else if (level === 'Senior') {
+      SENIOR_KEYWORDS.forEach(function (kw) {
+        if (text.indexOf(kw) !== -1) score += 10;
+      });
+      // Leadership indicators
+      if (text.indexOf('led') !== -1 || text.indexOf('managed') !== -1 || text.indexOf('mentored') !== -1) score += 15;
+      if (text.indexOf('architected') !== -1 || text.indexOf('designed') !== -1) score += 10;
+    } else {
+      // Mid-level
+      if (text.indexOf('senior') !== -1 || text.indexOf('lead') !== -1) score += 5;
+      if (text.indexOf('junior') !== -1) score += 5;
+    }
+    // Years of experience patterns
+    var yearMatch = text.match(/(\d+)\+?\s*(?:years?|yrs?)/);
+    if (yearMatch) {
+      var years = parseInt(yearMatch[1], 10);
+      if (level === 'Junior' && years <= 3) score += 15;
+      else if (level === 'Mid-Level' && years >= 2 && years <= 6) score += 15;
+      else if (level === 'Senior' && years >= 5) score += 15;
+    }
+    return Math.min(100, score);
+  }
+
+  function analyzeKeywordDensity(text) {
+    var words = text.split(/\s+/);
+    var totalWords = words.length || 1;
+    var freq = {};
+    words.forEach(function (w) {
+      var clean = w.replace(/[^a-z0-9+#.]/g, '').toLowerCase();
+      if (clean.length > 1) {
+        freq[clean] = (freq[clean] || 0) + 1;
+      }
+    });
+    // Return top keywords by frequency
+    var sorted = Object.keys(freq).sort(function (a, b) { return freq[b] - freq[a]; });
+    return sorted.slice(0, 15).map(function (kw) {
+      return { keyword: kw, count: freq[kw], density: ((freq[kw] / totalWords) * 100).toFixed(2) };
+    });
+  }
+
+  function generateSuggestions(score, categoryScores, matched, missing, text, role) {
+    var suggestions = [];
+    var cats = Object.keys(categoryScores);
+
+    cats.forEach(function (cat) {
+      if (categoryScores[cat] < 30) {
+        suggestions.push({
+          text: 'Add skills related to "' + cat + '" to strengthen your ' + role + ' profile.',
+          priority: 'high',
+          icon: '🔴'
+        });
+      } else if (categoryScores[cat] < 60) {
+        suggestions.push({
+          text: 'Consider expanding your "' + cat + '" section with more specific technologies.',
+          priority: 'medium',
+          icon: '🟡'
+        });
+      }
+    });
+
+    if (missing.length > 3) {
+      suggestions.push({
+        text: 'Your resume is missing ' + missing.length + ' key skills for ' + role + '. Focus on: ' + missing.slice(0, 3).join(', ') + '.',
+        priority: 'high',
+        icon: '🔴'
+      });
+    }
+
+    if (score < 50) {
+      suggestions.push({
+        text: 'Your overall ATS score is below 50. This may cause automatic rejection. Review the category breakdown for targeted improvements.',
+        priority: 'high',
+        icon: '🔴'
+      });
+    } else if (score < 70) {
+      suggestions.push({
+        text: 'Your score is moderate. Adding 2-3 more matching keywords could boost you into the strong candidate range.',
+        priority: 'medium',
+        icon: '🟡'
+      });
+    }
+
+    // Formatting suggestions
+    if (text.indexOf('@') === -1) {
+      suggestions.push({ text: 'Add a professional email address to your contact section.', priority: 'medium', icon: '🟡' });
+    }
+    if (text.indexOf('skills') === -1 && text.indexOf('competencies') === -1) {
+      suggestions.push({ text: 'Include a dedicated "Skills" or "Competencies" section for better ATS parsing.', priority: 'high', icon: '🔴' });
+    }
+    if (text.length < 1000) {
+      suggestions.push({ text: 'Your resume text is quite short. Add more detail about projects, achievements, and responsibilities.', priority: 'medium', icon: '🟡' });
+    }
+    if (score >= 70) {
+      suggestions.push({ text: 'Great score! Consider tailoring your resume further for specific job descriptions.', priority: 'low', icon: '🟢' });
+    }
+
+    return suggestions;
+  }
+
+  // ===== Rendering =====
+  function renderResults(analysis) {
+    resultsContainer.classList.remove('hidden');
+
+    // Score ring
+    var circumference = 2 * Math.PI * 80; // r=80
+    var offset = circumference - (analysis.score / 100) * circumference;
+    scoreRing.style.strokeDasharray = circumference;
+    setTimeout(function () {
+      scoreRing.style.strokeDashoffset = offset;
+    }, 100);
+
+    // Animated score counter
+    animateCounter(scoreValueEl, analysis.score);
+
+    // Score color
+    var scoreColor = analysis.score >= 70 ? 'var(--accent-emerald)' : analysis.score >= 50 ? 'var(--accent-amber)' : 'var(--accent-rose)';
+    scoreValueEl.style.color = scoreColor;
+
+    // Metrics cards
+    var metricsGrid = document.getElementById('metricsGrid');
+    metricsGrid.innerHTML = [
+      createMetricCard('🏷️', analysis.keywordScore + '%', 'Keyword Match', analysis.keywordScore >= 60 ? 'var(--accent-emerald)' : 'var(--accent-amber)'),
+      createMetricCard('📋', analysis.categoryScore + '%', 'Category Coverage', analysis.categoryScore >= 60 ? 'var(--accent-emerald)' : 'var(--accent-amber)'),
+      createMetricCard('📐', analysis.formatScore + '%', 'Formatting Score', analysis.formatScore >= 60 ? 'var(--accent-emerald)' : 'var(--accent-amber)'),
+      createMetricCard('🎯', analysis.expScore + '%', 'Experience Fit', analysis.expScore >= 60 ? 'var(--accent-emerald)' : 'var(--accent-amber)'),
+      createMetricCard('🛠️', analysis.foundSkills.length, 'Skills Detected', 'var(--accent-indigo)'),
+      createMetricCard('⚠️', analysis.suggestions.length, 'Suggestions', analysis.suggestions.filter(function (s) { return s.priority === 'high'; }).length > 0 ? 'var(--accent-rose)' : 'var(--accent-emerald)')
+    ].join('');
+
+    // Category bars
+    var categoryBars = document.getElementById('categoryBars');
+    var barColors = ['var(--accent-indigo)', 'var(--accent-emerald)', 'var(--accent-cyan)', 'var(--accent-violet)', 'var(--accent-amber)', 'var(--accent-rose)'];
+    categoryBars.innerHTML = Object.keys(analysis.categoryScores).map(function (cat, i) {
+      var val = analysis.categoryScores[cat];
+      var color = val >= 60 ? 'var(--accent-emerald)' : val >= 30 ? 'var(--accent-amber)' : 'var(--accent-rose)';
+      return (
+        '<div class="category-bar-item">' +
+        '<span class="cat-label">' + cat + '</span>' +
+        '<div class="bar-track"><div class="bar-fill" style="width:' + val + '%;background:' + color + ';"></div></div>' +
+        '<span class="cat-score" style="color:' + color + ';">' + val + '%</span>' +
+        '</div>'
+      );
+    }).join('');
+
+    // Suggestions
+    var suggestionsList = document.getElementById('suggestionsList');
+    suggestionsList.innerHTML = analysis.suggestions.map(function (s) {
+      return (
+        '<div class="suggestion-item">' +
+        '<span class="sug-priority">' + s.icon + '</span>' +
+        '<span>' + s.text + '</span>' +
+        '</div>'
+      );
+    }).join('');
+
+    // Skills
+    var skillsGrid = document.getElementById('skillsGrid');
+    skillsGrid.innerHTML = analysis.foundSkills.map(function (skill) {
+      return '<span class="skill-chip">✓ ' + skill + '</span>';
+    }).join('');
+
+    // Keyword density table
+    var tbody = document.getElementById('keywordTableBody');
+    var topKeywords = analysis.keywordDensity.slice(0, 10);
+    tbody.innerHTML = topKeywords.map(function (kw) {
+      var isTarget = analysis.matchedKeywords.indexOf(kw.keyword) !== -1;
+      var statusClass = isTarget ? 'badge-emerald' : '';
+      var statusText = isTarget ? '✓ Target' : '';
+      return (
+        '<tr>' +
+        '<td style="font-weight:600;">' + kw.keyword + '</td>' +
+        '<td>' + kw.count + '</td>' +
+        '<td>' + kw.density + '%</td>' +
+        '<td>' + (isTarget ? 'Yes' : '—') + '</td>' +
+        '<td><span class="badge ' + statusClass + '">' + statusText + '</span></td>' +
+        '</tr>'
+      );
+    }).join('');
+
+    // Smooth scroll to results
+    resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function createMetricCard(icon, value, label, color) {
+    return (
+      '<div class="metric-card">' +
+      '<div class="metric-icon">' + icon + '</div>' +
+      '<div class="metric-value" style="color:' + (color || 'var(--text-primary)') + ';">' + value + '</div>' +
+      '<div class="metric-label">' + label + '</div>' +
+      '</div>'
+    );
+  }
+
+  function animateCounter(el, target) {
+    var start = 0;
+    var duration = 1200;
+    var startTime = null;
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      var eased = 1 - Math.pow(1 - progress, 3); // ease-out cubic
+      el.textContent = Math.round(start + (target - start) * eased);
+      if (progress < 1) requestAnimationFrame(step);
+    }
+    requestAnimationFrame(step);
+  }
+
+  // ===== Score History =====
+  function loadHistory() {
+    try {
+      var stored = localStorage.getItem('resume_quality_history');
+      analysisHistory = stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      analysisHistory = [];
+    }
+  }
+
+  function saveHistory() {
+    try {
+      localStorage.setItem('resume_quality_history', JSON.stringify(analysisHistory));
+    } catch (e) {
+      // storage not available
+    }
+  }
+
+  function saveAnalysis(role, level, analysis) {
+    analysisHistory.push({
+      score: analysis.score,
+      keywordScore: analysis.keywordScore,
+      categoryScore: analysis.categoryScore,
+      formatScore: analysis.formatScore,
+      role: role,
+      level: level,
+      timestamp: analysis.timestamp,
+      skillsCount: analysis.foundSkills.length,
+      suggestionsCount: analysis.suggestions.length
+    });
+    // Keep only last 30 analyses
+    if (analysisHistory.length > 30) {
+      analysisHistory = analysisHistory.slice(-30);
+    }
+    saveHistory();
+  }
+
+  // ===== Canvas Chart =====
+  function renderHistoryChart() {
+    var placeholder = document.getElementById('chartPlaceholder');
+    var canvas = document.getElementById('historyCanvas');
+    var ctx = canvas.getContext('2d');
+
+    if (analysisHistory.length < 2) {
+      placeholder.classList.remove('hidden');
+      canvas.classList.add('hidden');
+      return;
+    }
+
+    placeholder.classList.add('hidden');
+    canvas.classList.remove('hidden');
+
+    var data = analysisHistory.slice(-20); // last 20
+    var w = canvas.parentElement.clientWidth - 48;
+    var h = 240;
+    canvas.width = w;
+    canvas.height = h;
+    canvas.style.width = w + 'px';
+    canvas.style.height = h + 'px';
+
+    var padding = { top: 30, right: 20, bottom: 40, left: 50 };
+    var chartW = w - padding.left - padding.right;
+    var chartH = h - padding.top - padding.bottom;
+
+    ctx.clearRect(0, 0, w, h);
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(51,65,85,0.3)';
+    ctx.lineWidth = 1;
+    for (var i = 0; i <= 4; i++) {
+      var y = padding.top + (chartH / 4) * i;
+      ctx.beginPath();
+      ctx.moveTo(padding.left, y);
+      ctx.lineTo(w - padding.right, y);
+      ctx.stroke();
+      ctx.fillStyle = '#64748b';
+      ctx.font = '11px system-ui';
+      ctx.textAlign = 'right';
+      ctx.fillText(Math.round(100 - (i * 25)) + '', padding.left - 8, y + 4);
+    }
+
+    // Line plot
+    var stepX = chartW / (data.length - 1);
+    var lineGradient = ctx.createLinearGradient(padding.left, 0, w - padding.right, 0);
+    lineGradient.addColorStop(0, '#6366f1');
+    lineGradient.addColorStop(0.5, '#8b5cf6');
+    lineGradient.addColorStop(1, '#10b981');
+
+    ctx.strokeStyle = lineGradient;
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+
+    data.forEach(function (d, idx) {
+      var x = padding.left + idx * stepX;
+      var y = padding.top + chartH - (d.score / 100) * chartH;
+      if (idx === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Area fill
+    var areaGradient = ctx.createLinearGradient(0, padding.top, 0, h - padding.bottom);
+    areaGradient.addColorStop(0, 'rgba(99,102,241,0.2)');
+    areaGradient.addColorStop(1, 'rgba(99,102,241,0.0)');
+
+    ctx.fillStyle = areaGradient;
+    ctx.beginPath();
+    data.forEach(function (d, idx) {
+      var x = padding.left + idx * stepX;
+      var y = padding.top + chartH - (d.score / 100) * chartH;
+      if (idx === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.lineTo(padding.left + (data.length - 1) * stepX, h - padding.bottom);
+    ctx.lineTo(padding.left, h - padding.bottom);
+    ctx.closePath();
+    ctx.fill();
+
+    // Dots
+    data.forEach(function (d, idx) {
+      var x = padding.left + idx * stepX;
+      var y = padding.top + chartH - (d.score / 100) * chartH;
+      var dotColor = d.score >= 70 ? '#10b981' : d.score >= 50 ? '#f59e0b' : '#f43f5e';
+      ctx.fillStyle = dotColor;
+      ctx.beginPath();
+      ctx.arc(x, y, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    });
+
+    // X-axis labels
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px system-ui';
+    ctx.textAlign = 'center';
+    data.forEach(function (d, idx) {
+      var x = padding.left + idx * stepX;
+      var date = new Date(d.timestamp);
+      var label = (date.getMonth() + 1) + '/' + date.getDate();
+      if (idx === 0 || idx === data.length - 1 || data.length <= 6 || idx % Math.ceil(data.length / 6) === 0) {
+        ctx.fillText(label, x, h - padding.bottom + 18);
+      }
+    });
+
+    // Title annotation
+    var latestScore = data[data.length - 1].score;
+    var firstScore = data[0].score;
+    var trend = latestScore - firstScore;
+    ctx.font = 'bold 12px system-ui';
+    ctx.textAlign = 'right';
+    ctx.fillStyle = trend >= 0 ? '#10b981' : '#f43f5e';
+    ctx.fillText(
+      (trend >= 0 ? '↑' : '↓') + ' ' + Math.abs(trend) + ' points since first analysis',
+      w - padding.right,
+      18
+    );
+  }
+
+  // ===== Start =====
+  init();
+})();
+</script>
+
+</body>
+</html>

@@ -228,9 +228,32 @@ REST_FRAMEWORK = {
         'skills_leaderboard': os.environ.get(
             'SKILLS_LEADERBOARD_RATE', '100/hour'
         ),
+        # The five features merged in #929-#933 all default to AllowAny and
+        # none of them set permission_classes, so routing them (#936) opens
+        # five unauthenticated endpoints. Same rule as above: each gets a
+        # ceiling, and each gets its own scope so one does not eat another's
+        # budget.
+        'accessibility_check': os.environ.get(
+            'ACCESSIBILITY_CHECK_RATE', '60/hour'
+        ),
+        'cliche_detection': os.environ.get('CLICHE_DETECTION_RATE', '60/hour'),
+        'linkedin_optimization': os.environ.get(
+            'LINKEDIN_OPTIMIZATION_RATE', '30/hour'
+        ),
+        # Lower than the text endpoints on purpose: this one writes the
+        # request body to disk before it does anything else.
+        'file_metadata': os.environ.get('FILE_METADATA_RATE', '20/hour'),
+        'sanitize_resume': os.environ.get('SANITIZE_RESUME_RATE', '60/hour'),
+        'cover_letter_gen': os.environ.get('COVER_LETTER_GEN_RATE', '20/hour'),
     },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
+
+# Fraud / Abuse Detection settings for Signup
+SIGNUP_ABUSE_ENABLED = os.environ.get('SIGNUP_ABUSE_ENABLED', 'True') == 'True'
+SIGNUP_ABUSE_THRESHOLD = int(os.environ.get('SIGNUP_ABUSE_THRESHOLD', '50'))
+SIGNUP_ABUSE_WINDOW_MINUTES = int(os.environ.get('SIGNUP_ABUSE_WINDOW_MINUTES', '60'))
+SIGNUP_ABUSE_COOLDOWN_MINUTES = int(os.environ.get('SIGNUP_ABUSE_COOLDOWN_MINUTES', '60'))
 
 # JWT lifetimes. These were previously inherited from SimpleJWT's defaults
 # rather than chosen, which meant a 5-minute access token — fine in itself, but

@@ -16,8 +16,9 @@ filtered on its history. The analysis is returned under `timeline` alongside
 | `reversed_range` | high | A range ends before it starts |
 | `employment_gap` | medium / high | A gap of 4 months or more; high past a year |
 | `future_date` | medium | A start more than 3 months from now |
+| `future_end_date` | medium | An end more than 3 months from now on a role that is not marked current |
 | `seniority_mismatch` | medium | Total experience falls short of the selected level |
-| `overlapping_roles` | low | Two roles run concurrently for 2 months or more |
+| `overlapping_roles` | low | Two roles run concurrently for 2 months or more (see *Year-only ranges* below) |
 | `mixed_date_formats` | low | More than one date format in the document |
 | `year_only_dates` | low | A range gives years but no months |
 | `no_dates_found` | info | Nothing parseable — see below |
@@ -32,11 +33,42 @@ line can be found.
 Jan 2020 – Mar 2022      January 2020 to March 2022      Sept. 2019 - Dec. 2021
 03/2017 - 06/2019        2020-01 until 2021-11           2015 – 2016
 Jan 2020 – Present       Mar 2021 - Current              Feb 2019 - now
+Jan 2020 to date         Mar 2021 till date              Feb 2019 – to date
 ```
 
 Hyphen, double hyphen, en dash, em dash, tilde, `to`, `until`, `through` and
 `till` all separate a range. `Present`, `Current`, `Currently`, `Now`,
-`Ongoing`, `To date` and `Today` all mean an open end.
+`Ongoing`, `To date`, `Till date` and `Today` all mean an open end.
+
+`to date` and `till date` are worth a note. The separator list above already
+contains `to` and `till`, and separators are matched *before* the open-end
+words, so by the time the parser looks for one the preposition has been
+consumed and only `date` is left. `date` is therefore an open-end word in its
+own right. It is only ever reached after a parsed start and a separator, so it
+cannot match a stray word elsewhere on the line.
+
+## Year-only ranges
+
+A year-only *end* reads as December of that year and a year-only *start* reads
+as January, so that `2019 - 2021` describes work through 2021 rather than
+inventing an eleven-month gap.
+
+The two conventions are asymmetric, which means two consecutive year-only
+ranges share a whole year:
+
+```
+Junior Developer   2019 - 2021
+Senior Developer   2021 - 2023
+```
+
+That is the most common way there is to write a promotion, and it is not a
+claim of concurrent employment — the resume simply does not say where in 2021
+one ended and the next began. `overlapping_roles` is therefore not raised when
+both endpoints at the join are year-only and name the same year.
+
+It *is* still raised when either side is month-precise. `Jan 2018 - Dec 2021`
+followed by `2021 - 2023` really does describe between one and twelve months of
+overlap, and that is worth saying even though the exact figure is unknown.
 
 Ranges are matched **within a line**, never across a line break. Two-column
 resumes flatten to text in ways that would otherwise let the end of one line and

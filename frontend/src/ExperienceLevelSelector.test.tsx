@@ -28,7 +28,7 @@ describe('Experience Level Selector (#538)', () => {
     expect(select.value).toBe('Mid-Level')
 
     const options = Array.from(select.options).map((opt) => opt.value)
-    expect(options).toEqual(['Junior', 'Mid-Level', 'Senior'])
+    expect(options).toEqual(['Junior', 'Mid-Level', 'Senior', 'Lead'])
   })
 
   it('persists selected experience level to localStorage on change', () => {

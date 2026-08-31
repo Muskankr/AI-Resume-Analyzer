@@ -1,0 +1,198 @@
+/* ==========================================================================
+   Reusable Button Component Styles (#102)
+   ========================================================================== */
+
+.app-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  font-family: inherit;
+  font-weight: 600;
+  line-height: 1.25;
+  border-radius: var(--radius-md, 8px);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-decoration: none;
+  white-space: nowrap;
+  user-select: none;
+  transition:
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.15s ease,
+    opacity 0.2s ease;
+  box-sizing: border-box;
+}
+
+/* Focus Visible State */
+.app-button:focus-visible {
+  outline: 2px solid var(--color-primary, #6366f1);
+  outline-offset: 2px;
+}
+
+/* Disabled State */
+.app-button:disabled,
+.app-button[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.55;
+  pointer-events: none;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Active / Pressed State */
+.app-button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+/* ==========================================================================
+   Variants
+   ========================================================================== */
+
+/* Primary Variant */
+.app-button--primary {
+  background: var(--color-primary, #6366f1);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.25);
+}
+
+.app-button--primary:hover:not(:disabled) {
+  background: var(--btn-accent-hover-bg, #4f46e5);
+  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Secondary Variant */
+.app-button--secondary {
+  background: var(--surface-soft-bg, rgba(255, 255, 255, 0.05));
+  color: var(--heading-text, #ffffff);
+  border-color: var(--surface-border, rgba(255, 255, 255, 0.15));
+}
+
+.app-button--secondary:hover:not(:disabled) {
+  background: var(--surface-strong-bg, rgba(255, 255, 255, 0.1));
+  border-color: var(--surface-border-strong, rgba(255, 255, 255, 0.25));
+  transform: translateY(-1px);
+}
+
+/* Ghost Variant */
+.app-button--ghost {
+  background: transparent;
+  color: var(--muted-text, #94a3b8);
+  border-color: transparent;
+}
+
+.app-button--ghost:hover:not(:disabled) {
+  background: var(--surface-soft-bg, rgba(255, 255, 255, 0.08));
+  color: var(--heading-text, #ffffff);
+}
+
+/* Outline Variant */
+.app-button--outline {
+  background: transparent;
+  color: var(--color-primary, #6366f1);
+  border-color: var(--color-primary, #6366f1);
+}
+
+.app-button--outline:hover:not(:disabled) {
+  background: rgba(99, 102, 241, 0.1);
+  border-color: var(--color-primary, #6366f1);
+}
+
+/* Danger Variant */
+.app-button--danger {
+  background: var(--color-danger, #ef4444);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.25);
+}
+
+.app-button--danger:hover:not(:disabled) {
+  background: #dc2626;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Accent / Success Variant */
+.app-button--accent {
+  background: var(--color-accent, #22c55e);
+  color: #ffffff;
+  border-color: transparent;
+  box-shadow: 0 2px 8px rgba(34, 197, 94, 0.25);
+}
+
+.app-button--accent:hover:not(:disabled) {
+  background: #16a34a;
+  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
+   Sizes
+   ========================================================================== */
+
+/* Small Size */
+.app-button--sm {
+  padding: 5px 12px;
+  font-size: var(--text-xs, 0.8rem);
+  gap: 6px;
+}
+
+/* Medium Size (Default) */
+.app-button--md {
+  padding: 8px 18px;
+  font-size: var(--text-sm, 0.9rem);
+  gap: 8px;
+}
+
+/* Large Size */
+.app-button--lg {
+  padding: 12px 28px;
+  font-size: var(--text-base, 1rem);
+  gap: 10px;
+}
+
+/* ==========================================================================
+   Modifiers & Layout
+   ========================================================================== */
+
+/* Pill Shape */
+.app-button--pill {
+  border-radius: 9999px;
+}
+
+/* Full Width */
+.app-button--full-width {
+  width: 100%;
+}
+
+/* Icon Elements */
+.app-button__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+/* Loading Spinner */
+.app-button__spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  animation: app-button-spin 0.65s linear infinite;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+@keyframes app-button-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

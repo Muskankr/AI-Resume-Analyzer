@@ -39,7 +39,7 @@ describe('notification preferences', () => {
 
   it('creates a browser notification when opted in and permission is granted', () => {
     saveNotificationPreferences({ in_app: true, browser: true })
-    const NotificationMock = vi.fn().mockImplementation(() => ({ close: vi.fn(), onclick: null }))
+    const NotificationMock = vi.fn().mockImplementation(function() { return { close: vi.fn(), onclick: null }; })
     Object.assign(NotificationMock, { permission: 'granted' })
     vi.stubGlobal('Notification', NotificationMock)
     sendAnalysisCompleteNotification('resume.pdf')

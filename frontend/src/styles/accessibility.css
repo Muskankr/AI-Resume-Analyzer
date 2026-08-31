@@ -1,0 +1,21 @@
+/* Accessibility Rule Engine: Suppress complex animations and transitions */
+@media (prefers-reduced-motion: reduce) {
+  html:not(.reduce-motion-disabled) *,
+  html:not(.reduce-motion-disabled) *::before,
+  html:not(.reduce-motion-disabled) *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Explicit In-App Manual Override Selector Hook */
+html.reduce-motion-active *,
+html.reduce-motion-active *::before,
+html.reduce-motion-active *::after {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}

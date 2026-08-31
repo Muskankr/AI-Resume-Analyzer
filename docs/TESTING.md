@@ -17,11 +17,11 @@ python manage.py test
 Expect roughly:
 
 ```
-Found 222 test(s).
+Found 300+ test(s).
 ...
-Ran 222 tests in 6.2s
+Ran 300+ tests in 30s
 
-OK (expected failures=2)
+OK
 ```
 
 A few things worth knowing before you read a confusing result.
@@ -42,33 +42,14 @@ with exit status 0. That is what happened to this project: 220 tests sat in the
 tree unexecuted. CI now asserts the discovered count is at least 200 so the
 same thing cannot pass silently again.
 
-### Two tests skip themselves until another fix lands
+### Keep the migration graph mergeable
 
-You will see `skipped=2` on a clean run. Both exercise a code path that is
-genuinely broken, with an issue open against it:
-
-| Test | Waiting on |
-|---|---|
-| `ProfileAvatarTests.test_upload_and_delete_avatar` | #632 — `/api/profile/avatar/` has a view but no route |
-| `UnsubscribeTokenTests.test_returns_none_when_the_user_no_longer_exists` | #631 — the `Webhook` model has no migration, so `User.delete()` cascades into a table that does not exist |
-
-They are guarded with `require_route()` / `require_table()`, which check the
-precondition at runtime, rather than with a static `@skip` or
-`@expectedFailure`.
-
-The reasoning is worth knowing, because the obvious choices are both wrong
-here. `@skip` stays silent forever — once the bug is fixed nothing tells you
-the test could be running again. `@expectedFailure` has the opposite problem in
-the right direction: unittest reports an expected failure that starts passing
-as an *unexpected success* and `wasSuccessful()` returns false, so the build
-goes red and demands the marker be deleted. That is the correct signal when one
-person owns both changes, but these fixes are in separate pull requests that
-can merge in either order, and a red build handed to whoever merges second is
-not a good way to communicate "please delete this line".
-
-Checking the precondition avoids the dilemma entirely: the condition *is* the
-fix, so the test starts running by itself the moment the route exists or the
-table appears, in any merge order, with nothing left behind to remember.
+Parallel feature work can produce two migrations with the same numeric prefix.
+That is valid until both branches are merged, but Django then has multiple
+heads and cannot create a test database or migrate a fresh deployment. Join
+the heads with an empty merge migration before release. The
+`AnalyzerMigrationGraphTests` regression test ensures the analyzer app keeps a
+single head.
 
 ### Selecting tests
 
@@ -89,7 +70,8 @@ unsubscribe test failing on `User.delete()`. Check with:
 python manage.py makemigrations --check --dry-run
 ```
 
-This runs in CI, so a model edit without a migration fails the build.
+This runs in CI, so a model edit without a migration or an unresolved migration
+conflict fails the build.
 
 ## Frontend
 
@@ -165,3 +147,56 @@ and most proxies, which is the exposure the change exists to avoid.
 To poke the endpoint freely in local development, set
 `ANALYSIS_CLAIM_REQUIRED=false`. It defaults to on, and production should leave
 it there.
+
+## "Conflicting migrations detected" — the suite is not failing, it never ran
+
+If `python manage.py test analyzer` prints something like:
+
+```
+Found 359 test(s).
+Creating test database for alias 'default'...
+CommandError: Conflicting migrations detected; multiple leaf nodes in the
+migration graph: (0020_merge_20260824_0025, 0020_resumebadge in analyzer).
+To fix them run 'python manage.py makemigrations --merge'
+```
+
+then nothing was executed. The count on the first line is discovery, not
+results — Django found the tests, then failed while building the test database
+and exited. `migrate`, `showmigrations` and `makemigrations --check` all fail
+the same way, because they all build the migration graph first.
+
+It happens when two branches each add a migration on top of the same parent and
+both get merged. Neither knows about the other, so the app is left with two
+tips and there is no single "latest" migration to plan towards.
+
+Fix it with a merge migration:
+
+```bash
+cd backend
+python manage.py makemigrations --merge analyzer
+```
+
+That writes an empty migration depending on both leaves. Commit it. It is a
+real migration and belongs in the pull request that discovered the conflict —
+do not resolve it by deleting or renumbering someone else's migration, which
+breaks any database that has already applied it.
+
+`analyzer/tests_migration_graph.py` asserts the graph has a single leaf, and CI
+runs that module on its own before the rest of the suite. It is a
+`SimpleTestCase`, so it needs no test database — which is the point, since
+creating the test database is the step that fails when the graph is broken.
+
+### Rebasing onto a new migration
+
+If your branch adds a migration and `main` has since gained one with the same
+number, rebase and renumber **your** migration rather than merging:
+
+```bash
+git fetch origin && git rebase origin/main
+git mv backend/analyzer/migrations/0021_my_change.py \
+       backend/analyzer/migrations/0022_my_change.py
+# then edit its `dependencies` to point at the new tip on main
+```
+
+A merge migration is for conflicts that already reached `main`. For a branch
+that has not merged yet, renumbering keeps the history linear.

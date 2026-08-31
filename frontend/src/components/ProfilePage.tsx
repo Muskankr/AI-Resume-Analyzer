@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react'
+import { Link } from 'react-router-dom'
 import { api } from '../api/client'
 import { useAuth } from '../hooks/useAuth'
 import { getConsentPreferences, saveConsentPreferences } from '../utils/cookieConsent'
 import { requestNotificationPermission, saveNotificationPreferences } from '../utils/notification'
+
+const MAX_BIO_LENGTH = 250
 
 type NotificationPreferences = { in_app: boolean; browser: boolean }
 const DEFAULT_NOTIFICATION_PREFERENCES: NotificationPreferences = { in_app: true, browser: false }
@@ -11,6 +14,7 @@ export const ProfilePage: React.FC = () => {
   const { user, updateProfileSession, exportUserData } = useAuth()
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
+  const [bio, setBio] = useState('')
   const [weeklyDigestOptIn, setWeeklyDigestOptIn] = useState(false)
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(
     DEFAULT_NOTIFICATION_PREFERENCES
@@ -25,6 +29,7 @@ export const ProfilePage: React.FC = () => {
 
   const [originalUsername, setOriginalUsername] = useState('')
   const [originalEmail, setOriginalEmail] = useState('')
+  const [originalBio, setOriginalBio] = useState('')
   const [originalOptIn, setOriginalOptIn] = useState(false)
   const [originalNotificationPreferences, setOriginalNotificationPreferences] =
     useState<NotificationPreferences>(DEFAULT_NOTIFICATION_PREFERENCES)
@@ -56,11 +61,13 @@ export const ProfilePage: React.FC = () => {
         }
         setUsername(data.username)
         setEmail(data.email || '')
+        setBio(data.bio || data.headline || '')
         setWeeklyDigestOptIn(!!data.weekly_digest_opt_in)
         setNotificationPreferences(prefs)
         saveNotificationPreferences(prefs)
         setOriginalUsername(data.username)
         setOriginalEmail(data.email || '')
+        setOriginalBio(data.bio || data.headline || '')
         setOriginalOptIn(!!data.weekly_digest_opt_in)
         setOriginalNotificationPreferences(prefs)
 
@@ -83,6 +90,7 @@ export const ProfilePage: React.FC = () => {
   const handleCancel = () => {
     setUsername(originalUsername)
     setEmail(originalEmail)
+    setBio(originalBio)
     setWeeklyDigestOptIn(originalOptIn)
     setNotificationPreferences(originalNotificationPreferences)
     saveNotificationPreferences(originalNotificationPreferences)
@@ -145,6 +153,13 @@ export const ProfilePage: React.FC = () => {
       return
     }
 
+    // Basic content sanitization on the client: strip HTML tags and trim excessive whitespace
+    const sanitizedBio = bio.replace(/<[^>]*>?/gm, '').trim()
+    if (sanitizedBio.length > MAX_BIO_LENGTH) {
+      setError(`Bio / headline cannot exceed ${MAX_BIO_LENGTH} characters.`)
+      return
+    }
+
     try {
       setSaving(true)
       setError(null)
@@ -153,6 +168,7 @@ export const ProfilePage: React.FC = () => {
       const response = await api.put('/api/profile/', {
         username,
         email,
+        bio: sanitizedBio,
         weekly_digest_opt_in: weeklyDigestOptIn,
         notification_preferences: notificationPreferences,
       })
@@ -164,11 +180,13 @@ export const ProfilePage: React.FC = () => {
       }
       setUsername(updated.username)
       setEmail(updated.email)
+      setBio(updated.bio || updated.headline || '')
       setWeeklyDigestOptIn(!!updated.weekly_digest_opt_in)
       setNotificationPreferences(savedPrefs)
       saveNotificationPreferences(savedPrefs)
       setOriginalUsername(updated.username)
       setOriginalEmail(updated.email)
+      setOriginalBio(updated.bio || updated.headline || '')
       setOriginalOptIn(!!updated.weekly_digest_opt_in)
       setOriginalNotificationPreferences(savedPrefs)
 
@@ -190,6 +208,8 @@ export const ProfilePage: React.FC = () => {
           setError(Array.isArray(errors.username) ? errors.username[0] : errors.username)
         } else if (errors.email) {
           setError(Array.isArray(errors.email) ? errors.email[0] : errors.email)
+        } else if (errors.bio) {
+          setError(Array.isArray(errors.bio) ? errors.bio[0] : errors.bio)
         } else {
           setError(errors.error || 'Failed to update profile details.')
         }

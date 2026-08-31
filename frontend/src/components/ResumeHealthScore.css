@@ -1,0 +1,244 @@
+/* ── Resume Health Score ────────────────────────────────────── */
+
+.rhs {
+  width: 100%;
+}
+
+.rhs__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.rhs__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #e2e8f0);
+  margin: 0;
+}
+
+.rhs__subtitle {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #94a3b8);
+  margin-top: 0.1rem;
+}
+
+/* ── Health Ring ───────────────────────────────────────────── */
+
+.rhs__ring-section {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.rhs__ring {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  flex-shrink: 0;
+}
+
+.rhs__ring svg {
+  transform: rotate(-90deg);
+}
+
+.rhs__ring-bg {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.08);
+  stroke-width: 8;
+}
+
+.rhs__ring-fill {
+  fill: none;
+  stroke-width: 8;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.8s ease, stroke 0.3s ease;
+}
+
+.rhs__ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.rhs__ring-score {
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.rhs__ring-label {
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted, #94a3b8);
+  margin-top: 0.1rem;
+}
+
+.rhs__ring-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.rhs__ring-summary {
+  font-size: 0.85rem;
+  color: var(--color-text-primary, #e2e8f0);
+  margin: 0 0 0.4rem;
+  line-height: 1.4;
+}
+
+.rhs__ring-action {
+  font-size: 0.8rem;
+  color: var(--color-text-muted, #94a3b8);
+  margin: 0;
+  padding: 0.5rem 0.7rem;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  border-left: 3px solid #818cf8;
+}
+
+/* ── Dimensions List ───────────────────────────────────────── */
+
+.rhs__dimensions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.rhs__dimension {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 0.75rem;
+  transition: border-color 0.2s;
+}
+
+.rhs__dimension:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.rhs__dim-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+}
+
+.rhs__dim-left {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.rhs__dim-grade {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #000;
+}
+
+.rhs__dim-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #e2e8f0);
+}
+
+.rhs__dim-score {
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.rhs__dim-bar {
+  height: 5px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.35rem;
+}
+
+.rhs__dim-bar-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+.rhs__dim-detail {
+  font-size: 0.72rem;
+  color: var(--color-text-muted, #94a3b8);
+  margin-bottom: 0.2rem;
+}
+
+.rhs__dim-tips {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.rhs__dim-tip {
+  font-size: 0.72rem;
+  color: var(--color-text-muted, #94a3b8);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.3rem;
+}
+
+.rhs__dim-tip::before {
+  content: '→';
+  color: #818cf8;
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+/* ── Empty State ───────────────────────────────────────────── */
+
+.rhs__empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.rhs__empty-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.rhs__empty-text {
+  font-size: 0.85rem;
+  color: var(--color-text-primary, #94a3b8);
+  font-weight: 500;
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 500px) {
+  .rhs__ring-section {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .rhs__ring-action {
+    border-left: none;
+    border-top: 3px solid #818cf8;
+    text-align: left;
+  }
+}

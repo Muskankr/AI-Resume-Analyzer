@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
-import { Share2, Check, Copy, Link2Off, RefreshCw, ShieldCheck, Eye } from 'lucide-react'
+import { Share2, Check, Copy, Link2Off, RefreshCw, ShieldCheck, Eye, EyeOff } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import { api } from '../api/client'
 import {
   DEFAULT_LIFETIME_DAYS,
@@ -22,8 +23,16 @@ interface Loaded {
 interface BadgeState {
   badge_id: string
   enabled: boolean
+  /**
+   * Present whether or not the badge is enabled.
+   *
+   * Unlike a revoked share link, a disabled badge keeps its URL and starts
+   * working again the moment it is switched back on — it is paused, not dead.
+   * Rotating is what invalidates a badge URL, and rotating returns the new one.
+   */
   badge_url: string
   markdown: string
+  updated_at: string | null
 }
 
 export const ShareResult: React.FC<ShareResultProps> = ({ analysisId }) => {
@@ -34,6 +43,8 @@ export const ShareResult: React.FC<ShareResultProps> = ({ analysisId }) => {
   const [error, setError] = useState('')
   const [badge, setBadge] = useState<BadgeState | null>(null)
   const [badgeCopied, setBadgeCopied] = useState<'url' | 'markdown' | null>(null)
+  const [badgeBusy, setBadgeBusy] = useState(false)
+  const [badgeError, setBadgeError] = useState('')
 
   const endpoint = analysisId === null ? null : `/api/history/${analysisId}/share/`
 
@@ -103,6 +114,33 @@ export const ShareResult: React.FC<ShareResultProps> = ({ analysisId }) => {
 
   const handleRevoke = () => endpoint && run(() => api.delete<ShareState>(endpoint))
 
+  /**
+   * Send a badge change and adopt whatever the server says the state now is.
+   *
+   * The response is the source of truth rather than an optimistic local flip:
+   * rotating changes `badge_id`, `badge_url` and `markdown` together, and
+   * guessing the new UUID client-side is not a thing that can be done.
+   */
+  const runBadge = useCallback(async (body: Record<string, boolean> | null) => {
+    setBadgeBusy(true)
+    setBadgeError('')
+    try {
+      const res =
+        body === null
+          ? await api.delete<BadgeState>('/api/badge/')
+          : await api.post<BadgeState>('/api/badge/', body)
+      setBadge(res.data)
+    } catch {
+      setBadgeError('Could not reach the server. The badge was not changed.')
+    } finally {
+      setBadgeBusy(false)
+    }
+  }, [])
+
+  const handleBadgePublish = () => runBadge({ enabled: true })
+  const handleBadgeRotate = () => runBadge({ rotate: true })
+  const handleBadgeUnpublish = () => runBadge(null)
+
   const copyBadge = async (kind: 'url' | 'markdown') => {
     if (!badge) return
     const value = kind === 'url' ? badge.badge_url : badge.markdown
@@ -145,6 +183,11 @@ export const ShareResult: React.FC<ShareResultProps> = ({ analysisId }) => {
               {copied ? <Check size={14} /> : <Copy size={14} />}
               {copied ? 'Copied' : 'Copy Link'}
             </button>
+          </div>
+
+          <div className="share-qr-code" role="img" aria-label="QR code for this analysis">
+            <QRCodeSVG value={state.share_url} size={144} includeMargin />
+            <span>Scan to open this shared analysis</span>
           </div>
 
           <div className="share-meta">
@@ -216,54 +259,107 @@ export const ShareResult: React.FC<ShareResultProps> = ({ analysisId }) => {
       )}
 
       {badge && (
-        <div
-          className="mt-4"
-          style={{
-            padding: '16px',
-            border: '1px solid var(--surface-border, rgba(255,255,255,0.12))',
-            borderRadius: '12px',
-            background: 'var(--surface-soft-bg, rgba(255,255,255,0.03))',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+        <div className="share-badge-panel mt-4">
+          <div className="share-badge-title">
             <span aria-hidden="true">🏅</span>
             <strong>Latest ATS Score Badge</strong>
-          </div>
-          <p className="share-help-text" style={{ marginBottom: '12px' }}>
-            Embed this badge in your GitHub README, portfolio, or personal website. It keeps the same URL and refreshes to your latest ATS score.
-          </p>
-
-          <div style={{ marginBottom: '12px' }}>
-            <img src={badge.badge_url} alt="Latest ATS score badge" style={{ verticalAlign: 'middle' }} />
+            <span className={`share-badge-status${badge.enabled ? '' : ' is-off'}`} role="status">
+              {badge.enabled ? 'Public' : 'Not published'}
+            </span>
           </div>
 
-          <div className="share-input-group" style={{ marginBottom: '8px' }}>
-            <input
-              type="text"
-              value={badge.badge_url}
-              readOnly
-              className="share-url-input"
-              aria-label="ATS score badge URL"
-            />
-            <button className="share-copy-btn" onClick={() => copyBadge('url')}>
-              {badgeCopied === 'url' ? <Check size={14} /> : <Copy size={14} />}
-              {badgeCopied === 'url' ? 'Copied' : 'Copy URL'}
-            </button>
-          </div>
+          {badge.enabled ? (
+            <>
+              <p className="share-help-text share-badge-blurb">
+                Embed this badge in your GitHub README, portfolio, or personal website. It keeps the
+                same URL and refreshes to your latest ATS score — including scores from analyses you
+                have not run yet.
+              </p>
 
-          <div className="share-input-group">
-            <input
-              type="text"
-              value={badge.markdown}
-              readOnly
-              className="share-url-input"
-              aria-label="ATS score badge Markdown"
-            />
-            <button className="share-copy-btn" onClick={() => copyBadge('markdown')}>
-              {badgeCopied === 'markdown' ? <Check size={14} /> : <Copy size={14} />}
-              {badgeCopied === 'markdown' ? 'Copied' : 'Copy Markdown'}
-            </button>
-          </div>
+              <div className="share-badge-preview">
+                <img src={badge.badge_url} alt="Latest ATS score badge" />
+              </div>
+
+              <div className="share-input-group share-badge-row">
+                <input
+                  type="text"
+                  value={badge.badge_url}
+                  readOnly
+                  className="share-url-input"
+                  aria-label="ATS score badge URL"
+                />
+                <button className="share-copy-btn" onClick={() => copyBadge('url')}>
+                  {badgeCopied === 'url' ? <Check size={14} /> : <Copy size={14} />}
+                  {badgeCopied === 'url' ? 'Copied' : 'Copy URL'}
+                </button>
+              </div>
+
+              <div className="share-input-group">
+                <input
+                  type="text"
+                  value={badge.markdown}
+                  readOnly
+                  className="share-url-input"
+                  aria-label="ATS score badge Markdown"
+                />
+                <button className="share-copy-btn" onClick={() => copyBadge('markdown')}>
+                  {badgeCopied === 'markdown' ? <Check size={14} /> : <Copy size={14} />}
+                  {badgeCopied === 'markdown' ? 'Copied' : 'Copy Markdown'}
+                </button>
+              </div>
+
+              <div className="share-actions">
+                <button
+                  className="share-secondary-btn"
+                  onClick={handleBadgeRotate}
+                  disabled={badgeBusy}
+                >
+                  <RefreshCw size={13} /> New badge URL
+                </button>
+                <button
+                  className="share-danger-btn"
+                  onClick={handleBadgeUnpublish}
+                  disabled={badgeBusy}
+                >
+                  <EyeOff size={13} /> Stop publishing
+                </button>
+              </div>
+
+              <p className="share-help-text">
+                <strong>New badge URL</strong> stops every copy of the current one from working, so
+                anywhere you have already embedded it will show a broken image until you replace it.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="share-help-text share-badge-blurb">
+                Your badge is not published. Nobody can load it, and the URL below stays reserved
+                for you — publishing again brings the same address back to life.
+              </p>
+
+              <div className="share-actions">
+                <button
+                  className="share-copy-btn"
+                  onClick={handleBadgePublish}
+                  disabled={badgeBusy}
+                >
+                  <Eye size={14} /> Publish badge
+                </button>
+              </div>
+
+              <p className="share-help-text">
+                A published badge is readable by anyone who has the URL, with no sign-in. It shows
+                your most recent ATS score and nothing else — no file name, no skills, no resume
+                text.
+              </p>
+            </>
+          )}
+
+          {badgeError && (
+            <p className="share-error-text" role="alert">
+              {badgeError}
+            </p>
+          )}
         </div>
       )}
     </div>
