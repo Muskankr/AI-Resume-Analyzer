@@ -1,0 +1,110 @@
+/* ─── ATS Compatibility Panel Styles ────────────────────────────────── */
+
+.ats-panel {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: #e2e8f0;
+}
+
+.ats-header { text-align: center; margin-bottom: 28px; }
+.ats-header-icon { font-size: 36px; margin-bottom: 8px; }
+.ats-title {
+  font-size: 26px; font-weight: 800; margin: 0;
+  background: linear-gradient(135deg, #06b6d4, #3b82f6);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+}
+.ats-subtitle { font-size: 14px; color: #94a3b8; margin: 6px 0 0; line-height: 1.5; }
+
+/* Score Row */
+.ats-score-row {
+  display: flex; align-items: center; justify-content: center; gap: 32px;
+  background: rgba(255,255,255,0.06); border-radius: 16px; padding: 24px;
+  border: 1px solid rgba(255,255,255,0.08); margin-bottom: 24px;
+}
+
+.ats-gauge { position: relative; flex-shrink: 0; }
+.ats-gauge-center {
+  position: absolute; inset: 0; display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+}
+.ats-gauge-score { font-size: 32px; font-weight: 800; }
+.ats-gauge-label { font-size: 11px; color: #94a3b8; }
+
+.ats-score-details { text-align: center; }
+.ats-grade { font-size: 48px; font-weight: 900; margin-bottom: 8px; }
+.ats-pass-rate { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.ats-pass-label { font-size: 13px; color: #94a3b8; }
+.ats-pass-val { font-size: 18px; font-weight: 800; }
+.ats-counts { display: flex; gap: 12px; font-size: 12px; }
+
+/* Section Titles */
+.ats-section-title { font-size: 16px; font-weight: 700; color: #e2e8f0; margin: 0 0 14px; }
+
+/* Category Grid */
+.ats-categories { margin-bottom: 24px; }
+.ats-cat-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px;
+}
+.ats-cat-card {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 14px; background: rgba(255,255,255,0.06); border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.08);
+}
+.ats-cat-icon { font-size: 20px; }
+.ats-cat-name { font-size: 12px; color: #94a3b8; text-transform: capitalize; }
+.ats-cat-score { font-size: 22px; font-weight: 800; }
+
+/* Top Fixes */
+.ats-top-fixes { margin-bottom: 24px; }
+.ats-fixes-list { display: flex; flex-direction: column; gap: 10px; }
+
+/* Filter Bar */
+.ats-filter-bar { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+.ats-filter-btn {
+  padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04); color: #94a3b8; font-size: 12px;
+  font-weight: 600; cursor: pointer; transition: all 0.2s;
+}
+.ats-filter-btn:hover { background: rgba(255,255,255,0.08); color: #e2e8f0; }
+.ats-filter-active { background: rgba(6,182,212,0.15); border-color: rgba(6,182,212,0.4); color: #06b6d4; }
+
+/* All Checks */
+.ats-all-checks { margin-bottom: 24px; }
+.ats-checks-list { display: flex; flex-direction: column; gap: 10px; }
+
+/* Check Card */
+.ats-check-card {
+  background: rgba(255,255,255,0.06); border-radius: 12px; padding: 14px;
+  border: 1px solid rgba(255,255,255,0.08); border-left: 3px solid #22c55e;
+  transition: border-color 0.2s;
+}
+.ats-check-card:hover { border-color: rgba(255,255,255,0.15); }
+
+.ats-check-header {
+  display: flex; align-items: center; gap: 10px; cursor: pointer;
+}
+.ats-check-icon { font-size: 16px; flex-shrink: 0; }
+.ats-check-info { flex: 1; }
+.ats-check-name { font-size: 14px; font-weight: 700; color: #e2e8f0; display: block; }
+.ats-check-category { font-size: 11px; color: #64748b; text-transform: capitalize; }
+.ats-check-score-wrap { display: flex; align-items: center; gap: 8px; }
+.ats-check-score-bar-bg {
+  width: 80px; height: 6px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden;
+}
+.ats-check-score-bar { height: 100%; border-radius: 3px; transition: width 0.5s ease; }
+.ats-check-score-val { font-size: 14px; font-weight: 800; min-width: 28px; text-align: right; }
+.ats-chevron { font-size: 14px; color: #64748b; }
+
+.ats-check-body {
+  margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.06);
+}
+.ats-check-message { font-size: 13px; color: #cbd5e1; margin: 0 0 8px; line-height: 1.5; }
+.ats-check-suggestion { font-size: 13px; color: #94a3b8; margin: 0; line-height: 1.5; }
+
+@media (max-width: 640px) {
+  .ats-score-row { flex-direction: column; gap: 20px; }
+  .ats-cat-grid { grid-template-columns: repeat(3, 1fr); }
+  .ats-counts { flex-direction: column; gap: 4px; }
+}
