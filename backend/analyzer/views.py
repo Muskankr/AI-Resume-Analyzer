@@ -2450,3 +2450,30 @@ def batch_status(request, batch_id):
         })
     except BatchUpload.DoesNotExist:
         return Response({"error": "Batch not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+# ── Resume Score History & Trend Analysis ──────────────────────────────────
+
+@extend_schema(
+    summary="Get score history and trend analysis",
+    description=(
+        "Returns timeline data, improvement metrics, skill progression, "
+        "monthly aggregation, and role performance breakdown for the "
+        "authenticated user's analysis history."
+    ),
+    responses={
+        200: OpenApiResponse(description="Score history and trend data."),
+    },
+)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def score_history_view(request):
+    """Return score history with trend analysis for the current user."""
+    from .score_history import analyse_score_history
+    from .score_history_serializers import ScoreHistoryResultSerializer
+
+    analyses = ResumeAnalysis.objects.filter(user=request.user)
+
+    result = analyse_score_history(analyses)
+    serializer = ScoreHistoryResultSerializer(result.as_dict())
+    return Response(serializer.data, status=status.HTTP_200_OK)
