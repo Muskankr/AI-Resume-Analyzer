@@ -10,13 +10,14 @@ beforeAll(() => {
   Element.prototype.scrollIntoView = vi.fn()
 })
 
+vi.mock('../theme/ThemeContext', () => ({
+  useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }),
+}))
+
 const defaultProps = {
-  theme: 'dark' as const,
-  toggleTheme: vi.fn(),
   user: null,
   onLogin: vi.fn(),
   onLogout: vi.fn(),
-
 }
 
 const renderNavbar = (
@@ -45,7 +46,7 @@ describe('Navbar Component (#241)', () => {
   it('renders correctly in light mode', () => {
     render(
       <MemoryRouter>
-        <Navbar {...defaultProps} theme="light" />
+        <Navbar {...defaultProps} />
       </MemoryRouter>
     )
     expect(screen.getByText(/AI Resume Analyzer/i)).toBeInTheDocument()
@@ -56,14 +57,7 @@ describe('Navbar Component right-side cluster (#244)', () => {
   it('renders all right-side cluster elements without clipping issues', () => {
     render(
       <MemoryRouter>
-        <Navbar
-          theme="light"
-          toggleTheme={() => {}}
-          user={null}
-          onLogin={() => {}}
-          onLogout={() => {}}
-
-        />
+        <Navbar user={null} onLogin={() => {}} onLogout={() => {}} />
       </MemoryRouter>
     )
 
@@ -80,14 +74,7 @@ describe('Navbar Component right-side cluster (#244)', () => {
     const user = { username: 'testuser', token: 'fake-token' }
     render(
       <MemoryRouter>
-        <Navbar
-          theme="dark"
-          toggleTheme={() => {}}
-          user={user}
-          onLogin={() => {}}
-          onLogout={() => {}}
-
-        />
+        <Navbar user={user} onLogin={() => {}} onLogout={() => {}} />
       </MemoryRouter>
     )
 
@@ -100,14 +87,7 @@ describe('Navbar responsive hamburger (#245)', () => {
   it('renders the hamburger toggle button', () => {
     render(
       <MemoryRouter>
-        <Navbar
-          theme="light"
-          toggleTheme={() => {}}
-          user={null}
-          onLogin={() => {}}
-          onLogout={() => {}}
-
-        />
+        <Navbar user={null} onLogin={() => {}} onLogout={() => {}} />
       </MemoryRouter>
     )
 
@@ -120,14 +100,7 @@ describe('Navbar responsive hamburger (#245)', () => {
   it('toggles mobile menu open and closed on click', () => {
     render(
       <MemoryRouter>
-        <Navbar
-          theme="light"
-          toggleTheme={() => {}}
-          user={null}
-          onLogin={() => {}}
-          onLogout={() => {}}
-
-        />
+        <Navbar user={null} onLogin={() => {}} onLogout={() => {}} />
       </MemoryRouter>
     )
 
@@ -148,13 +121,7 @@ describe('Navbar responsive hamburger (#245)', () => {
   it('closes menu when a nav link is clicked', () => {
     render(
       <MemoryRouter>
-        <Navbar
-          theme="light"
-          toggleTheme={() => {}}
-          user={null}
-          onLogin={() => {}}
-          onLogout={() => {}}
-        />
+        <Navbar user={null} onLogin={() => {}} onLogout={() => {}} />
       </MemoryRouter>
     )
 

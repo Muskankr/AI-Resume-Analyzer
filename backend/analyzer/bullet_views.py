@@ -49,12 +49,13 @@ class BulletOptimizeView(APIView):
 
         bullets = serializer.validated_data["bullets"]
         target_role = serializer.validated_data.get("target_role", "")
+        job_description = serializer.validated_data.get("job_description", "")
 
         results = []
         total_score = 0
 
         for bullet in bullets:
-            analysis = BulletOptimizer.analyze(bullet)
+            analysis = BulletOptimizer.analyze(bullet, job_description=job_description)
             results.append(
                 {
                     "original": analysis.original,

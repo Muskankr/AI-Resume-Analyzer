@@ -118,8 +118,13 @@ export const FormattingChecks: React.FC<FormattingChecksProps> = ({ formattingCh
                 border: '1px solid rgba(255, 255, 255, 0.06)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                <FileText size={15} style={{ color: length_status === 'optimal' ? '#22c55e' : '#eab308' }} />
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}
+              >
+                <FileText
+                  size={15}
+                  style={{ color: length_status === 'optimal' ? '#22c55e' : '#eab308' }}
+                />
                 <strong style={{ fontSize: '0.85rem' }}>Length &amp; Pages</strong>
               </div>
               <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.85 }}>
@@ -136,8 +141,13 @@ export const FormattingChecks: React.FC<FormattingChecksProps> = ({ formattingCh
                 border: '1px solid rgba(255, 255, 255, 0.06)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                <Layout size={15} style={{ color: layout_status === 'optimal' ? '#22c55e' : '#ef4444' }} />
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}
+              >
+                <Layout
+                  size={15}
+                  style={{ color: layout_status === 'optimal' ? '#22c55e' : '#ef4444' }}
+                />
                 <strong style={{ fontSize: '0.85rem' }}>Table / Column Layout</strong>
               </div>
               <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.85 }}>
@@ -154,8 +164,13 @@ export const FormattingChecks: React.FC<FormattingChecksProps> = ({ formattingCh
                 border: '1px solid rgba(255, 255, 255, 0.06)',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                <Type size={15} style={{ color: missing_sections.length === 0 ? '#22c55e' : '#eab308' }} />
+              <div
+                style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}
+              >
+                <Type
+                  size={15}
+                  style={{ color: missing_sections.length === 0 ? '#22c55e' : '#eab308' }}
+                />
                 <strong style={{ fontSize: '0.85rem' }}>Standard Sections</strong>
               </div>
               <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.85 }}>
@@ -176,9 +191,21 @@ export const FormattingChecks: React.FC<FormattingChecksProps> = ({ formattingCh
             <h5 style={{ margin: '0 0 10px', fontSize: '0.9rem', fontWeight: '700' }}>
               Actionable ATS Formatting Guidance
             </h5>
-            <ul style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
+            <ul
+              style={{
+                margin: 0,
+                paddingLeft: '20px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                fontSize: '0.85rem',
+              }}
+            >
               {tips.length.map((t, idx) => (
-                <li key={`len-${idx}`} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                <li
+                  key={`len-${idx}`}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}
+                >
                   <span style={{ color: length_status === 'optimal' ? '#22c55e' : '#eab308' }}>
                     {length_status === 'optimal' ? '✓' : '⚠️'}
                   </span>
@@ -187,7 +214,10 @@ export const FormattingChecks: React.FC<FormattingChecksProps> = ({ formattingCh
               ))}
 
               {tips.sections.map((t, idx) => (
-                <li key={`sec-${idx}`} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                <li
+                  key={`sec-${idx}`}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}
+                >
                   <span style={{ color: missing_sections.length === 0 ? '#22c55e' : '#ef4444' }}>
                     {missing_sections.length === 0 ? '✓' : '⚠️'}
                   </span>
@@ -196,7 +226,10 @@ export const FormattingChecks: React.FC<FormattingChecksProps> = ({ formattingCh
               ))}
 
               {tips.layout.map((t, idx) => (
-                <li key={`lay-${idx}`} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                <li
+                  key={`lay-${idx}`}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}
+                >
                   <span style={{ color: layout_status === 'optimal' ? '#22c55e' : '#ef4444' }}>
                     {layout_status === 'optimal' ? '✓' : '⚠️'}
                   </span>
@@ -205,7 +238,10 @@ export const FormattingChecks: React.FC<FormattingChecksProps> = ({ formattingCh
               ))}
 
               {tips.typography.map((t, idx) => (
-                <li key={`typ-${idx}`} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+                <li
+                  key={`typ-${idx}`}
+                  style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}
+                >
                   <span style={{ color: '#22c55e' }}>✓</span>
                   <span>{t}</span>
                 </li>

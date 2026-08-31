@@ -374,7 +374,8 @@ def score_impact_language(lines: Sequence[str]) -> FactorScore:
     weak = 0
     for bullet in bullets:
         stripped = BULLET_PATTERN.sub("", bullet).strip().lower()
-        first_word = re.split(r"[^\w]+", stripped, maxsplit=1)[0] if stripped else ""
+        first_word = re.split(r"[^\w]+", stripped,
+                              maxsplit=1)[0] if stripped else ""
         if first_word in ACTION_VERBS:
             strong += 1
         elif any(stripped.startswith(opener) for opener in WEAK_OPENERS):
@@ -520,10 +521,12 @@ def score_length_and_format(text: str, lines: Sequence[str]) -> FactorScore:
         notes.append(f"{words} words is a good length")
     elif words < low:
         earned += WEIGHTS["length_format"] * 0.25
-        notes.append(f"{words} words is on the short side — aim for at least {low}")
+        notes.append(
+            f"{words} words is on the short side — aim for at least {low}")
     else:
         earned += WEIGHTS["length_format"] * 0.3
-        notes.append(f"{words} words is long — trimming below {high} keeps attention")
+        notes.append(
+            f"{words} words is long — trimming below {high} keeps attention")
 
     if len(bullets) >= 5:
         earned += WEIGHTS["length_format"] * 0.4
@@ -532,7 +535,8 @@ def score_length_and_format(text: str, lines: Sequence[str]) -> FactorScore:
         earned += WEIGHTS["length_format"] * 0.2
         notes.append("only a few bullet points — break dense paragraphs up")
     else:
-        notes.append("no bullet points detected — ATS parsers handle bullets better than paragraphs")
+        notes.append(
+            "no bullet points detected — ATS parsers handle bullets better than paragraphs")
 
     return _make_factor(
         "length_format", earned, "; ".join(notes).capitalize() + "."
@@ -540,7 +544,8 @@ def score_length_and_format(text: str, lines: Sequence[str]) -> FactorScore:
 
 
 def _summarise(overall: int, factors: Sequence[FactorScore]) -> str:
-    weakest = min(factors, key=lambda factor: factor.earned / factor.possible if factor.possible else 1)
+    weakest = min(factors, key=lambda factor: factor.earned /
+                  factor.possible if factor.possible else 1)
 
     if overall >= 80:
         opening = "Strong resume."
@@ -597,7 +602,8 @@ def compute_score_breakdown(
         )
 
     factors = [
-        score_keyword_match(matched_skills, required_skills, detected_skills, partial_skills),
+        score_keyword_match(matched_skills, required_skills,
+                            detected_skills, partial_skills),
         score_sections(text),
         score_impact_language(lines),
         score_contact_details(text),

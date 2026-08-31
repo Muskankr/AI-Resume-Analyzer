@@ -64,7 +64,8 @@ class PasswordResetRequestTests(TestCase):
         self.assertEqual(mail.outbox[0].to, ["resetme@example.com"])
 
     def test_the_email_contains_a_working_reset_link(self):
-        self.client.post("/api/password-reset/", {"username": "resetme"}, format="json")
+        self.client.post("/api/password-reset/",
+                         {"username": "resetme"}, format="json")
 
         uid, _ = reset_credentials(self.user)
         self.assertIn(f"/reset-password/{uid}/", mail.outbox[0].body)
@@ -74,12 +75,14 @@ class PasswordResetRequestTests(TestCase):
         """It was hardcoded to http://localhost:5173 wherever this ran."""
         link = build_password_reset_link(self.user)
 
-        self.assertTrue(link.startswith("https://resume.example.com/reset-password/"))
+        self.assertTrue(link.startswith(
+            "https://resume.example.com/reset-password/"))
         self.assertNotIn("localhost", link)
 
     @override_settings(FRONTEND_URL="https://resume.example.com/")
     def test_a_trailing_slash_does_not_double_up(self):
-        self.assertNotIn("//reset-password", build_password_reset_link(self.user))
+        self.assertNotIn("//reset-password",
+                         build_password_reset_link(self.user))
 
     def test_unknown_username_gets_the_same_answer(self):
         """The reply must not reveal whether an account exists."""
@@ -92,7 +95,8 @@ class PasswordResetRequestTests(TestCase):
 
         self.assertEqual(unknown.status_code, status.HTTP_200_OK)
         self.assertEqual(known.data, unknown.data)
-        self.assertEqual(unknown.data["message"], PASSWORD_RESET_REQUESTED_MESSAGE)
+        self.assertEqual(unknown.data["message"],
+                         PASSWORD_RESET_REQUESTED_MESSAGE)
 
     def test_no_email_is_sent_for_an_unknown_username(self):
         self.client.post(
@@ -109,7 +113,8 @@ class PasswordResetRequestTests(TestCase):
         )
 
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        self.assertEqual(resp.data["message"], PASSWORD_RESET_REQUESTED_MESSAGE)
+        self.assertEqual(resp.data["message"],
+                         PASSWORD_RESET_REQUESTED_MESSAGE)
         self.assertEqual(len(mail.outbox), 0)
 
     def test_missing_username_does_not_error(self):
@@ -127,7 +132,8 @@ class PasswordResetRequestTests(TestCase):
         """
         throttle = PasswordResetRequestThrottle()
         allowed = throttle.num_requests
-        self.assertIsNotNone(allowed, "password_reset throttle rate is not configured")
+        self.assertIsNotNone(
+            allowed, "password_reset throttle rate is not configured")
 
         for attempt in range(allowed):
             resp = self.client.post(
@@ -140,7 +146,8 @@ class PasswordResetRequestTests(TestCase):
         blocked = self.client.post(
             "/api/password-reset/", {"username": "resetme"}, format="json"
         )
-        self.assertEqual(blocked.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
+        self.assertEqual(blocked.status_code,
+                         status.HTTP_429_TOO_MANY_REQUESTS)
 
     def test_the_configured_rate_is_not_absurdly_high(self):
         """A 10000/hour ceiling would be the same as having none."""
@@ -269,7 +276,8 @@ class SignupPasswordPolicyTests(TestCase):
     """
 
     def _errors_for(self, password, username="brandnew"):
-        serializer = SignupSerializer(data={"username": username, "password": password})
+        serializer = SignupSerializer(
+            data={"username": username, "password": password})
         is_valid = serializer.is_valid()
         return is_valid, serializer.errors
 
@@ -304,7 +312,8 @@ class SignupPasswordPolicyTests(TestCase):
         self.assertIn("password", errors)
 
     def test_a_valid_password_actually_creates_the_user(self):
-        serializer = SignupSerializer(data={"username": "brandnew", "password": GOOD_PASSWORD})
+        serializer = SignupSerializer(
+            data={"username": "brandnew", "password": GOOD_PASSWORD})
         self.assertTrue(serializer.is_valid(), serializer.errors)
         serializer.save()
 

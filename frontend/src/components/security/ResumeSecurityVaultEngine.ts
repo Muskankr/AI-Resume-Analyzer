@@ -1,4 +1,8 @@
-import type { SecurityComplianceReport, SecurityVaultFilterQuery, SecurityAuditTimelineLog } from './types';
+import type {
+  SecurityComplianceReport,
+  SecurityVaultFilterQuery,
+  SecurityAuditTimelineLog,
+} from './types'
 
 export class ResumeSecurityVaultEngine {
   private static mockVaultReports: SecurityComplianceReport[] = [
@@ -71,7 +75,7 @@ export class ResumeSecurityVaultEngine {
       createdAt: '2026-08-22 01:10:00',
       lastAuditedAt: '2026-08-22 06:10:00',
     },
-  ];
+  ]
 
   private static mockAuditLogs: SecurityAuditTimelineLog[] = [
     {
@@ -98,35 +102,39 @@ export class ResumeSecurityVaultEngine {
       actor: 'KMS Service',
       complianceImpact: 'Key Rotation Verified',
     },
-  ];
+  ]
 
   public static getVaultReports(filters: SecurityVaultFilterQuery): SecurityComplianceReport[] {
     return this.mockVaultReports.filter((item) => {
-      if (filters.piiRiskLevel && filters.piiRiskLevel !== 'All' && item.piiRiskLevel !== filters.piiRiskLevel) {
-        return false;
+      if (
+        filters.piiRiskLevel &&
+        filters.piiRiskLevel !== 'All' &&
+        item.piiRiskLevel !== filters.piiRiskLevel
+      ) {
+        return false
       }
       if (filters.search && filters.search.trim() !== '') {
-        const query = filters.search.toLowerCase();
-        const matchesName = item.candidateName.toLowerCase().includes(query);
-        const matchesDoc = item.documentTitle.toLowerCase().includes(query);
-        if (!matchesName && !matchesDoc) return false;
+        const query = filters.search.toLowerCase()
+        const matchesName = item.candidateName.toLowerCase().includes(query)
+        const matchesDoc = item.documentTitle.toLowerCase().includes(query)
+        if (!matchesName && !matchesDoc) return false
       }
-      return true;
-    });
+      return true
+    })
   }
 
   public static getAuditLogs(): SecurityAuditTimelineLog[] {
-    return [...this.mockAuditLogs];
+    return [...this.mockAuditLogs]
   }
 
   public static applyRedaction(vaultId: string, fieldCategory: string): boolean {
-    const report = this.mockVaultReports.find((r) => r.vaultId === vaultId);
-    if (!report) return false;
-    const finding = report.piiFindings.find((f) => f.fieldCategory === fieldCategory);
+    const report = this.mockVaultReports.find((r) => r.vaultId === vaultId)
+    if (!report) return false
+    const finding = report.piiFindings.find((f) => f.fieldCategory === fieldCategory)
     if (finding) {
-      finding.isRedacted = true;
-      return true;
+      finding.isRedacted = true
+      return true
     }
-    return false;
+    return false
   }
 }

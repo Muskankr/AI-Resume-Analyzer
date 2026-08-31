@@ -70,10 +70,13 @@ def _diff_lines(older_text: str, newer_text: str, max_lines: int = 200) -> list:
     entries (unchanged runs are skipped so the payload stays small).
     """
 
-    older_lines = [ln.strip() for ln in (older_text or "").splitlines() if ln.strip()]
-    newer_lines = [ln.strip() for ln in (newer_text or "").splitlines() if ln.strip()]
+    older_lines = [ln.strip()
+                   for ln in (older_text or "").splitlines() if ln.strip()]
+    newer_lines = [ln.strip()
+                   for ln in (newer_text or "").splitlines() if ln.strip()]
 
-    matcher = difflib.SequenceMatcher(a=older_lines, b=newer_lines, autojunk=False)
+    matcher = difflib.SequenceMatcher(
+        a=older_lines, b=newer_lines, autojunk=False)
     diff = []
 
     for tag, i1, i2, j1, j2 in matcher.get_opcodes():
@@ -143,13 +146,15 @@ def _generate_insights(comparison: VersionComparison) -> list:
         )
 
     if comparison.still_missing_skills:
-        skills = ", ".join(s.title() for s in comparison.still_missing_skills[:5])
+        skills = ", ".join(s.title()
+                           for s in comparison.still_missing_skills[:5])
         insights.append(
             f"To improve further, consider adding evidence of: {skills}."
         )
 
     added_lines = sum(1 for d in comparison.text_diff if d["type"] == "added")
-    removed_lines = sum(1 for d in comparison.text_diff if d["type"] == "removed")
+    removed_lines = sum(
+        1 for d in comparison.text_diff if d["type"] == "removed")
     if added_lines or removed_lines:
         insights.append(
             f"Content changes: {added_lines} line{'s' if added_lines != 1 else ''} added, "
@@ -157,7 +162,8 @@ def _generate_insights(comparison: VersionComparison) -> list:
         )
 
     if not insights:
-        insights.append("No meaningful differences were detected between these versions.")
+        insights.append(
+            "No meaningful differences were detected between these versions.")
 
     return insights
 

@@ -18,10 +18,7 @@ describe('validateResumeFile', () => {
   it('accepts the three formats the backend parser reads', () => {
     const cases: Array<[string, string]> = [
       ['resume.pdf', 'application/pdf'],
-      [
-        'resume.docx',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      ],
+      ['resume.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
       ['resume.txt', 'text/plain'],
     ]
 

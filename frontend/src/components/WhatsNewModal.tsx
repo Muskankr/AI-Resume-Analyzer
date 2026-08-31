@@ -19,11 +19,13 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
     if (!isOpen) return
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // eslint-disable-next-line react-hooks/immutability
         handleDismiss()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, release.version])
 
   if (!isOpen) return null
@@ -47,14 +49,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
   }
 
   return (
-    <div
-      className="whats-new-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="whats-new-title"
-      onClick={handleDismiss}
-      data-testid="whats-new-overlay"
-    >
+    <div className="whats-new-overlay" onClick={handleDismiss} data-testid="whats-new-overlay">
       <div
         className="whats-new-modal"
         onClick={(e) => e.stopPropagation()}

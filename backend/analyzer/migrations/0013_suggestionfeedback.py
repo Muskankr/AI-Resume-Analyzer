@@ -26,7 +26,8 @@ class Migration(migrations.Migration):
                     ),
                 ),
                 ("suggestion_text", models.TextField()),
-                ("suggestion_hash", models.CharField(db_index=True, max_length=64)),
+                ("suggestion_hash", models.CharField(
+                    db_index=True, max_length=64)),
                 (
                     "vote",
                     models.CharField(

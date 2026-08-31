@@ -30,16 +30,11 @@ export const RegistrationLegalConsentBox: React.FC = () => {
 
   const handleCompleteRegistration = () => {
     if (!consent.acceptedTerms || !consent.acceptedPrivacy) {
-      alert(
-        'Please accept both the Terms of Service and Privacy Policy before continuing.'
-      )
+      alert('Please accept both the Terms of Service and Privacy Policy before continuing.')
       return
     }
 
-    const auditLog = createConsentAuditRecord(
-      'usr_candidate_9921',
-      consent
-    )
+    const auditLog = createConsentAuditRecord('usr_candidate_9921', consent)
 
     setIsSubmitted(true)
     console.log('Consent Audit Log Created:', auditLog)
@@ -53,9 +48,7 @@ export const RegistrationLegalConsentBox: React.FC = () => {
           GDPR & CCPA Compliance
         </div>
 
-        <h2 className="text-2xl font-black text-slate-100">
-          Legal Agreement & Consent
-        </h2>
+        <h2 className="text-2xl font-black text-slate-100">Legal Agreement & Consent</h2>
 
         <p className="text-xs text-slate-400">
           Please review and accept terms before creating your account.
@@ -66,15 +59,11 @@ export const RegistrationLegalConsentBox: React.FC = () => {
         <div className="bg-slate-950 border border-emerald-500/40 rounded-2xl p-6 text-center space-y-3">
           <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
 
-          <h3 className="text-base font-bold text-slate-100">
-            Registration Consent Verified
-          </h3>
+          <h3 className="text-base font-bold text-slate-100">Registration Consent Verified</h3>
 
           <p className="text-xs text-slate-400">
             Audit log record created at{' '}
-            <span className="font-mono text-emerald-400">
-              {consent.consentTimestamp}
-            </span>
+            <span className="font-mono text-emerald-400">{consent.consentTimestamp}</span>
           </p>
 
           <button

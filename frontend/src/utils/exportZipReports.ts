@@ -69,7 +69,10 @@ export function generateSingleReportPdf(item: BulkReportItem): jsPDF {
 
   if (item.jobDescription) {
     addLine('Job Description Reference', 12, true)
-    const snippet = item.jobDescription.length > 300 ? item.jobDescription.slice(0, 300) + '...' : item.jobDescription
+    const snippet =
+      item.jobDescription.length > 300
+        ? item.jobDescription.slice(0, 300) + '...'
+        : item.jobDescription
     addLine(snippet, 9)
   }
 
@@ -80,7 +83,10 @@ export function generateSingleReportPdf(item: BulkReportItem): jsPDF {
  * Sanitizes role or filename into a safe distinguishable filename string.
  */
 export function sanitizeFilename(str: string): string {
-  return str.replace(/[^\w.-]/g, '_').replace(/_+/g, '_').substring(0, 40)
+  return str
+    .replace(/[^\w.-]/g, '_')
+    .replace(/_+/g, '_')
+    .substring(0, 40)
 }
 
 /**
@@ -116,7 +122,9 @@ export async function downloadBulkReportsZip(
         matched_skills: item.matchedSkills,
         missing_skills: item.missingSkills,
         suggestions: item.suggestions,
-        timestamp: item.timestamp ? new Date(item.timestamp).toISOString() : new Date().toISOString(),
+        timestamp: item.timestamp
+          ? new Date(item.timestamp).toISOString()
+          : new Date().toISOString(),
         job_description: item.jobDescription || null,
       },
       null,

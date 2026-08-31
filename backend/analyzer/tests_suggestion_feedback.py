@@ -33,7 +33,8 @@ def make_analysis(user, **overrides):
 
 class SuggestionFeedbackModelTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="voter", password="password123")
+        self.user = User.objects.create_user(
+            username="voter", password="password123")
         self.analysis = make_analysis(self.user)
 
     def test_hash_is_derived_from_the_text_on_save(self):
@@ -41,7 +42,8 @@ class SuggestionFeedbackModelTests(TestCase):
             user=self.user, analysis=self.analysis, suggestion_text=SUGGESTION, vote="up"
         )
         self.assertEqual(
-            feedback.suggestion_hash, SuggestionFeedback.hash_suggestion(SUGGESTION)
+            feedback.suggestion_hash, SuggestionFeedback.hash_suggestion(
+                SUGGESTION)
         )
 
     def test_hash_ignores_surrounding_whitespace(self):
@@ -86,7 +88,8 @@ class SuggestionFeedbackModelTests(TestCase):
 class SuggestionFeedbackEndpointTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username="voter", password="password123")
+        self.user = User.objects.create_user(
+            username="voter", password="password123")
         self.analysis = make_analysis(self.user)
         self.client.force_authenticate(user=self.user)
 
@@ -96,7 +99,8 @@ class SuggestionFeedbackEndpointTests(TestCase):
     def test_requires_authentication(self):
         response = APIClient().post(
             "/api/suggestion-feedback/",
-            {"analysis_id": self.analysis.pk, "suggestion_text": SUGGESTION, "vote": "up"},
+            {"analysis_id": self.analysis.pk,
+                "suggestion_text": SUGGESTION, "vote": "up"},
             format="json",
         )
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
@@ -110,12 +114,14 @@ class SuggestionFeedbackEndpointTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(response.data["created"])
 
-        stored = SuggestionFeedback.objects.get(user=self.user, analysis=self.analysis)
+        stored = SuggestionFeedback.objects.get(
+            user=self.user, analysis=self.analysis)
         self.assertEqual(stored.vote, "up")
         self.assertEqual(stored.suggestion_text, SUGGESTION)
 
     def test_voting_again_updates_instead_of_duplicating(self):
-        self._post(analysis_id=self.analysis.pk, suggestion_text=SUGGESTION, vote="up")
+        self._post(analysis_id=self.analysis.pk,
+                   suggestion_text=SUGGESTION, vote="up")
         response = self._post(
             analysis_id=self.analysis.pk, suggestion_text=SUGGESTION, vote="down"
         )
@@ -151,7 +157,8 @@ class SuggestionFeedbackEndpointTests(TestCase):
         ):
             with self.subTest(payload=payload):
                 response = self._post(**payload)
-                self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+                self.assertEqual(response.status_code,
+                                 status.HTTP_400_BAD_REQUEST)
 
     def test_unknown_analysis_is_a_404(self):
         response = self._post(
@@ -160,10 +167,12 @@ class SuggestionFeedbackEndpointTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_cannot_vote_on_another_users_analysis(self):
-        stranger = User.objects.create_user(username="stranger", password="password123")
+        stranger = User.objects.create_user(
+            username="stranger", password="password123")
         theirs = make_analysis(stranger)
 
-        response = self._post(analysis_id=theirs.pk, suggestion_text=SUGGESTION, vote="up")
+        response = self._post(analysis_id=theirs.pk,
+                              suggestion_text=SUGGESTION, vote="up")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertEqual(SuggestionFeedback.objects.count(), 0)
@@ -175,7 +184,8 @@ class SuggestionFeedbackEndpointTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_get_returns_the_callers_votes_for_one_analysis(self):
-        self._post(analysis_id=self.analysis.pk, suggestion_text=SUGGESTION, vote="up")
+        self._post(analysis_id=self.analysis.pk,
+                   suggestion_text=SUGGESTION, vote="up")
         self._post(
             analysis_id=self.analysis.pk, suggestion_text=OTHER_SUGGESTION, vote="down"
         )
@@ -185,21 +195,25 @@ class SuggestionFeedbackEndpointTests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        votes = {row["suggestion_text"]: row["vote"] for row in response.data["results"]}
+        votes = {row["suggestion_text"]: row["vote"]
+                 for row in response.data["results"]}
         self.assertEqual(votes, {SUGGESTION: "up", OTHER_SUGGESTION: "down"})
 
     def test_get_does_not_leak_another_users_votes(self):
-        stranger = User.objects.create_user(username="stranger", password="password123")
+        stranger = User.objects.create_user(
+            username="stranger", password="password123")
         theirs = make_analysis(stranger)
         SuggestionFeedback.objects.create(
             user=stranger, analysis=theirs, suggestion_text=SUGGESTION, vote="up"
         )
 
-        response = self.client.get(f"/api/suggestion-feedback/?analysis_id={theirs.pk}")
+        response = self.client.get(
+            f"/api/suggestion-feedback/?analysis_id={theirs.pk}")
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_withdraws_a_vote(self):
-        self._post(analysis_id=self.analysis.pk, suggestion_text=SUGGESTION, vote="up")
+        self._post(analysis_id=self.analysis.pk,
+                   suggestion_text=SUGGESTION, vote="up")
 
         response = self.client.delete(
             "/api/suggestion-feedback/",

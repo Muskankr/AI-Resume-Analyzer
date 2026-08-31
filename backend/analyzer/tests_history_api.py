@@ -36,7 +36,8 @@ def make_analysis(user, index=0, **overrides):
 class HistoryListTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username="lister", password="password123")
+        self.user = User.objects.create_user(
+            username="lister", password="password123")
         self.client.force_authenticate(user=self.user)
 
     def test_requires_authentication(self):
@@ -72,7 +73,8 @@ class HistoryListTests(TestCase):
 
     def test_only_returns_the_requesting_users_analyses(self):
         make_analysis(self.user)
-        other = User.objects.create_user(username="someone-else", password="password123")
+        other = User.objects.create_user(
+            username="someone-else", password="password123")
         make_analysis(other, index=99)
 
         response = self.client.get("/api/history/")
@@ -83,14 +85,17 @@ class HistoryListTests(TestCase):
         for index in range(3):
             make_analysis(self.user, index=index)
 
-        names = [row["file_name"] for row in self.client.get("/api/history/").data]
-        self.assertEqual(names, ["resume-2.pdf", "resume-1.pdf", "resume-0.pdf"])
+        names = [row["file_name"]
+                 for row in self.client.get("/api/history/").data]
+        self.assertEqual(
+            names, ["resume-2.pdf", "resume-1.pdf", "resume-0.pdf"])
 
 
 class HistoryPaginationTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username="paginator", password="password123")
+        self.user = User.objects.create_user(
+            username="paginator", password="password123")
         self.client.force_authenticate(user=self.user)
         for index in range(25):
             make_analysis(self.user, index=index)
@@ -98,29 +103,36 @@ class HistoryPaginationTests(TestCase):
     def test_page_param_returns_an_envelope(self):
         response = self.client.get("/api/history/?page=1")
 
-        self.assertEqual(set(response.data), {"count", "page", "page_size", "next", "previous", "results"})
+        self.assertEqual(set(response.data), {
+                         "count", "page", "page_size", "next", "previous", "results"})
         self.assertEqual(response.data["count"], 25)
         self.assertEqual(response.data["page_size"], HISTORY_DEFAULT_PAGE_SIZE)
-        self.assertEqual(len(response.data["results"]), HISTORY_DEFAULT_PAGE_SIZE)
+        self.assertEqual(
+            len(response.data["results"]), HISTORY_DEFAULT_PAGE_SIZE)
 
     def test_second_page_holds_the_remainder(self):
         response = self.client.get("/api/history/?page=2")
 
-        self.assertEqual(len(response.data["results"]), 25 - HISTORY_DEFAULT_PAGE_SIZE)
+        self.assertEqual(
+            len(response.data["results"]), 25 - HISTORY_DEFAULT_PAGE_SIZE)
         self.assertIsNone(response.data["next"])
         self.assertIn("page=1", response.data["previous"])
 
     def test_pages_do_not_overlap_or_skip(self):
-        first = self.client.get("/api/history/?page=1&page_size=10").data["results"]
-        second = self.client.get("/api/history/?page=2&page_size=10").data["results"]
-        third = self.client.get("/api/history/?page=3&page_size=10").data["results"]
+        first = self.client.get(
+            "/api/history/?page=1&page_size=10").data["results"]
+        second = self.client.get(
+            "/api/history/?page=2&page_size=10").data["results"]
+        third = self.client.get(
+            "/api/history/?page=3&page_size=10").data["results"]
 
         ids = [row["id"] for row in first + second + third]
         self.assertEqual(len(ids), 25)
         self.assertEqual(len(set(ids)), 25)
 
     def test_page_size_is_capped(self):
-        response = self.client.get(f"/api/history/?page=1&page_size={HISTORY_MAX_PAGE_SIZE * 10}")
+        response = self.client.get(
+            f"/api/history/?page=1&page_size={HISTORY_MAX_PAGE_SIZE * 10}")
         self.assertEqual(response.data["page_size"], HISTORY_MAX_PAGE_SIZE)
 
     def test_page_size_alone_is_enough_to_paginate(self):
@@ -151,7 +163,8 @@ class HistoryPaginationTests(TestCase):
 class HistoryDetailTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username="reader", password="password123")
+        self.user = User.objects.create_user(
+            username="reader", password="password123")
         self.client.force_authenticate(user=self.user)
         self.analysis = make_analysis(self.user)
 
@@ -160,10 +173,12 @@ class HistoryDetailTests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["resume_text"], LONG_RESUME_TEXT)
-        self.assertEqual(response.data["interview_questions"], ["Explain the GIL."])
+        self.assertEqual(response.data["interview_questions"], [
+                         "Explain the GIL."])
 
     def test_detail_does_not_expose_another_users_analysis(self):
-        other = User.objects.create_user(username="stranger", password="password123")
+        other = User.objects.create_user(
+            username="stranger", password="password123")
         theirs = make_analysis(other, index=7)
 
         response = self.client.get(f"/api/history/{theirs.pk}/")
@@ -173,10 +188,12 @@ class HistoryDetailTests(TestCase):
         response = self.client.delete(f"/api/history/{self.analysis.pk}/")
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(ResumeAnalysis.objects.filter(pk=self.analysis.pk).exists())
+        self.assertFalse(ResumeAnalysis.objects.filter(
+            pk=self.analysis.pk).exists())
 
     def test_delete_does_not_touch_another_users_analysis(self):
-        other = User.objects.create_user(username="stranger", password="password123")
+        other = User.objects.create_user(
+            username="stranger", password="password123")
         theirs = make_analysis(other, index=7)
 
         response = self.client.delete(f"/api/history/{theirs.pk}/")
@@ -187,17 +204,20 @@ class HistoryDetailTests(TestCase):
 class ClearHistoryTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username="clearer", password="password123")
+        self.user = User.objects.create_user(
+            username="clearer", password="password123")
         self.client.force_authenticate(user=self.user)
 
     def test_clear_removes_only_the_callers_rows(self):
         make_analysis(self.user)
-        other = User.objects.create_user(username="bystander", password="password123")
+        other = User.objects.create_user(
+            username="bystander", password="password123")
         make_analysis(other, index=3)
 
         self.client.delete("/api/history/clear/")
 
-        self.assertFalse(ResumeAnalysis.objects.filter(user=self.user).exists())
+        self.assertFalse(ResumeAnalysis.objects.filter(
+            user=self.user).exists())
         self.assertTrue(ResumeAnalysis.objects.filter(user=other).exists())
 
     def test_204_response_has_no_body(self):

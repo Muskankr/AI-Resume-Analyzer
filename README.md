@@ -59,6 +59,43 @@
 
 ---
 
+## 🌐 Browser Compatibility
+
+### Supported Browsers
+
+| Browser | Version | Status | Notes |
+|---------|---------|--------|-------|
+| Chrome | 90+ | ✅ Fully Supported | Best performance |
+| Firefox | 88+ | ✅ Fully Supported | Slight UI differences |
+| Edge | 90+ | ✅ Fully Supported | Chromium-based |
+| Safari | 14+ | ✅ Supported | Some CSS limitations |
+| Opera | 76+ | ⚠️ Partial | Minor UI issues |
+| Brave | 1.20+ | ✅ Fully Supported | Chromium-based |
+
+### Mobile Support
+
+| Browser | Version | Status |
+|---------|---------|--------|
+| Chrome Mobile | 90+ | ✅ Supported |
+| Safari Mobile | 14+ | ✅ Supported |
+| Samsung Internet | 15+ | ✅ Supported |
+
+### Minimum Requirements
+- JavaScript: ES6+
+- Cookies: Enabled
+- Local Storage: Enabled
+- Screen: 1024x768 min
+- Internet: 2 Mbps min
+
+### Known Limitations
+- Safari: PDF preview may not render correctly (🔄 In Progress)
+- Firefox: Drag-and-drop upload has minor delay (✅ Fixed in v1.2)
+- Opera: Keyboard shortcuts conflict (⚠️ Known Issue)
+
+> Full details: [BROWSER_COMPATIBILITY.md](docs/BROWSER_COMPATIBILITY.md)
+
+---
+
 ## Project Preview/ Screenshots
 
 ### 🏠 Home Page
@@ -595,6 +632,17 @@ Once both services are running, open the frontend in your browser and ensure it 
 
 ---
 
+## AI Cover Letter Generator (Issue #965)
+
+The **AI Cover Letter Generator** creates highly personalized cover letter drafts by intelligently matching extracted resume evidence against a provided target job description.
+
+- **Anti-Fabrication Safeguards**: Uses strict prompt guardrails to ensure no companies, job titles, or skills are hallucinated if they are not explicitly listed in your resume.
+- **Customizable**: Allows users to input specific job descriptions to fine-tune the relevance of the output.
+- **Draft Status**: All outputs are clearly labeled as `[AI-GENERATED DRAFT - PLEASE REVIEW AND EDIT]`, ensuring it's used as a starting point.
+- **Architecture**: Plugs cleanly into the existing Django REST Framework API and React UI, using an LLM integration (configurable via `OPENAI_API_KEY`) accessed directly through standard REST requests.
+
+---
+
 ## ATS Simulator (Issue #974)
 
 The **ATS Simulator** is a specialized feature that evaluates analyzed resumes against the known parsing quirks and limitations of major enterprise applicant tracking systems (like Workday, Greenhouse, and Taleo).
@@ -618,6 +666,8 @@ The **ATS Simulator** is a specialized feature that evaluates analyzed resumes a
 ## Contributing
 
 We welcome contributions of all levels under the **ECSoC'26** program!
+
+> 🌱 **Never opened a pull request before?** Follow our beginner-friendly [Your First Pull Request Ever](docs/FIRST_PULL_REQUEST.md) guide — a step-by-step walkthrough (forking, cloning, branching, committing, and opening the PR) that assumes zero prior Git/GitHub experience.
 
 📜 Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating in this project. By contributing, you agree to abide by its guidelines.
 
@@ -663,5 +713,7 @@ A huge thanks to all the developers who have contributed code, fixed bugs, and i
 </div>
 
 ## Community
+
+Have a question, idea, or something to show off? Use [GitHub Discussions](https://github.com/Muskankr/AI-Resume-Analyzer/discussions) for open-ended conversations (Q&A, Ideas, Show and Tell), and keep the [Issues](https://github.com/Muskankr/AI-Resume-Analyzer/issues) tab for actionable, scoped work items.
 
 Join our [Discord Community](YOUR_DISCORD_URL) to ask questions, discuss the project, and connect with contributors.

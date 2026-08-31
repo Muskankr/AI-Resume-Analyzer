@@ -1,8 +1,8 @@
-import React from 'react';
-import type { VersionAuditLog } from './types';
+import React from 'react'
+import type { VersionAuditLog } from './types'
 
 interface VersionAuditTimelineProps {
-  logs: VersionAuditLog[];
+  logs: VersionAuditLog[]
 }
 
 export const VersionAuditTimeline: React.FC<VersionAuditTimelineProps> = ({ logs }) => {
@@ -24,5 +24,5 @@ export const VersionAuditTimeline: React.FC<VersionAuditTimelineProps> = ({ logs
         ))}
       </div>
     </div>
-  );
-};
+  )
+}

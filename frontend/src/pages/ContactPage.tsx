@@ -139,9 +139,7 @@ export const ContactPage: React.FC = () => {
           }}
         >
           <div style={{ fontSize: '1.6rem', marginBottom: '8px' }}>🐙</div>
-          <h3 style={{ fontSize: '1.05rem', color: '#fff', marginBottom: '6px' }}>
-            GitHub Issues
-          </h3>
+          <h3 style={{ fontSize: '1.05rem', color: '#fff', marginBottom: '6px' }}>GitHub Issues</h3>
           <p style={{ color: '#94a3b8', fontSize: '0.88rem', margin: 0, lineHeight: '1.6' }}>
             Developer or feature request?
             <br />

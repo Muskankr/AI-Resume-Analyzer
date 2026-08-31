@@ -17,14 +17,16 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='BatchUpload',
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('id', models.UUIDField(default=uuid.uuid4,
+                 editable=False, primary_key=True, serialize=False)),
                 ('status', models.CharField(default='Pending', max_length=50)),
                 ('uploaded_at', models.DateTimeField(auto_now_add=True)),
                 ('total_files', models.IntegerField(default=0)),
                 ('processed_files', models.IntegerField(default=0)),
                 ('results', models.JSONField(blank=True, default=list)),
                 ('error_message', models.TextField(blank=True, null=True)),
-                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='batch_uploads', to=settings.AUTH_USER_MODEL)),
+                ('user', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE,
+                 related_name='batch_uploads', to=settings.AUTH_USER_MODEL)),
             ],
             options={
                 'ordering': ['-uploaded_at'],
