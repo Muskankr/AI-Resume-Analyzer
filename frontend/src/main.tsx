@@ -51,6 +51,7 @@ import { Routes, Route } from 'react-router-dom'
 import { TermsOfService } from './pages/TermsOfService'
 import { ProfilePage } from './components/ProfilePage'
 import { CareerRoadmap } from './pages/CareerRoadmap'
+import { InterviewQuestionBank } from './components/InterviewQuestionBank'
 import { RecruiterDashboard } from './pages/Recruiter/RecruiterDashboard'
 import { ResumeVersionHistory } from './components/ResumeVersionHistory'
 import { ATSCompatibilityScanner } from './components/ATSCompatibilityScanner'
@@ -68,6 +69,7 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/docs" element={<ApiDocs />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/career-roadmap" element={<CareerRoadmap />} />
+          <Route path="/interview-bank" element={<InterviewQuestionBank />} />
           <Route path="/version-history" element={<ResumeVersionHistory />} />
           <Route path="/ats-scanner" element={<ATSCompatibilityScanner />} />
           <Route path="/contributors" element={<ContributorCertificate />} />
