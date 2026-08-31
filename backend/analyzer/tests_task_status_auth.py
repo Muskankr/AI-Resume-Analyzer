@@ -57,10 +57,12 @@ class ClaimHelperTests(TestCase):
 
     def setUp(self):
         self.factory = APIRequestFactory()
-        self.user = User.objects.create_user(username="jane", password="password123")
+        self.user = User.objects.create_user(
+            username="jane", password="password123")
 
     def _request(self, claim=None, user=None):
-        request = self.factory.get(f"/api/status/{TASK_ID}/", **({"HTTP_X_ANALYSIS_TOKEN": claim} if claim else {}))
+        request = self.factory.get(
+            f"/api/status/{TASK_ID}/", **({"HTTP_X_ANALYSIS_TOKEN": claim} if claim else {}))
         request.user = user or self.user
         # `verify_claim` reads `query_params` when no header is present, which
         # only DRF's request wrapper provides.
@@ -79,22 +81,27 @@ class ClaimHelperTests(TestCase):
         """Otherwise owning one task would unlock every id the holder tries."""
         claim = issue_claim(TASK_ID, self._request())
 
-        self.assertFalse(verify_claim("some-other-task-id", self._request(claim=claim)))
+        self.assertFalse(verify_claim(
+            "some-other-task-id", self._request(claim=claim)))
 
     def test_a_claim_is_bound_to_one_user(self):
-        other = User.objects.create_user(username="bob", password="password123")
+        other = User.objects.create_user(
+            username="bob", password="password123")
         claim = issue_claim(TASK_ID, self._request())
 
-        self.assertFalse(verify_claim(TASK_ID, self._request(claim=claim, user=other)))
+        self.assertFalse(verify_claim(
+            TASK_ID, self._request(claim=claim, user=other)))
 
     def test_a_tampered_claim_is_rejected(self):
         claim = issue_claim(TASK_ID, self._request())
 
-        self.assertFalse(verify_claim(TASK_ID, self._request(claim=claim + "x")))
+        self.assertFalse(verify_claim(
+            TASK_ID, self._request(claim=claim + "x")))
 
     def test_an_unsigned_payload_is_rejected(self):
         """Signing is the whole mechanism; a hand-built payload must not pass."""
-        forged = signing.dumps({"t": TASK_ID, "o": f"user:{self.user.id}"}, salt="not-our-salt")
+        forged = signing.dumps(
+            {"t": TASK_ID, "o": f"user:{self.user.id}"}, salt="not-our-salt")
 
         self.assertFalse(verify_claim(TASK_ID, self._request(claim=forged)))
 
@@ -121,8 +128,10 @@ class TaskStatusAuthorizationTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.owner = User.objects.create_user(username="owner", password="password123")
-        self.other = User.objects.create_user(username="other", password="password123")
+        self.owner = User.objects.create_user(
+            username="owner", password="password123")
+        self.other = User.objects.create_user(
+            username="other", password="password123")
 
     def _claim_for(self, user):
         factory = APIRequestFactory()
@@ -235,7 +244,8 @@ class TaskFailureDisclosureTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username="jane", password="password123")
+        self.user = User.objects.create_user(
+            username="jane", password="password123")
         self.client.force_authenticate(user=self.user)
 
         factory = APIRequestFactory()
@@ -253,7 +263,8 @@ class TaskFailureDisclosureTests(TestCase):
             response = self._get()
 
         body = response.content.decode()
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.status_code,
+                         status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertNotIn("/srv/app", body)
         self.assertNotIn("not a PDF", body)
 

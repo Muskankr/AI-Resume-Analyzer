@@ -13,7 +13,8 @@ class ContentSecurityPolicyMiddleware:
         """Inject CSP and Cache-Control headers based on response content type and path."""
         response = self.get_response(request)
         content_type = response.get("Content-Type", "")
-        is_api = request.path.startswith("/api/") or (content_type and content_type.startswith("application/json"))
+        is_api = request.path.startswith(
+            "/api/") or (content_type and content_type.startswith("application/json"))
 
         if is_api:
             # API requests don't need to load scripts, styles, or frame other websites

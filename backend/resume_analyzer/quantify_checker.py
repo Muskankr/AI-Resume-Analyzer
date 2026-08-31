@@ -59,11 +59,13 @@ METRIC_PROMPTS = {
     "default": "Try adding a number, percentage, dollar amount, or time saved.",
 }
 
+
 class QuantifyNudge(TypedDict):
     line_index: int
     original_text: str
     suggestion: str
     hint: str
+
 
 def is_exempt(line: str) -> bool:
     stripped = line.strip().lstrip("-*▪▸ \t")
@@ -74,6 +76,7 @@ def is_exempt(line: str) -> bool:
             return True
     return False
 
+
 def _pick_hint(line: str) -> str:
     for key, hint in METRIC_PROMPTS.items():
         if key == "default":
@@ -81,6 +84,7 @@ def _pick_hint(line: str) -> str:
         if re.search(r"\b" + key, line, re.IGNORECASE):
             return hint
     return METRIC_PROMPTS["default"]
+
 
 def flag_unquantified_bullets(bullets: list[str]) -> list[QuantifyNudge]:
     nudges: list[QuantifyNudge] = []

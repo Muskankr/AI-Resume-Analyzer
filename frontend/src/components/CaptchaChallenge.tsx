@@ -23,6 +23,7 @@ export const CaptchaChallenge: React.FC<CaptchaChallengeProps> = ({ onVerify }) 
   }
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     generateChallenge()
   }, [])
 
@@ -124,7 +125,9 @@ export const CaptchaChallenge: React.FC<CaptchaChallengeProps> = ({ onVerify }) 
       </div>
 
       {!verified && (
-        <p style={{ fontSize: '0.78rem', color: '#94a3b8', margin: '6px 0 0 0', textAlign: 'left' }}>
+        <p
+          style={{ fontSize: '0.78rem', color: '#94a3b8', margin: '6px 0 0 0', textAlign: 'left' }}
+        >
           Solve the quick puzzle above to verify you are human.
         </p>
       )}

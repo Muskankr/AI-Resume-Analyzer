@@ -1,0 +1,526 @@
+/**
+ * Dyslexia-Friendly Font Styles
+ * Comprehensive CSS for dyslexia-friendly font support
+ */
+
+/* ============================================
+   Font Imports
+   ============================================ */
+
+/* OpenDyslexic - Import via CDN */
+@import url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/woff/OpenDyslexic-Regular.woff2');
+@import url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/woff/OpenDyslexic-Bold.woff2');
+@import url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/woff/OpenDyslexic-Italic.woff2');
+@import url('https://cdn.jsdelivr.net/npm/open-dyslexic@1.0.3/woff/OpenDyslexic-BoldItalic.woff2');
+
+/* Atkinson Hyperlegible - Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+
+/* Lexend - Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@100..900&display=swap');
+
+/* ============================================
+   CSS Variables
+   ============================================ */
+
+:root {
+  /* Default font variables */
+  --font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-body: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-size-base: 16px;
+  --font-line-height: 1.5;
+  --font-letter-spacing: normal;
+  --font-weight-normal: 400;
+  --font-weight-bold: 700;
+
+  /* OpenDyslexic specific */
+  --font-opendyslexic-family: "OpenDyslexic", "OpenDyslexic3", "OpenDyslexic Mono", "OpenDyslexic Rounded", system-ui, sans-serif;
+  --font-opendyslexic-letter-spacing: 0.05em;
+  --font-opendyslexic-line-height: 1.6;
+
+  /* Atkinson specific */
+  --font-atkinson-family: "Atkinson Hyperlegible", system-ui, sans-serif;
+  --font-atkinson-letter-spacing: 0.02em;
+  --font-atkinson-line-height: 1.5;
+
+  /* Lexend specific */
+  --font-lexend-family: "Lexend", system-ui, sans-serif;
+  --font-lexend-letter-spacing: 0.04em;
+  --font-lexend-line-height: 1.6;
+
+  /* Comic Sans specific */
+  --font-comic-family: "Comic Sans MS", "Comic Sans", cursive;
+  --font-comic-letter-spacing: 0.03em;
+  --font-comic-line-height: 1.5;
+
+  /* Dyslexie specific */
+  --font-dyslexie-family: "Dyslexie", "Dyslexie Regular", "Dyslexie Bold", system-ui, sans-serif;
+  --font-dyslexie-letter-spacing: 0.06em;
+  --font-dyslexie-line-height: 1.7;
+
+  /* Contrast settings */
+  --high-contrast-text: #000000;
+  --high-contrast-background: #ffffff;
+  --high-contrast-link: #0000ff;
+  --high-contrast-border: #000000;
+
+  /* Large text */
+  --large-text-scale: 1.2;
+}
+
+/* ============================================
+   Font Classes
+   ============================================ */
+
+/* Default Font */
+.font-default {
+  font-family: var(--font-family);
+  font-size: var(--font-size-base);
+  line-height: var(--font-line-height);
+  letter-spacing: var(--font-letter-spacing);
+}
+
+/* OpenDyslexic Font */
+.font-opendyslexic {
+  font-family: var(--font-opendyslexic-family);
+  letter-spacing: var(--font-opendyslexic-letter-spacing);
+  line-height: var(--font-opendyslexic-line-height);
+}
+
+.font-opendyslexic p,
+.font-opendyslexic span,
+.font-opendyslexic div,
+.font-opendyslexic li,
+.font-opendyslexic a {
+  font-family: var(--font-opendyslexic-family);
+  letter-spacing: var(--font-opendyslexic-letter-spacing);
+  line-height: var(--font-opendyslexic-line-height);
+}
+
+.font-opendyslexic h1,
+.font-opendyslexic h2,
+.font-opendyslexic h3,
+.font-opendyslexic h4,
+.font-opendyslexic h5,
+.font-opendyslexic h6 {
+  font-family: var(--font-opendyslexic-family);
+  font-weight: 700;
+  letter-spacing: var(--font-opendyslexic-letter-spacing);
+  line-height: 1.4;
+}
+
+/* Atkinson Hyperlegible Font */
+.font-atkinson {
+  font-family: var(--font-atkinson-family);
+  letter-spacing: var(--font-atkinson-letter-spacing);
+  line-height: var(--font-atkinson-line-height);
+}
+
+.font-atkinson p,
+.font-atkinson span,
+.font-atkinson div,
+.font-atkinson li,
+.font-atkinson a {
+  font-family: var(--font-atkinson-family);
+  letter-spacing: var(--font-atkinson-letter-spacing);
+  line-height: var(--font-atkinson-line-height);
+}
+
+.font-atkinson h1,
+.font-atkinson h2,
+.font-atkinson h3,
+.font-atkinson h4,
+.font-atkinson h5,
+.font-atkinson h6 {
+  font-family: var(--font-atkinson-family);
+  font-weight: 700;
+  letter-spacing: var(--font-atkinson-letter-spacing);
+  line-height: 1.4;
+}
+
+/* Lexend Font */
+.font-lexend {
+  font-family: var(--font-lexend-family);
+  letter-spacing: var(--font-lexend-letter-spacing);
+  line-height: var(--font-lexend-line-height);
+}
+
+.font-lexend p,
+.font-lexend span,
+.font-lexend div,
+.font-lexend li,
+.font-lexend a {
+  font-family: var(--font-lexend-family);
+  letter-spacing: var(--font-lexend-letter-spacing);
+  line-height: var(--font-lexend-line-height);
+}
+
+.font-lexend h1,
+.font-lexend h2,
+.font-lexend h3,
+.font-lexend h4,
+.font-lexend h5,
+.font-lexend h6 {
+  font-family: var(--font-lexend-family);
+  font-weight: 600;
+  letter-spacing: var(--font-lexend-letter-spacing);
+  line-height: 1.4;
+}
+
+/* Comic Sans Font */
+.font-comic-sans {
+  font-family: var(--font-comic-family);
+  letter-spacing: var(--font-comic-letter-spacing);
+  line-height: var(--font-comic-line-height);
+}
+
+.font-comic-sans p,
+.font-comic-sans span,
+.font-comic-sans div,
+.font-comic-sans li,
+.font-comic-sans a {
+  font-family: var(--font-comic-family);
+  letter-spacing: var(--font-comic-letter-spacing);
+  line-height: var(--font-comic-line-height);
+}
+
+/* Dyslexie Font */
+.font-dyslexie {
+  font-family: var(--font-dyslexie-family);
+  letter-spacing: var(--font-dyslexie-letter-spacing);
+  line-height: var(--font-dyslexie-line-height);
+}
+
+.font-dyslexie p,
+.font-dyslexie span,
+.font-dyslexie div,
+.font-dyslexie li,
+.font-dyslexie a {
+  font-family: var(--font-dyslexie-family);
+  letter-spacing: var(--font-dyslexie-letter-spacing);
+  line-height: var(--font-dyslexie-line-height);
+}
+
+/* ============================================
+   High Contrast Mode
+   ============================================ */
+
+.high-contrast,
+.high-contrast * {
+  --high-contrast-text: #000000;
+  --high-contrast-background: #ffffff;
+  --high-contrast-link: #0000ff;
+  --high-contrast-border: #000000;
+
+  color: var(--high-contrast-text) !important;
+  background-color: var(--high-contrast-background) !important;
+  border-color: var(--high-contrast-border) !important;
+}
+
+.high-contrast a {
+  color: var(--high-contrast-link) !important;
+  text-decoration: underline !important;
+}
+
+.high-contrast button {
+  border: 2px solid var(--high-contrast-border) !important;
+}
+
+.high-contrast input,
+.high-contrast textarea,
+.high-contrast select {
+  border: 2px solid var(--high-contrast-border) !important;
+  color: var(--high-contrast-text) !important;
+  background-color: var(--high-contrast-background) !important;
+}
+
+.high-contrast .card,
+.high-contrast .paper,
+.high-contrast .container {
+  border: 2px solid var(--high-contrast-border) !important;
+  background-color: var(--high-contrast-background) !important;
+}
+
+/* ============================================
+   Large Text Mode
+   ============================================ */
+
+.large-text,
+.large-text * {
+  font-size: calc(var(--font-size-base) * var(--large-text-scale)) !important;
+}
+
+.large-text h1 {
+  font-size: calc(2.5rem * var(--large-text-scale)) !important;
+}
+
+.large-text h2 {
+  font-size: calc(2rem * var(--large-text-scale)) !important;
+}
+
+.large-text h3 {
+  font-size: calc(1.75rem * var(--large-text-scale)) !important;
+}
+
+.large-text h4 {
+  font-size: calc(1.5rem * var(--large-text-scale)) !important;
+}
+
+.large-text h5 {
+  font-size: calc(1.25rem * var(--large-text-scale)) !important;
+}
+
+.large-text h6 {
+  font-size: calc(1rem * var(--large-text-scale)) !important;
+}
+
+.large-text p {
+  font-size: calc(1rem * var(--large-text-scale)) !important;
+  line-height: 1.8 !important;
+}
+
+.large-text button {
+  font-size: calc(0.875rem * var(--large-text-scale)) !important;
+}
+
+.large-text input,
+.large-text textarea,
+.large-text select {
+  font-size: calc(1rem * var(--large-text-scale)) !important;
+}
+
+/* ============================================
+   Reduced Motion
+   ============================================ */
+
+.reduce-motion,
+.reduce-motion * {
+  animation-duration: 0.01ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 0.01ms !important;
+  scroll-behavior: auto !important;
+}
+
+.reduce-motion .animated,
+.reduce-motion .fade,
+.reduce-motion .slide,
+.reduce-motion .zoom {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}
+
+/* ============================================
+   Combined Accessibility Features
+   ============================================ */
+
+/* High Contrast + Large Text */
+.high-contrast.large-text,
+.high-contrast .large-text {
+  font-size: calc(var(--font-size-base) * var(--large-text-scale) * 1.1) !important;
+}
+
+/* Dyslexia Font + Large Text */
+.font-opendyslexic.large-text,
+.font-opendyslexic .large-text,
+.font-atkinson.large-text,
+.font-atkinson .large-text,
+.font-lexend.large-text,
+.font-lexend .large-text {
+  font-size: calc(var(--font-size-base) * var(--large-text-scale) * 1.05) !important;
+  line-height: 2 !important;
+}
+
+/* Dyslexia Font + High Contrast */
+.font-opendyslexic.high-contrast,
+.font-opendyslexic .high-contrast,
+.font-atkinson.high-contrast,
+.font-atkinson .high-contrast,
+.font-lexend.high-contrast,
+.font-lexend .high-contrast {
+  letter-spacing: calc(var(--font-opendyslexic-letter-spacing) + 0.02em) !important;
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+  /* Keep dyslexia fonts in print */
+  .font-opendyslexic {
+    font-family: var(--font-opendyslexic-family) !important;
+    letter-spacing: var(--font-opendyslexic-letter-spacing) !important;
+    line-height: var(--font-opendyslexic-line-height) !important;
+  }
+
+  .font-atkinson {
+    font-family: var(--font-atkinson-family) !important;
+    letter-spacing: var(--font-atkinson-letter-spacing) !important;
+    line-height: var(--font-atkinson-line-height) !important;
+  }
+
+  .font-lexend {
+    font-family: var(--font-lexend-family) !important;
+    letter-spacing: var(--font-lexend-letter-spacing) !important;
+    line-height: var(--font-lexend-line-height) !important;
+  }
+
+  /* Ensure high contrast in print */
+  .high-contrast {
+    color: #000000 !important;
+    background: #ffffff !important;
+  }
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+
+@media (max-width: 768px) {
+  .font-opendyslexic,
+  .font-atkinson,
+  .font-lexend {
+    letter-spacing: calc(0.03em) !important;
+  }
+
+  .large-text {
+    font-size: calc(var(--font-size-base) * var(--large-text-scale) * 0.9) !important;
+  }
+
+  .large-text h1 {
+    font-size: calc(2rem * var(--large-text-scale) * 0.9) !important;
+  }
+
+  .large-text h2 {
+    font-size: calc(1.75rem * var(--large-text-scale) * 0.9) !important;
+  }
+
+  .large-text h3 {
+    font-size: calc(1.5rem * var(--large-text-scale) * 0.9) !important;
+  }
+}
+
+/* ============================================
+   Dark Mode Support
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  .high-contrast {
+    --high-contrast-text: #ffffff !important;
+    --high-contrast-background: #000000 !important;
+    --high-contrast-link: #66b3ff !important;
+    --high-contrast-border: #ffffff !important;
+  }
+
+  .high-contrast * {
+    color: var(--high-contrast-text) !important;
+    background-color: var(--high-contrast-background) !important;
+    border-color: var(--high-contrast-border) !important;
+  }
+
+  .high-contrast a {
+    color: var(--high-contrast-link) !important;
+  }
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+/* Force font on specific elements */
+.font-force {
+  font-family: var(--font-family) !important;
+}
+
+.font-force-opendyslexic {
+  font-family: var(--font-opendyslexic-family) !important;
+}
+
+.font-force-atkinson {
+  font-family: var(--font-atkinson-family) !important;
+}
+
+.font-force-lexend {
+  font-family: var(--font-lexend-family) !important;
+}
+
+/* Exclude from font changes */
+.font-exclude,
+.font-exclude * {
+  font-family: inherit !important;
+}
+
+/* Letter spacing helpers */
+.letter-spacing-wide {
+  letter-spacing: 0.05em !important;
+}
+
+.letter-spacing-wider {
+  letter-spacing: 0.1em !important;
+}
+
+/* Line height helpers */
+.line-height-large {
+  line-height: 1.8 !important;
+}
+
+.line-height-larger {
+  line-height: 2 !important;
+}
+
+/* Accessibility quick toggle indicators */
+[data-dyslexia-font="true"] .dyslexia-indicator {
+  display: inline-block !important;
+}
+
+[data-dyslexia-font="false"] .dyslexia-indicator {
+  display: none !important;
+}
+
+.dyslexia-indicator {
+  display: none;
+  background: #4f46e5;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 4px;
+}
+
+/* High contrast indicator */
+.high-contrast .contrast-indicator {
+  display: inline-block !important;
+}
+
+.contrast-indicator {
+  display: none;
+  background: #000;
+  color: #fff;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 4px;
+}
+
+/* Large text indicator */
+.large-text .large-text-indicator {
+  display: inline-block !important;
+}
+
+.large-text-indicator {
+  display: none;
+  background: #059669;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 4px;
+}

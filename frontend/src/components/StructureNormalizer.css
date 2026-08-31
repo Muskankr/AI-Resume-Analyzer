@@ -1,0 +1,211 @@
+.structure-normalizer-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.normalizer-title {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #2ed573, #7bed9f);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.normalizer-workspace {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 2rem;
+}
+
+.glass-card {
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+}
+
+.glass-card h3 {
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+}
+
+.panel-description {
+    color: var(--text-secondary, #b0b0b0);
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+}
+
+.text-input {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: 8px;
+    padding: 1rem;
+    color: var(--text-primary, #e0e0e0);
+    font-family: inherit;
+    font-size: 1rem;
+    resize: vertical;
+    min-height: 300px;
+    margin-bottom: 1rem;
+}
+
+.text-input:focus {
+    outline: none;
+    border-color: #2ed573;
+    box-shadow: 0 0 0 3px rgba(46, 213, 115, 0.2);
+}
+
+.glass-button {
+    background: linear-gradient(135deg, #2ed573, #26af61);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-button.secondary {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.2));
+}
+
+.glass-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(46, 213, 115, 0.4);
+}
+
+.glass-button.secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.glass-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: #ff6b6b;
+    text-align: center;
+    margin-top: 1rem;
+    font-weight: 500;
+}
+
+.empty-state,
+.loading-state {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary, #b0b0b0);
+    font-style: italic;
+    min-height: 300px;
+    text-align: center;
+}
+
+.results-content {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.changes-summary {
+    background: rgba(46, 213, 115, 0.1);
+    border: 1px solid rgba(46, 213, 115, 0.3);
+    border-radius: 8px;
+    padding: 1rem;
+}
+
+.changes-summary h4 {
+    margin: 0 0 0.5rem 0;
+    color: #2ed573;
+    font-size: 1rem;
+}
+
+.changes-summary ul {
+    margin: 0;
+    padding-left: 1.25rem;
+    color: var(--text-primary, #e0e0e0);
+    font-size: 0.9rem;
+}
+
+.normalized-sections {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.section-block {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    border-left: 3px solid #2ed573;
+}
+
+.section-header {
+    margin: 0 0 0.75rem 0;
+    font-size: 1rem;
+    color: #2ed573;
+    letter-spacing: 0.05em;
+}
+
+.section-content {
+    margin: 0;
+    font-family: inherit;
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-primary, #e0e0e0);
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}
+
+/* Light mode adjustments */
+@media (prefers-color-scheme: light) {
+    .structure-normalizer-container {
+        color: #333333;
+    }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .text-input {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        color: #333333;
+    }
+
+    .changes-summary {
+        background: rgba(46, 213, 115, 0.1);
+    }
+
+    .section-block {
+        background: rgba(0, 0, 0, 0.02);
+    }
+
+    .section-content {
+        color: #333333;
+    }
+}
+
+@media (max-width: 768px) {
+    .normalizer-workspace {
+        grid-template-columns: 1fr;
+    }
+}

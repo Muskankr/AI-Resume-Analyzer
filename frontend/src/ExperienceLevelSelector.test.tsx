@@ -4,8 +4,10 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import App from './App'
 import { MemoryRouter } from 'react-router-dom'
-
 describe('Experience Level Selector (#538)', () => {
+  vi.mock('./theme/ThemeContext', () => ({
+    useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }),
+  }))
   beforeEach(() => {
     localStorage.clear()
     vi.restoreAllMocks()
@@ -26,7 +28,7 @@ describe('Experience Level Selector (#538)', () => {
     expect(select.value).toBe('Mid-Level')
 
     const options = Array.from(select.options).map((opt) => opt.value)
-    expect(options).toEqual(['Junior', 'Mid-Level', 'Senior'])
+    expect(options).toEqual(['Junior', 'Mid-Level', 'Senior', 'Lead'])
   })
 
   it('persists selected experience level to localStorage on change', () => {

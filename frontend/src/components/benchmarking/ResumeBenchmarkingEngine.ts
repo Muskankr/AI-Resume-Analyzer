@@ -1,4 +1,4 @@
-import type { IndustryPeerComparison, PeerBenchmarkFilterQuery, BenchmarkAuditLog } from './types';
+import type { IndustryPeerComparison, PeerBenchmarkFilterQuery, BenchmarkAuditLog } from './types'
 
 export class ResumeBenchmarkingEngine {
   private static initialComparisons: IndustryPeerComparison[] = [
@@ -9,8 +9,17 @@ export class ResumeBenchmarkingEngine {
       userScore: 84,
       industryAverageScore: 71,
       top10PercentileScore: 93,
-      missingHighImpactKeywords: ['Kafka', 'Microfrontends', 'Distributed Transactions', 'Kubernetes', 'PCI-DSS'],
-      recommendedCertifications: ['AWS Certified Solutions Architect', 'Certified Kubernetes Application Developer (CKAD)'],
+      missingHighImpactKeywords: [
+        'Kafka',
+        'Microfrontends',
+        'Distributed Transactions',
+        'Kubernetes',
+        'PCI-DSS',
+      ],
+      recommendedCertifications: [
+        'AWS Certified Solutions Architect',
+        'Certified Kubernetes Application Developer (CKAD)',
+      ],
       benchmarkMetrics: {
         percentileRank: 82,
         atsPassProbability: 89,
@@ -28,7 +37,13 @@ export class ResumeBenchmarkingEngine {
       userScore: 89,
       industryAverageScore: 76,
       top10PercentileScore: 96,
-      missingHighImpactKeywords: ['PyTorch Distributed', 'vLLM Optimization', 'CUDA Kernels', 'Triton Server', 'MLOps Pipeline'],
+      missingHighImpactKeywords: [
+        'PyTorch Distributed',
+        'vLLM Optimization',
+        'CUDA Kernels',
+        'Triton Server',
+        'MLOps Pipeline',
+      ],
       recommendedCertifications: ['NVIDIA Certified Associate - Generative AI', 'AWS ML Specialty'],
       benchmarkMetrics: {
         percentileRank: 91,
@@ -47,7 +62,13 @@ export class ResumeBenchmarkingEngine {
       userScore: 76,
       industryAverageScore: 68,
       top10PercentileScore: 88,
-      missingHighImpactKeywords: ['Product-Led Growth (PLG)', 'ARR Expansion', 'User Retention Funnel', 'SQL Data Warehouse', 'Customer Discovery'],
+      missingHighImpactKeywords: [
+        'Product-Led Growth (PLG)',
+        'ARR Expansion',
+        'User Retention Funnel',
+        'SQL Data Warehouse',
+        'Customer Discovery',
+      ],
       recommendedCertifications: ['Certified Scrum Product Owner (CSPO)', 'Product School PMC'],
       benchmarkMetrics: {
         percentileRank: 73,
@@ -66,8 +87,17 @@ export class ResumeBenchmarkingEngine {
       userScore: 91,
       industryAverageScore: 74,
       top10PercentileScore: 95,
-      missingHighImpactKeywords: ['HIPAA Compliance', 'SIEM Integration', 'Zero-Trust Architecture', 'Threat Hunting', 'SOC2 Type II'],
-      recommendedCertifications: ['CISSP - Certified Information Systems Security Professional', 'CEH Master'],
+      missingHighImpactKeywords: [
+        'HIPAA Compliance',
+        'SIEM Integration',
+        'Zero-Trust Architecture',
+        'Threat Hunting',
+        'SOC2 Type II',
+      ],
+      recommendedCertifications: [
+        'CISSP - Certified Information Systems Security Professional',
+        'CEH Master',
+      ],
       benchmarkMetrics: {
         percentileRank: 94,
         atsPassProbability: 96,
@@ -78,7 +108,7 @@ export class ResumeBenchmarkingEngine {
         leadershipQuantificationScore: 87,
       },
     },
-  ];
+  ]
 
   private static initialAuditLogs: BenchmarkAuditLog[] = [
     {
@@ -101,36 +131,45 @@ export class ResumeBenchmarkingEngine {
       id: 'LOG-8803',
       timestamp: '2026-08-22 05:50:04',
       action: 'PDF_EXPORTED',
-      details: 'Generated executive peer benchmark analysis PDF report with high-impact keyword audit.',
+      details:
+        'Generated executive peer benchmark analysis PDF report with high-impact keyword audit.',
       performer: 'Export Service',
       scoreDelta: 'Export Successful',
     },
-  ];
+  ]
 
   public static getComparisons(filters: PeerBenchmarkFilterQuery): IndustryPeerComparison[] {
     return this.initialComparisons.filter((item) => {
-      if (filters.industryDomain && filters.industryDomain !== 'All' && item.industryDomain !== filters.industryDomain) {
-        return false;
+      if (
+        filters.industryDomain &&
+        filters.industryDomain !== 'All' &&
+        item.industryDomain !== filters.industryDomain
+      ) {
+        return false
       }
-      if (filters.experienceLevel && filters.experienceLevel !== 'All' && item.experienceLevel !== filters.experienceLevel) {
-        return false;
+      if (
+        filters.experienceLevel &&
+        filters.experienceLevel !== 'All' &&
+        item.experienceLevel !== filters.experienceLevel
+      ) {
+        return false
       }
       if (filters.search && filters.search.trim() !== '') {
-        const query = filters.search.toLowerCase();
-        const matchesRole = item.targetRole.toLowerCase().includes(query);
-        const matchesIndustry = item.industryDomain.toLowerCase().includes(query);
-        if (!matchesRole && !matchesIndustry) return false;
+        const query = filters.search.toLowerCase()
+        const matchesRole = item.targetRole.toLowerCase().includes(query)
+        const matchesIndustry = item.industryDomain.toLowerCase().includes(query)
+        if (!matchesRole && !matchesIndustry) return false
       }
-      return true;
-    });
+      return true
+    })
   }
 
   public static getAuditLogs(): BenchmarkAuditLog[] {
-    return [...this.initialAuditLogs];
+    return [...this.initialAuditLogs]
   }
 
   public static calculateCustomScore(userScore: number, missingCount: number): number {
-    const penalty = missingCount * 1.5;
-    return Math.max(0, Math.min(100, Math.round(userScore - penalty)));
+    const penalty = missingCount * 1.5
+    return Math.max(0, Math.min(100, Math.round(userScore - penalty)))
   }
 }

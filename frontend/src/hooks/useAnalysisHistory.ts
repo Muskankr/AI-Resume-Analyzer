@@ -23,6 +23,7 @@ export interface AnalysisEntry {
   source?: 'sample' | 'upload'
   share_id?: string
   coverLetterText?: string
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   coverLetterFeedback?: any
   interviewQuestions?: string[]
   jobMatchScore?: number | null

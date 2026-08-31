@@ -28,7 +28,8 @@ class OAuthSocialAuthTests(TestCase):
             format="json",
         )
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("OAuth token or credential is required", resp.data["error"])
+        self.assertIn("OAuth token or credential is required",
+                      resp.data["error"])
 
     def test_oauth_google_signup_new_user(self):
         resp = self.client.post(
