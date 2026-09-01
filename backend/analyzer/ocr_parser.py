@@ -35,10 +35,9 @@ def preprocess_image_for_ocr(image_or_path):
 
 def extract_text_from_image(file_path: str) -> str:
     """Extract text from photographed printed resume images (PNG, JPEG, WEBP)."""
-    if not os.path.exists(file_path):
+    if not file_path or not os.path.exists(file_path):
         return ""
 
-    text = ""
     # Stage 1: Primary OCR via Pytesseract (if Tesseract binary is accessible)
     try:
         import pytesseract
@@ -60,14 +59,14 @@ def extract_text_from_image(file_path: str) -> str:
             try:
                 pytesseract.pytesseract.tesseract_cmd = cmd
                 extracted = pytesseract.image_to_string(processed, lang="eng")
-                if extracted and len(extracted.strip()) >= 10:
+                if extracted and len(extracted.strip()) >= 5:
                     return extracted.strip()
             except Exception:
                 continue
     except Exception:
         pass
 
-    # Stage 2: Secondary / Fallback text extraction for embedded image metadata/text chunks
+    # Stage 2: Fallback text extraction for embedded image metadata/text chunks
     try:
         with open(file_path, "rb") as f:
             raw_bytes = f.read()
@@ -75,23 +74,24 @@ def extract_text_from_image(file_path: str) -> str:
         # Find printable ASCII / UTF-8 text strings of length >= 4
         matches = re.findall(rb"[\x20-\x7e\t\r\n]{4,}", raw_bytes)
         lines = []
+        ignored_keywords = [
+            "ihdr", "idat", "iend", "plte", "gama", "srgb", "exif", "jfif",
+            "photoshop", "adobe", "xmp", "xml", "software", "creation",
+        ]
         for m in matches:
             try:
                 decoded = m.decode("utf-8", errors="ignore").strip()
-                # Exclude image format header keywords
                 if (
                     len(decoded) >= 4
-                    and not any(
-                        header in decoded.lower()
-                        for header in ["adobe", "photoshop", "jfif", "exif", "icc_profile", "xmp", "xml"]
-                    )
+                    and not any(h in decoded.lower() for h in ignored_keywords)
+                    and re.search(r"[A-Za-z]{3,}", decoded)
                 ):
                     lines.append(decoded)
             except Exception:
                 pass
         if lines:
-            text = "\n".join(lines)
+            return "\n".join(lines).strip()
     except Exception:
         pass
 
-    return text.strip()
+    return ""

@@ -198,6 +198,13 @@ class UserProfile(models.Model):
         blank=True,
         help_text="Per-channel notification preferences. Missing keys use documented defaults.",
     )
+    tier = models.CharField(
+        max_length=20,
+        default="free",
+        choices=[("free", "Free"), ("pro", "Pro")],
+        help_text="Subscription tier: 'free' or 'pro'.",
+    )
+    tier_updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.username}'s Profile"

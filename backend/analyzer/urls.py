@@ -67,6 +67,8 @@ from .ab_testing_views import ABTestingStatsView, LogApplicationView
 from .accessibility_views import AccessibilityCheckView
 from .cliche_views import ClicheDetectorView
 from .linkedin_views import LinkedInOptimizationView, LinkedInConsistencyView
+from .contributor_views import ContributorCertificateView
+from .pro_tier_views import AccountTierView
 from .sanitizer_views import FileMetadataView, SanitizeResumeView
 from .ats_simulator_views import list_ats_profiles, simulate_ats
 from .cover_letter_views import generate_cover_letter_view
@@ -213,11 +215,6 @@ urlpatterns = [
         SanitizeResumeView.as_view(),
         name="sanitize_resume",
     ),
-
-    # Career Path Recommendation Engine
-    path(
-        "career-path/",
-        generate_career_path_view,
-        name="generate_career_path",
-    ),
+    path("check-linkedin-consistency/", LinkedInConsistencyView.as_view(), name="check_linkedin_consistency"),
+    path("account/tier/", AccountTierView.as_view(), name="account_tier"),
 ]
