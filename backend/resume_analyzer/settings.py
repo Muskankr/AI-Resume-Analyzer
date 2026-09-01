@@ -31,6 +31,7 @@ ALLOWED_HOSTS = os.environ.get(
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'corsheaders',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -39,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
+    'channels',
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_spectacular',
@@ -77,6 +79,16 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'resume_analyzer.wsgi.application'
+ASGI_APPLICATION = 'resume_analyzer.asgi.application'
+
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [('127.0.0.1', 6379)],
+        },
+    },
+}
 
 SPECTACULAR_SETTINGS = {
     "TITLE": "AI Resume Analyzer API",

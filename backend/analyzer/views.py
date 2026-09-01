@@ -1,4 +1,4 @@
-from .models import BatchUpload
+from .models import BatchJob
 from collections import Counter
 from rest_framework.decorators import parser_classes
 from rest_framework.permissions import AllowAny
@@ -2384,7 +2384,7 @@ class UserDashboardViewSet(viewsets.ModelViewSet):
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-from .models import BatchUpload
+from .models import BatchJob
 from .tasks import process_batch_upload
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.permissions import AllowAny
@@ -2416,7 +2416,7 @@ def upload_batch_resumes(request):
 
     user = request.user if request.user.is_authenticated else None
 
-    batch = BatchUpload.objects.create(
+    batch = BatchJob.objects.create(
         user=user,
         status="Pending"
     )
@@ -2443,16 +2443,32 @@ def upload_batch_resumes(request):
 @permission_classes([AllowAny])
 def batch_status(request, batch_id):
     try:
-        batch = BatchUpload.objects.get(id=batch_id)
+        batch = BatchJob.objects.get(id=batch_id)
+        
+        # Build results from individual tasks
+        results = []
+        for task in batch.tasks.all():
+            task_result = {
+                "file_name": task.file_name,
+                "status": task.status,
+            }
+            if task.analysis:
+                task_result["score"] = task.analysis.score
+                task_result["skills_found"] = task.analysis.skills_found
+                task_result["analysis_id"] = task.analysis.id
+            if task.error_trace:
+                task_result["error"] = task.error_trace
+            results.append(task_result)
+
         return Response({
             "id": batch.id,
             "status": batch.status,
             "total_files": batch.total_files,
             "processed_files": batch.processed_files,
-            "results": batch.results,
+            "results": results,
             "error_message": batch.error_message
         })
-    except BatchUpload.DoesNotExist:
+    except BatchJob.DoesNotExist:
         return Response({"error": "Batch not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
@@ -2587,3 +2603,8 @@ def generate_career_path_view(request):
 
     plan_serializer = CareerPathPlanSerializer(plan.as_dict())
     return Response(plan_serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+def compare_bulk_resumes_view(request):
+    pass
