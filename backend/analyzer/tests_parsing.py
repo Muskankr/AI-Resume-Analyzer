@@ -1,6 +1,7 @@
 import os
 import tempfile
 import docx
+from unittest.mock import patch
 from django.test import TestCase
 from django.conf import settings
 from analyzer.services import extract_text_from_file
@@ -135,3 +136,47 @@ class ResumeParsingTests(TestCase):
         text = extract_text_from_file(path, "resume2.pdf")
         self.assertIn("Jane Doe", text)
         self.assertIn("kotlin, spring", text)
+
+    @patch("pytesseract.image_to_string")
+    def test_image_ocr_png_parsing(self, mock_ocr):
+        """Validates OCR extraction from a PNG photographed printed resume."""
+        from PIL import Image, ImageDraw
+        mock_ocr.return_value = "Alex Johnson\nSenior Full-Stack Engineer\nSkills: Python, Django, React, TypeScript, Docker"
+
+        img = Image.new("RGB", (600, 200), color=(255, 255, 255))
+        d = ImageDraw.Draw(img)
+        d.text((20, 20), "Alex Johnson\nSenior Full-Stack Engineer\nSkills: Python, Django, React, TypeScript, Docker", fill=(0, 0, 0))
+
+        path = self._create_temp_file(".png", b"")
+        img.save(path, format="PNG")
+
+        text = extract_text_from_file(path, "photo_resume.png")
+        self.assertTrue(len(text) > 0)
+        self.assertIn("Alex Johnson", text)
+
+    @patch("pytesseract.image_to_string")
+    def test_image_ocr_jpeg_parsing(self, mock_ocr):
+        """Validates OCR extraction from a JPEG photographed printed resume."""
+        from PIL import Image, ImageDraw
+        mock_ocr.return_value = "Sarah Parker\nDevOps Specialist\nSkills: Kubernetes, Terraform, AWS, Python, CI/CD"
+
+        img = Image.new("RGB", (600, 200), color=(245, 245, 245))
+        d = ImageDraw.Draw(img)
+        d.text((20, 20), "Sarah Parker\nDevOps Specialist\nSkills: Kubernetes, Terraform, AWS, Python, CI/CD", fill=(10, 10, 10))
+
+        path = self._create_temp_file(".jpg", b"")
+        img.save(path, format="JPEG")
+
+        text = extract_text_from_file(path, "camera_resume.jpg")
+        self.assertTrue(len(text) > 0)
+        self.assertIn("Sarah Parker", text)
+
+    def test_ocr_image_preprocessing(self):
+        """Verifies image preprocessing filter enhancements (grayscale, contrast boost)."""
+        from PIL import Image
+        from analyzer.ocr_parser import preprocess_image_for_ocr
+        img = Image.new("RGB", (100, 100), color=(200, 200, 200))
+        processed = preprocess_image_for_ocr(img)
+        self.assertEqual(processed.mode, "L")
+        self.assertEqual(processed.size, (100, 100))
+

@@ -282,6 +282,8 @@ class UserProfileSerializer(serializers.ModelSerializer):
         prefs = profile.notification_preferences or {}
         ret["theme_preference"] = profile.theme_preference
         ret["weekly_digest_opt_in"] = profile.weekly_digest_opt_in
+        ret["tier"] = getattr(profile, "tier", "free")
+        ret["tier_updated_at"] = getattr(profile, "tier_updated_at", None)
         ret["notification_preferences"] = {
             "in_app": prefs.get("in_app", True),
             "browser": prefs.get("browser", False),

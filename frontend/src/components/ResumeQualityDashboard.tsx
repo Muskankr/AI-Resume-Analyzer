@@ -14,6 +14,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import './ResumeQualityDashboard.css';
 import BulletPointOptimizer from './BulletPointOptimizer';
+import { PhotoResumeUploader } from './PhotoResumeUploader';
 
 // ===== Role Skill Database =====
 interface RoleCategory {
@@ -497,16 +498,22 @@ export function ResumeQualityDashboard() {
         onClick={() => fileInputRef.current?.click()}
       >
         <span className="rqd-upload-icon">📄</span>
-        <h3>{file ? `✓ ${file.name}` : 'Drop your Resume here'}</h3>
-        <p>{file ? `${(file.size / 1024).toFixed(1)} KB — Ready to analyze` : 'PDF format · Max 5 MB'}</p>
+        <h3>{file ? `✓ ${file.name}` : 'Drop your Resume or Printed Photo here'}</h3>
+        <p>{file ? `${(file.size / 1024).toFixed(1)} KB — Ready to analyze` : 'PDF, Word, Text or Printed Resume Photo (PNG, JPG, WEBP) · Max 5 MB'}</p>
         <input
           ref={fileInputRef}
           type="file"
-          accept=".pdf"
+          accept=".pdf,.docx,.txt,.png,.jpg,.jpeg,.webp,image/*"
           style={{ display: 'none' }}
           onChange={(e) => { if (e.target.files?.length) handleFile(e.target.files[0]); }}
         />
       </div>
+
+      {/* Camera / Photo OCR Upload Section (#976) */}
+      <PhotoResumeUploader
+        selectedFile={file}
+        onPhotoCaptured={(capturedFile) => handleFile(capturedFile)}
+      />
 
       {/* Config */}
       <div className="rqd-config-row">

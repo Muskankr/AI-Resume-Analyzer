@@ -198,6 +198,13 @@ class UserProfile(models.Model):
         blank=True,
         help_text="Per-channel notification preferences. Missing keys use documented defaults.",
     )
+    tier = models.CharField(
+        max_length=20,
+        default="free",
+        choices=[("free", "Free"), ("pro", "Pro")],
+        help_text="Subscription tier: 'free' or 'pro'.",
+    )
+    tier_updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.username}'s Profile"
@@ -370,15 +377,39 @@ class SuggestionFeedback(models.Model):
 
 
 class Skill(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    org = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.SET_NULL,
+        related_name="skills",
+        null=True,
+        blank=True,
+    )
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["org", "name"], name="unique_skill_name_per_org")
+        ]
 
     def __str__(self):
         return self.name
 
 
 class Role(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    org = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.SET_NULL,
+        related_name="roles",
+        null=True,
+        blank=True,
+    )
+    name = models.CharField(max_length=100)
     skills = models.ManyToManyField(Skill, related_name="roles")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["org", "name"], name="unique_role_name_per_org")
+        ]
 
     def __str__(self):
         return self.name
