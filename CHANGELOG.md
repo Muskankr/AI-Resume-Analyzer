@@ -7,7 +7,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
-- Added Admin Panel UI for managing career tracks, required skill sets, and score thresholds in real time (#546).
+- Added interactive "What-If" Score Simulator allowing candidates to preview projected ATS score impact and domain coverage increases when adding missing skills without requiring a real resume re-upload (#604).
 - Added database indexing and query performance review for history, leaderboard aggregation, and analysis retrieval (#979).
 - Unified reusable Button component with primary, secondary, ghost, outline, danger, and accent variants, size modifiers, pill shape, accessible loading spinner, and consistent hover/active/focus/disabled states (#102).
 - Added drag-and-drop resume upload functionality to compare tools allowing drag-and-drop directly on the file inputs (#20).
