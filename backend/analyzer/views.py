@@ -2449,3 +2449,136 @@ def batch_status(request, batch_id):
         })
     except BatchUpload.DoesNotExist:
         return Response({"error": "Batch not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+# ── Career Path Recommendation Engine ──────────────────────────────────────
+
+class CareerPathThrottle(AnonRateThrottle):
+    """Rate-limit the career path endpoint (heavy computation)."""
+
+    scope = "career_path"
+
+
+@extend_schema(
+    summary="Generate a personalised career development plan",
+    description=(
+        "Accepts either an ``analysis_id`` (to load skills and score from "
+        "the database) or raw fields, and returns a phased roadmap with "
+        "priority-ranked actions, quick wins, and long-term goals."
+    ),
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "analysis_id": {
+                    "type": "integer",
+                    "description": "ResumeAnalysis id (loads all fields from DB).",
+                },
+                "target_role": {
+                    "type": "string",
+                    "description": "Target job title.",
+                },
+                "experience_level": {
+                    "type": "string",
+                    "enum": ["Junior", "Mid-Level", "Senior"],
+                },
+                "matched_skills": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+                "missing_skills": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                },
+                "current_score": {
+                    "type": "integer",
+                },
+            },
+        }
+    },
+    responses={
+        200: OpenApiResponse(description="Career path plan."),
+        400: OpenApiResponse(description="Invalid input."),
+    },
+)
+@api_view(["POST"])
+@permission_classes([AllowAny])
+@throttle_classes([CareerPathThrottle])
+def generate_career_path_view(request):
+    """Generate a career development roadmap.
+
+    Two modes:
+
+    1. **analysis_id** — looks up the user's stored analysis and builds
+       the plan from its persisted fields.  The caller must own the
+       analysis (authenticated) or the analysis must exist (anonymous).
+    2. **Raw fields** — accepts ``matched_skills``, ``missing_skills``,
+       ``current_score`` and ``target_role`` directly.  Useful for
+       ad-hoc planning without a prior upload.
+    """
+    from .career_path import generate_career_path
+    from .career_path_serializers import (
+        CareerPathRequestSerializer,
+        CareerPathPlanSerializer,
+    )
+
+    serializer = CareerPathRequestSerializer(data=request.data)
+    if not serializer.is_valid():
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    data = serializer.validated_data
+    analysis_id = data.get("analysis_id")
+
+    # ── Mode 1: load from a stored analysis ────────────────────────────
+    if analysis_id is not None:
+        try:
+            if request.user.is_authenticated:
+                analysis = ResumeAnalysis.objects.get(
+                    pk=analysis_id, user=request.user
+                )
+            else:
+                analysis = ResumeAnalysis.objects.get(pk=analysis_id)
+        except ResumeAnalysis.DoesNotExist:
+            return Response(
+                {"error": "Analysis not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        target_role = analysis.target_role or "General"
+        experience_level = analysis.experience_level or "Mid-Level"
+        current_score = analysis.score
+        matched_skills = analysis.matched_skills or []
+        missing_skills = analysis.missing_skills or []
+        detected_skills = analysis.skills_found or []
+
+    # ── Mode 2: raw fields ────────────────────────────────────────────
+    else:
+        target_role = data.get("target_role") or "General"
+        experience_level = data.get("experience_level") or "Mid-Level"
+        current_score = data.get("current_score") or 0
+        matched_skills = data.get("matched_skills") or []
+        missing_skills = data.get("missing_skills") or []
+        detected_skills = data.get("detected_skills") or []
+
+        if not matched_skills and not missing_skills:
+            return Response(
+                {
+                    "error": (
+                        "Provide matched_skills and missing_skills, or an "
+                        "analysis_id to load them from."
+                    )
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    plan = generate_career_path(
+        target_role=target_role,
+        experience_level=experience_level,
+        current_score=current_score,
+        matched_skills=matched_skills,
+        missing_skills=missing_skills,
+        detected_skills=detected_skills,
+    )
+
+    plan_serializer = CareerPathPlanSerializer(plan.as_dict())
+    return Response(plan_serializer.data, status=status.HTTP_200_OK)
