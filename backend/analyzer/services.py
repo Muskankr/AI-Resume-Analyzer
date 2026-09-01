@@ -153,7 +153,11 @@ def calculate_readability(text):
 
 def extract_text_from_file(file_path, file_name):
     text = ""
-    if file_name.lower().endswith('.docx'):
+    lower_name = (file_name or "").lower()
+    if any(lower_name.endswith(ext) for ext in ('.png', '.jpg', '.jpeg', '.webp')):
+        from .ocr_parser import extract_text_from_image
+        return extract_text_from_image(file_path)
+    elif lower_name.endswith('.docx'):
         doc = docx.Document(file_path)
         # Extract paragraph text
         for paragraph in doc.paragraphs:
@@ -164,7 +168,7 @@ def extract_text_from_file(file_path, file_name):
                 for cell in row.cells:
                     text += cell.text + " "
                 text += "\n"
-    elif file_name.lower().endswith('.txt'):
+    elif lower_name.endswith('.txt'):
         # Robust multi-encoding fallback parsing
         for encoding in ('utf-8-sig', 'utf-16', 'latin-1'):
             try:
@@ -181,11 +185,20 @@ def extract_text_from_file(file_path, file_name):
             except Exception:
                 pass
     else:
-        with pdfplumber.open(file_path) as pdf:
-            for page in pdf.pages:
-                extracted = page.extract_text()
-                if extracted:
-                    text += extracted
+        try:
+            with pdfplumber.open(file_path) as pdf:
+                for page in pdf.pages:
+                    extracted = page.extract_text()
+                    if extracted:
+                        text += extracted
+        except Exception:
+            pass
+
+        # If PDF extracted text is empty (scanned / photographed PDF), attempt OCR fallback
+        if not text.strip():
+            from .ocr_parser import extract_text_from_image
+            text = extract_text_from_image(file_path)
+
     return text
 
 
