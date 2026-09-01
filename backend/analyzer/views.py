@@ -846,6 +846,11 @@ def analysis_history(request):
     page_param = request.query_params.get("page")
     size_param = request.query_params.get("page_size")
 
+    # Feature gating: Free tier gets up to 10 history items; Pro tier gets unlimited (#992)
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    if profile.tier == "free" and page_param is None and size_param is None:
+        analyses = analyses[:10]
+
     if page_param is None and size_param is None:
         serializer = ResumeAnalysisListSerializer(analyses, many=True)
         return Response(serializer.data)

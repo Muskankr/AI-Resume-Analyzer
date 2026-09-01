@@ -1,0 +1,209 @@
+/* PricingPage.css */
+
+.pricing-container {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 40px 20px 80px;
+  color: var(--heading-text, #f8fafc);
+}
+
+.pricing-hero {
+  text-align: center;
+  margin-bottom: 36px;
+}
+
+.pricing-hero h1 {
+  font-size: 2.3rem;
+  font-weight: 800;
+  margin-bottom: 12px;
+  background: linear-gradient(135deg, #38bdf8, #8b5cf6, #f59e0b);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.pricing-hero p {
+  color: var(--muted-text, #94a3b8);
+  font-size: 1.1rem;
+  max-width: 650px;
+  margin: 0 auto 24px;
+  line-height: 1.6;
+}
+
+.pricing-billing-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--surface-bg, rgba(30, 41, 59, 0.7));
+  padding: 6px 12px;
+  border-radius: 30px;
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.08));
+}
+
+.pricing-toggle-btn {
+  padding: 8px 18px;
+  border-radius: 20px;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: #94a3b8;
+  transition: all 0.2s ease;
+}
+
+.pricing-toggle-btn.active {
+  background: #3b82f6;
+  color: #fff;
+  box-shadow: 0 2px 10px rgba(59, 130, 246, 0.4);
+}
+
+.pricing-discount-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 10px;
+}
+
+/* Pricing Grid Cards */
+.pricing-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 28px;
+  margin-bottom: 48px;
+}
+
+.pricing-card {
+  position: relative;
+  background: var(--surface-bg, rgba(30, 41, 59, 0.7));
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.08));
+  border-radius: 20px;
+  padding: 32px 28px;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.pricing-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.4);
+}
+
+.pricing-card--pro {
+  border: 2px solid #8b5cf6;
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.9) 0%, rgba(30, 27, 75, 0.9) 100%);
+  box-shadow: 0 12px 40px rgba(139, 92, 246, 0.25);
+}
+
+.pricing-badge-popular {
+  position: absolute;
+  top: -14px;
+  right: 28px;
+  background: linear-gradient(135deg, #8b5cf6, #ec4899);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  padding: 4px 14px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.pricing-card-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 6px;
+}
+
+.pricing-card-price {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin-bottom: 4px;
+}
+
+.pricing-card-period {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin-bottom: 16px;
+}
+
+.pricing-card-desc {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  margin-bottom: 24px;
+  line-height: 1.5;
+  min-height: 48px;
+}
+
+.pricing-feature-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 32px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.pricing-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.95rem;
+  color: #e2e8f0;
+}
+
+.pricing-feature-check {
+  color: #10b981;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* Feature Matrix Table */
+.pricing-matrix-card {
+  background: var(--surface-bg, rgba(30, 41, 59, 0.7));
+  border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.08));
+  border-radius: 16px;
+  padding: 32px;
+  margin-bottom: 36px;
+}
+
+.pricing-matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+}
+
+.pricing-matrix-table th,
+.pricing-matrix-table td {
+  padding: 14px 16px;
+  text-align: left;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.pricing-matrix-table th {
+  font-weight: 700;
+  color: #f8fafc;
+  font-size: 1rem;
+}
+
+.pricing-matrix-table td {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+}
+
+/* Guarantee Banner */
+.pricing-guarantee-card {
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 14px;
+  padding: 20px 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}

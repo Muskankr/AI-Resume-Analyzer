@@ -1,6 +1,7 @@
 import os
 import tempfile
 import docx
+from unittest.mock import patch
 from django.test import TestCase
 from django.conf import settings
 from analyzer.services import extract_text_from_file
@@ -135,9 +136,12 @@ class ResumeParsingTests(TestCase):
         self.assertIn("Jane Doe", text)
         self.assertIn("kotlin, spring", text)
 
-    def test_image_ocr_png_parsing(self):
+    @patch("pytesseract.image_to_string")
+    def test_image_ocr_png_parsing(self, mock_ocr):
         """Validates OCR extraction from a PNG photographed printed resume."""
         from PIL import Image, ImageDraw
+        mock_ocr.return_value = "Alex Johnson\nSenior Full-Stack Engineer\nSkills: Python, Django, React, TypeScript, Docker"
+
         img = Image.new("RGB", (600, 200), color=(255, 255, 255))
         d = ImageDraw.Draw(img)
         d.text((20, 20), "Alex Johnson\nSenior Full-Stack Engineer\nSkills: Python, Django, React, TypeScript, Docker", fill=(0, 0, 0))
@@ -149,9 +153,12 @@ class ResumeParsingTests(TestCase):
         self.assertTrue(len(text) > 0)
         self.assertIn("Alex Johnson", text)
 
-    def test_image_ocr_jpeg_parsing(self):
+    @patch("pytesseract.image_to_string")
+    def test_image_ocr_jpeg_parsing(self, mock_ocr):
         """Validates OCR extraction from a JPEG photographed printed resume."""
         from PIL import Image, ImageDraw
+        mock_ocr.return_value = "Sarah Parker\nDevOps Specialist\nSkills: Kubernetes, Terraform, AWS, Python, CI/CD"
+
         img = Image.new("RGB", (600, 200), color=(245, 245, 245))
         d = ImageDraw.Draw(img)
         d.text((20, 20), "Sarah Parker\nDevOps Specialist\nSkills: Kubernetes, Terraform, AWS, Python, CI/CD", fill=(10, 10, 10))

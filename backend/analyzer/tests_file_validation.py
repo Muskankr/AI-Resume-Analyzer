@@ -149,7 +149,10 @@ class ValidateUploadTests(TestCase):
 
     def test_describe_formats_reads_naturally(self):
         self.assertEqual(
-            describe_formats(RESUME_FORMATS), "PDF, Word (.docx) or plain text"
+            describe_formats((PDF, DOCX, TXT)), "PDF, Word (.docx) or plain text"
+        )
+        self.assertEqual(
+            describe_formats(RESUME_FORMATS), "PDF, Word (.docx), plain text, PNG image, JPEG image or WebP image"
         )
         self.assertEqual(describe_formats((PDF,)), "PDF")
 
