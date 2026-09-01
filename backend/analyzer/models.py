@@ -370,15 +370,39 @@ class SuggestionFeedback(models.Model):
 
 
 class Skill(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    org = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.SET_NULL,
+        related_name="skills",
+        null=True,
+        blank=True,
+    )
+    name = models.CharField(max_length=100)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["org", "name"], name="unique_skill_name_per_org")
+        ]
 
     def __str__(self):
         return self.name
 
 
 class Role(models.Model):
-    name = models.CharField(max_length=100, unique=True)
+    org = models.ForeignKey(
+        "organizations.Organization",
+        on_delete=models.SET_NULL,
+        related_name="roles",
+        null=True,
+        blank=True,
+    )
+    name = models.CharField(max_length=100)
     skills = models.ManyToManyField(Skill, related_name="roles")
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["org", "name"], name="unique_role_name_per_org")
+        ]
 
     def __str__(self):
         return self.name
