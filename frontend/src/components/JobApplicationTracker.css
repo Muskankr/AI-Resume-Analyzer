@@ -1,0 +1,286 @@
+/* ── Job Application Tracker ────────────────────────────────── */
+
+.jat {
+  width: 100%;
+}
+
+.jat__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.jat__title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #e2e8f0);
+  margin: 0;
+}
+
+.jat__subtitle {
+  font-size: 0.78rem;
+  color: var(--color-text-muted, #94a3b8);
+  margin-top: 0.1rem;
+}
+
+/* ── Stats Row ─────────────────────────────────────────────── */
+
+.jat__stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.jat__stat {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 0.6rem;
+  text-align: center;
+}
+
+.jat__stat-value {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--color-text-primary, #f1f5f9);
+}
+
+.jat__stat-label {
+  font-size: 0.6rem;
+  color: var(--color-text-muted, #94a3b8);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-top: 0.1rem;
+}
+
+/* ── Add Form ──────────────────────────────────────────────── */
+
+.jat__add-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+}
+
+.jat__input {
+  padding: 0.5rem 0.65rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--color-text-primary, #e2e8f0);
+  font-size: 0.82rem;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.jat__input:focus {
+  border-color: rgba(99, 102, 241, 0.5);
+}
+
+.jat__add-btn {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.jat__add-btn:hover {
+  opacity: 0.9;
+}
+
+/* ── Pipeline View ─────────────────────────────────────────── */
+
+.jat__pipeline {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.jat__column {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  padding: 0.6rem;
+  min-height: 120px;
+}
+
+.jat__col-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  padding-bottom: 0.4rem;
+  border-bottom: 2px solid var(--col-color, rgba(255, 255, 255, 0.1));
+}
+
+.jat__col-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #e2e8f0);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.jat__col-count {
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--col-color, #60a5fa);
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 0.1rem 0.4rem;
+}
+
+/* ── Application Card ──────────────────────────────────────── */
+
+.jat__card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 8px;
+  padding: 0.55rem;
+  margin-bottom: 0.4rem;
+  transition: transform 0.12s;
+}
+
+.jat__card:hover {
+  transform: translateY(-1px);
+}
+
+.jat__card-company {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #f1f5f9);
+}
+
+.jat__card-role {
+  font-size: 0.7rem;
+  color: var(--color-text-muted, #94a3b8);
+  margin-top: 0.1rem;
+}
+
+.jat__card-date {
+  font-size: 0.6rem;
+  color: var(--color-text-muted, #64748b);
+  margin-top: 0.25rem;
+}
+
+.jat__card-actions {
+  display: flex;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.jat__card-btn {
+  padding: 0.15rem 0.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--color-text-muted, #94a3b8);
+  font-size: 0.62rem;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.jat__card-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.jat__card-btn--next {
+  background: rgba(99, 102, 241, 0.12);
+  color: #818cf8;
+  border-color: rgba(99, 102, 241, 0.2);
+}
+
+.jat__card-btn--del:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+/* ── Funnel ────────────────────────────────────────────────── */
+
+.jat__funnel {
+  display: flex;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.jat__funnel-stage {
+  flex: 1;
+  padding: 0.55rem;
+  text-align: center;
+}
+
+.jat__funnel-num {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.jat__funnel-label {
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  opacity: 0.85;
+}
+
+.jat__funnel-bar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  margin-top: 0.3rem;
+  overflow: hidden;
+}
+
+.jat__funnel-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+/* ── Empty ─────────────────────────────────────────────────── */
+
+.jat__empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--color-text-muted, #64748b);
+}
+
+.jat__empty-icon {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+.jat__empty-text {
+  font-size: 0.85rem;
+  color: var(--color-text-primary, #94a3b8);
+}
+
+/* ── Responsive ────────────────────────────────────────────── */
+
+@media (max-width: 700px) {
+  .jat__pipeline {
+    grid-template-columns: 1fr;
+  }
+
+  .jat__add-form {
+    grid-template-columns: 1fr;
+  }
+
+  .jat__stats {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}

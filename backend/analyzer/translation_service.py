@@ -4,6 +4,7 @@ for the core ATS scoring engine, preserving original text for user display.
 """
 
 import logging
+import re
 from typing import List, Optional
 from dataclasses import dataclass
 
@@ -121,25 +122,104 @@ class TranslationService:
         return "\n".join(translated_chunks)
 
     def _chunk_text(self, text: str) -> List[str]:
-        """Splits text into chunks respecting the MAX_CHUNK_SIZE."""
+        """Split ``text`` into pieces no larger than :attr:`MAX_CHUNK_SIZE`.
+
+        The previous implementation packed paragraphs into chunks and assumed
+        every paragraph fit. One that did not was assigned to ``current_chunk``
+        whole and emitted at its full length, so the function whose entire
+        purpose is respecting the API's payload limit returned chunks over it:
+
+            >>> TranslationService()._chunk_text("A" * 4500 + chr(10)*2 + "B" * 4500)
+            >>> [len(c) for c in _]
+            [4500, 4500]
+
+        A resume is exactly where that happens. ``pdfplumber`` returns a dense
+        single-column layout as one unbroken run of text with no blank line in
+        it, so the whole document arrives as a single paragraph and goes to the
+        provider in one oversized request, which it rejects.
+
+        Oversized paragraphs are now broken down in decreasing order of how
+        much structure the split costs: sentences first, then lines, then a
+        hard character cut. The last one is not good, but it is bounded, and it
+        only happens for text with no sentence or line break in 4000
+        characters.
+        """
         if len(text) <= self.MAX_CHUNK_SIZE:
             return [text]
 
-        chunks = []
+        chunks: List[str] = []
         current_chunk = ""
 
-        # Split by paragraphs first to maintain context
-        paragraphs = text.split("\n\n")
+        # Split by paragraphs first to maintain context.
+        for para in text.split("\n\n"):
+            for piece in self._split_oversized(para):
+                if not piece:
+                    continue
 
-        for para in paragraphs:
-            if len(current_chunk) + len(para) + 2 <= self.MAX_CHUNK_SIZE:
-                current_chunk += para + "\n\n"
-            else:
-                if current_chunk:
+                # +2 for the "\n\n" that will rejoin them.
+                if current_chunk and len(current_chunk) + len(piece) + 2 > self.MAX_CHUNK_SIZE:
                     chunks.append(current_chunk.strip())
-                current_chunk = para + "\n\n"
+                    current_chunk = ""
 
-        if current_chunk:
+                current_chunk = f"{current_chunk}{piece}\n\n" if current_chunk else f"{piece}\n\n"
+
+        if current_chunk.strip():
             chunks.append(current_chunk.strip())
 
         return chunks
+
+    def _split_oversized(self, paragraph: str) -> List[str]:
+        """Break one paragraph into parts that each fit in a chunk.
+
+        Returns ``[paragraph]`` unchanged when it already fits, which is the
+        usual case — this only does work for the paragraph that would have
+        broken the request.
+        """
+        if len(paragraph) <= self.MAX_CHUNK_SIZE:
+            return [paragraph]
+
+        # Sentence boundaries: the cheapest place to cut, because the provider
+        # translates a sentence at a time anyway. The lookbehind keeps the
+        # terminator attached to the sentence it ends.
+        parts = self._pack(re.split(r"(?<=[.!?])\s+", paragraph))
+        if all(len(part) <= self.MAX_CHUNK_SIZE for part in parts):
+            return parts
+
+        # No sentence punctuation — a bulleted skills block, or a parser that
+        # dropped the periods. Lines are the next-best boundary.
+        parts = self._pack(paragraph.splitlines())
+        if all(len(part) <= self.MAX_CHUNK_SIZE for part in parts):
+            return parts
+
+        # Nothing to cut on. Slice on character count so the caller still gets
+        # something it can send, rather than a request the provider refuses.
+        return [
+            paragraph[start : start + self.MAX_CHUNK_SIZE]
+            for start in range(0, len(paragraph), self.MAX_CHUNK_SIZE)
+        ]
+
+    def _pack(self, pieces: List[str]) -> List[str]:
+        """Greedily join ``pieces`` into the fewest parts that each fit.
+
+        Rejoining with a single space, since the pieces came from splitting on
+        whitespace. A piece that is itself too long is passed through for the
+        caller to notice and handle at the next level down.
+        """
+        packed: List[str] = []
+        current = ""
+
+        for piece in pieces:
+            piece = piece.strip()
+            if not piece:
+                continue
+            candidate = f"{current} {piece}" if current else piece
+            if current and len(candidate) > self.MAX_CHUNK_SIZE:
+                packed.append(current)
+                current = piece
+            else:
+                current = candidate
+
+        if current:
+            packed.append(current)
+
+        return packed

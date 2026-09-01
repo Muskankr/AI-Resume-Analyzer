@@ -8,7 +8,127 @@ from typing import Dict, Optional, Tuple
 from dataclasses import dataclass
 
 # Common language indicators (heuristic fallback if langdetect is unavailable)
+#
+# English was missing from this table entirely, which meant English could never
+# *win* the vote — it was only what the code fell back to when every other
+# language scored zero. It rarely did: the Italian list holds "a", "e", "i",
+# "in", "no", "si", "ha", "ma", "per" and "come", so any English paragraph of
+# reasonable length scored several points for Italian and none for English, and
+# was reported as Italian with a straight face.
 LANGUAGE_INDICATORS = {
+    "en": [
+        "the",
+        "of",
+        "and",
+        "to",
+        "a",
+        "in",
+        "that",
+        "is",
+        "was",
+        "for",
+        "it",
+        "with",
+        "as",
+        "his",
+        "on",
+        "be",
+        "at",
+        "by",
+        "this",
+        "had",
+        "not",
+        "are",
+        "but",
+        "from",
+        "or",
+        "have",
+        "an",
+        "they",
+        "which",
+        "one",
+        "you",
+        "were",
+        "her",
+        "all",
+        "she",
+        "there",
+        "would",
+        "their",
+        "we",
+        "him",
+        "been",
+        "has",
+        "when",
+        "who",
+        "will",
+        "more",
+        "no",
+        "if",
+        "out",
+        "so",
+        "said",
+        "what",
+        "up",
+        "its",
+        "about",
+        "into",
+        "them",
+        "can",
+        "only",
+        "other",
+        "new",
+        "some",
+        "could",
+        "time",
+        "these",
+        "two",
+        "may",
+        "then",
+        "do",
+        "first",
+        "any",
+        "my",
+        "now",
+        "such",
+        "like",
+        "our",
+        "over",
+        "man",
+        "me",
+        "even",
+        "most",
+        "made",
+        "after",
+        "also",
+        "did",
+        "many",
+        "before",
+        "must",
+        "through",
+        "back",
+        "years",
+        "where",
+        "much",
+        "your",
+        "way",
+        "well",
+        "down",
+        "should",
+        "because",
+        "each",
+        "just",
+        "those",
+        "how",
+        "between",
+        "both",
+        "under",
+        "while",
+        "during",
+        "against",
+        "within",
+        "across",
+    ],
     "es": [
         "el",
         "la",
@@ -710,12 +830,94 @@ LANGUAGE_NAMES = {
 }
 
 
+#: Languages we can recognise, in the order ties are broken. Alphabetical
+#: rather than dict order: ``max()`` returns the first key at the maximum, and
+#: dict order here is "whoever edited the table last", which made a genuine
+#: two-way tie resolve differently depending on an unrelated edit.
+SUPPORTED_LANGUAGES = tuple(sorted(LANGUAGE_INDICATORS))
+
+#: Inflected forms the tables above are missing.
+#:
+#: The Spanish and French lists were written as lemmas — ``ser``, ``haber``,
+#: ``être``, ``avoir`` — but nobody writes a resume in the infinitive. The
+#: conjugated forms that actually appear in a sentence were absent, so "Esta es
+#: claramente una oración en español" matched Spanish on almost nothing and was
+#: reported as German, whose list does carry the surface form ``es``.
+#:
+#: Kept separate from the tables above rather than merged into them: these are
+#: a targeted correction with a reason, and burying them in a 700-line literal
+#: would lose it.
+ADDITIONAL_INDICATORS = {
+    "es": (
+        "es", "son", "está", "están", "estaba", "una", "del", "al", "esta",
+        "esa", "fue", "fueron", "han", "he", "hemos", "sus", "nuestra",
+        "según", "durante", "mediante", "sobre",
+    ),
+    "fr": (
+        "est", "sont", "était", "des", "les", "qui", "cette", "ces", "été",
+        "nous", "vous", "leur", "aux", "du", "au", "ainsi", "chez", "dont",
+    ),
+    "de": (
+        "zwischen", "während", "gegen", "jedoch", "sowie", "bereits",
+    ),
+    "it": (
+        "del", "della", "dei", "delle", "nel", "nella", "questa", "sua",
+        "loro", "tra", "dal", "alla", "allo", "gli", "presso", "inoltre",
+    ),
+}
+
+#: The indicator lists as sets, built once. The literals above contain repeats
+#: — ``"la"`` appears twice under ``es``, ``"in"`` three times under ``it`` —
+#: which would have counted a single match more than once.
+_INDICATOR_SETS = {
+    lang: frozenset(words) | frozenset(ADDITIONAL_INDICATORS.get(lang, ()))
+    for lang, words in LANGUAGE_INDICATORS.items()
+}
+
+
+def _build_indicator_weights():
+    """How much one matched word is worth, per word.
+
+    A word shared by several languages says almost nothing about which one you
+    are reading. ``in`` is English, German and Italian; ``no`` is English,
+    Spanish and Italian; ``a`` is English, Portuguese-ish Italian and more. Under
+    a flat one-point-per-match count those shared words were the *majority* of
+    what an English resume matched, and they all paid out to languages the text
+    was not written in.
+
+    Weighting each word by ``1 / (languages containing it)`` leaves the shared
+    words contributing a fraction each while a distinctive word — ``the``,
+    ``qué``, ``werden`` — carries its full point.
+    """
+    counts = {}
+    for words in _INDICATOR_SETS.values():
+        for word in words:
+            counts[word] = counts.get(word, 0) + 1
+    return {word: 1.0 / count for word, count in counts.items()}
+
+
+_INDICATOR_WEIGHTS = _build_indicator_weights()
+
+#: Below this many characters there is not enough signal to call it.
+MIN_TEXT_LENGTH = 10
+
+#: Roughly the weighted stop-word density of ordinary prose in its own
+#: language. Used to turn a raw density into a 0–1 strength, so "half the words
+#: I recognise" does not read as "50% confident".
+TYPICAL_INDICATOR_DENSITY = 0.18
+
+
 @dataclass
 class LanguageDetectionResult:
     language_code: str
     language_name: str
     confidence: float
     method_used: str
+
+    @property
+    def is_english(self) -> bool:
+        """Convenience for callers that only care whether to offer translation."""
+        return self.language_code == "en"
 
 
 class LanguageDetector:
@@ -727,57 +929,141 @@ class LanguageDetector:
         Detects the language of the provided text.
         Attempts to use `langdetect` first, falls back to heuristic word matching.
         """
-        if not text or len(text.strip()) < 10:
+        if not text or len(text.strip()) < MIN_TEXT_LENGTH:
             return LanguageDetectionResult("en", "English", 0.0, "fallback_short_text")
 
-        # Attempt 1: Use langdetect if available
-        try:
-            from langdetect import detect, LangDetectException
+        detected = cls._langdetect_detection(text)
+        if detected is not None:
+            return detected
 
-            lang_code = detect(text)
-            # langdetect returns 'en' for English, 'es' for Spanish, etc.
-            lang_name = LANGUAGE_NAMES.get(lang_code, LANGUAGE_NAMES["unknown"])
-            return LanguageDetectionResult(lang_code, lang_name, 0.85, "langdetect")
-        except ImportError:
-            pass  # Fall back to heuristic
-        except Exception:
-            pass  # Fall back to heuristic on detection failure
-
-        # Attempt 2: Heuristic word frequency matching
         return cls._heuristic_detection(text)
+
+    @classmethod
+    def _langdetect_detection(cls, text: str):
+        """``langdetect``'s answer, or ``None`` when it cannot give one.
+
+        ``langdetect`` is not in ``requirements.txt``, so in practice this
+        returns ``None`` and the heuristic below is what actually runs. It is
+        kept because the response contract documents a ``"langdetect"`` method,
+        and because the heuristic should stay the fallback rather than quietly
+        become the whole implementation.
+
+        The seed matters. ``langdetect`` samples features at random and, left
+        unseeded, gives different answers for the same input across runs — the
+        same resume would be Spanish on upload and Portuguese on re-analysis.
+        Seeding makes the result a function of the text alone.
+        """
+        try:
+            from langdetect import DetectorFactory, detect_langs
+        except ImportError:
+            return None
+
+        DetectorFactory.seed = 0
+
+        try:
+            ranked = detect_langs(text)
+        except Exception:
+            # langdetect raises its own LangDetectException, which we cannot
+            # name without importing it, plus anything its tokenizer throws on
+            # unusual input. Either way the answer is "fall back".
+            return None
+
+        if not ranked:
+            return None
+
+        best = ranked[0]
+        code = best.lang.split("-")[0]
+        return LanguageDetectionResult(
+            code,
+            LANGUAGE_NAMES.get(code, LANGUAGE_NAMES["unknown"]),
+            # Its own probability, rather than the flat 0.85 this used to
+            # report for every answer including the shaky ones.
+            round(min(0.99, float(best.prob)), 2),
+            "langdetect",
+        )
 
     @classmethod
     def _heuristic_detection(cls, text: str) -> LanguageDetectionResult:
         """Fallback heuristic detection based on common stop words."""
         words = re.findall(r"\b\w+\b", text.lower())
         if not words:
-            return LanguageDetectionResult("en", "English", 0.5, "heuristic_empty")
+            return LanguageDetectionResult("en", "English", 0.0, "heuristic_empty")
 
-        scores = {lang: 0 for lang in LANGUAGE_INDICATORS}
-        total_words = len(words)
+        densities = cls._indicator_densities(words)
+        total = sum(densities.values())
 
-        for word in words:
-            for lang, indicators in LANGUAGE_INDICATORS.items():
-                if word in indicators:
-                    scores[lang] += 1
+        if total <= 0:
+            # No stop word from any list. A skills-only resume — "Python Django
+            # PostgreSQL Kubernetes" — looks like this. English is the right
+            # default for the app, but the confidence has to say that nothing
+            # was actually recognised, or callers cannot tell a real answer
+            # from a shrug.
+            return LanguageDetectionResult("en", "English", 0.0, "heuristic_no_signal")
 
-        # Normalize scores
-        max_score = max(scores.values())
-        best_lang = "en"  # Default to English
+        # Ranked rather than `max`, so a tie resolves alphabetically instead of
+        # by whichever key the table happens to list first, and so the
+        # runner-up is available below.
+        ranked = sorted(SUPPORTED_LANGUAGES, key=lambda lang: (-densities[lang], lang))
+        best_lang = ranked[0]
+        best_density = densities[best_lang]
+        runner_up_density = densities[ranked[1]] if len(ranked) > 1 else 0.0
 
-        if max_score > 0:
-            best_lang = max(scores, key=scores.get)
-            confidence = min(0.95, (max_score / total_words) * 5.0)  # Scale confidence
-        else:
-            confidence = 0.5
+        # Two halves, because either alone misleads.
+        #
+        # `margin` is how far clear of the runner-up the winner is. Near zero
+        # for a text made of words several languages share — which is what an
+        # English resume looked like before English had a list of its own, and
+        # exactly the case that used to be reported with full confidence.
+        #
+        # `strength` is how much was recognised at all. Low for a resume that
+        # is mostly proper nouns and product names, where a clear winner among
+        # four matched words still is not much to go on.
+        margin = (best_density - runner_up_density) / best_density
+        strength = min(1.0, best_density / TYPICAL_INDICATOR_DENSITY)
+        confidence = min(0.95, 0.5 * margin + 0.5 * strength)
 
-        lang_name = LANGUAGE_NAMES.get(best_lang, LANGUAGE_NAMES["unknown"])
         return LanguageDetectionResult(
-            best_lang, lang_name, round(confidence, 2), "heuristic"
+            best_lang,
+            LANGUAGE_NAMES.get(best_lang, LANGUAGE_NAMES["unknown"]),
+            round(confidence, 2),
+            "heuristic",
         )
 
     @classmethod
+    def _indicator_densities(cls, words) -> Dict[str, float]:
+        """Weighted share of ``words`` that are stop words of each language.
+
+        Divided by the word count, so a long resume and a short one are
+        comparable, and every language is measured against the same text —
+        which the old raw counts were not, since the lists are different
+        lengths.
+        """
+        totals = {lang: 0.0 for lang in LANGUAGE_INDICATORS}
+
+        for word in words:
+            weight = _INDICATOR_WEIGHTS.get(word)
+            if weight is None:
+                continue
+            for lang, indicators in _INDICATOR_SETS.items():
+                if word in indicators:
+                    totals[lang] += weight
+
+        return {lang: total / len(words) for lang, total in totals.items()}
+
+    @classmethod
     def is_english(cls, text: str) -> bool:
-        """Quick check if text is predominantly English."""
-        result = cls.detect(text)
-        return result.language_code == "en" and result.confidence > 0.6
+        """Quick check if text is predominantly English.
+
+        This used to be ``code == "en" and confidence > 0.6`` and could not
+        return ``True`` for anything. Every path that returns ``"en"`` returned
+        a confidence below the gate — the short-text fallback ``0.0``, the
+        no-signal default ``0.5`` — and the only branch that clears ``0.6`` is
+        the branch that has just decided the text is *not* English. So the
+        translation banner offered to translate English resumes, every time.
+
+        The gate is gone rather than lowered. What the caller is deciding is
+        whether to offer a translation, and offering one for a text we are
+        unsure about is worse than not offering it: the confident answer and
+        the shrug both mean "leave this alone".
+        """
+        return cls.detect(text).language_code == "en"

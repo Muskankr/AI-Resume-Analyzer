@@ -119,7 +119,8 @@ def deliver(webhook: Webhook, event: str, data: dict) -> bool:
         webhook.record_failure(f"Destination is not allowed: {exc.reason}")
         return False
 
-    body = json.dumps(build_payload(event, data), separators=(",", ":")).encode("utf-8")
+    body = json.dumps(build_payload(event, data),
+                      separators=(",", ":")).encode("utf-8")
     timestamp = str(int(timezone.now().timestamp()))
 
     headers = {
@@ -181,7 +182,8 @@ def trigger_webhooks_for_user(user, analysis_result):
 
     payload = summarize_analysis(analysis_result)
     webhook_ids = list(
-        Webhook.objects.filter(user=user, is_active=True).values_list("id", flat=True)
+        Webhook.objects.filter(
+            user=user, is_active=True).values_list("id", flat=True)
     )
 
     for webhook_id in webhook_ids:

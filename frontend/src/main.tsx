@@ -3,16 +3,17 @@ import { createRoot } from 'react-dom/client'
 import * as Sentry from '@sentry/react'
 import './index.css'
 import App from './App.tsx'
+import { ThemeProvider } from './theme/ThemeContext.tsx'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import ErrorBoundary from './components/ErrorBoundary'
-import {  BrowserRouter } from 'react-router-dom'
-import ApiDocs from "./pages/Apidocs";
-
+import { BrowserRouter } from 'react-router-dom'
+import ApiDocs from './pages/Apidocs'
 
 if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
     integrations: [],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     beforeSend(event: any) {
       // Redact sensitive data from the event payload
       if (event.request && event.request.data) {
@@ -50,8 +51,11 @@ if (import.meta.env.VITE_SENTRY_DSN) {
 import { Routes, Route } from 'react-router-dom'
 import { TermsOfService } from './pages/TermsOfService'
 import { ProfilePage } from './components/ProfilePage'
+import { BuilderPage } from './pages/Builder/BuilderPage'
 import { RecruiterDashboard } from './pages/Recruiter/RecruiterDashboard'
-
+import { ResumeVersionHistory } from './components/ResumeVersionHistory'
+import { ATSCompatibilityScanner } from './components/ATSCompatibilityScanner'
+import { ContributorCertificate } from './components/ContributorCertificate'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
@@ -61,8 +65,15 @@ createRoot(document.getElementById('root')!).render(
           <Route path="/terms" element={<TermsOfService />} />
           <Route path="/recruiter" element={<RecruiterDashboard />} />
           <Route path="/*" element={<App />} />
+          <Route path="/builder" element={<BuilderPage />} />
           <Route path="/docs" element={<ApiDocs />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/career-roadmap" element={<CareerRoadmap />} />
+          <Route path="/skill-gap" element={<SkillGapAnalyzer />} />
+          <Route path="/version-history" element={<ResumeVersionHistory />} />
+          <Route path="/ats-scanner" element={<ATSCompatibilityScanner />} />
+          <Route path="/contributors" element={<ContributorCertificate />} />
+          <Route path="/contributor-certificate" element={<ContributorCertificate />} />
         </Routes>
       </BrowserRouter>
     </ErrorBoundary>

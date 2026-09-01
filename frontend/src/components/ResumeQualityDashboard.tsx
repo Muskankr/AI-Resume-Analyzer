@@ -13,6 +13,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import './ResumeQualityDashboard.css';
+import BulletPointOptimizer from './BulletPointOptimizer';
 
 // ===== Role Skill Database =====
 interface RoleCategory {
@@ -648,6 +649,11 @@ export function ResumeQualityDashboard() {
                 })}
               </tbody>
             </table>
+          </div>
+
+          {/* Bullet Point Optimizer */}
+          <div style={{ marginTop: 28 }}>
+            <BulletPointOptimizer targetRole={selectedRole} />
           </div>
 
           {/* History Chart */}

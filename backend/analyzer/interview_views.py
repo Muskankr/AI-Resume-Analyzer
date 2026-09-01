@@ -16,6 +16,13 @@ from rest_framework.throttling import UserRateThrottle
 
 
 class InterviewQuestionThrottle(UserRateThrottle):
+    # `scope` decides the cache key, and `UserRateThrottle` sets it to "user"
+    # for every subclass. Without an override each of these endpoints counted
+    # against one shared bucket keyed on the user id, so the tightest limit in
+    # the app applied to all of them: five interview questions a minute meant
+    # five bullet optimisations a minute too. Distinct scopes give each
+    # endpoint the rate its own class declares.
+    scope = "interview_questions"
     rate = "5/minute"
 
 

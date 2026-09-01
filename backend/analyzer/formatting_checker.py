@@ -10,12 +10,23 @@ Performs structural checks beyond keyword matching:
 import re
 from typing import Dict, List, Any, Optional
 
+from .section_headings import SECTION_KEYS, SECTIONS, find_headings
+
+#: Derived from :mod:`analyzer.section_headings` rather than hand-maintained.
+#: This was one of three copies of the same list, and they had already drifted
+#: — ``qualifications`` was in two of them, ``toolkit`` in one, ``degrees``
+#: plural here and singular there.
 STANDARD_SECTIONS = [
-    {"key": "summary", "name": "Summary / Objective", "variants": ["summary", "professional summary", "about me", "objective", "profile"]},
-    {"key": "experience", "name": "Work Experience", "variants": ["experience", "work experience", "employment", "work history", "professional experience"]},
-    {"key": "education", "name": "Education", "variants": ["education", "academic", "qualifications", "degree"]},
-    {"key": "skills", "name": "Skills", "variants": ["skills", "technical skills", "technologies", "competencies", "core competencies", "tools"]},
-    {"key": "projects", "name": "Projects", "variants": ["projects", "personal projects", "portfolio", "key projects"]},
+    {"key": "summary", "name": "Summary / Objective",
+        "variants": ["summary", "professional summary", "about me", "objective", "profile"]},
+    {"key": "experience", "name": "Work Experience", "variants": [
+        "experience", "work experience", "employment", "work history", "professional experience"]},
+    {"key": "education", "name": "Education", "variants": [
+        "education", "academic", "qualifications", "degree"]},
+    {"key": "skills", "name": "Skills", "variants": [
+        "skills", "technical skills", "technologies", "competencies", "core competencies", "tools"]},
+    {"key": "projects", "name": "Projects", "variants": [
+        "projects", "personal projects", "portfolio", "key projects"]},
 ]
 
 ESTIMATED_WORDS_PER_PAGE = 450
@@ -60,15 +71,21 @@ def check_resume_formatting(
         )
 
     # 2. Section order & presence check
-    lowered_text = text.lower()
-    found_sections = []
-    missing_sections = []
+    #
+    # This built a heading-anchored regex and then threw the result away with
+    # `or variant in lowered_text`, which matches a substring of any paragraph.
+    # The regex was dead code and every section was "found": "years of
+    # experience" counted as an Experience heading, "improved my skills" as a
+    # Skills heading, and a resume with no headings at all was told it had all
+    # five and scored 80 for structure.
+    headings = {heading.key: heading for heading in find_headings(text)}
 
     for section in STANDARD_SECTIONS:
         matched_variant = None
         for variant in section["variants"]:
             # Match heading either standalone line or early in line
-            pattern = re.compile(rf"(?:^|\n)\s*{re.escape(variant)}\s*(?::|$|\n)", re.IGNORECASE)
+            pattern = re.compile(
+                rf"(?:^|\n)\s*{re.escape(variant)}\s*(?::|$|\n)", re.IGNORECASE)
             if pattern.search(text) or variant in lowered_text:
                 matched_variant = variant
                 break
@@ -87,7 +104,8 @@ def check_resume_formatting(
 
     section_tips = []
     required_core = {"experience", "education", "skills"}
-    missing_core = [s["name"] for s in missing_sections if s["key"] in required_core]
+    missing_core = [s["name"]
+                    for s in missing_sections if s["key"] in required_core]
 
     if missing_core:
         section_tips.append(
@@ -113,7 +131,8 @@ def check_resume_formatting(
         )
     else:
         # Check text lines for potential horizontal tabular alignment / multiple tabs
-        tab_heavy_lines = [l for l in lines if l.count("\t") >= 2 or re.search(r"\s{4,}\S+\s{4,}", l)]
+        tab_heavy_lines = [l for l in lines if l.count(
+            "\t") >= 2 or re.search(r"\s{4,}\S+\s{4,}", l)]
         if len(tab_heavy_lines) >= 4:
             layout_status = "warning"
             layout_tips.append(
@@ -126,7 +145,8 @@ def check_resume_formatting(
 
     # 4. Font and character cleanliness check
     font_tips = []
-    non_ascii_symbols = re.findall(r"[^\x00-\x7F\u2010-\u2015\u2018-\u201D\u2022\u25CF\u2026\u00A0]", text)
+    non_ascii_symbols = re.findall(
+        r"[^\x00-\x7F\u2010-\u2015\u2018-\u201D\u2022\u25CF\u2026\u00A0]", text)
     if len(non_ascii_symbols) > 15:
         font_tips.append(
             "Detected custom or decorative special symbols/glyphs. Stick to standard Unicode bullets (•) and standard web-safe fonts (Arial, Calibri, Helvetica, Roboto) for reliable ATS rendering."

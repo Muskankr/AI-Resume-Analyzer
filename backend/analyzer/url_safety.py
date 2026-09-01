@@ -127,7 +127,8 @@ def is_public_address(raw_ip):
     treated as not public — failing closed is the only safe direction here.
     """
     try:
-        ip = ipaddress.ip_address(raw_ip) if isinstance(raw_ip, str) else raw_ip
+        ip = ipaddress.ip_address(raw_ip) if isinstance(
+            raw_ip, str) else raw_ip
     except ValueError:
         return False
 
@@ -157,7 +158,8 @@ def resolve_host(hostname, port):
             continue
 
     if not addresses:
-        raise UnsafeURLError(reason=f"host {hostname!r} resolved to no usable address")
+        raise UnsafeURLError(
+            reason=f"host {hostname!r} resolved to no usable address")
 
     return addresses
 

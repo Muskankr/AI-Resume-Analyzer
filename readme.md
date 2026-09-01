@@ -1,0 +1,682 @@
+<div align="center">
+
+[![GitHub license](https://img.shields.io/github/license/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=34d399)](https://github.com/Muskankr/AI-Resume-Analyzer/blob/main/LICENSE)
+[![GitHub issues](https://img.shields.io/github/issues/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=f43f5e)](https://github.com/Muskankr/AI-Resume-Analyzer/issues)
+[![Last Commit](https://img.shields.io/github/last-commit/Muskankr/AI-Resume-Analyzer?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer/commits/main)
+[![Build](https://img.shields.io/github/actions/workflow/status/Muskankr/AI-Resume-Analyzer/ci.yml?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer/actions)
+[![Backend Coverage](https://img.shields.io/badge/Backend%20Coverage-94%25-brightgreen?style=for-the-badge&logo=python)](https://github.com/Muskankr/AI-Resume-Analyzer)
+[![Frontend Coverage](https://img.shields.io/badge/Frontend%20Coverage-80%25-brightgreen?style=for-the-badge&logo=vitest)](https://github.com/Muskankr/AI-Resume-Analyzer)
+[![GitHub stars](https://img.shields.io/badge/stars-ECSoC'26-fbbf24?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=34d399)](https://github.com/Muskankr/AI-Resume-Analyzer/network/members)
+[![GitHub contributors](https://img.shields.io/github/contributors/Muskankr/AI-Resume-Analyzer?style=for-the-badge&color=818cf8)](https://github.com/Muskankr/AI-Resume-Analyzer/graphs/contributors)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge&color=38bdf8)](https://github.com/Muskankr/AI-Resume-Analyzer/pulls)
+[![ECSoC'26](https://img.shields.io/badge/Program-ECSoC'26-orange?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer)
+
+# AI Resume Analyzer
+
+## *An enterprise-grade automated platform to parse resumes, evaluate ATS scores, extract technical skills, and generate contextual recommendations.*
+
+## Framework Overview
+
+### Client (Frontend)
+
+![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-7-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Bootstrap](https://img.shields.io/badge/Bootstrap-5-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white)
+![Axios](https://img.shields.io/badge/Axios-5A29E4?style=for-the-badge&logo=axios&logoColor=white)
+
+### Server (Backend)
+
+![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Django](https://img.shields.io/badge/Django-REST_Framework-092E20?style=for-the-badge&logo=django&logoColor=white)
+![DRF](https://img.shields.io/badge/DRF-REST_API-red?style=for-the-badge)
+![PDFPlumber](https://img.shields.io/badge/PDFPlumber-PDF_Parser-orange?style=for-the-badge)
+![CORS](https://img.shields.io/badge/django--cors--headers-CORS-green?style=for-the-badge)
+
+<p align="center>
+  <a href="#key-features">Key Features</a> •
+  <a href="#project-preview">Project Preview</a> •pm tun
+  <a href="#architecture--data-flow">Architecture</a> •
+  <a href="#tech-stack">Tech Stack</a> •
+  <a href="#installation--setup">Installation & Setup</a> •
+  <a href="#api-reference">API Reference</a> •
+  <a href="#roadmap">Roadmap</a> •
+  <a href="#contributing">Contributing</a> •
+  <a href="#contributors">Contributors</a>
+</p>
+</div>
+
+---
+
+## Key Features
+
+- **Flexible Multi-Format Parsing** — Instant text extraction from files (PDF format) using Python `pdfplumber`.
+- **ATS Optimizer & Scoring Engine** — High-performance scoring algorithm that parses resumes against technical standard keywords.
+- **Contextual Skill Extraction** — Detects core programming languages, frameworks, developer tools, database engines, and libraries.
+- **Dynamic Feedback Generation** — Yields smart suggestions recommending targeted certifications, technologies, and formatting changes.
+- **Premium Glassmorphic UI** — Fully responsive, beautiful interface with active state indicators, hover metrics, and smooth transitions built using Bootstrap 5.
+
+---
+
+## Project Preview/ Screenshots
+
+### 🏠 Home Page
+
+<div align="center">
+  <img src="frontend\src\assets\screenshots\homepage.png" alt="Application Interface Preview" width="850" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);"/>
+</div>
+
+
+### 📤 Resume Upload
+
+<div align="center">
+  <img src="frontend\src\assets\screenshots\awqy65.gif" alt="Application Interface Preview" width="850" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);"/>
+</div>
+
+
+### 📜 Analysis Result
+
+<div align="center">
+  <img src="frontend\src\assets\screenshots\result.png" alt="Application Interface Preview" width="850" style="border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);"/>
+</div>
+
+
+---
+
+## Architecture & Data Flow
+
+```text
+ ┌──────────────┐         POST /api/upload/         ┌─────────────────┐
+ │              │ ────────────────────────────────> │                 │
+ │ React Client │                                   │ Django Backend  │
+ │  (Bootstrap) │ <──────────────────────────────── │   (REST API)    │
+ └──────────────┘           Analysis JSON           └─────────────────┘
+                                                             │
+                                                             ▼
+                                                    ┌─────────────────┐
+                                                    │  PDFPlumber Parser│
+                                                    └─────────────────┘
+                                                             │
+                                                             ▼
+                                                    ┌─────────────────┐
+                                                    │ Keyword Matches │
+                                                    │   & ATS Engine  │
+                                                    └─────────────────┘
+```
+
+---
+
+## Tech Stack
+
+### Client (Frontend)
+* **Framework**: React 19 (Vite boilerplate)
+* **Language**: TypeScript
+* **Styling**: Bootstrap 5 + Vanilla CSS Variables (Glassmorphism theme)
+* **API Handler**: Axios
+
+### Server (Backend)
+* **Framework**: Django REST Framework (DRF)
+* **Language**: Python 3.10+
+* **CORS Management**: django-cors-headers
+* **Text Extractor**: PDFPlumber
+
+---
+
+## Project Structure
+
+```text
+ai-resume-analyzer/
+├── frontend/                 # React frontend application
+│   ├── public/             # Static public assets (ui.png, favicon, etc.)
+│   ├── src/
+│   │   ├── assets/         # Images, logos, and Vite assets
+│   │   ├── App.css         # Component layout configurations
+│   │   ├── App.tsx         # Application entry view & core client logic
+│   │   ├── index.css       # Core stylesheets and variables
+│   │   └── main.tsx        # DOM Renderer
+│   ├── package.json        # Node modules and dependency matrix
+│   └── tsconfig.json       # TypeScript compiler settings
+│
+├── backend/                 # Django REST API backend
+│   ├── resume_analyzer/    # Main settings, routing, and configurations
+│   ├── analyzer/           # App endpoints, models, viewsets, and migrations
+│   │   ├── migrations/     # Database migration schema
+│   │   ├── models.py       # Resume database models
+│   │   ├── serializers.py  # Django REST serialization maps
+│   │   ├── urls.py         # Endpoint routes
+│   │   └── views.py        # Resume parsing & scoring logic
+│   ├── resumes/            # Storage path for processed resumes
+│   ├── requirements.txt    # Python dependencies list
+│   └── manage.py           # Django command utility
+│
+└── README.md
+```
+
+---
+
+## Installation & Setup
+
+### Prerequisites
+
+Ensure you have the following packages installed on your local development machine:
+- **Node.js** (v18 or higher)
+- **Python** (v3.10 or higher)
+- **Git**
+- **Redis Server** (running locally on port 6379 for Celery tasks)
+
+---
+
+### Clone the Repository
+
+```bash
+git clone https://github.com/Muskankr/AI-Resume-Analyzer.git
+```
+
+---
+
+### Server Setup (Django)
+
+We recommend installing dependencies inside a secure Python virtual environment:
+
+```bash
+# Navigate to backend directory
+cd backend
+
+# Initialize a virtual environment
+python -m venv venv
+
+# Activate the virtual environment
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
+# Create local environment configuration from the example
+# Windows:
+copy .env.example .env
+# macOS/Linux:
+cp .env.example .env
+
+# Install dependencies
+pip install -r requirements.txt
+
+# Execute database migrations
+python manage.py migrate
+
+# Spin up Django development server
+python manage.py runserver
+
+# In a separate terminal, activate the venv and start the Celery background worker:
+# (Use --pool=solo on Windows to avoid process spawning issues)
+celery -A resume_analyzer worker -l info --pool=solo
+```
+The API server starts on: `http://127.0.0.1:8000/`
+
+#### Server Environment Variables
+| Variable | Description | Default / Placeholder |
+| :--- | :--- | :--- |
+| `SECRET_KEY` | Secret key for Django cryptographic signing | `django-insecure-local-development-secret-key-change-me` |
+| `DEBUG` | Set to `True` for development, `False` for production | `True` |
+| `ALLOWED_HOSTS` | Comma-separated list of allowed host/domain names | `localhost,127.0.0.1,127.0.0.1:8000` |
+
+---
+
+### Client Setup (React)
+
+Create your environment variables by copying the provided examples:
+
+```bash
+cd frontend
+
+# Windows
+copy .env.development.example .env.development
+copy .env.production.example .env.production
+
+# macOS / Linux
+cp .env.development.example .env.development
+cp .env.production.example .env.production
+```
+
+Then install dependencies and start the app:
+
+```bash
+# Install packages
+npm install
+
+# Run the local Vite web server
+npm run dev
+```
+The client application will run at: `http://localhost:5173/`
+
+#### Client Environment Variables
+| Variable | Description | Default / Placeholder |
+| :--- | :--- | :--- |
+| `VITE_BACKEND_URL` | The URL of the Django backend REST API server | `http://127.0.0.1:8000` |
+| `VITE_SENTRY_DSN` | Sentry DSN for frontend error tracking | *(Empty)* |
+
+---
+
+## Error Tracking (Sentry)
+
+This project uses [Sentry](https://sentry.io) for production error tracking on both the frontend and backend. The integration includes a `before_send` (backend) and `beforeSend` (frontend) hook to actively sanitize request bodies and prevent Personally Identifiable Information (PII) or resume content from being sent to the tracking service.
+
+### Setup
+
+1. Create a free developer account at [Sentry.io](https://sentry.io/signup/).
+2. Create two new projects in Sentry:
+   - One for **Django** (Backend)
+   - One for **React** (Frontend)
+3. Copy the respective **DSN (Data Source Name)** for each project.
+
+### Environment Variables
+
+Add the DSNs to your `.env` files:
+
+**Backend (backend/.env)**
+```env
+SENTRY_DSN=your-django-sentry-dsn
+```
+
+**Frontend (frontend/.env)**
+```env
+VITE_SENTRY_DSN=your-react-sentry-dsn
+```
+
+### Local Development Behavior
+
+For local development, you do **not** need to set the Sentry DSNs. 
+- If `SENTRY_DSN` and `VITE_SENTRY_DSN` are missing or empty, Sentry remains inactive.
+- The application will initialize normally without any tracking overhead or startup errors.
+
+---
+
+### Testing & Coverage Setup
+
+Test suites and coverage reports are wired into the project setup for both backend and frontend submodules.
+
+#### Root Workspace Commands
+
+```bash
+# Run test coverage for both Frontend and Backend
+npm run test:coverage
+
+# Run Frontend tests with Vitest coverage
+npm run test:coverage:frontend
+
+# Run Backend tests with Coverage.py
+npm run test:coverage:backend
+```
+
+#### Backend Coverage (Django + Coverage.py)
+
+```bash
+cd backend
+coverage run manage.py test analyzer
+coverage report
+```
+
+* **Coverage Configuration**: Configured in [`backend/.coveragerc`](backend/.coveragerc)
+* **Minimum Threshold**: **60%** line coverage.
+
+#### Frontend Coverage (React + Vitest)
+
+```bash
+cd frontend
+npm run test:coverage
+```
+
+* **Coverage Configuration**: Configured in [`frontend/vite.config.ts`](frontend/vite.config.ts)
+* **Minimum Threshold**: **50%** across lines, functions, branches, and statements.
+
+---
+
+## API Reference
+## API Reference
+
+The AI Resume Analyzer backend provides an OpenAPI-documented REST API.
+
+### Interactive API Documentation
+
+The API can be explored interactively using Swagger UI:
+
+- **Frontend Swagger UI:** `http://localhost:5173/docs`
+- **Backend Swagger UI:** `http://127.0.0.1:8000/api/docs/`
+
+### OpenAPI Specification
+
+The generated OpenAPI specification is available at:
+
+`http://127.0.0.1:8000/api/schema/`
+
+### Authentication
+
+Protected endpoints use JWT bearer authentication.
+
+After obtaining an access token from:
+
+`POST /api/auth/login/`
+
+provide it in the Swagger UI using the **Authorize** button:
+
+```text
+Bearer <access_token>
+```
+
+### Parse Resume File
+
+Uploads a resume and starts the resume analysis process.
+
+- **Endpoint:** `/api/upload/`
+- **Method:** `POST`
+- **Payload Format:** `multipart/form-data`
+
+#### Parameters
+
+| Name | Type | Required | Description |
+| :--- | :--- | :---: | :--- |
+| `resume` | `binary (PDF/document)` | **Yes** | The resume document to analyze |
+
+--- 
+
+#### Sample Success JSON Response (`200 OK`)
+```json
+{
+  "score": 80,
+  "skills_found": [
+    "python",
+    "django",
+    "react",
+    "git"
+  ],
+  "suggestions": [
+    "Mention Django experience",
+    "Add frontend skills like React"
+  ]
+}
+```
+
+---
+
+## Rate Limiting
+
+The resume upload endpoint (`POST /api/upload/`) is throttled per client IP using DRF's `SimpleRateThrottle`.
+
+| Setting | Default | Description |
+| :--- | :--- | :--- |
+| `RESUME_UPLOAD_RATE` | `10/hour` | Max requests per IP. Format: `<n>/hour`, `<n>/day`, `<n>/min` |
+
+To change the limit, set RESUME_UPLOAD_RATE in your backend/.env:
+
+```env
+RESUME_UPLOAD_RATE=20/hour
+```
+
+When the limit is exceeded, the API returns:
+
+```json
+// HTTP 429 Too Many Requests
+// Retry-After: <seconds>
+{ "detail": "Request was throttled. Expected available in <N> seconds." }
+```
+
+---
+
+## Security Configuration & Headers
+
+Standard security headers are configured for both the frontend (client) and backend (server) environments to mitigate common vulnerabilities:
+
+### Configured Headers
+
+1. **Content-Security-Policy (CSP):** Limits the resources (scripts, styles, connections) the browser is allowed to load.
+   - *Client:* Allows `'self'` resources, inline scripts/styles for React/Bootstrap, and local/production backend API connections.
+   - *Server (API):* Uses a strict `default-src 'none';` for JSON API responses, and standard self-hosting for Django admin.
+2. **X-Frame-Options (`DENY`):** Prevents the app from being embedded in `<iframe>` tags, mitigating Clickjacking attacks.
+3. **X-Content-Type-Options (`nosniff`):** Disables MIME-type sniffing to prevent MIME-based attacks.
+4. **Referrer-Policy (`strict-origin-when-cross-origin`):** Protects privacy by stripping referrer paths when making cross-origin requests.
+
+### Local Development Parity
+
+To ensure parity between local development and production environments, the headers are applied in both locations:
+- **Production (Vercel):** Configured via [vercel.json](file:///e:/ECSOC-26/AI-Resume-Analyzer/frontend/vercel.json) files in the root and frontend directories.
+- **Local Development (Vite):** Preconfigured in [vite.config.ts](file:///e:/ECSOC-26/AI-Resume-Analyzer/frontend/vite.config.ts) to send headers when running the local dev server (`npm run dev`).
+- **Django Backend:** Applied dynamically in all environments via Django settings and a custom middleware in [middleware.py](file:///e:/ECSOC-26/AI-Resume-Analyzer/backend/resume_analyzer/middleware.py).
+
+## 🔧 Troubleshooting
+
+If you encounter issues while setting up or running the project, try the following solutions.
+
+### Backend server not starting
+
+**Possible causes**
+- Virtual environment is not activated.
+- Dependencies are missing.
+- Database migrations have not been applied.
+- Environment variables are not configured correctly.
+
+**Solutions**
+```bash
+cd backend
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+```
+
+---
+
+### Frontend cannot connect to the backend
+
+**Possible causes**
+- Backend server is not running.
+- `VITE_BACKEND_URL` is incorrect.
+- CORS settings are misconfigured.
+
+**Solutions**
+- Ensure the backend is running on `http://127.0.0.1:8000`.
+- Verify the `VITE_BACKEND_URL` value in your environment file.
+- Restart the frontend after updating environment variables.
+
+---
+
+### Missing environment variables
+
+**Symptoms**
+- Application fails during startup.
+- API requests fail unexpectedly.
+
+**Solutions**
+Copy the example environment files before starting the project.
+
+Backend:
+
+```bash
+# Windows
+copy .env.example .env
+
+# macOS / Linux
+cp .env.example .env
+```
+
+Frontend:
+
+```bash
+# Windows
+copy .env.development.example .env.development
+
+# macOS / Linux
+cp .env.development.example .env.development
+```
+
+---
+
+### Port already in use
+
+**Symptoms**
+
+```
+Address already in use
+```
+
+**Solutions**
+
+Use another port or stop the process currently using the required port.
+
+Example:
+
+```bash
+python manage.py runserver 8001
+```
+
+---
+
+### Dependency installation errors
+
+**Possible causes**
+
+- Unsupported Node.js or Python version.
+- Interrupted package installation.
+- Corrupted dependency cache.
+
+**Solutions**
+
+Backend:
+
+```bash
+pip install -r requirements.txt
+```
+
+Frontend:
+
+```bash
+npm install
+```
+
+Make sure you are using:
+- Node.js **v18+**
+- Python **3.10+**
+
+---
+
+## Frequently Asked Questions (FAQ)
+
+### 1. Which resume formats are supported?
+Currently, the application supports **PDF resumes** for analysis. Make sure the uploaded file is valid and not corrupted.
+
+### 2. What are the minimum Node.js and Python versions?
+The recommended versions are:
+- **Node.js:** v18 or higher
+- **Python:** v3.10 or higher
+
+### 3. Why is my resume upload failing?
+If your upload fails, check the following:
+- The resume is in PDF format.
+- The backend server is running.
+- The file is not corrupted.
+- The API endpoint is correctly configured.
+
+### 4. How do I configure environment variables?
+Copy the provided example environment files (`.env.example`, `.env.development.example`, or `.env.production.example`) to the appropriate `.env` files and update the required values before starting the application.
+
+### 5. How do I run the frontend and backend together?
+Start the backend server first, then run the frontend in a separate terminal:
+
+```bash
+# Backend
+cd backend
+python manage.py runserver
+
+# Frontend
+cd frontend
+npm install
+npm run dev
+```
+
+Once both services are running, open the frontend in your browser and ensure it is connected to the backend API.
+
+---
+
+## AI Cover Letter Generator (Issue #965)
+
+The **AI Cover Letter Generator** creates highly personalized cover letter drafts by intelligently matching extracted resume evidence against a provided target job description.
+
+- **Anti-Fabrication Safeguards**: Uses strict prompt guardrails to ensure no companies, job titles, or skills are hallucinated if they are not explicitly listed in your resume.
+- **Customizable**: Allows users to input specific job descriptions to fine-tune the relevance of the output.
+- **Draft Status**: All outputs are clearly labeled as `[AI-GENERATED DRAFT - PLEASE REVIEW AND EDIT]`, ensuring it's used as a starting point.
+- **Architecture**: Plugs cleanly into the existing Django REST Framework API and React UI, using an LLM integration (configurable via `OPENAI_API_KEY`) accessed directly through standard REST requests.
+
+---
+
+## ATS Simulator (Issue #974)
+
+The **ATS Simulator** is a specialized feature that evaluates analyzed resumes against the known parsing quirks and limitations of major enterprise applicant tracking systems (like Workday, Greenhouse, and Taleo).
+
+- **Approximation Notice**: This feature *simulates* how different platforms might interpret your formatting, contact information, and headings based on publicly documented behavior. It is **not** an official or proprietary parser.
+- **Profiles**: Out-of-the-box profiles simulate the strict chronological requirements of Workday, the contact-dependent indexing of Greenhouse, and the rigid formatting checks of Taleo legacy systems.
+- **Usage**: The Simulator is available at the bottom of a successful resume analysis. It dynamically builds recommendations on how to tweak your layout to improve parsing compatibility.
+
+---
+
+## Roadmap
+
+- [ ] **DOCX Document Parsing** — Integrate `python-docx` to support Word resume parser pipelines.
+- [ ] **Dark Mode Toggle** — Implement user-theme selections with CSS theme tokens persisted in `localStorage`.
+- [ ] **Target Job Role Comparison** — Match resume skill outputs directly against selectable target job roles.
+- [ ] **Persistent User Dashboard** — Save and render a timeline history of past scores using client-side indexing.
+- [ ] **Upload Interactive States** — Dash borders and overlay drop indicators to make file uploads feel extremely natural.
+
+---
+
+## Contributing
+
+We welcome contributions of all levels under the **ECSoC'26** program!
+
+> 🌱 **Never opened a pull request before?** Follow our beginner-friendly [Your First Pull Request Ever](docs/FIRST_PULL_REQUEST.md) guide — a step-by-step walkthrough (forking, cloning, branching, committing, and opening the PR) that assumes zero prior Git/GitHub experience.
+
+📜 Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating in this project. By contributing, you agree to abide by its guidelines.
+
+1. **Fork** the repository on GitHub.
+2. Clone your fork and create a checkout branch:
+   ```bash
+   git checkout -b feature/your-feature-name
+   ```
+3. Commit your changes with standard semantic commit messages (e.g. `feat: ...`, `fix: ...`).
+4. Push changes to your fork and create a **Pull Request (PR)** targeting the upstream `main` branch.
+
+Please review active issues before creating duplicates, and always link open issues to your Pull Request!
+
+---
+
+## Code Owners
+
+This repository uses a [`CODEOWNERS`](.github/CODEOWNERS) file to automatically request reviews from maintainers whenever a Pull Request is opened.
+
+- The file lives at `.github/CODEOWNERS`.
+- Currently, all files (`*`) are owned by [@Muskankr](https://github.com/Muskankr).
+- When you open a PR, GitHub will automatically add the code owner as a reviewer.
+- As the project grows, ownership can be split by folder (e.g. `/frontend/` → frontend maintainers, `/backend/` → backend maintainers).
+
+---
+
+## Contributors
+
+### Maintainer
+- **Muskan Kumari** ([@Muskankr](https://github.com/Muskankr)) — Project Creator & Lead Maintainer
+
+### Active Contributors Grid
+A huge thanks to all the developers who have contributed code, fixed bugs, and improved documentation!
+
+<a href="https://github.com/Muskankr/AI-Resume-Analyzer/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=Muskankr/AI-Resume-Analyzer" alt="Contributors Avatars Grid" style="border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.05); padding: 5px; background: rgba(255, 255, 255, 0.03);"/>
+</a>
+
+---
+
+<div align="center">
+  Show your support by leaving a ⭐ on this repository!
+</div>
+
+## Community
+
+Have a question, idea, or something to show off? Use [GitHub Discussions](https://github.com/Muskankr/AI-Resume-Analyzer/discussions) for open-ended conversations (Q&A, Ideas, Show and Tell), and keep the [Issues](https://github.com/Muskankr/AI-Resume-Analyzer/issues) tab for actionable, scoped work items.
+
+Join our [Discord Community](YOUR_DISCORD_URL) to ask questions, discuss the project, and connect with contributors.

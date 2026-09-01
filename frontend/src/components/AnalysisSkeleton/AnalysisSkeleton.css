@@ -12,6 +12,12 @@
   --skeleton-border: rgba(255, 255, 255, 0.05);
 }
 
+[data-theme='high-contrast'] {
+  --skeleton-base: rgba(255, 255, 255, 0.1);
+  --skeleton-highlight: rgba(255, 255, 255, 0.25);
+  --skeleton-border: rgba(255, 255, 255, 0.3);
+}
+
 .analysis-skeleton {
   width: 100%;
   margin-top: 2rem;

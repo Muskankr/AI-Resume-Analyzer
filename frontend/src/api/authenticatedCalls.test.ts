@@ -34,10 +34,7 @@ interface SeenRequest {
 const STORAGE_KEY = 'auth_user'
 
 function signIn(token = 'access-1', refresh = 'refresh-1') {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({ username: 'someone', token, refresh })
-  )
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ username: 'someone', token, refresh }))
 }
 
 describe('authenticated calls go through the refreshing client', () => {
@@ -70,15 +67,12 @@ describe('authenticated calls go through the refreshing client', () => {
     return sources[key]
   }
 
-  it.each(AUTHENTICATED_SOURCES)(
-    '%s does not hand-build an Authorization header',
-    (file) => {
-      // A hand-built header carries whatever token the component captured on
-      // render. Even when the interceptor refreshes and writes a new token to
-      // storage, a closure like this keeps sending the stale one.
-      expect(sourceFor(file)).not.toMatch(/Authorization:\s*`Bearer/)
-    }
-  )
+  it.each(AUTHENTICATED_SOURCES)('%s does not hand-build an Authorization header', (file) => {
+    // A hand-built header carries whatever token the component captured on
+    // render. Even when the interceptor refreshes and writes a new token to
+    // storage, a closure like this keeps sending the stale one.
+    expect(sourceFor(file)).not.toMatch(/Authorization:\s*`Bearer/)
+  })
 
   it.each(AUTHENTICATED_SOURCES)('%s does not call bare axios verbs', (file) => {
     // `axios.isAxiosError` is fine — it inspects an error, it does not make a

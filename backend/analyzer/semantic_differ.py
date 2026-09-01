@@ -9,6 +9,8 @@ import difflib
 from typing import List, Dict, Any, Set, Tuple
 from dataclasses import dataclass, field
 
+from .section_headings import section_body
+
 
 @dataclass
 class SemanticChange:
@@ -26,16 +28,13 @@ class SemanticDiffer:
     Extracts structured data and compares it semantically rather than just textually.
     """
 
-    SECTION_PATTERNS = {
-        "experience": re.compile(
-            r"(?im)^(experience|work history|employment|professional background)"
-        ),
-        "education": re.compile(r"(?im)^(education|academic|qualifications|degrees)"),
-        "skills": re.compile(
-            r"(?im)^(skills|technologies|competencies|technical skills)"
-        ),
-        "summary": re.compile(r"(?im)^(summary|profile|objective|about me)"),
-    }
+    #: The sections this differ compares.
+    #:
+    #: The heading vocabulary itself lives in
+    #: :mod:`analyzer.section_headings`, which is also what
+    #: ``scoring.py`` and ``formatting_checker.py`` use. There were three
+    #: hand-maintained copies of it and they had already drifted.
+    COMPARED_SECTIONS = ("experience", "education", "skills", "summary")
 
     STRONG_ACTION_VERBS = {
         "spearheaded",
@@ -102,35 +101,48 @@ class SemanticDiffer:
 
     @classmethod
     def _normalize_text(cls, text: str) -> str:
-        """Removes excessive whitespace and normalizes line breaks."""
-        text = re.sub(r"\s+", " ", text)
-        text = re.sub(r"\n+", "\n", text)
-        return text.strip()
+        r"""Collapse runs of whitespace without destroying the line structure.
+
+        The old version ran ``re.sub(r"\s+", " ", text)`` first, which replaces
+        every newline with a space, and then ``re.sub(r"\n+", "\n", text)``,
+        which by that point had nothing left to match. Section detection is
+        line-anchored — headings sit on their own line — so after normalisation
+        there were no headings to find, and any resume that opens with the
+        candidate's name (which is every resume) compared as having no sections
+        at all:
+
+            >>> SemanticDiffer._extract_section(
+            ...     SemanticDiffer._normalize_text("Jane Doe\\n\\nEXPERIENCE\\nAcme"),
+            ...     "experience",
+            ... )
+            ''
+
+        Runs of spaces and tabs inside a line are still collapsed, and runs of
+        blank lines still become one, which is all "ignore trivial whitespace
+        changes" ever needed.
+        """
+        lines = [re.sub(r"[^\S\n]+", " ", line).strip() for line in (text or "").splitlines()]
+
+        collapsed = []
+        for line in lines:
+            if not line and (not collapsed or not collapsed[-1]):
+                continue
+            collapsed.append(line)
+
+        return "\n".join(collapsed).strip()
 
     @classmethod
     def _extract_section(cls, text: str, section_name: str) -> str:
-        """Extracts the content of a specific section from the resume text."""
-        pattern = cls.SECTION_PATTERNS.get(section_name)
-        if not pattern:
+        """The content under a section's heading, up to the next heading.
+
+        Delegates to :func:`analyzer.section_headings.section_body`, which also
+        handles the label-with-content form — "Skills: Python, Django" — that
+        the previous character-offset walk returned with the colon still
+        attached.
+        """
+        if section_name not in cls.COMPARED_SECTIONS:
             return ""
-
-        match = pattern.search(text)
-        if not match:
-            return ""
-
-        start_idx = match.end()
-        # Find the next section header to determine the end of this section
-        next_section_match = None
-        for name, pat in cls.SECTION_PATTERNS.items():
-            if name != section_name:
-                m = pat.search(text, start_idx)
-                if m and (
-                    not next_section_match or m.start() < next_section_match.start()
-                ):
-                    next_section_match = m
-
-        end_idx = next_section_match.start() if next_section_match else len(text)
-        return text[start_idx:end_idx].strip()
+        return section_body(text, section_name)
 
     @classmethod
     def _extract_skills(cls, text: str) -> Set[str]:
@@ -139,12 +151,18 @@ class SemanticDiffer:
         if not skills_section:
             return set()
 
-        # Split by common delimiters
-        raw_skills = re.split(r"[,•\-\n;|]", skills_section)
+        # Split by common delimiters. The leading colon of "Skills: Python" is
+        # gone by the time we get here — `section_body` returns the content, not
+        # the label — but a stray one on a sub-list is still stripped, along
+        # with the bullet glyphs and trailing punctuation that survive a split.
+        raw_skills = re.split(r"[,•·▪●;|/\n]|\s+[-–—]\s+", skills_section)
         return {
-            s.strip().lower()
-            for s in raw_skills
-            if len(s.strip()) > 1 and len(s.strip()) < 50
+            skill
+            for skill in (
+                candidate.strip().strip(":-–—*• \t").lower()
+                for candidate in raw_skills
+            )
+            if 1 < len(skill) < 50
         }
 
     @classmethod

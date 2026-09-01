@@ -35,13 +35,14 @@ export const SkillsLeaderboard: React.FC<SkillsLeaderboardProps> = ({ onBack }) 
     const metaDescription = document.querySelector('meta[name="description"]')
     const ogDescription = document.querySelector('meta[property="og:description"]')
     const twitterDescription = document.querySelector('meta[name="twitter:description"]')
-    
+
     const originalDesc = metaDescription?.getAttribute('content') || ''
     const originalTitle = document.title
-    
-    const newDesc = "Explore the AI Resume Analyzer Skills Leaderboard. View aggregated insights on top matched skills and in-demand skill gaps across various career tracks."
-    const newTitle = "Skills Leaderboard | AI Resume Analyzer"
-    
+
+    const newDesc =
+      'Explore the AI Resume Analyzer Skills Leaderboard. View aggregated insights on top matched skills and in-demand skill gaps across various career tracks.'
+    const newTitle = 'Skills Leaderboard | AI Resume Analyzer'
+
     if (metaDescription) metaDescription.setAttribute('content', newDesc)
     if (ogDescription) ogDescription.setAttribute('content', newDesc)
     if (twitterDescription) twitterDescription.setAttribute('content', newDesc)
@@ -89,7 +90,17 @@ export const SkillsLeaderboard: React.FC<SkillsLeaderboardProps> = ({ onBack }) 
         }}
       >
         <div>
-          <h2 style={{ fontSize: '1.8rem', fontWeight: '800', margin: 0, color: '#fff', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h2
+            style={{
+              fontSize: '1.8rem',
+              fontWeight: '800',
+              margin: 0,
+              color: '#fff',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+            }}
+          >
             🏆 Skills Leaderboard
           </h2>
           <p style={{ margin: '4px 0 0', color: 'rgba(255,255,255,0.6)', fontSize: '0.9rem' }}>

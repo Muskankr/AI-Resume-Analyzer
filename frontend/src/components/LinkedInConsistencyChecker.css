@@ -1,0 +1,152 @@
+.consistency-checker-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.checker-title {
+    font-size: 2rem;
+    color: var(--heading-text, #fff);
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.checker-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 24px;
+    margin-bottom: 30px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.input-group label {
+    font-weight: 600;
+    color: var(--heading-text, #e2e8f0);
+}
+
+.input-group input,
+.input-group textarea {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.15));
+    background: var(--control-bg, rgba(0, 0, 0, 0.2));
+    color: var(--text-color, #fff);
+    font-size: 0.95rem;
+}
+
+.input-group textarea {
+    resize: vertical;
+}
+
+.check-btn {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #fff;
+    background: var(--color-primary, #6366f1);
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 10px;
+}
+
+.check-btn:hover:not(:disabled) {
+    background: var(--color-primary-hover, #4f46e5);
+    transform: translateY(-1px);
+}
+
+.check-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    margin-top: 10px;
+}
+
+.checker-results {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.result-section {
+    padding: 24px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    border-bottom: 1px solid var(--surface-border, rgba(255, 255, 255, 0.1));
+    padding-bottom: 12px;
+}
+
+.section-header h3 {
+    margin: 0;
+    color: var(--heading-text, #fff);
+}
+
+.mismatch-item {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--surface-border, rgba(255, 255, 255, 0.1));
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.mismatch-item h4 {
+    margin: 0 0 10px 0;
+    color: #ef4444;
+}
+
+.mismatch-comparison {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 12px;
+}
+
+.mismatch-col {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.03);
+    padding: 12px;
+    border-radius: 6px;
+}
+
+.col-label {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-muted, #94a3b8);
+    margin-bottom: 8px;
+}
+
+.mismatch-col p {
+    margin: 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.mismatch-message {
+    margin: 0;
+    padding: 10px;
+    background: rgba(234, 179, 8, 0.1);
+    border-left: 3px solid #eab308;
+    border-radius: 4px;
+    font-size: 0.9rem;
+    color: #fef08a;
+}

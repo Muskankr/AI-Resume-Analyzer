@@ -1,0 +1,129 @@
+.builder-container {
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 64px);
+  padding: 20px;
+  background-color: var(--background-color, #f9fafb);
+  color: var(--text-color, #1f2937);
+}
+
+.builder-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.export-button {
+  background-color: #3b82f6;
+  color: white;
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.export-button:hover {
+  background-color: #2563eb;
+}
+
+.export-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.builder-content {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.resume-editor {
+  flex: 1;
+  background: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow-y: auto;
+}
+
+.live-preview-pane {
+  flex: 1;
+  background: #e5e7eb;
+  padding: 20px;
+  border-radius: 8px;
+  overflow-y: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+}
+
+.form-group input, .form-group textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+.form-group textarea {
+  resize: vertical;
+}
+
+.nested-group {
+  margin-bottom: 15px;
+  padding: 10px;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: #f9fafb;
+}
+
+.nested-group input, .nested-group textarea {
+  margin-bottom: 10px;
+}
+
+.preview-document {
+  background: white;
+  width: 100%;
+  max-width: 8.5in;
+  min-height: 11in;
+  padding: 0.5in;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  color: black;
+}
+
+.preview-name {
+  font-size: 24px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.preview-contact {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.preview-section {
+  margin-bottom: 20px;
+}
+
+.preview-heading {
+  font-size: 18px;
+  border-bottom: 1px solid #000;
+  margin-bottom: 10px;
+  padding-bottom: 4px;
+}
+
+.preview-item {
+  margin-bottom: 10px;
+}

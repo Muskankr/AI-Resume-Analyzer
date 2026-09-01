@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import type { AuthUser } from '../hooks/useAuth'
 import { Link, useLocation } from 'react-router-dom'
+import { useTheme } from '../theme/ThemeContext'
 
 interface NavbarProps {
-  theme: 'light' | 'dark'
-  toggleTheme: () => void
   user: AuthUser | null
   onLogin: () => void
   onLogout: () => void
@@ -13,14 +12,8 @@ interface NavbarProps {
 
 const MOBILE_BREAKPOINT = 1024
 
-export const Navbar: React.FC<NavbarProps> = ({
-  theme,
-  toggleTheme,
-  user,
-  onLogin,
-  onLogout,
-  onProfileClick,
-}) => {
+export const Navbar: React.FC<NavbarProps> = ({ user, onLogin, onLogout, onProfileClick }) => {
+  const { theme, toggleTheme } = useTheme()
   const [mobileOpen, setMobileOpen] = useState(false)
   const location = useLocation()
   const [activeSection, setActiveSection] = useState<'home' | 'ats'>('home')
@@ -51,11 +44,7 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <header className="navbar">
-      <Link
-        to="/"
-        className={`navbar-brand ${theme}`}
-        onClick={closeMenu}
-      >
+      <Link to="/" className={`navbar-brand ${theme}`} onClick={closeMenu}>
         🚀 AI Resume Analyzer
       </Link>
       <button
@@ -103,6 +92,20 @@ export const Navbar: React.FC<NavbarProps> = ({
           <Link to="/leaderboard" onClick={() => setMobileOpen(false)}>
             🏆 Leaderboard
           </Link>
+          <Link
+            to="/linkedin-consistency"
+            className={location.pathname === '/linkedin-consistency' ? 'active' : ''}
+            onClick={() => setMobileOpen(false)}
+          >
+            🔗 LinkedIn Consistency
+          </Link>
+          <Link
+            to="/contributors"
+            className={location.pathname === '/contributors' || location.pathname === '/contributor-certificate' ? 'active' : ''}
+            onClick={() => setMobileOpen(false)}
+          >
+            🎖️ Contributors
+          </Link>
           <a
             href="#ats-score"
             className={isAtsActive ? 'active' : ''}
@@ -137,13 +140,16 @@ export const Navbar: React.FC<NavbarProps> = ({
               closeMenu()
             }}
             aria-label="Toggle theme"
-            aria-pressed={theme === 'dark'}
+            aria-pressed={theme !== 'light'}
           >
-            {theme === 'light' ? '🌙 Dark Mode' : '☀️ Light Mode'}
+            {theme === 'light' ? '🌙 Dark Mode' : theme === 'dark' ? '👁️ High Contrast' : '☀️ Light Mode'}
           </button>
 
           {user ? (
-            <div className="navbar-user" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div
+              className="navbar-user"
+              style={{ display: 'flex', alignItems: 'center', gap: '8px' }}
+            >
               <button
                 type="button"
                 onClick={() => onProfileClick?.()}

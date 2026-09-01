@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react'
 import { Share2, Check, Copy, Link2Off, RefreshCw, ShieldCheck, Eye, EyeOff } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import { api } from '../api/client'
 import {
   DEFAULT_LIFETIME_DAYS,
@@ -182,6 +183,11 @@ export const ShareResult: React.FC<ShareResultProps> = ({ analysisId }) => {
               {copied ? <Check size={14} /> : <Copy size={14} />}
               {copied ? 'Copied' : 'Copy Link'}
             </button>
+          </div>
+
+          <div className="share-qr-code" role="img" aria-label="QR code for this analysis">
+            <QRCodeSVG value={state.share_url} size={144} includeMargin />
+            <span>Scan to open this shared analysis</span>
           </div>
 
           <div className="share-meta">

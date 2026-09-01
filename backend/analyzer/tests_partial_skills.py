@@ -15,7 +15,7 @@ class PartialSkillsTestCase(TestCase):
         # React.js is a near match for React
         self.assertIn("PostgreSQL", matched)
         self.assertIn("Python", missing)
-        
+
         partial_skills = [p["skill"] for p in partial]
         self.assertIn("React", partial_skills)
         self.assertEqual(partial[0]["matched_variant"].lower(), "react.js")
@@ -48,9 +48,11 @@ class PartialSkillsTestCase(TestCase):
         matched = ["PostgreSQL"]
         required = ["React", "PostgreSQL", "Python"]
         detected = ["postgresql", "react.js"]
-        partial = [{"skill": "React", "matched_variant": "React.js", "note": "Near match"}]
+        partial = [
+            {"skill": "React", "matched_variant": "React.js", "note": "Near match"}]
 
-        factor = score_keyword_match(matched, required, detected, partial_skills=partial)
+        factor = score_keyword_match(
+            matched, required, detected, partial_skills=partial)
         # 1 exact + 0.5 partial = 1.5 out of 3 = 50% coverage
         # 50% of weight 40 = 20 earned points
         self.assertEqual(factor.earned, 20)

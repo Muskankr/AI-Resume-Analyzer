@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { DEFAULT_NOTIFICATION_PREFERENCES, getNotificationPreferences, saveNotificationPreferences, sendAnalysisCompleteNotification } from './notification'
+import {
+  DEFAULT_NOTIFICATION_PREFERENCES,
+  getNotificationPreferences,
+  saveNotificationPreferences,
+  sendAnalysisCompleteNotification,
+} from './notification'
 
 describe('notification preferences', () => {
   beforeEach(() => {
@@ -34,13 +39,13 @@ describe('notification preferences', () => {
 
   it('creates a browser notification when opted in and permission is granted', () => {
     saveNotificationPreferences({ in_app: true, browser: true })
-    const NotificationMock = vi.fn().mockImplementation(() => ({ close: vi.fn(), onclick: null }))
+    const NotificationMock = vi.fn().mockImplementation(function() { return { close: vi.fn(), onclick: null }; })
     Object.assign(NotificationMock, { permission: 'granted' })
     vi.stubGlobal('Notification', NotificationMock)
     sendAnalysisCompleteNotification('resume.pdf')
     expect(NotificationMock).toHaveBeenCalledWith(
       'Resume Analysis Complete 🚀',
-      expect.objectContaining({ body: expect.stringContaining('resume.pdf') }),
+      expect.objectContaining({ body: expect.stringContaining('resume.pdf') })
     )
   })
 })

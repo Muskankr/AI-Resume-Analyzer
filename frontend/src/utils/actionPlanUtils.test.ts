@@ -9,7 +9,7 @@ import {
 
 // Mock jsPDF
 vi.mock('jspdf', () => {
-  const MockJsPDF = vi.fn().mockImplementation(() => ({
+  const MockJsPDF = vi.fn().mockImplementation(function() { return {
     setFontSize: vi.fn(),
     setFont: vi.fn(),
     setTextColor: vi.fn(),
@@ -22,7 +22,7 @@ vi.mock('jspdf', () => {
     getTextWidth: vi.fn(() => 20),
     addPage: vi.fn(),
     save: vi.fn(),
-  }))
+  }; })
   return { jsPDF: MockJsPDF }
 })
 

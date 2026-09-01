@@ -7,6 +7,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 ### Added
+- Added Admin Panel UI for managing career tracks, required skill sets, and score thresholds in real time (#546).
+- Added database indexing and query performance review for history, leaderboard aggregation, and analysis retrieval (#979).
+- Unified reusable Button component with primary, secondary, ghost, outline, danger, and accent variants, size modifiers, pill shape, accessible loading spinner, and consistent hover/active/focus/disabled states (#102).
+- Added drag-and-drop resume upload functionality to compare tools allowing drag-and-drop directly on the file inputs (#20).
 - Bulk resume analysis allowing multi-file upload (.pdf, .docx, .txt), candidate ranking summary table, and detailed inspection view per resume (#57).
 - Granular consent toggles in Account Settings and initial banner for optional data collection (analytics and AI resume roast mode), strictly opt-in and off by default (#536).
 - Auto-save Job Description text as a debounced draft in local storage to prevent accidental data loss upon page refresh or navigation (#533).
@@ -31,6 +35,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Multi-resume "Download All (.ZIP)" export in Bulk JD Compare and History Sidebar; generates individual PDF and JSON reports per resume with distinguishable filenames inside a single ZIP archive (#495).
 - Optional weekly resume-tips email digest: logged-in users can opt-in via an Account Settings toggle; digest includes a curated actionable tip and a personalised ATS score-improvement nudge; unsubscribe link included in every email and a dedicated `/unsubscribe` page provided (#496).
 ### Changed
+- Redesigned Skill Gap Matrix with adaptive responsive grid/table views, filter controls, aggregate score progress badge, critical gap alert banners, and interactive detail drawer (#106).
 - Improved upload screen visual hierarchy with clear step indicators, structured cards, and enhanced CTA prominence (#67).
 - Password hashing now uses Argon2 as the primary hasher, with PBKDF2 retained as a fallback so existing users are transparently migrated to Argon2 on their next successful login (#478).
 - Compressed static raster images and added WebP optimized assets reducing total image bundle size from ~1.15 MB to ~956 KB (16.8% reduction) with no visible quality loss (#353).
@@ -41,6 +46,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Improved frontend performance and usability.
 
 ### Fixed
+- Fixed truncated "Answ" label on login security-check field by refactoring `<SecurityCheckInput />` component and conducting modal input flexbox layout audit across all viewports (#617).
+- Fixed "How It Works" heading and step card description contrast meeting WCAG AA standards (>= 4.5:1 ratio), resolved low-opacity fade animation issue (#140), and updated step badges (#276).
 - Fixed widespread low-opacity/faded text across stats, How It Works cards, upload zone, and footer (#242).
 - Added proper HTML autocomplete attributes (`username`, `email`, `new-password`, `current-password`) to auth and account form inputs for password manager compatibility (#531).
 - Minor UI and styling fixes across multiple frontend components.

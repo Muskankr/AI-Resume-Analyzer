@@ -18,6 +18,12 @@
   color: var(--card-text, #e2e8f0);
 }
 
+[data-theme='high-contrast'] .compare-modal {
+  background: #000000;
+  border-color: #ffffff;
+  color: #ffffff;
+}
+
 .compare-modal__header {
   display: flex;
   align-items: center;

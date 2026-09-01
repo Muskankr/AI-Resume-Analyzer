@@ -2,6 +2,7 @@ import React, { useEffect } from 'react'
 import { Sparkles, X, Check } from 'lucide-react'
 import { CURRENT_RELEASE, markWhatsNewAsSeen, type ReleaseInfo } from '../data/whatsNewReleases'
 import './WhatsNewModal.css'
+import { Button } from './Button'
 
 interface WhatsNewModalProps {
   isOpen: boolean
@@ -18,11 +19,13 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
     if (!isOpen) return
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // eslint-disable-next-line react-hooks/immutability
         handleDismiss()
       }
     }
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, release.version])
 
   if (!isOpen) return null
@@ -46,35 +49,15 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
   }
 
   return (
-    <div
-      className="whats-new-overlay"
-      onClick={handleDismiss}
-      data-testid="whats-new-overlay"
-    >
+    <div className="whats-new-overlay" onClick={handleDismiss} data-testid="whats-new-overlay">
       <div
         className="whats-new-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="whats-new-title"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div className="whats-new-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div
-              style={{
-                width: '38px',
-                height: '38px',
-                borderRadius: '10px',
-                background: 'linear-gradient(135deg, #6366f1, #a855f7)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#ffffff',
-                boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
-                flexShrink: 0,
-              }}
-            >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div className="whats-new-icon-badge">
               <Sparkles size={20} />
             </div>
             <div>
@@ -86,13 +69,15 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
               </p>
             </div>
           </div>
-          <button
+          <Button
+            variant="ghost"
+            size="sm"
             onClick={handleDismiss}
             aria-label="Close What's New modal"
             className="whats-new-close-btn"
           >
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         {/* Highlight Items List */}
@@ -124,20 +109,18 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
 
         {/* Footer actions */}
         <div className="whats-new-footer">
-          <button
-            type="button"
-            className="app-btn app-btn--primary"
+          <Button
+            variant="primary"
+            size="md"
             onClick={handleDismiss}
+            leftIcon={<Check size={16} />}
             style={{
               padding: '8px 22px',
               fontSize: '0.9rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
             }}
           >
-            <Check size={16} /> Got It, Let's Go!
-          </button>
+            Got It, Let's Go!
+          </Button>
         </div>
       </div>
     </div>

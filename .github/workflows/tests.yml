@@ -46,6 +46,19 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Every Python file must parse
+        # `manage.py check` does not import migration modules, so a migration
+        # that does not compile passes it and then kills `migrate`, `test` and
+        # `showmigrations` on import. That is not hypothetical: 58e2d84 left
+        # `feature/document-semver-process-756` as line 1 of
+        # 0021_merge_0020_merge_20260824_0025_0020_resumebadge.py and every
+        # check in this workflow except the suite itself stayed green (#872).
+        #
+        # compileall parses every .py under the app without importing it, so
+        # it is cheap and cannot be fooled by what does or does not get
+        # imported at check time.
+        run: python -m compileall -q analyzer resume_analyzer manage.py
+
       - name: Django system checks
         run: python manage.py check
 
@@ -84,6 +97,13 @@ jobs:
         # `analyzer/__init__.py` was missing: `manage.py test` cheerfully
         # reported "NO TESTS RAN" and exited 0. A green run on an empty suite
         # must never look like a passing one, so assert a floor on the count.
+        #
+        # A floor is a backstop, not the check. It cannot notice one corner of
+        # the suite going quiet while the rest keeps counting: 28 tests under
+        # `analyzer/tests/` were never collected for weeks and the count stayed
+        # comfortably over this line the whole time. `analyzer/tests_discovery.py`
+        # is the check that catches that, by asserting every test file in the
+        # app resolves to itself under the name the loader will import.
         run: |
           count=$(grep -oE 'Found [0-9]+ test' test-output.txt \
                     | grep -oE '[0-9]+' \

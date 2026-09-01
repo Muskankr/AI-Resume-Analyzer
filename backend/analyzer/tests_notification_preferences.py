@@ -61,7 +61,8 @@ class NotificationPreferenceTests(TestCase):
         )
 
     def test_partial_notification_update_keeps_existing_values(self):
-        self.profile.notification_preferences = {"in_app": False, "browser": True}
+        self.profile.notification_preferences = {
+            "in_app": False, "browser": True}
         self.profile.save(update_fields=["notification_preferences"])
 
         response = self.client.put(

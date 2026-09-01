@@ -44,18 +44,21 @@ class Command(BaseCommand):
         # argparse stores --dry-run under "dry_run"; the old "dry-run" lookup
         # was always None, so --dry-run sent real email.
         dry_run = options.get("dry_run", False)
-        opted_in_users = User.objects.filter(profile__weekly_digest_opt_in=True)
+        opted_in_users = User.objects.filter(
+            profile__weekly_digest_opt_in=True)
 
         count = 0
-        self.stdout.write(f"Found {opted_in_users.count()} opted-in user(s) for weekly digest.")
+        self.stdout.write(
+            f"Found {opted_in_users.count()} opted-in user(s) for weekly digest.")
 
         for user in opted_in_users:
             if not user.email:
                 continue
 
-            analyses = ResumeAnalysis.objects.filter(user=user).order_by("-created_at")
+            analyses = ResumeAnalysis.objects.filter(
+                user=user).order_by("-created_at")
             recent_score = analyses.first().score if analyses.exists() else None
-            
+
             # Check score progression
             nudge = ""
             if analyses.count() >= 2:
@@ -89,21 +92,26 @@ class Command(BaseCommand):
 
             if dry_run:
                 try:
-                    self.stdout.write(f"[DRY-RUN] To: {user.email}\nSubject: {subject}\n{body}\n")
+                    self.stdout.write(
+                        f"[DRY-RUN] To: {user.email}\nSubject: {subject}\n{body}\n")
                 except UnicodeEncodeError:
                     safe_body = body.encode("ascii", "replace").decode("ascii")
-                    self.stdout.write(f"[DRY-RUN] To: {user.email}\nSubject: {subject}\n{safe_body}\n")
+                    self.stdout.write(
+                        f"[DRY-RUN] To: {user.email}\nSubject: {subject}\n{safe_body}\n")
             else:
                 try:
                     send_mail(
                         subject=subject,
                         message=body,
-                        from_email=getattr(settings, "DEFAULT_FROM_EMAIL", "noreply@ai-resume-analyzer.dev"),
+                        from_email=getattr(
+                            settings, "DEFAULT_FROM_EMAIL", "noreply@ai-resume-analyzer.dev"),
                         recipient_list=[user.email],
                         fail_silently=True,
                     )
                     count += 1
                 except Exception as e:
-                    self.stderr.write(f"Failed to send email to {user.email}: {e}")
+                    self.stderr.write(
+                        f"Failed to send email to {user.email}: {e}")
 
-        self.stdout.write(self.style.SUCCESS(f"Successfully processed weekly digest for {count} user(s)."))
+        self.stdout.write(self.style.SUCCESS(
+            f"Successfully processed weekly digest for {count} user(s)."))

@@ -1,0 +1,240 @@
+.market-estimator-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+    color: var(--text-primary, #e0e0e0);
+}
+
+.estimator-title {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #2ed573, #7bed9f);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.estimator-workspace {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: 2rem;
+}
+
+.glass-card {
+    background: var(--glass-bg, rgba(255, 255, 255, 0.05));
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: 16px;
+    padding: 1.5rem;
+}
+
+.glass-card h3 {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+    border-bottom: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    padding-bottom: 0.75rem;
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #b0b0b0);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--glass-border, rgba(255, 255, 255, 0.1));
+    border-radius: 8px;
+    padding: 0.75rem;
+    color: var(--text-primary, #e0e0e0);
+    font-family: inherit;
+    font-size: 1rem;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    outline: none;
+    border-color: #2ed573;
+    box-shadow: 0 0 0 3px rgba(46, 213, 115, 0.2);
+}
+
+.glass-button {
+    width: 100%;
+    background: linear-gradient(135deg, #2ed573, #26af61);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass-button:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(46, 213, 115, 0.4);
+}
+
+.glass-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.error-message {
+    color: #ff6b6b;
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.empty-state,
+.loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+    color: var(--text-secondary, #b0b0b0);
+    font-style: italic;
+    text-align: center;
+}
+
+.results-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.salary-visualization {
+    padding: 1rem 0;
+}
+
+.salary-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.median-label {
+    color: #2ed573;
+}
+
+.salary-bar-container {
+    padding: 0 1rem;
+}
+
+.salary-bar-bg {
+    width: 100%;
+    height: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    position: relative;
+}
+
+.salary-bar-fill {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    background: linear-gradient(90deg, #ffa502, #2ed573);
+    border-radius: 6px;
+}
+
+.median-marker {
+    position: absolute;
+    left: 50%;
+    top: -4px;
+    width: 4px;
+    height: 20px;
+    background: white;
+    border-radius: 2px;
+    transform: translateX(-50%);
+}
+
+.value-skills-section h4,
+.negotiation-section h4 {
+    margin-top: 0;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.skills-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.skill-tag {
+    background: rgba(46, 213, 115, 0.15);
+    border: 1px solid rgba(46, 213, 115, 0.3);
+    color: #2ed573;
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.skills-note {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #b0b0b0);
+    margin: 0;
+}
+
+.negotiation-list {
+    margin: 0;
+    padding-left: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.negotiation-list li {
+    line-height: 1.6;
+    color: var(--text-primary, #e0e0e0);
+}
+
+/* Light mode adjustments */
+@media (prefers-color-scheme: light) {
+    .market-estimator-container {
+        color: #333333;
+    }
+
+    .glass-card {
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .form-group input,
+    .form-group select {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        color: #333333;
+    }
+
+    .salary-bar-bg {
+        background: rgba(0, 0, 0, 0.1);
+    }
+
+    .median-marker {
+        background: #333333;
+    }
+}
+
+@media (max-width: 768px) {
+    .estimator-workspace {
+        grid-template-columns: 1fr;
+    }
+}

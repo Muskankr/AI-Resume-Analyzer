@@ -1,9 +1,13 @@
 // @vitest-environment jsdom
 import '@testing-library/jest-dom/vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import App from './App'
 import { MemoryRouter } from 'react-router-dom'
+
+vi.mock('./theme/ThemeContext', () => ({
+  useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }),
+}))
 
 describe('Drag and Drop Zone Contrast & Visual Pairing (#258)', () => {
   it('renders the drag & drop instructional text with high contrast element classes and paired icon', () => {

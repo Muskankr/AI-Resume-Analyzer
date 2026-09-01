@@ -222,3 +222,32 @@
   border-top: 1px solid var(--surface-border, rgba(148, 163, 184, 0.2));
   padding-top: 16px;
 }
+
+[data-theme='high-contrast'] .whats-new-overlay {
+  background-color: rgba(0, 0, 0, 0.95);
+}
+
+[data-theme='high-contrast'] .whats-new-modal {
+  background: #000000;
+  border: 1px solid #ffffff;
+  box-shadow: none;
+}
+
+[data-theme='high-contrast'] .whats-new-version-badge,
+[data-theme='high-contrast'] .whats-new-tag--new,
+[data-theme='high-contrast'] .whats-new-tag--improved,
+[data-theme='high-contrast'] .whats-new-tag--security,
+[data-theme='high-contrast'] .whats-new-tag--fix {
+  background: #000000;
+  color: #ffff00;
+  border-color: #ffffff;
+}
+
+[data-theme='high-contrast'] .whats-new-item {
+  background: #000000;
+  border: 1px solid #ffffff;
+}
+
+[data-theme='high-contrast'] .whats-new-item-desc {
+  color: #ffffff;
+}

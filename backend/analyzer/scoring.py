@@ -20,6 +20,8 @@ import re
 from dataclasses import dataclass, asdict
 from typing import Dict, List, Optional, Sequence
 
+from .section_headings import SECTIONS, find_section_keys
+
 #: Factor weights, in points out of 100.
 WEIGHTS = {
     "keyword_match": 40,
@@ -44,19 +46,14 @@ FACTOR_LABELS = {
     "length_format": "Length & formatting",
 }
 
-#: Headings we expect to find, and the words that introduce them. Resumes label
-#: these inconsistently, so each section lists its common variants.
+#: Headings we expect to find. The variants live in
+#: :mod:`analyzer.section_headings` alongside the two other copies of this list
+#: they were drifting from — see the module docstring there.
+EXPECTED_SECTION_KEYS = ("experience", "education", "skills", "projects")
+
+#: Kept for callers that read it. Derived rather than hand-maintained.
 EXPECTED_SECTIONS = {
-    "experience": (
-        "experience",
-        "employment",
-        "work history",
-        "professional background",
-        "career history",
-    ),
-    "education": ("education", "academic", "qualification", "degree"),
-    "skills": ("skills", "technical skills", "technologies", "competencies", "toolkit"),
-    "projects": ("projects", "portfolio", "personal projects", "selected work"),
+    key: SECTIONS[key][1] for key in EXPECTED_SECTION_KEYS
 }
 
 #: Verbs that open a strong accomplishment bullet. Deliberately overlapping
@@ -281,22 +278,34 @@ def score_keyword_match(matched: Sequence[str], required: Sequence[str],
 
 
 def score_sections(text: str) -> FactorScore:
-    """Points for having the sections a recruiter scans for."""
-    lowered = text.lower()
-    found = [
-        name
-        for name, variants in EXPECTED_SECTIONS.items()
-        if any(variant in lowered for variant in variants)
-    ]
-    missing = [name for name in EXPECTED_SECTIONS if name not in found]
+    """Points for having the sections a recruiter scans for.
 
-    earned = (len(found) / len(EXPECTED_SECTIONS)) * WEIGHTS["sections"]
+    This asked ``variant in text.lower()``, which is a question about the whole
+    document rather than about its headings. A resume with no headings at all
+    scored the full 15: "years of experience" supplied *experience*, "improved
+    my skills" supplied *skills*, "a degree from a good academic program"
+    supplied *education*, and "a portfolio of small projects" supplied
+    *projects*.
+
+    That is the worst way for this factor to be wrong. Adding headings is the
+    single cheapest thing most people can do to get past an ATS, and they were
+    being told it was already done.
+    """
+    present = set(find_section_keys(text))
+    found = [key for key in EXPECTED_SECTION_KEYS if key in present]
+    missing = [key for key in EXPECTED_SECTION_KEYS if key not in present]
+
+    earned = (len(found) / len(EXPECTED_SECTION_KEYS)) * WEIGHTS["sections"]
 
     if not missing:
         detail = "All four expected sections are present: experience, education, skills and projects."
     else:
         readable = ", ".join(sorted(missing))
-        detail = f"Found {len(found)} of 4 expected sections. Missing: {readable}."
+        detail = (
+            f"Found {len(found)} of 4 expected section headings. Missing: {readable}. "
+            "An ATS splits a resume on its headings — text under no heading at "
+            "all often lands in the wrong field or is dropped."
+        )
 
     return _make_factor("sections", earned, detail)
 
@@ -365,7 +374,8 @@ def score_impact_language(lines: Sequence[str]) -> FactorScore:
     weak = 0
     for bullet in bullets:
         stripped = BULLET_PATTERN.sub("", bullet).strip().lower()
-        first_word = re.split(r"[^\w]+", stripped, maxsplit=1)[0] if stripped else ""
+        first_word = re.split(r"[^\w]+", stripped,
+                              maxsplit=1)[0] if stripped else ""
         if first_word in ACTION_VERBS:
             strong += 1
         elif any(stripped.startswith(opener) for opener in WEAK_OPENERS):
@@ -511,10 +521,12 @@ def score_length_and_format(text: str, lines: Sequence[str]) -> FactorScore:
         notes.append(f"{words} words is a good length")
     elif words < low:
         earned += WEIGHTS["length_format"] * 0.25
-        notes.append(f"{words} words is on the short side — aim for at least {low}")
+        notes.append(
+            f"{words} words is on the short side — aim for at least {low}")
     else:
         earned += WEIGHTS["length_format"] * 0.3
-        notes.append(f"{words} words is long — trimming below {high} keeps attention")
+        notes.append(
+            f"{words} words is long — trimming below {high} keeps attention")
 
     if len(bullets) >= 5:
         earned += WEIGHTS["length_format"] * 0.4
@@ -523,7 +535,8 @@ def score_length_and_format(text: str, lines: Sequence[str]) -> FactorScore:
         earned += WEIGHTS["length_format"] * 0.2
         notes.append("only a few bullet points — break dense paragraphs up")
     else:
-        notes.append("no bullet points detected — ATS parsers handle bullets better than paragraphs")
+        notes.append(
+            "no bullet points detected — ATS parsers handle bullets better than paragraphs")
 
     return _make_factor(
         "length_format", earned, "; ".join(notes).capitalize() + "."
@@ -531,7 +544,8 @@ def score_length_and_format(text: str, lines: Sequence[str]) -> FactorScore:
 
 
 def _summarise(overall: int, factors: Sequence[FactorScore]) -> str:
-    weakest = min(factors, key=lambda factor: factor.earned / factor.possible if factor.possible else 1)
+    weakest = min(factors, key=lambda factor: factor.earned /
+                  factor.possible if factor.possible else 1)
 
     if overall >= 80:
         opening = "Strong resume."
@@ -588,7 +602,8 @@ def compute_score_breakdown(
         )
 
     factors = [
-        score_keyword_match(matched_skills, required_skills, detected_skills, partial_skills),
+        score_keyword_match(matched_skills, required_skills,
+                            detected_skills, partial_skills),
         score_sections(text),
         score_impact_language(lines),
         score_contact_details(text),

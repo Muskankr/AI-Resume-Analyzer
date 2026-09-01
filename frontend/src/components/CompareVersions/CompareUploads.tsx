@@ -17,6 +17,8 @@ const BACKEND = import.meta.env.VITE_BACKEND_URL || 'http://127.0.0.1:8000'
 export const CompareUploads: React.FC<CompareUploadsProps> = ({ onClose, targetRole, jobDesc = '', isEmbed = false }) => {
   const [file1, setFile1] = useState<File | null>(null)
   const [file2, setFile2] = useState<File | null>(null)
+  const [isDragging1, setIsDragging1] = useState(false)
+  const [isDragging2, setIsDragging2] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [comparison, setComparison] = useState<VersionComparison | null>(null)
@@ -70,8 +72,16 @@ export const CompareUploads: React.FC<CompareUploadsProps> = ({ onClose, targetR
             }}
           >
             <div
-              className="compare-picker"
-              style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
+              className={`compare-picker ${isDragging1 ? 'dragging' : ''}`}
+              style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem', border: isDragging1 ? '2px dashed #4f46e5' : '1px solid transparent', borderRadius: '8px', transition: 'all 0.2s ease' }}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging1(true); }}
+              onDragLeave={() => setIsDragging1(false)}
+              onDrop={(e) => {
+                e.preventDefault(); setIsDragging1(false);
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  setFile1(e.dataTransfer.files[0]);
+                }
+              }}
             >
               <label>Older Version (File 1)</label>
               <input
@@ -82,8 +92,16 @@ export const CompareUploads: React.FC<CompareUploadsProps> = ({ onClose, targetR
               />
             </div>
             <div
-              className="compare-picker"
-              style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}
+              className={`compare-picker ${isDragging2 ? 'dragging' : ''}`}
+              style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '1rem', border: isDragging2 ? '2px dashed #4f46e5' : '1px solid transparent', borderRadius: '8px', transition: 'all 0.2s ease' }}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging2(true); }}
+              onDragLeave={() => setIsDragging2(false)}
+              onDrop={(e) => {
+                e.preventDefault(); setIsDragging2(false);
+                if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                  setFile2(e.dataTransfer.files[0]);
+                }
+              }}
             >
               <label>Newer Version (File 2)</label>
               <input
