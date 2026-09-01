@@ -100,12 +100,7 @@ TXT = FileFormat(
     text_like=True,
 )
 
-#: Formats accepted for resumes and cover letters — the three the parser reads.
-RESUME_FORMATS: Tuple[FileFormat, ...] = (PDF, DOCX, TXT)
-
-# Profile images must be recognised by their contents as well as their names.
-# Browsers can provide an arbitrary content type and a file can be renamed, so
-# neither is suitable for deciding whether it is safe to store as an avatar.
+# Profile images and photographed resume photos must be recognised by content and extension.
 PNG = FileFormat(
     key="png",
     label="PNG image",
@@ -129,6 +124,9 @@ WEBP = FileFormat(
     magic_offsets=((0, b"RIFF"), (8, b"WEBP")),
     content_types=("image/webp",),
 )
+
+#: Formats accepted for resumes and cover letters — digital files and photographed printed resumes.
+RESUME_FORMATS: Tuple[FileFormat, ...] = (PDF, DOCX, TXT, PNG, JPEG, WEBP)
 
 AVATAR_FORMATS: Tuple[FileFormat, ...] = (PNG, JPEG, WEBP)
 

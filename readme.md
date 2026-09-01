@@ -630,8 +630,6 @@ The **ATS Simulator** is a specialized feature that evaluates analyzed resumes a
 
 We welcome contributions of all levels under the **ECSoC'26** program!
 
-> 🌱 **Never opened a pull request before?** Follow our beginner-friendly [Your First Pull Request Ever](docs/FIRST_PULL_REQUEST.md) guide — a step-by-step walkthrough (forking, cloning, branching, committing, and opening the PR) that assumes zero prior Git/GitHub experience.
-
 📜 Please read our [Code of Conduct](CODE_OF_CONDUCT.md) before participating in this project. By contributing, you agree to abide by its guidelines.
 
 1. **Fork** the repository on GitHub.
@@ -676,7 +674,5 @@ A huge thanks to all the developers who have contributed code, fixed bugs, and i
 </div>
 
 ## Community
-
-Have a question, idea, or something to show off? Use [GitHub Discussions](https://github.com/Muskankr/AI-Resume-Analyzer/discussions) for open-ended conversations (Q&A, Ideas, Show and Tell), and keep the [Issues](https://github.com/Muskankr/AI-Resume-Analyzer/issues) tab for actionable, scoped work items.
 
 Join our [Discord Community](YOUR_DISCORD_URL) to ask questions, discuss the project, and connect with contributors.
