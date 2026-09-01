@@ -12,7 +12,8 @@ class SuggestionFeedbackAdmin(admin.ModelAdmin):
     the aggregate — which suggestions get downvoted most.
     """
 
-    list_display = ("short_suggestion", "vote", "user", "analysis", "updated_at")
+    list_display = ("short_suggestion", "vote",
+                    "user", "analysis", "updated_at")
     list_filter = ("vote", "updated_at")
     search_fields = ("suggestion_text", "comment", "user__username")
     readonly_fields = (

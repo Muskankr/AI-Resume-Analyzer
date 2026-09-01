@@ -58,7 +58,8 @@ class DetectFormatTests(TestCase):
         self.assertEqual(detect_format(txt_upload()), TXT)
 
     def test_unknown_extension_is_not_detected(self):
-        upload = SimpleUploadedFile("resume.rtf", b"{\\rtf1}", content_type="text/rtf")
+        upload = SimpleUploadedFile(
+            "resume.rtf", b"{\\rtf1}", content_type="text/rtf")
         self.assertIsNone(detect_format(upload))
 
     def test_extension_alone_is_not_enough(self):
@@ -102,14 +103,16 @@ class ValidateUploadTests(TestCase):
         self.assertIn("No resume was uploaded", str(ctx.exception))
 
     def test_rejects_empty_file(self):
-        empty = SimpleUploadedFile("resume.pdf", b"", content_type="application/pdf")
+        empty = SimpleUploadedFile(
+            "resume.pdf", b"", content_type="application/pdf")
         with self.assertRaises(UploadValidationError) as ctx:
             validate_upload(empty, field_label="resume")
         self.assertIn("empty", str(ctx.exception))
 
     @override_settings(MAX_UPLOAD_SIZE_BYTES=1024)
     def test_rejects_oversized_file(self):
-        big = SimpleUploadedFile("resume.pdf", PDF_BYTES + b"0" * 2048, content_type="application/pdf")
+        big = SimpleUploadedFile(
+            "resume.pdf", PDF_BYTES + b"0" * 2048, content_type="application/pdf")
         with self.assertRaises(UploadValidationError) as ctx:
             validate_upload(big, field_label="resume")
         self.assertIn("maximum allowed size", str(ctx.exception))
@@ -119,7 +122,8 @@ class ValidateUploadTests(TestCase):
             validate_upload(pdf_upload(), max_size=4)
 
     def test_rejects_unsupported_extension_with_a_helpful_message(self):
-        upload = SimpleUploadedFile("resume.exe", b"MZ\x90\x00", content_type="application/octet-stream")
+        upload = SimpleUploadedFile(
+            "resume.exe", b"MZ\x90\x00", content_type="application/octet-stream")
         with self.assertRaises(UploadValidationError) as ctx:
             validate_upload(upload, field_label="resume")
         message = str(ctx.exception)
@@ -128,7 +132,8 @@ class ValidateUploadTests(TestCase):
         self.assertIn("Word (.docx)", message)
 
     def test_rejects_renamed_file_whose_contents_do_not_match(self):
-        disguised = SimpleUploadedFile("resume.docx", b"not a zip archive", content_type="text/plain")
+        disguised = SimpleUploadedFile(
+            "resume.docx", b"not a zip archive", content_type="text/plain")
         with self.assertRaises(UploadValidationError) as ctx:
             validate_upload(disguised, field_label="resume")
         self.assertIn("does not look like", str(ctx.exception))
@@ -138,12 +143,14 @@ class ValidateUploadTests(TestCase):
         self.assertTrue(issubclass(UploadValidationError, ValueError))
 
     def test_optional_upload_allows_none(self):
-        self.assertIsNone(validate_optional_upload(None, field_label="cover letter"))
+        self.assertIsNone(validate_optional_upload(
+            None, field_label="cover letter"))
 
     def test_optional_upload_still_validates_when_present(self):
         with self.assertRaises(UploadValidationError):
             validate_optional_upload(
-                SimpleUploadedFile("cover.exe", b"MZ", content_type="application/octet-stream"),
+                SimpleUploadedFile("cover.exe", b"MZ",
+                                   content_type="application/octet-stream"),
                 field_label="cover letter",
             )
 
@@ -173,7 +180,8 @@ class UploadEndpointValidationTests(TestCase):
 
     def _post(self, **payload):
         with patch("analyzer.views.analyze_resume_task.delay") as mock_delay:
-            mock_delay.return_value = type("Task", (), {"id": "test-task-id"})()
+            mock_delay.return_value = type(
+                "Task", (), {"id": "test-task-id"})()
             response = self.client.post("/api/upload/", payload)
         return response
 
@@ -192,7 +200,8 @@ class UploadEndpointValidationTests(TestCase):
 
     def test_unsupported_format_is_rejected(self):
         response = self._post(
-            file=SimpleUploadedFile("resume.exe", b"MZ\x90\x00", content_type="application/octet-stream"),
+            file=SimpleUploadedFile(
+                "resume.exe", b"MZ\x90\x00", content_type="application/octet-stream"),
             role="Frontend Developer",
         )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

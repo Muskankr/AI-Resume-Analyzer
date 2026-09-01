@@ -1,4 +1,4 @@
-import type { ResumeVersionRecord, VersionFilterQuery, VersionAuditLog } from './types';
+import type { ResumeVersionRecord, VersionFilterQuery, VersionAuditLog } from './types'
 
 export class ResumeVersioningEngine {
   private static mockVersions: ResumeVersionRecord[] = [
@@ -16,14 +16,16 @@ export class ResumeVersioningEngine {
         {
           sectionName: 'WORK_EXPERIENCE',
           originalText: 'Managed a team of developers working on microservices.',
-          revisedText: 'Spearheaded an agile team of 8 senior engineers building Kubernetes-orchestrated microservices, improving throughput by 42%.',
+          revisedText:
+            'Spearheaded an agile team of 8 senior engineers building Kubernetes-orchestrated microservices, improving throughput by 42%.',
           diffStatus: 'MODIFIED',
           keywordScoreGain: 8,
         },
         {
           sectionName: 'SKILLS',
           originalText: 'React, Node, SQL',
-          revisedText: 'React 18, TypeScript, Node.js, PostgreSQL, Redis, Apache Kafka, Docker, Kubernetes',
+          revisedText:
+            'React 18, TypeScript, Node.js, PostgreSQL, Redis, Apache Kafka, Docker, Kubernetes',
           diffStatus: 'ADDED',
           keywordScoreGain: 6,
         },
@@ -41,7 +43,7 @@ export class ResumeVersioningEngine {
       isCurrentActiveVersion: false,
       sectionDiffs: [],
     },
-  ];
+  ]
 
   private static mockAuditLogs: VersionAuditLog[] = [
     {
@@ -58,24 +60,28 @@ export class ResumeVersioningEngine {
       details: 'Exported side-by-side diff matrix between v1.0 and v2.4.',
       performer: 'Candidate',
     },
-  ];
+  ]
 
   public static getVersions(filters: VersionFilterQuery): ResumeVersionRecord[] {
     return this.mockVersions.filter((item) => {
-      if (filters.versionTag && filters.versionTag !== 'All' && item.versionTag !== filters.versionTag) {
-        return false;
+      if (
+        filters.versionTag &&
+        filters.versionTag !== 'All' &&
+        item.versionTag !== filters.versionTag
+      ) {
+        return false
       }
       if (filters.search && filters.search.trim() !== '') {
-        const q = filters.search.toLowerCase();
-        const matchesVer = item.versionNumber.toLowerCase().includes(q);
-        const matchesAuthor = item.author.toLowerCase().includes(q);
-        if (!matchesVer && !matchesAuthor) return false;
+        const q = filters.search.toLowerCase()
+        const matchesVer = item.versionNumber.toLowerCase().includes(q)
+        const matchesAuthor = item.author.toLowerCase().includes(q)
+        if (!matchesVer && !matchesAuthor) return false
       }
-      return true;
-    });
+      return true
+    })
   }
 
   public static getAuditLogs(): VersionAuditLog[] {
-    return [...this.mockAuditLogs];
+    return [...this.mockAuditLogs]
   }
 }

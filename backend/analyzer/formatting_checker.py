@@ -17,8 +17,16 @@ from .section_headings import SECTION_KEYS, SECTIONS, find_headings
 #: — ``qualifications`` was in two of them, ``toolkit`` in one, ``degrees``
 #: plural here and singular there.
 STANDARD_SECTIONS = [
-    {"key": key, "name": SECTIONS[key][0], "variants": list(SECTIONS[key][1])}
-    for key in SECTION_KEYS
+    {"key": "summary", "name": "Summary / Objective",
+        "variants": ["summary", "professional summary", "about me", "objective", "profile"]},
+    {"key": "experience", "name": "Work Experience", "variants": [
+        "experience", "work experience", "employment", "work history", "professional experience"]},
+    {"key": "education", "name": "Education", "variants": [
+        "education", "academic", "qualifications", "degree"]},
+    {"key": "skills", "name": "Skills", "variants": [
+        "skills", "technical skills", "technologies", "competencies", "core competencies", "tools"]},
+    {"key": "projects", "name": "Projects", "variants": [
+        "projects", "personal projects", "portfolio", "key projects"]},
 ]
 
 ESTIMATED_WORDS_PER_PAGE = 450
@@ -72,24 +80,32 @@ def check_resume_formatting(
     # five and scored 80 for structure.
     headings = {heading.key: heading for heading in find_headings(text)}
 
-    found_sections = [
-        {
-            "key": key,
-            "name": headings[key].name,
-            "detected_as": headings[key].detected_as,
-        }
-        for key in SECTION_KEYS
-        if key in headings
-    ]
-    missing_sections = [
-        {"key": key, "name": SECTIONS[key][0]}
-        for key in SECTION_KEYS
-        if key not in headings
-    ]
+    for section in STANDARD_SECTIONS:
+        matched_variant = None
+        for variant in section["variants"]:
+            # Match heading either standalone line or early in line
+            pattern = re.compile(
+                rf"(?:^|\n)\s*{re.escape(variant)}\s*(?::|$|\n)", re.IGNORECASE)
+            if pattern.search(text) or variant in lowered_text:
+                matched_variant = variant
+                break
+
+        if matched_variant:
+            found_sections.append({
+                "key": section["key"],
+                "name": section["name"],
+                "detected_as": matched_variant,
+            })
+        else:
+            missing_sections.append({
+                "key": section["key"],
+                "name": section["name"],
+            })
 
     section_tips = []
     required_core = {"experience", "education", "skills"}
-    missing_core = [s["name"] for s in missing_sections if s["key"] in required_core]
+    missing_core = [s["name"]
+                    for s in missing_sections if s["key"] in required_core]
 
     if missing_core:
         section_tips.append(
@@ -115,7 +131,8 @@ def check_resume_formatting(
         )
     else:
         # Check text lines for potential horizontal tabular alignment / multiple tabs
-        tab_heavy_lines = [l for l in lines if l.count("\t") >= 2 or re.search(r"\s{4,}\S+\s{4,}", l)]
+        tab_heavy_lines = [l for l in lines if l.count(
+            "\t") >= 2 or re.search(r"\s{4,}\S+\s{4,}", l)]
         if len(tab_heavy_lines) >= 4:
             layout_status = "warning"
             layout_tips.append(
@@ -128,7 +145,8 @@ def check_resume_formatting(
 
     # 4. Font and character cleanliness check
     font_tips = []
-    non_ascii_symbols = re.findall(r"[^\x00-\x7F\u2010-\u2015\u2018-\u201D\u2022\u25CF\u2026\u00A0]", text)
+    non_ascii_symbols = re.findall(
+        r"[^\x00-\x7F\u2010-\u2015\u2018-\u201D\u2022\u25CF\u2026\u00A0]", text)
     if len(non_ascii_symbols) > 15:
         font_tips.append(
             "Detected custom or decorative special symbols/glyphs. Stick to standard Unicode bullets (•) and standard web-safe fonts (Arial, Calibri, Helvetica, Roboto) for reliable ATS rendering."

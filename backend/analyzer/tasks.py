@@ -93,24 +93,24 @@ def process_batch_upload(batch_id, zip_file_path, target_role="General", experie
     batch.save(update_fields=["status"])
 
     results = []
-    
+
     try:
         with tempfile.TemporaryDirectory() as temp_dir:
             with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
                 zip_ref.extractall(temp_dir)
-            
+
             pdf_files = []
             for root, dirs, files in os.walk(temp_dir):
                 for file in files:
                     if file.lower().endswith('.pdf'):
                         pdf_files.append(os.path.join(root, file))
-            
+
             batch.total_files = len(pdf_files)
             batch.save(update_fields=["total_files"])
-            
+
             for i, pdf_path in enumerate(pdf_files):
                 file_name = os.path.basename(pdf_path)
-                
+
                 try:
                     analysis_result = analyze_resume(
                         file_path=pdf_path,
@@ -120,7 +120,7 @@ def process_batch_upload(batch_id, zip_file_path, target_role="General", experie
                         job_description=job_description,
                         experience_level=experience_level,
                     )
-                    
+
                     results.append({
                         "file_name": file_name,
                         "score": analysis_result.get("score"),
@@ -128,19 +128,20 @@ def process_batch_upload(batch_id, zip_file_path, target_role="General", experie
                         "analysis_id": analysis_result.get("id"),
                     })
                 except Exception as e:
-                    logger.exception(f"Failed to analyze {file_name} in batch {batch_id}")
+                    logger.exception(
+                        f"Failed to analyze {file_name} in batch {batch_id}")
                     results.append({
                         "file_name": file_name,
                         "error": str(e)
                     })
-                
+
                 batch.processed_files = i + 1
                 batch.save(update_fields=["processed_files"])
-                
+
         batch.status = "Completed"
         batch.results = results
         batch.save(update_fields=["status", "results"])
-        
+
     except Exception as e:
         logger.exception(f"Batch processing failed for {batch_id}")
         batch.status = "Failed"

@@ -13,6 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="resumeanalysis",
             name="experience_level",
-            field=models.CharField(blank=True, default="Mid-Level", max_length=50),
+            field=models.CharField(
+                blank=True, default="Mid-Level", max_length=50),
         ),
     ]

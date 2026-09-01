@@ -96,7 +96,8 @@ class ResumeParsingTests(TestCase):
                 pdf_file_path = p
                 break
 
-        self.assertIsNotNone(pdf_file_path, "Could not find frontend/public/sample-resume.pdf in workspace")
+        self.assertIsNotNone(
+            pdf_file_path, "Could not find frontend/public/sample-resume.pdf in workspace")
 
         text = extract_text_from_file(pdf_file_path, "sample-resume.pdf")
         self.assertIn("John Doe", text)

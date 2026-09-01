@@ -6,6 +6,12 @@ PDF whose pages yield the text we control, and the persistence branch is
 mocked so no ``ResumeAnalysis`` row is ever written.
 """
 
+from django.contrib.auth.models import User
+from analyzer.url_fetcher import convert_to_direct_download_url, download_and_validate_url
+from analyzer.models import ResumeAnalysis, UserProfile
+from analyzer.comparison import compare_versions
+from rest_framework.test import APIClient
+from django.urls import reverse
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -77,7 +83,8 @@ class AnalyzeResumeTests(TestCase):
         mock_open.return_value = _fake_pdf("HTML CSS JavaScript")
         result = analyze_resume("dummy.pdf", "Frontend Developer")
 
-        self.assertEqual(len(result["suggestions"]), len(result["missing_skills"]))
+        self.assertEqual(len(result["suggestions"]),
+                         len(result["missing_skills"]))
         self.assertTrue(
             all(
                 skill.title() in suggestion
@@ -156,19 +163,12 @@ class AnalyzeResumeTests(TestCase):
         self.assertIsInstance(result["matched_skills"], list)
         self.assertIsInstance(result["missing_skills"], list)
         self.assertGreater(len(result["matched_skills"]), 0)
-        
+
         # Verify that the counts can be used for sorting
         matched_count = len(result["matched_skills"])
         missing_count = len(result["missing_skills"])
         self.assertGreaterEqual(matched_count, 0)
         self.assertGreaterEqual(missing_count, 0)
-
-from django.contrib.auth.models import User
-from django.urls import reverse
-from rest_framework.test import APIClient
-
-from analyzer.comparison import compare_versions
-from analyzer.models import ResumeAnalysis, UserProfile
 
 
 def _make_analysis(user, **overrides):
@@ -188,7 +188,8 @@ def _make_analysis(user, **overrides):
 
 class CompareVersionsEngineTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="alice", password="pw123456")
+        self.user = User.objects.create_user(
+            username="alice", password="pw123456")
 
     def test_score_delta_and_skill_diffs(self):
         older = _make_analysis(
@@ -217,17 +218,21 @@ class CompareVersionsEngineTests(TestCase):
         self.assertEqual(result["newly_missing_skills"], [])
         self.assertIn("git", result["still_missing_skills"])
         self.assertTrue(any(d["type"] == "added" for d in result["text_diff"]))
-        self.assertTrue(any("improved" in insight for insight in result["insights"]))
+        self.assertTrue(
+            any("improved" in insight for insight in result["insights"]))
 
     def test_score_regression_is_explained(self):
-        older = _make_analysis(self.user, score=80, matched_skills=["python", "react"], missing_skills=[])
-        newer = _make_analysis(self.user, score=55, matched_skills=["python"], missing_skills=["react"])
+        older = _make_analysis(self.user, score=80, matched_skills=[
+                               "python", "react"], missing_skills=[])
+        newer = _make_analysis(self.user, score=55, matched_skills=[
+                               "python"], missing_skills=["react"])
 
         result = compare_versions(older, newer).as_dict()
 
         self.assertEqual(result["score_delta"], -25)
         self.assertIn("react", result["newly_missing_skills"])
-        self.assertTrue(any("dropped" in insight for insight in result["insights"]))
+        self.assertTrue(
+            any("dropped" in insight for insight in result["insights"]))
 
     def test_identical_versions_yield_no_diff_message(self):
         older = _make_analysis(self.user)
@@ -301,7 +306,8 @@ class CompareVersionsEngineTests(TestCase):
         # No crash; diff entries are only ever of the two highlightable types.
         self.assertTrue(isinstance(result["text_diff"], list))
         self.assertGreater(len(result["text_diff"]), 0)
-        self.assertTrue(all(d["type"] in ("added", "removed") for d in result["text_diff"]))
+        self.assertTrue(all(d["type"] in ("added", "removed")
+                        for d in result["text_diff"]))
         # The payload is capped so a huge rewrite cannot balloon the response.
         self.assertLessEqual(len(result["text_diff"]), 200)
         # A full rewrite is reflected in the insights summary.
@@ -312,13 +318,16 @@ class CompareVersionsEngineTests(TestCase):
 
 class CompareVersionsAPITests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="bob", password="pw123456")
-        self.other_user = User.objects.create_user(username="eve", password="pw123456")
+        self.user = User.objects.create_user(
+            username="bob", password="pw123456")
+        self.other_user = User.objects.create_user(
+            username="eve", password="pw123456")
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
         self.older = _make_analysis(self.user, score=40)
-        self.newer = _make_analysis(self.user, score=65, skills_found=["python", "sql", "docker"])
+        self.newer = _make_analysis(self.user, score=65, skills_found=[
+                                    "python", "sql", "docker"])
 
     def test_compare_requires_auth(self):
         anon_client = APIClient()
@@ -354,14 +363,12 @@ class CompareVersionsAPITests(TestCase):
         self.assertEqual(resp.status_code, 404)
 
 
-from analyzer.url_fetcher import convert_to_direct_download_url, download_and_validate_url
-
-
 class UrlFetcherTests(TestCase):
     def test_convert_gdrive_url(self):
         gdrive_share_url = "https://drive.google.com/file/d/11A2b3C4d5E6f7G8h9I/view?usp=sharing"
         direct_url, filename = convert_to_direct_download_url(gdrive_share_url)
-        self.assertEqual(direct_url, "https://drive.google.com/uc?export=download&id=11A2b3C4d5E6f7G8h9I")
+        self.assertEqual(
+            direct_url, "https://drive.google.com/uc?export=download&id=11A2b3C4d5E6f7G8h9I")
         self.assertEqual(filename, "gdrive_11A2b3C4d5E6f7G8h9I.pdf")
 
     def test_convert_dropbox_url(self):
@@ -383,50 +390,49 @@ class SecurityHeadersTests(TestCase):
     def test_security_headers_are_present_on_api_responses(self):
         # Trigger an API request
         resp = self.client.get("/api/compare/")
-        
+
         # Check that Content-Security-Policy is present and configured for APIs
         self.assertIn("Content-Security-Policy", resp)
         self.assertEqual(
             resp["Content-Security-Policy"],
             "default-src 'none'; frame-ancestors 'none';"
         )
-        
+
         # Check standard secure headers
         self.assertIn("X-Frame-Options", resp)
         self.assertEqual(resp["X-Frame-Options"], "DENY")
-        
+
         self.assertIn("X-Content-Type-Options", resp)
         self.assertEqual(resp["X-Content-Type-Options"], "nosniff")
-        
+
         self.assertIn("Referrer-Policy", resp)
-        self.assertEqual(resp["Referrer-Policy"], "strict-origin-when-cross-origin")
+        self.assertEqual(resp["Referrer-Policy"],
+                         "strict-origin-when-cross-origin")
 
     def test_security_headers_are_present_on_html_responses(self):
         # Trigger an HTML view request
         resp = self.client.get("/admin/login/")
-        
+
         # Check that Content-Security-Policy is configured for HTML/Admin
         self.assertIn("Content-Security-Policy", resp)
         self.assertIn("default-src 'self'", resp["Content-Security-Policy"])
-        
+
         # Check standard secure headers
         self.assertIn("X-Frame-Options", resp)
         self.assertEqual(resp["X-Frame-Options"], "DENY")
-        
+
         self.assertIn("X-Content-Type-Options", resp)
         self.assertEqual(resp["X-Content-Type-Options"], "nosniff")
-        
+
         self.assertIn("Referrer-Policy", resp)
-        self.assertEqual(resp["Referrer-Policy"], "strict-origin-when-cross-origin")
-
-
-
+        self.assertEqual(resp["Referrer-Policy"],
+                         "strict-origin-when-cross-origin")
 
 
 class CoverLetterAnalysisTests(TestCase):
     def test_analyze_cover_letter_tone_and_length(self):
         from analyzer.services import analyze_cover_letter
-        
+
         # Test a short cover letter
         short_text = "I am interested in the Frontend Developer position. I have React skills."
         res = analyze_cover_letter(short_text, "Frontend Developer")
@@ -461,15 +467,16 @@ class CoverLetterAnalysisTests(TestCase):
     @patch("analyzer.services.pdfplumber.open")
     def test_analyze_resume_with_cover_letter(self, mock_open):
         mock_open.return_value = _fake_pdf("Python Django developer")
-        
+
         # We patch open to mock text extraction for the cover letter as well.
         # But analyze_resume calls extract_text_from_file twice. So let's mock extract_text_from_file.
         with patch("analyzer.services.extract_text_from_file") as mock_extract:
             mock_extract.side_effect = [
                 "Python Django developer",  # Resume text
-                "I am applying for Backend Developer role. I designed and implemented backend systems.",  # Cover letter text
+                # Cover letter text
+                "I am applying for Backend Developer role. I designed and implemented backend systems.",
             ]
-            
+
             result = analyze_resume(
                 file_path="dummy_resume.pdf",
                 target_role="Backend Developer",
@@ -477,69 +484,75 @@ class CoverLetterAnalysisTests(TestCase):
                 cover_letter_path="dummy_cl.pdf",
                 cover_letter_name="cover_letter.pdf",
             )
-            
+
             self.assertEqual(result["resume_text"], "Python Django developer")
             self.assertIsNotNone(result["cover_letter_text"])
             self.assertIsNotNone(result["cover_letter_feedback"])
-            self.assertEqual(result["cover_letter_feedback"]["length"]["status"], "Too short")
-            self.assertTrue(result["cover_letter_feedback"]["relevance"]["references_role"])
-
+            self.assertEqual(result["cover_letter_feedback"]
+                             ["length"]["status"], "Too short")
+            self.assertTrue(result["cover_letter_feedback"]
+                            ["relevance"]["references_role"])
 
 
 class InterviewQuestionTests(TestCase):
     def test_generate_interview_questions_valid(self):
         from analyzer.services import generate_interview_questions
-        
+
         # Test generation with React skill and Frontend Developer target role
-        questions = generate_interview_questions(["React", "TypeScript"], "Frontend Developer")
+        questions = generate_interview_questions(
+            ["React", "TypeScript"], "Frontend Developer")
         self.assertTrue(len(questions) >= 5)
         self.assertTrue(len(questions) <= 8)
-        
+
         # At least one question should be from React or TS
-        has_tech = any("React" in q or "TypeScript" in q or "virtual DOM" in q or "generics" in q for q in questions)
+        has_tech = any(
+            "React" in q or "TypeScript" in q or "virtual DOM" in q or "generics" in q for q in questions)
         self.assertTrue(has_tech)
 
     @patch("analyzer.services.pdfplumber.open")
     def test_analyze_resume_generates_interview_questions(self, mock_open):
         mock_open.return_value = _fake_pdf("Expert in Python and SQL.")
-        
+
         result = analyze_resume(
             file_path="dummy_resume.pdf",
             target_role="Backend Developer",
             file_name="resume.pdf",
         )
-        
+
         self.assertIn("interview_questions", result)
         self.assertTrue(len(result["interview_questions"]) >= 5)
+
 
 class JdAnalysisTests(TestCase):
     def test_analyze_jd_endpoint(self):
         from rest_framework import status
-        
+
         # Test empty input error
         resp = self.client.post("/api/analyze-jd/", {"job_description": ""})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", resp.data)
-        
+
         # Test valid input analysis with known skill keywords and stop words
         jd_text = (
             "We are seeking a React Developer. The candidate should have experience in React, "
             "JavaScript, HTML, and CSS. Working with teams to deliver responsive layouts is essential. "
             "React and TypeScript are strong plusses. The candidate will work in a fast-paced environment."
         )
-        resp = self.client.post("/api/analyze-jd/", {"job_description": jd_text})
+        resp = self.client.post(
+            "/api/analyze-jd/", {"job_description": jd_text})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn("keywords", resp.data)
-        
+
         keywords = resp.data["keywords"]
         self.assertTrue(len(keywords) > 0)
-        
+
         # Check that 'react' is recognized and tagged as a skill
-        react_keyword = next((k for k in keywords if k["text"] == "react"), None)
+        react_keyword = next(
+            (k for k in keywords if k["text"] == "react"), None)
         self.assertIsNotNone(react_keyword)
         self.assertEqual(react_keyword["type"], "skill")
         self.assertTrue(react_keyword["value"] >= 2)
-        
+
         # Common English stop words like 'the' or 'and' or corporate fillers like 'candidate' shouldn't be here
         texts = [k["text"] for k in keywords]
         self.assertNotIn("the", texts)
@@ -552,8 +565,9 @@ class SkillsLeaderboardTests(TestCase):
         from rest_framework import status
         from django.contrib.auth.models import User
         from analyzer.models import ResumeAnalysis
-        
-        user = User.objects.create_user(username="testuser", password="password123")
+
+        user = User.objects.create_user(
+            username="testuser", password="password123")
         ResumeAnalysis.objects.create(
             user=user,
             file_name="resume1.pdf",
@@ -581,19 +595,21 @@ class SkillsLeaderboardTests(TestCase):
             matched_skills=["react", "typescript"],
         )
         jd_text = "Looking for a React developer with strong React experience, TypeScript, and CSS skills."
-        resp = self.client.post("/api/analyze-jd/", {"job_description": jd_text})
+        resp = self.client.post(
+            "/api/analyze-jd/", {"job_description": jd_text})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn("keywords", resp.data)
-        
+
         keywords = resp.data["keywords"]
         self.assertTrue(len(keywords) > 0)
-        
+
         # Check that 'react' is recognized and tagged as a skill
-        react_keyword = next((k for k in keywords if k["text"] == "react"), None)
+        react_keyword = next(
+            (k for k in keywords if k["text"] == "react"), None)
         self.assertIsNotNone(react_keyword)
         self.assertEqual(react_keyword["type"], "skill")
         self.assertTrue(react_keyword["value"] >= 2)
-        
+
         # Common English stop words like 'the' or 'and' or corporate fillers like 'candidate' shouldn't be here
         texts = [k["text"] for k in keywords]
         self.assertNotIn("the", texts)
@@ -606,8 +622,9 @@ class SkillsLeaderboardTests(TestCase):
         from analyzer.models import ResumeAnalysis
         from datetime import datetime
         from django.utils.timezone import now
-        
-        user = User.objects.create_user(username="testuser2", password="password123")
+
+        user = User.objects.create_user(
+            username="testuser2", password="password123")
         ResumeAnalysis.objects.create(
             user=user,
             file_name="resume1.pdf",
@@ -617,13 +634,13 @@ class SkillsLeaderboardTests(TestCase):
             matched_skills=["react"],
             missing_skills=["css"],
         )
-        
+
         resp = self.client.get("/api/skills-leaderboard/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
-        
+
         self.assertIn("last_updated", resp.data)
         self.assertIsInstance(resp.data["last_updated"], str)
-        
+
         # Verify it's a valid ISO format timestamp
         try:
             datetime.fromisoformat(resp.data["last_updated"])
@@ -635,8 +652,10 @@ class UserProfileTests(TestCase):
     def setUp(self):
         from rest_framework.test import APIClient
         self.client = APIClient()
-        self.user = User.objects.create_user(username="testuser", password="password123", email="test@example.com")
-        self.other_user = User.objects.create_user(username="otheruser", password="password123", email="other@example.com")
+        self.user = User.objects.create_user(
+            username="testuser", password="password123", email="test@example.com")
+        self.other_user = User.objects.create_user(
+            username="otheruser", password="password123", email="other@example.com")
 
     def test_get_profile_requires_auth(self):
         from rest_framework import status
@@ -645,37 +664,82 @@ class UserProfileTests(TestCase):
 
     def test_get_profile_success(self):
         from rest_framework import status
+        self.profile = UserProfile.objects.get_or_create(user=self.user)[0]
+        self.profile.bio = "Senior Backend Engineer | Python & Django"
+        self.profile.save()
+
         self.client.force_authenticate(user=self.user)
         resp = self.client.get("/api/profile/")
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data["username"], "testuser")
         self.assertEqual(resp.data["email"], "test@example.com")
+        self.assertEqual(resp.data["bio"], "Senior Backend Engineer | Python & Django")
+        self.assertEqual(resp.data["headline"], "Senior Backend Engineer | Python & Django")
 
     def test_put_profile_success(self):
         from rest_framework import status
         self.client.force_authenticate(user=self.user)
-        resp = self.client.put("/api/profile/", {"username": "newusername", "email": "newemail@example.com"})
+        resp = self.client.put(
+            "/api/profile/", {"username": "newusername", "email": "newemail@example.com"})
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(resp.data["username"], "newusername")
         self.assertEqual(resp.data["email"], "newemail@example.com")
+        self.assertEqual(resp.data["bio"], "Full-Stack Developer passionate about AI")
 
         self.user.refresh_from_db()
         self.assertEqual(self.user.username, "newusername")
         self.assertEqual(self.user.email, "newemail@example.com")
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertEqual(profile.bio, "Full-Stack Developer passionate about AI")
+
+    def test_put_profile_headline_alias(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.put("/api/profile/", {
+            "headline": "Lead DevOps Architect",
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["bio"], "Lead DevOps Architect")
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertEqual(profile.bio, "Lead DevOps Architect")
+
+    def test_put_profile_sanitizes_bio(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        resp = self.client.put("/api/profile/", {
+            "bio": "<script>alert('xss')</script><b>Senior Engineer</b> \n\t  at <i>OpenSource</i>  ",
+        })
+        self.assertEqual(resp.status_code, status.HTTP_200_OK)
+        self.assertEqual(resp.data["bio"], "alert('xss')Senior Engineer at OpenSource")
+        profile = UserProfile.objects.get(user=self.user)
+        self.assertEqual(profile.bio, "alert('xss')Senior Engineer at OpenSource")
+
+    def test_put_profile_bio_length_limit(self):
+        from rest_framework import status
+        self.client.force_authenticate(user=self.user)
+        long_bio = "a" * 251
+        resp = self.client.put("/api/profile/", {
+            "bio": long_bio,
+        })
+        self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("bio", resp.data)
 
     def test_put_profile_duplicate_username(self):
         from rest_framework import status
         self.client.force_authenticate(user=self.user)
-        resp = self.client.put("/api/profile/", {"username": "otheruser", "email": "test@example.com"})
+        resp = self.client.put(
+            "/api/profile/", {"username": "otheruser", "email": "test@example.com"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("username", resp.data)
 
     def test_put_profile_duplicate_email(self):
         from rest_framework import status
         self.client.force_authenticate(user=self.user)
-        resp = self.client.put("/api/profile/", {"username": "testuser", "email": "other@example.com"})
+        resp = self.client.put(
+            "/api/profile/", {"username": "testuser", "email": "other@example.com"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("email", resp.data)
+
 
 #: A token ``verify_captcha_token`` accepts. Kept in one place so the tests
 #: that only need to get *past* the CAPTCHA do not each invent their own.
@@ -726,11 +790,13 @@ class CaptchaProtectionTests(TestCase):
     def setUp(self):
         from rest_framework.test import APIClient
         self.client = APIClient()
-        self.user = User.objects.create_user(username="botuser", password="password123")
+        self.user = User.objects.create_user(
+            username="botuser", password="password123")
 
     def test_signup_fails_without_captcha_token(self):
         from rest_framework import status
-        resp = self.client.post("/api/auth/signup/", {"username": "newbot", "password": "password123"})
+        resp = self.client.post(
+            "/api/auth/signup/", {"username": "newbot", "password": "password123"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         # `signup` rejects the request before it ever builds the serializer, so
         # the body describes the CAPTCHA and carries no field errors. This used
@@ -754,7 +820,8 @@ class CaptchaProtectionTests(TestCase):
     def test_login_fails_without_captcha_token(self):
         from rest_framework import status
         resp = self.client.post(
-            "/api/auth/login/", {"username": "botuser", "password": "password123"}
+            "/api/auth/login/", {"username": "botuser",
+                                 "password": "password123"}
         )
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("captcha_token", resp.data)
@@ -767,7 +834,8 @@ class ContactUsTests(TestCase):
 
     def test_contact_us_validation_error(self):
         from rest_framework import status
-        resp = self.client.post("/api/contact/", {"name": "", "email": "test@example.com", "message": ""})
+        resp = self.client.post(
+            "/api/contact/", {"name": "", "email": "test@example.com", "message": ""})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", resp.data)
 
@@ -793,7 +861,8 @@ class ProfileAvatarTests(TestCase):
         from django.contrib.auth.models import User
         from rest_framework.test import APIClient
         self.client = APIClient()
-        self.user = User.objects.create_user(username="avataruser", password="password123")
+        self.user = User.objects.create_user(
+            username="avataruser", password="password123")
 
     def _login(self):
         """Log in and return the response.
@@ -834,29 +903,33 @@ class ProfileAvatarTests(TestCase):
         token = login_resp.data["access"]
         auth_headers = {"HTTP_AUTHORIZATION": f"Bearer {token}"}
 
-        txt_file = SimpleUploadedFile("avatar.txt", b"plain text content", content_type="text/plain")
-        resp = self.client.post("/api/profile/avatar/", {"avatar": txt_file}, **auth_headers)
+        txt_file = SimpleUploadedFile(
+            "avatar.txt", b"plain text content", content_type="text/plain")
+        resp = self.client.post("/api/profile/avatar/",
+                                {"avatar": txt_file}, **auth_headers)
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", resp.data)
-        
-        large_file = SimpleUploadedFile("avatar.png", b"x" * (2 * 1024 * 1024 + 1), content_type="image/png")
-        resp = self.client.post("/api/profile/avatar/", {"avatar": large_file}, **auth_headers)
+
+        large_file = SimpleUploadedFile(
+            "avatar.png", b"x" * (2 * 1024 * 1024 + 1), content_type="image/png")
+        resp = self.client.post("/api/profile/avatar/",
+                                {"avatar": large_file}, **auth_headers)
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
-        
+
         valid_img = SimpleUploadedFile(
-            "avatar.png", b"\x89PNG\r\n\x1a\n" + b"fake_png_binary_data", content_type="image/png"
-        )
-        resp = self.client.post("/api/profile/avatar/", {"avatar": valid_img}, **auth_headers)
+            "avatar.png", b"fake_png_binary_data", content_type="image/png")
+        resp = self.client.post("/api/profile/avatar/",
+                                {"avatar": valid_img}, **auth_headers)
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn("avatar_url", resp.data)
         self.assertIsNotNone(resp.data["avatar_url"])
-        
+
         login_resp = self._login()
         self.assertIsNotNone(login_resp.data["avatar_url"])
-        
+
         del_resp = self.client.delete("/api/profile/avatar/", **auth_headers)
         self.assertEqual(del_resp.status_code, status.HTTP_200_OK)
-        
+
         login_resp = self._login()
         self.assertIsNone(login_resp.data["avatar_url"])
 
@@ -868,13 +941,14 @@ class CompareBulkJDsTests(TestCase):
         from django.core.files.uploadedfile import SimpleUploadedFile
 
         resume_content = b"Python developer with experience in django and javascript"
-        txt_file = SimpleUploadedFile("resume.txt", resume_content, content_type="text/plain")
-        
+        txt_file = SimpleUploadedFile(
+            "resume.txt", resume_content, content_type="text/plain")
+
         jds = [
             "Looking for python django developer",
             "React frontend developer using typescript",
         ]
-        
+
         resp = self.client.post(
             "/api/compare-bulk-jds/",
             {
@@ -885,7 +959,7 @@ class CompareBulkJDsTests(TestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertIn("resume_skills", resp.data)
         self.assertIn("comparisons", resp.data)
-        
+
         comparisons = resp.data["comparisons"]
         self.assertEqual(len(comparisons), 2)
         # First one should have higher score since the resume matches python/django
@@ -897,7 +971,8 @@ class WeeklyDigestTests(TestCase):
         from rest_framework.test import APIClient
         from analyzer.models import UserProfile
         self.client = APIClient()
-        self.user = User.objects.create_user(username="digestuser", password="password123", email="digest@example.com")
+        self.user = User.objects.create_user(
+            username="digestuser", password="password123", email="digest@example.com")
         self.profile, _ = UserProfile.objects.get_or_create(user=self.user)
 
     def test_digest_opt_in_toggle(self):
@@ -910,7 +985,8 @@ class WeeklyDigestTests(TestCase):
         self.assertFalse(resp.data["weekly_digest_opt_in"])
 
         # PUT profile - set opt-in True
-        put_resp = self.client.put("/api/profile/", {"username": "digestuser", "email": "digest@example.com", "weekly_digest_opt_in": True})
+        put_resp = self.client.put(
+            "/api/profile/", {"username": "digestuser", "email": "digest@example.com", "weekly_digest_opt_in": True})
         self.assertEqual(put_resp.status_code, status.HTTP_200_OK)
         self.assertTrue(put_resp.data["weekly_digest_opt_in"])
 
@@ -1012,6 +1088,7 @@ class ExportUserDataTests(TestCase):
         self.assertEqual(data["account"]["last_name"], "User")
         self.assertTrue(data["account"]["weekly_digest_opt_in"])
         self.assertIsNone(data["account"]["avatar"])
+        self.assertEqual(data["account"]["bio"], "")
 
         self.assertEqual(len(data["analysis_history"]), 1)
 
@@ -1066,39 +1143,50 @@ class ExportUserDataTests(TestCase):
 class ExperienceLevelTests(TestCase):
     @patch("analyzer.services.pdfplumber.open")
     def test_experience_level_skill_expectations_vary_for_frontend(self, mock_open):
-        mock_open.return_value = _fake_pdf("Experienced with HTML, CSS, JavaScript, React, Git, GitHub.")
-        
+        mock_open.return_value = _fake_pdf(
+            "Experienced with HTML, CSS, JavaScript, React, Git, GitHub.")
+
         # At Junior level, this resume has all required skills
-        junior_res = analyze_resume("dummy.pdf", "Frontend Developer", experience_level="Junior")
+        junior_res = analyze_resume(
+            "dummy.pdf", "Frontend Developer", experience_level="Junior")
         self.assertEqual(junior_res["score"], 100)
         self.assertEqual(len(junior_res["missing_skills"]), 0)
 
         # At Senior level, advanced skills like system design, mentoring, ci/cd, docker are expected
-        senior_res = analyze_resume("dummy.pdf", "Frontend Developer", experience_level="Senior")
+        senior_res = analyze_resume(
+            "dummy.pdf", "Frontend Developer", experience_level="Senior")
         self.assertLess(senior_res["score"], 100)
         self.assertTrue(len(senior_res["missing_skills"]) > 0)
-        self.assertTrue(any("leadership" in s.lower() or "mentoring" in s.lower() or "architectural" in s.lower() for s in senior_res["suggestions"]))
+        self.assertTrue(any("leadership" in s.lower() or "mentoring" in s.lower(
+        ) or "architectural" in s.lower() for s in senior_res["suggestions"]))
 
     @patch("analyzer.services.pdfplumber.open")
     def test_experience_level_skill_expectations_vary_for_backend(self, mock_open):
-        mock_open.return_value = _fake_pdf("Python, JavaScript, SQL, Git, GitHub, Flask, Node.js.")
-        
-        junior_res = analyze_resume("dummy.pdf", "Backend Developer", experience_level="Junior")
+        mock_open.return_value = _fake_pdf(
+            "Python, JavaScript, SQL, Git, GitHub, Flask, Node.js.")
+
+        junior_res = analyze_resume(
+            "dummy.pdf", "Backend Developer", experience_level="Junior")
         self.assertEqual(junior_res["score"], 100)
 
-        senior_res = analyze_resume("dummy.pdf", "Backend Developer", experience_level="Senior")
+        senior_res = analyze_resume(
+            "dummy.pdf", "Backend Developer", experience_level="Senior")
         self.assertLess(senior_res["score"], 100)
-        self.assertTrue(any("senior" in s.lower() or "leadership" in s.lower() or "architectural" in s.lower() or "scalable" in s.lower() for s in senior_res["suggestions"]))
+        self.assertTrue(any("senior" in s.lower() or "leadership" in s.lower(
+        ) or "architectural" in s.lower() or "scalable" in s.lower() for s in senior_res["suggestions"]))
 
     @patch("analyzer.services.pdfplumber.open")
     def test_experience_level_persists_in_model(self, mock_open):
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        user = User.objects.create_user(username="leveluser", email="level@example.com", password="password123")
-        
-        mock_open.return_value = _fake_pdf("Python, SQL, Excel, Pandas, Data Analysis.")
-        res = analyze_resume("dummy.pdf", "Data Analyst", user_id=user.id, experience_level="Senior")
-        
+        user = User.objects.create_user(
+            username="leveluser", email="level@example.com", password="password123")
+
+        mock_open.return_value = _fake_pdf(
+            "Python, SQL, Excel, Pandas, Data Analysis.")
+        res = analyze_resume("dummy.pdf", "Data Analyst",
+                             user_id=user.id, experience_level="Senior")
+
         from analyzer.models import ResumeAnalysis
         record = ResumeAnalysis.objects.get(id=res["id"])
         self.assertEqual(record.experience_level, "Senior")

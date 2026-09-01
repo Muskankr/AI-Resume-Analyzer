@@ -1,4 +1,8 @@
-import type { AtsCandidateAnalyticsReport, AtsAnalyticsFilterQuery, AtsAnalyticsAuditLog } from './types';
+import type {
+  AtsCandidateAnalyticsReport,
+  AtsAnalyticsFilterQuery,
+  AtsAnalyticsAuditLog,
+} from './types'
 
 export class AtsScoringAnalyticsEngine {
   private static mockReports: AtsCandidateAnalyticsReport[] = [
@@ -18,7 +22,10 @@ export class AtsScoringAnalyticsEngine {
           weightPercentage: 35,
           status: 'EXCELLENT',
           benchmarkPercentile: 94,
-          recommendations: ['Add explicit Kubernetes ingress controller keywords.', 'Include AWS Transit Gateway architecture experience.'],
+          recommendations: [
+            'Add explicit Kubernetes ingress controller keywords.',
+            'Include AWS Transit Gateway architecture experience.',
+          ],
         },
         {
           categoryName: 'FORMATTING_PARSING',
@@ -26,7 +33,9 @@ export class AtsScoringAnalyticsEngine {
           weightPercentage: 25,
           status: 'EXCELLENT',
           benchmarkPercentile: 98,
-          recommendations: ['Font hierarchy and section tags fully compliant with Taleo & Workday ATS.'],
+          recommendations: [
+            'Font hierarchy and section tags fully compliant with Taleo & Workday ATS.',
+          ],
         },
         {
           categoryName: 'QUANTIFIED_IMPACT',
@@ -34,7 +43,9 @@ export class AtsScoringAnalyticsEngine {
           weightPercentage: 20,
           status: 'EXCELLENT',
           benchmarkPercentile: 92,
-          recommendations: ['Quantified cloud cost optimization metrics ($1.2M annual savings included).'],
+          recommendations: [
+            'Quantified cloud cost optimization metrics ($1.2M annual savings included).',
+          ],
         },
         {
           categoryName: 'SECURITY_COMPLIANCE',
@@ -51,18 +62,25 @@ export class AtsScoringAnalyticsEngine {
           category: 'HARD_SKILL',
           matchFound: true,
           relevanceWeight: 0.95,
-          suggestedContextSnippet: 'Orchestrated multi-region Kubernetes clusters handling 5M daily requests.',
+          suggestedContextSnippet:
+            'Orchestrated multi-region Kubernetes clusters handling 5M daily requests.',
         },
         {
           keyword: 'Terraform Cloud',
           category: 'HARD_SKILL',
           matchFound: false,
           relevanceWeight: 0.88,
-          suggestedContextSnippet: 'Automated infrastructure provisioning using HCL and Terraform Cloud pipelines.',
+          suggestedContextSnippet:
+            'Automated infrastructure provisioning using HCL and Terraform Cloud pipelines.',
         },
       ],
       detectedSkillsCount: 24,
-      missingCriticalKeywords: ['Terraform Cloud', 'FinOps', 'AWS Transit Gateway', 'Zero Trust Network Architecture'],
+      missingCriticalKeywords: [
+        'Terraform Cloud',
+        'FinOps',
+        'AWS Transit Gateway',
+        'Zero Trust Network Architecture',
+      ],
       createdAt: '2026-08-21 16:00:00',
       lastEvaluatedAt: '2026-08-22 06:15:00',
     },
@@ -82,7 +100,10 @@ export class AtsScoringAnalyticsEngine {
           weightPercentage: 35,
           status: 'NEEDS_IMPROVEMENT',
           benchmarkPercentile: 72,
-          recommendations: ['Missing distributed caching (Redis, Memcached) terminology.', 'Add PostgreSQL index optimization examples.'],
+          recommendations: [
+            'Missing distributed caching (Redis, Memcached) terminology.',
+            'Add PostgreSQL index optimization examples.',
+          ],
         },
         {
           categoryName: 'FORMATTING_PARSING',
@@ -111,7 +132,12 @@ export class AtsScoringAnalyticsEngine {
         },
       ],
       detectedSkillsCount: 16,
-      missingCriticalKeywords: ['gRPC', 'PostgreSQL Index Tuning', 'Distributed Locking', 'Redis Enterprise'],
+      missingCriticalKeywords: [
+        'gRPC',
+        'PostgreSQL Index Tuning',
+        'Distributed Locking',
+        'Redis Enterprise',
+      ],
       createdAt: '2026-08-22 02:00:00',
       lastEvaluatedAt: '2026-08-22 06:10:00',
     },
@@ -140,7 +166,8 @@ export class AtsScoringAnalyticsEngine {
           category: 'CERTIFICATION',
           matchFound: true,
           relevanceWeight: 0.99,
-          suggestedContextSnippet: 'Led annual SOC2 Type II audit compliance with zero non-conformances.',
+          suggestedContextSnippet:
+            'Led annual SOC2 Type II audit compliance with zero non-conformances.',
         },
       ],
       detectedSkillsCount: 38,
@@ -148,14 +175,15 @@ export class AtsScoringAnalyticsEngine {
       createdAt: '2026-08-22 05:00:00',
       lastEvaluatedAt: '2026-08-22 06:18:00',
     },
-  ];
+  ]
 
   private static mockAuditLogs: AtsAnalyticsAuditLog[] = [
     {
       logId: 'ATS-LOG-1',
       timestamp: '2026-08-22 06:15:10',
       eventType: 'SCORE_RECALCULATED',
-      details: 'Recalculated ATS keyword match matrix against 2026 enterprise cloud role benchmarks.',
+      details:
+        'Recalculated ATS keyword match matrix against 2026 enterprise cloud role benchmarks.',
       performer: 'ATS Analytics Service',
       impactScope: '3 Candidate Reports Updated',
     },
@@ -163,32 +191,37 @@ export class AtsScoringAnalyticsEngine {
       logId: 'ATS-LOG-2',
       timestamp: '2026-08-22 06:17:00',
       eventType: 'KEYWORD_MATRIX_UPDATED',
-      details: 'Ingested 45 new high-impact FinOps & Kubernetes keywords from modern tech job specs.',
+      details:
+        'Ingested 45 new high-impact FinOps & Kubernetes keywords from modern tech job specs.',
       performer: 'AI Taxonomy Sync Pipeline',
       impactScope: 'Global ATS Keyword Dictionary',
     },
-  ];
+  ]
 
   public static getReports(filters: AtsAnalyticsFilterQuery): AtsCandidateAnalyticsReport[] {
     return this.mockReports.filter((item) => {
-      if (filters.scoringTier && filters.scoringTier !== 'All' && item.scoringTier !== filters.scoringTier) {
-        return false;
+      if (
+        filters.scoringTier &&
+        filters.scoringTier !== 'All' &&
+        item.scoringTier !== filters.scoringTier
+      ) {
+        return false
       }
       if (filters.minScore && item.overallAtsScore < filters.minScore) {
-        return false;
+        return false
       }
       if (filters.search && filters.search.trim() !== '') {
-        const q = filters.search.toLowerCase();
-        const matchesName = item.candidateName.toLowerCase().includes(q);
-        const matchesRole = item.targetRoleTitle.toLowerCase().includes(q);
-        const matchesEmail = item.candidateEmail.toLowerCase().includes(q);
-        if (!matchesName && !matchesRole && !matchesEmail) return false;
+        const q = filters.search.toLowerCase()
+        const matchesName = item.candidateName.toLowerCase().includes(q)
+        const matchesRole = item.targetRoleTitle.toLowerCase().includes(q)
+        const matchesEmail = item.candidateEmail.toLowerCase().includes(q)
+        if (!matchesName && !matchesRole && !matchesEmail) return false
       }
-      return true;
-    });
+      return true
+    })
   }
 
   public static getAuditLogs(): AtsAnalyticsAuditLog[] {
-    return [...this.mockAuditLogs];
+    return [...this.mockAuditLogs]
   }
 }

@@ -14,11 +14,13 @@ class Migration(migrations.Migration):
         migrations.CreateModel(
             name='AnalysisResult',
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, editable=False, primary_key=True, serialize=False)),
+                ('id', models.UUIDField(default=uuid.uuid4,
+                 editable=False, primary_key=True, serialize=False)),
                 ('score', models.IntegerField()),
                 ('skills_found', models.JSONField(default=list)),
                 ('suggestions', models.JSONField(default=list)),
-                ('target_role', models.CharField(blank=True, max_length=100, null=True)),
+                ('target_role', models.CharField(
+                    blank=True, max_length=100, null=True)),
                 ('matched_skills', models.JSONField(default=list)),
                 ('missing_skills', models.JSONField(default=list)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),

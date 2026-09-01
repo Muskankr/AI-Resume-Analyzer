@@ -63,20 +63,25 @@ class WebhookRoutingTests(TestCase):
         self.assertEqual(resolve("/api/webhooks/").url_name, "manage_webhooks")
 
     def test_detail_route_resolves(self):
-        self.assertEqual(resolve("/api/webhooks/1/").url_name, "webhook_detail")
+        self.assertEqual(resolve("/api/webhooks/1/").url_name,
+                         "webhook_detail")
 
     def test_test_delivery_route_resolves(self):
-        self.assertEqual(resolve("/api/webhooks/1/test/").url_name, "test_webhook")
+        self.assertEqual(
+            resolve("/api/webhooks/1/test/").url_name, "test_webhook")
 
     def test_routes_are_named(self):
         self.assertEqual(reverse("manage_webhooks"), "/api/webhooks/")
-        self.assertEqual(reverse("webhook_detail", args=[7]), "/api/webhooks/7/")
-        self.assertEqual(reverse("test_webhook", args=[7]), "/api/webhooks/7/test/")
+        self.assertEqual(
+            reverse("webhook_detail", args=[7]), "/api/webhooks/7/")
+        self.assertEqual(reverse("test_webhook", args=[
+                         7]), "/api/webhooks/7/test/")
 
 
 class WebhookModelTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="hooks", password="password123")
+        self.user = User.objects.create_user(
+            username="hooks", password="password123")
 
     def test_table_exists_and_user_deletion_cascades(self):
         """The regression the missing migration caused, pinned directly.
@@ -90,8 +95,10 @@ class WebhookModelTests(TestCase):
         self.assertEqual(Webhook.objects.count(), 0)
 
     def test_each_webhook_gets_its_own_secret(self):
-        first = Webhook.objects.create(user=self.user, url="https://example.com/a")
-        second = Webhook.objects.create(user=self.user, url="https://example.com/b")
+        first = Webhook.objects.create(
+            user=self.user, url="https://example.com/a")
+        second = Webhook.objects.create(
+            user=self.user, url="https://example.com/b")
 
         self.assertEqual(len(first.secret), 64)
         self.assertNotEqual(first.secret, second.secret)
@@ -99,16 +106,19 @@ class WebhookModelTests(TestCase):
     def test_same_url_cannot_be_registered_twice_by_one_user(self):
         Webhook.objects.create(user=self.user, url="https://example.com/hook")
         with self.assertRaises(IntegrityError):
-            Webhook.objects.create(user=self.user, url="https://example.com/hook")
+            Webhook.objects.create(
+                user=self.user, url="https://example.com/hook")
 
     def test_two_users_may_share_a_url(self):
-        other = User.objects.create_user(username="other", password="password123")
+        other = User.objects.create_user(
+            username="other", password="password123")
         Webhook.objects.create(user=self.user, url="https://example.com/hook")
         Webhook.objects.create(user=other, url="https://example.com/hook")
         self.assertEqual(Webhook.objects.count(), 2)
 
     def test_success_clears_the_failure_count(self):
-        hook = Webhook.objects.create(user=self.user, url="https://example.com/hook")
+        hook = Webhook.objects.create(
+            user=self.user, url="https://example.com/hook")
         hook.record_failure("boom")
         hook.record_success(200)
 
@@ -118,7 +128,8 @@ class WebhookModelTests(TestCase):
         self.assertEqual(hook.last_error, "")
 
     def test_repeated_failures_disable_the_webhook(self):
-        hook = Webhook.objects.create(user=self.user, url="https://example.com/hook")
+        hook = Webhook.objects.create(
+            user=self.user, url="https://example.com/hook")
 
         for _ in range(Webhook.MAX_CONSECUTIVE_FAILURES - 1):
             hook.record_failure("still down")
@@ -130,7 +141,8 @@ class WebhookModelTests(TestCase):
         self.assertFalse(hook.is_active)
 
     def test_a_long_error_is_truncated_rather_than_rejected(self):
-        hook = Webhook.objects.create(user=self.user, url="https://example.com/hook")
+        hook = Webhook.objects.create(
+            user=self.user, url="https://example.com/hook")
         hook.record_failure("x" * 5000)
         hook.refresh_from_db()
         self.assertEqual(len(hook.last_error), 255)
@@ -209,7 +221,8 @@ class WebhookPayloadTests(TestCase):
 
 class WebhookDeliveryTests(TestCase):
     def setUp(self):
-        self.user = User.objects.create_user(username="hooks", password="password123")
+        self.user = User.objects.create_user(
+            username="hooks", password="password123")
         self.hook = Webhook.objects.create(
             user=self.user, url="https://example.com/hook"
         )
@@ -300,16 +313,19 @@ class WebhookDeliveryTests(TestCase):
         self.hook.save(update_fields=["is_active"])
 
         with patch("analyzer.tasks.deliver_webhook_task.delay") as mock_delay:
-            queued = trigger_webhooks_for_user(self.user, {"id": 1, "score": 50})
+            queued = trigger_webhooks_for_user(
+                self.user, {"id": 1, "score": 50})
 
         self.assertEqual(queued, 0)
         mock_delay.assert_not_called()
 
     def test_active_webhooks_are_queued_once_each(self):
-        Webhook.objects.create(user=self.user, url="https://example.com/second")
+        Webhook.objects.create(
+            user=self.user, url="https://example.com/second")
 
         with patch("analyzer.tasks.deliver_webhook_task.delay") as mock_delay:
-            queued = trigger_webhooks_for_user(self.user, {"id": 1, "score": 50})
+            queued = trigger_webhooks_for_user(
+                self.user, {"id": 1, "score": 50})
 
         self.assertEqual(queued, 2)
         self.assertEqual(mock_delay.call_count, 2)
@@ -326,8 +342,10 @@ class WebhookDeliveryTests(TestCase):
 class WebhookAPITests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username="hooks", password="password123")
-        self.other = User.objects.create_user(username="other", password="password123")
+        self.user = User.objects.create_user(
+            username="hooks", password="password123")
+        self.other = User.objects.create_user(
+            username="other", password="password123")
         self.client.force_authenticate(user=self.user)
 
     def test_registration_requires_authentication(self):
@@ -348,7 +366,8 @@ class WebhookAPITests(TestCase):
         self.assertEqual(len(listing.data), 1)
 
     def test_the_secret_is_returned_once_and_never_again(self):
-        created = self.client.post("/api/webhooks/", {"url": "https://example.com/a"})
+        created = self.client.post(
+            "/api/webhooks/", {"url": "https://example.com/a"})
         self.assertIn("secret", created.data)
         self.assertEqual(len(created.data["secret"]), 64)
 
@@ -359,7 +378,8 @@ class WebhookAPITests(TestCase):
         self.assertNotIn("secret", detail.data)
 
     def test_a_loopback_destination_is_rejected_at_registration(self):
-        resp = self.client.post("/api/webhooks/", {"url": "http://127.0.0.1:6379/"})
+        resp = self.client.post(
+            "/api/webhooks/", {"url": "http://127.0.0.1:6379/"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("url", resp.data)
         self.assertEqual(Webhook.objects.count(), 0)
@@ -372,12 +392,14 @@ class WebhookAPITests(TestCase):
         self.assertEqual(Webhook.objects.count(), 0)
 
     def test_a_non_http_scheme_is_rejected(self):
-        resp = self.client.post("/api/webhooks/", {"url": "file:///etc/passwd"})
+        resp = self.client.post(
+            "/api/webhooks/", {"url": "file:///etc/passwd"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(Webhook.objects.count(), 0)
 
     def test_a_non_web_port_is_rejected(self):
-        resp = self.client.post("/api/webhooks/", {"url": "http://example.com:5432/"})
+        resp = self.client.post(
+            "/api/webhooks/", {"url": "http://example.com:5432/"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_a_missing_url_is_rejected(self):
@@ -387,7 +409,8 @@ class WebhookAPITests(TestCase):
 
     def test_a_duplicate_url_is_rejected_with_a_message(self):
         self.client.post("/api/webhooks/", {"url": "https://example.com/hook"})
-        resp = self.client.post("/api/webhooks/", {"url": "https://example.com/hook"})
+        resp = self.client.post(
+            "/api/webhooks/", {"url": "https://example.com/hook"})
 
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("already registered", str(resp.data["url"]))
@@ -396,14 +419,17 @@ class WebhookAPITests(TestCase):
         from analyzer.views import MAX_WEBHOOKS_PER_USER
 
         for index in range(MAX_WEBHOOKS_PER_USER):
-            Webhook.objects.create(user=self.user, url=f"https://example.com/{index}")
+            Webhook.objects.create(
+                user=self.user, url=f"https://example.com/{index}")
 
-        resp = self.client.post("/api/webhooks/", {"url": "https://example.com/extra"})
+        resp = self.client.post(
+            "/api/webhooks/", {"url": "https://example.com/extra"})
         self.assertEqual(resp.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("at most", resp.data["detail"])
 
     def test_a_user_only_sees_their_own_webhooks(self):
-        Webhook.objects.create(user=self.other, url="https://example.com/theirs")
+        Webhook.objects.create(
+            user=self.other, url="https://example.com/theirs")
         Webhook.objects.create(user=self.user, url="https://example.com/mine")
 
         listing = self.client.get("/api/webhooks/")
@@ -426,20 +452,23 @@ class WebhookAPITests(TestCase):
         self.assertTrue(Webhook.objects.filter(pk=theirs.pk).exists())
 
     def test_delete_removes_the_webhook(self):
-        hook = Webhook.objects.create(user=self.user, url="https://example.com/hook")
+        hook = Webhook.objects.create(
+            user=self.user, url="https://example.com/hook")
         resp = self.client.delete(f"/api/webhooks/{hook.pk}/")
 
         self.assertEqual(resp.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Webhook.objects.filter(pk=hook.pk).exists())
 
     def test_patch_can_reenable_a_disabled_webhook_and_clears_the_strikes(self):
-        hook = Webhook.objects.create(user=self.user, url="https://example.com/hook")
+        hook = Webhook.objects.create(
+            user=self.user, url="https://example.com/hook")
         for _ in range(Webhook.MAX_CONSECUTIVE_FAILURES):
             hook.record_failure("down")
         hook.refresh_from_db()
         self.assertFalse(hook.is_active)
 
-        resp = self.client.patch(f"/api/webhooks/{hook.pk}/", {"is_active": True})
+        resp = self.client.patch(
+            f"/api/webhooks/{hook.pk}/", {"is_active": True})
 
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         hook.refresh_from_db()
@@ -447,7 +476,8 @@ class WebhookAPITests(TestCase):
         self.assertEqual(hook.consecutive_failures, 0)
 
     def test_patch_cannot_move_a_webhook_to_an_internal_address(self):
-        hook = Webhook.objects.create(user=self.user, url="https://example.com/hook")
+        hook = Webhook.objects.create(
+            user=self.user, url="https://example.com/hook")
         resp = self.client.patch(
             f"/api/webhooks/{hook.pk}/", {"url": "http://127.0.0.1:6379/"}
         )
@@ -457,7 +487,8 @@ class WebhookAPITests(TestCase):
         self.assertEqual(hook.url, "https://example.com/hook")
 
     def test_status_is_reported_on_the_listing(self):
-        hook = Webhook.objects.create(user=self.user, url="https://example.com/hook")
+        hook = Webhook.objects.create(
+            user=self.user, url="https://example.com/hook")
         hook.record_failure("Receiver returned HTTP 502", status_code=502)
 
         listing = self.client.get("/api/webhooks/")
@@ -468,20 +499,23 @@ class WebhookAPITests(TestCase):
     @patch("analyzer.webhook_utils.requests.post")
     def test_test_delivery_reports_the_outcome(self, mock_post, _safe):
         mock_post.return_value = _response(200)
-        hook = Webhook.objects.create(user=self.user, url="https://example.com/hook")
+        hook = Webhook.objects.create(
+            user=self.user, url="https://example.com/hook")
 
         resp = self.client.post(f"/api/webhooks/{hook.pk}/test/")
 
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertTrue(resp.data["delivered"])
         self.assertEqual(resp.data["status"]["last_status_code"], 200)
-        self.assertEqual(mock_post.call_args.kwargs["headers"][EVENT_HEADER], "ping")
+        self.assertEqual(
+            mock_post.call_args.kwargs["headers"][EVENT_HEADER], "ping")
 
     @patch("analyzer.webhook_utils.assert_url_is_safe")
     @patch("analyzer.webhook_utils.requests.post")
     def test_a_failing_test_delivery_reports_rather_than_errors(self, mock_post, _safe):
         mock_post.return_value = _response(503)
-        hook = Webhook.objects.create(user=self.user, url="https://example.com/hook")
+        hook = Webhook.objects.create(
+            user=self.user, url="https://example.com/hook")
 
         resp = self.client.post(f"/api/webhooks/{hook.pk}/test/")
 

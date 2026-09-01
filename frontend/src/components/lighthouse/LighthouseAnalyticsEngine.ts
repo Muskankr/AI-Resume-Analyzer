@@ -1,4 +1,9 @@
-import type { LighthouseReportSuite, LighthouseFilterQuery, LighthouseAuditTimelineLog, AuditMetricCategorySummary } from './types';
+import type {
+  LighthouseReportSuite,
+  LighthouseFilterQuery,
+  LighthouseAuditTimelineLog,
+  AuditMetricCategorySummary,
+} from './types'
 
 /**
  * Enterprise Service Engine for Lighthouse CI Analytics & Web Accessibility Telemetry
@@ -71,7 +76,7 @@ export class LighthouseAnalyticsEngine {
         },
       ],
     },
-  ];
+  ]
 
   private static mockAuditLogs: LighthouseAuditTimelineLog[] = [
     {
@@ -90,7 +95,7 @@ export class LighthouseAnalyticsEngine {
       performer: 'Lighthouse Auto-Fixer',
       impactScoreGain: 8,
     },
-  ];
+  ]
 
   /**
    * Retrieves Lighthouse audit report suites according to query parameters
@@ -98,29 +103,29 @@ export class LighthouseAnalyticsEngine {
   public static getReports(filters: LighthouseFilterQuery): LighthouseReportSuite[] {
     return this.mockReports.filter((item) => {
       if (filters.search && filters.search.trim() !== '') {
-        const q = filters.search.toLowerCase();
-        const matchesUrl = item.targetPageUrl.toLowerCase().includes(q);
-        const matchesId = item.reportId.toLowerCase().includes(q);
-        if (!matchesUrl && !matchesId) return false;
+        const q = filters.search.toLowerCase()
+        const matchesUrl = item.targetPageUrl.toLowerCase().includes(q)
+        const matchesId = item.reportId.toLowerCase().includes(q)
+        if (!matchesUrl && !matchesId) return false
       }
-      return true;
-    });
+      return true
+    })
   }
 
   /**
    * Retrieves historical Lighthouse audit timeline logs
    */
   public static getAuditLogs(): LighthouseAuditTimelineLog[] {
-    return [...this.mockAuditLogs];
+    return [...this.mockAuditLogs]
   }
 
   /**
    * Evaluates aggregate average Lighthouse score across all audited page routes
    */
   public static calculateAverageOverallScore(): number {
-    if (this.mockReports.length === 0) return 0;
-    const sum = this.mockReports.reduce((acc, curr) => acc + curr.overallScore, 0);
-    return Math.round(sum / this.mockReports.length);
+    if (this.mockReports.length === 0) return 0
+    const sum = this.mockReports.reduce((acc, curr) => acc + curr.overallScore, 0)
+    return Math.round(sum / this.mockReports.length)
   }
 
   /**
@@ -128,20 +133,20 @@ export class LighthouseAnalyticsEngine {
    */
   public static computeCategorySummaries(): AuditMetricCategorySummary {
     if (this.mockReports.length === 0) {
-      return { performance: 0, accessibility: 0, bestPractices: 0, seo: 0 };
+      return { performance: 0, accessibility: 0, bestPractices: 0, seo: 0 }
     }
-    const count = this.mockReports.length;
-    const perfSum = this.mockReports.reduce((acc, r) => acc + r.performanceScore, 0);
-    const a11ySum = this.mockReports.reduce((acc, r) => acc + r.accessibilityScore, 0);
-    const bestSum = this.mockReports.reduce((acc, r) => acc + r.bestPracticesScore, 0);
-    const seoSum = this.mockReports.reduce((acc, r) => acc + r.seoScore, 0);
+    const count = this.mockReports.length
+    const perfSum = this.mockReports.reduce((acc, r) => acc + r.performanceScore, 0)
+    const a11ySum = this.mockReports.reduce((acc, r) => acc + r.accessibilityScore, 0)
+    const bestSum = this.mockReports.reduce((acc, r) => acc + r.bestPracticesScore, 0)
+    const seoSum = this.mockReports.reduce((acc, r) => acc + r.seoScore, 0)
 
     return {
       performance: Math.round(perfSum / count),
       accessibility: Math.round(a11ySum / count),
       bestPractices: Math.round(bestSum / count),
       seo: Math.round(seoSum / count),
-    };
+    }
   }
 
   /**
@@ -152,6 +157,6 @@ export class LighthouseAnalyticsEngine {
       report.overallScore >= minScore &&
       report.performanceScore >= minScore &&
       report.accessibilityScore >= minScore
-    );
+    )
   }
 }

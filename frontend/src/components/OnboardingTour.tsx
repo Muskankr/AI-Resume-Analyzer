@@ -87,6 +87,7 @@ export const OnboardingTour: React.FC = () => {
     }
   }, [updateTargetRect])
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const finishTour = () => {
     localStorage.setItem('hasSeenOnboarding', 'true')
     setIsVisible(false)

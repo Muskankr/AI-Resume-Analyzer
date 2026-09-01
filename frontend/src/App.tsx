@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useLocation, Link } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { useLocation, Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import './index.css'
 import { AtsScore } from './AtsScore'
@@ -21,6 +21,7 @@ import { Footer } from './Footer'
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage'
 import LinkedInConsistencyChecker from './components/LinkedInConsistencyChecker'
 import { InterviewQuestionsPanel } from './components/InterviewQuestionsPanel'
+import { Dashboard } from './pages/Dashboard/Dashboard'
 import { TimelinePanel } from './components/TimelinePanel'
 import { type TimelineData } from './utils/timelineFormat'
 // import CareerTrackSelector from './components/CareerTrackSelector'
@@ -30,85 +31,8 @@ import { WhatsNewModal } from './components/WhatsNewModal'
 import { shouldShowWhatsNew } from './data/whatsNewReleases'
 import ReleaseNotes from './pages/ReleaseNotes'
 import { ShareResult } from './components/ShareResult'
- feature/auto-detect-experience-759
- feature/auto-detect-experience-759
- feature/auto-detect-experience-759
-import { ExperienceLevelSelector } from './components/ExperienceLevelSelector'
-import { estimateExperienceFromText } from './utils/experienceParser'
-import type { ExperienceLevel } from './utils/experienceParser'
-
-import SkillGapAnalyzer from './components/SkillGapAnalyzer'
- main
-
-
-import { Button } from './components/Button'
-import {
-  AnalysisAbortedError,
-  abortableSleep,
-  pollAnalysisTask,
-} from './utils/pollAnalysisTask'
-import { SectionAnalyzer } from './components/SectionAnalyzer'
-import { SkillsRadarChart } from './components/SkillsRadarChart'
-import { AtsSimulator } from './components/atsAnalytics/AtsSimulator'
-import { AiCoverLetterGenerator } from './components/AiCoverLetterGenerator'
-
-/**
- * The subset of the analysis payload this screen reads.
- *
- * Not the full response — the point is that every field `runAnalysis` pulls
- * off the result is declared, so adding a `setX(result.y)` line for an
- * undeclared `y` is a compile error rather than an `undefined` at runtime.
- * `timeline` and `partial_skills` landed on `main` while this branch was open
- * and were caught exactly that way on the rebase.
- */
-interface AnalysisResult {
-  id?: number
-  score: number
-  score_breakdown?: ScoreBreakdownData | null
-  formatting_checks?: FormattingChecksData | null
-  timeline?: TimelineData | null
-  skills_found?: string[]
-  suggestions?: string[]
-  matched_skills?: string[]
-  partial_skills?: PartialSkillItem[]
-  missing_skills?: string[]
-  resume_text?: string
-  interview_questions?: string[]
-}
- main
-
-import CareerRoadmapPlanner from './components/CareerRoadmapPlanner'
-import ResumeCompareDashboard from './components/ResumeCompareDashboard'
-import InterviewPrepCoach from './components/InterviewPrepCoach'
-import PortfolioShowcaseBuilder from './components/PortfolioShowcaseBuilder'
-
-import SkillGapAnalyzer from './components/SkillGapAnalyzer'
-import { JobBoardSuggestions } from './components/JobBoardSuggestions'
-
- main
 import { setResumeRoastConsent } from './utils/cookieConsent'
- feature/readiness-composite-score-758
-import { ReadinessDisplay } from './components/ReadinessDisplay'
-import { calculateReadinessScore } from './utils/readinessEngine'
-
-
-import { JobDescriptionInput } from './components/JobDescriptionInput'
- main
-
-type Theme = 'light' | 'dark' | 'high-contrast'
-
-function getInitialTheme(): Theme {
-  try {
-    const saved = localStorage.getItem('theme')
-    if (saved === 'light' || saved === 'dark' || saved === 'high-contrast') return saved as Theme
-    if (typeof window !== 'undefined' && window.matchMedia) {
-      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    }
-  } catch {
-    // localStorage / matchMedia can throw in restricted privacy modes
-  }
-  return 'light'
-}
+import { useTheme } from './theme/ThemeContext'
 
 function highlightSkills(text: string, skills: string[]): React.ReactNode[] {
   if (!text) return []
@@ -195,6 +119,7 @@ function ResumePreview({ text, skills }: { text: string; skills: string[] }) {
 
 function App() {
   const location = useLocation()
+  const navigate = useNavigate()
   const [theme, setTheme] = useState<Theme>(getInitialTheme)
   const [loading, setLoading] = useState(false)
   const [file, setFile] = useState<File | null>(null)
@@ -490,15 +415,8 @@ function App() {
   // }
 
   useEffect(() => {
-    if (user) {
-      fetchDbHistory()
-      return
-    }
-    // The session ended. `useAnalysisHistory` drops the entries and clears
-    // storage on its own, but the "load more" cursor lives here, and a URL
-    // pointing at page 2 of the previous account's history must not survive
-    // into the next one (#864).
-    setHistoryNextUrl(null)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (user) fetchDbHistory()
   }, [user, fetchDbHistory])
 
   useEffect(() => {
@@ -518,15 +436,6 @@ function App() {
     }
   }, [targetRole])
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme)
-    try {
-      localStorage.setItem('theme', theme)
-    } catch {
-      // persistence is best-effort; ignore if storage is unavailable
-    }
-  }, [theme])
-
   // Cooldown timer effect
   useEffect(() => {
     if (cooldownRemaining > 0) {
@@ -536,21 +445,6 @@ function App() {
       return () => clearTimeout(timer)
     }
   }, [cooldownRemaining])
-
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'light' ? 'dark' : prev === 'dark' ? 'high-contrast' : 'light'))
-  }
-
-  // Holds the in-flight analysis poll so it can be abandoned when a new run
-  // starts or the component unmounts. Previously the loop had no owner and
-  // simply kept polling after the user navigated away.
-  const pollAbortRef = useRef<AbortController | null>(null)
-
-  useEffect(() => {
-    return () => {
-      pollAbortRef.current?.abort()
-    }
-  }, [])
 
   const getRetryDelay = (attemptNumber: number): number => {
     // Exponential backoff: 2^attemptNumber seconds, capped at 30 seconds
@@ -941,21 +835,22 @@ function App() {
     )
   }
 
-  if (location.pathname === '/release-notes') {
+  if (location.pathname === '/dashboard') {
     return (
       <>
-        <ReleaseNotes />
+        <div className="auth-bar m-3 d-flex justify-content-end">
+          <Link to="/" className="btn btn-sm btn-outline-secondary me-2">
+            Back to Home
+          </Link>
+          <button className="auth-bar-btn" onClick={logout}>
+            Logout
+          </button>
+        </div>
+        <Dashboard />
         <Footer />
       </>
     )
   }
-
-  const displayScore = previewData ? previewData.score : score
-  const displayScoreBreakdown = previewData ? previewData.scoreBreakdown : scoreBreakdown
-  const displayMatchedSkills = previewData ? previewData.matchedSkills : matchedSkills
-  const displayMissingSkills = previewData ? previewData.missingSkills : missingSkills
-  const displaySuggestions = previewData ? previewData.suggestions : suggestions
-  const displayExperienceLevel = previewData ? previewData.experienceLevel : experienceLevel
 
   return (
     <>
@@ -1016,11 +911,11 @@ function App() {
             {user ? (
               <>
                 <Link
-                  to="/career-roadmap"
-                  className="auth-bar-btn"
-                  style={{ textDecoration: 'none', marginRight: '8px', background: 'rgba(99, 102, 241, 0.2)', borderColor: 'rgba(99, 102, 241, 0.4)', color: '#818cf8' }}
+                  to="/dashboard"
+                  className="auth-username me-3"
+                  style={{ textDecoration: 'none', color: 'inherit' }}
                 >
-                  🗺️ Career Roadmap
+                  Dashboard
                 </Link>
                 <Link
                   to="/profile"
@@ -1048,8 +943,7 @@ function App() {
             />
           )}
           <h1 className="mb-4">🚀 AI Resume Analyzer</h1>
- feature/auto-detect-experience-759
- feature/auto-detect-experience-759
+
           <div
             className="upload-flow-container"
             style={{
@@ -1177,7 +1071,11 @@ function App() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                   <label
                     htmlFor="roleSelect"
-                    style={{ fontWeight: '600', fontSize: '0.85rem', color: 'var(--heading-text, #fff)' }}
+                    style={{
+                      fontWeight: '600',
+                      fontSize: '0.85rem',
+                      color: 'var(--heading-text, #fff)',
+                    }}
                   >
                     Target Career Track:
                   </label>
@@ -1208,7 +1106,11 @@ function App() {
                   />
                   <label
                     htmlFor="experienceLevelSelect"
-                    style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }}
+                    style={{
+                      fontWeight: '600',
+                      fontSize: '0.85rem',
+                      color: 'var(--heading-text, #fff)',
+                    }}
                   >
                     Experience Level:
                   </label>
@@ -1247,7 +1149,16 @@ function App() {
                       gap: '6px',
                     }}
                   >
-                    💼 Target Job Description <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: 'var(--muted-text, #94a3b8)' }}>(Optional)</span>
+                    💼 Target Job Description{' '}
+                    <span
+                      style={{
+                        fontSize: '0.8rem',
+                        fontWeight: 'normal',
+                        color: 'var(--muted-text, #94a3b8)',
+                      }}
+                    >
+                      (Optional)
+                    </span>
                   </label>
                   {isDraftSaved && (
                     <span
@@ -1280,7 +1191,9 @@ function App() {
                   }}
                 />
                 {(() => {
-                  const wordCount = jobDescription.trim() ? jobDescription.trim().split(/\s+/).length : 0;
+                  const wordCount = jobDescription.trim()
+                    ? jobDescription.trim().split(/\s+/).length
+                    : 0
                   if (wordCount > 0 && wordCount < 50) {
                     return (
                       <div
@@ -1297,11 +1210,15 @@ function App() {
                           gap: '6px',
                         }}
                       >
-                        ⚠️ <span>Friendly tip: Very short job descriptions might yield less accurate analysis. Consider pasting the full description!</span>
+                        ⚠️{' '}
+                        <span>
+                          Friendly tip: Very short job descriptions might yield less accurate
+                          analysis. Consider pasting the full description!
+                        </span>
                       </div>
-                    );
+                    )
                   }
-                  return null;
+                  return null
                 })()}
                 <div
                   style={{
@@ -1447,7 +1364,12 @@ function App() {
                   {file ? (
                     <span
                       className="upload-text-secondary"
-                      style={{ display: 'block', marginTop: '4px' }}
+                      style={{
+                        display: 'block',
+                        marginTop: '4px',
+                        fontWeight: '600',
+                        color: '#4ade80',
+                      }}
                     >
                       Selected: {file.name}
                     </span>
@@ -1459,7 +1381,9 @@ function App() {
                       {uploadError}
                     </span>
                   ) : (
-                    <span className="upload-text-secondary">{describeUploadLimits(MAX_FILE_SIZE)}</span>
+                    <span className="upload-text-secondary">
+                      {describeUploadLimits(MAX_FILE_SIZE)}
+                    </span>
                   )}
                 </label>
               </div>
@@ -2302,9 +2226,17 @@ function App() {
                 style={{ background: 'rgba(255,255,255,0.05)', borderRadius: '8px' }}
               >
                 <h4>
-                  🎯 Skill Gap Matrix ({targetRole} • {displayExperienceLevel})
+                  🎯 Skill Gap Matrix ({targetRole} • {experienceLevel})
                 </h4>
-                <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '12px' }}>
+                <div
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-around',
+                    marginTop: '12px',
+                    flexWrap: 'wrap',
+                    gap: '16px',
+                  }}
+                >
                   <div>
                     <h6 style={{ color: '#22c55e' }}>Matched Skills</h6>
                     {displayMatchedSkills.length === 0 ? (
@@ -2566,14 +2498,28 @@ function App() {
                 })}
 
                 {/* Reset Button */}
-                <div style={{ marginTop: '24px', textAlign: 'center' }}>
-                  <Button
-                    variant="secondary"
-                    size="md"
+                <div style={{ marginTop: '24px', textAlign: 'center', display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                  <button
+                    type="button"
+                    className="app-btn app-btn--secondary"
                     onClick={resetAnalysis}
                   >
                     🔄 Start New Analysis
-                  </Button>
+                  </button>
+                  <button
+                    type="button"
+                    className="app-btn"
+                    style={{ backgroundColor: '#10b981', color: 'white' }}
+                    onClick={() => {
+                      navigate('/builder', { 
+                        state: { 
+                          resumeData: { name: '', email: '', phone: '', skills: skills, experience: [], education: [] } 
+                        } 
+                      })
+                    }}
+                  >
+                    ✏️ Edit & Export PDF
+                  </button>
                 </div>
               </div>
 

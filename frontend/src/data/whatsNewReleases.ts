@@ -19,31 +19,36 @@ export const CURRENT_RELEASE: ReleaseInfo = {
   highlights: [
     {
       title: 'Opt-in Resume Roast Feedback',
-      description: 'Get humorously constructive, spicy feedback on your resume suggestions with our new Roast Mode toggle.',
+      description:
+        'Get humorously constructive, spicy feedback on your resume suggestions with our new Roast Mode toggle.',
       tag: 'New',
       icon: '🔥',
     },
     {
       title: 'Action Plan & Checklist Export',
-      description: 'Export a prioritized, ATS-impact-ranked improvement plan in clean Markdown or PDF format.',
+      description:
+        'Export a prioritized, ATS-impact-ranked improvement plan in clean Markdown or PDF format.',
       tag: 'New',
       icon: '📋',
     },
     {
       title: 'Multi-Resume ZIP Export',
-      description: 'Download multiple comparative resume and job description analyses simultaneously in a single structured ZIP archive.',
+      description:
+        'Download multiple comparative resume and job description analyses simultaneously in a single structured ZIP archive.',
       tag: 'New',
       icon: '📦',
     },
     {
       title: 'Weekly Resume Tips & Nudges',
-      description: 'Subscribe to curated weekly ATS tips and score-improvement nudges right from your account profile.',
+      description:
+        'Subscribe to curated weekly ATS tips and score-improvement nudges right from your account profile.',
       tag: 'Improved',
       icon: '📧',
     },
     {
       title: 'Terms of Service & Privacy Policy',
-      description: 'Full legal transparency and immediate document deletion standards available directly in the footer.',
+      description:
+        'Full legal transparency and immediate document deletion standards available directly in the footer.',
       tag: 'Improved',
       icon: '🔒',
     },

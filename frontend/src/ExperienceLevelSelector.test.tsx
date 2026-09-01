@@ -4,8 +4,10 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import App from './App'
 import { MemoryRouter } from 'react-router-dom'
-
 describe('Experience Level Selector (#538)', () => {
+  vi.mock('./theme/ThemeContext', () => ({
+    useTheme: () => ({ theme: 'light', toggleTheme: vi.fn() }),
+  }))
   beforeEach(() => {
     localStorage.clear()
     vi.restoreAllMocks()

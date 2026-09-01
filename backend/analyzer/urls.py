@@ -35,6 +35,12 @@ from .views import (
     webhook_detail,
     test_webhook,
     preview_experience_level_view,
+    generate_career_path_view,
+    export_pdf_view,
+    upload_batch_resumes,
+    batch_status,
+    import_jd_url_view,
+    UserDashboardViewSet,
 )
 from . import career_roadmap
 from .badge_views import manage_resume_badge, resume_score_badge
@@ -67,15 +73,18 @@ from .sanitizer_views import FileMetadataView, SanitizeResumeView
 from .ats_simulator_views import list_ats_profiles, simulate_ats
 from .cover_letter_views import generate_cover_letter_view
 from .job_board_views import suggest_roles
+from .contributor_views import ContributorCertificateView
 
 urlpatterns = [
     path("upload/", upload_resume),
-    path("job-board/suggest/", suggest_roles, name="suggest_roles"),
-    path("preview-level/", preview_experience_level_view),
+    path("batch-upload/", upload_batch_resumes),
+    path("import-jd-url/", import_jd_url_view),
     path("status/<str:task_id>/", task_status),
+    path("batch-status/<str:batch_id>/", batch_status),
     path("mock-interview/", mock_interview_view),
     path("compare-uploads/", compare_uploads),
     path("analyze-jd/", analyze_jd_view),
+    path("export-pdf/", export_pdf_view, name="export_pdf"),
     path("compare-bulk-jds/", compare_bulk_jds_view),
     path("compare-bulk-resumes/", compare_bulk_resumes_view),
     path("profile/", user_profile_view),
@@ -91,6 +100,9 @@ urlpatterns = [
     path("auth/login/", CustomTokenObtainPairView.as_view()),
     path("auth/oauth/", social_auth_view, name="social_auth"),
     path("auth/refresh/", TokenRefreshView.as_view()),
+
+    path("dashboard/", UserDashboardViewSet.as_view({'get': 'list'}), name='dashboard_list'),
+    path("dashboard/<int:pk>/", UserDashboardViewSet.as_view({'get': 'retrieve', 'delete': 'destroy'}), name='dashboard_detail'),
 
     path("history/", analysis_history),
     path("history/clear/", clear_user_history),
@@ -112,11 +124,6 @@ urlpatterns = [
     path("compare/", compare_versions_view),
     path("suggestion-feedback/", suggestion_feedback),
     path("shared/<uuid:share_id>/", get_shared_result),
-    # Job Application Tracker
-    path("applications/", ApplicationLogListView.as_view(), name="application_list"),
-    path("applications/<int:pk>/", ApplicationLogDetailView.as_view(), name="application_detail"),
-    path("applications/stats/", application_stats_view, name="application_stats"),
-
     path("badge/", manage_resume_badge, name="manage_resume_badge"),
     path("badge/<uuid:badge_id>/svg/", resume_score_badge, name="resume_score_badge"),
     path('password-reset/', PasswordResetRequestView.as_view(), name='password_reset_request'),
