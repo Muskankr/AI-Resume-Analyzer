@@ -29,9 +29,7 @@ export const RESUME_FORMATS: AcceptedFormat[] = [
   {
     label: 'Word (.docx)',
     extensions: ['.docx'],
-    mimeTypes: [
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    ],
+    mimeTypes: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
   },
   { label: 'plain text', extensions: ['.txt'], mimeTypes: ['text/plain'] },
 ]
@@ -72,8 +70,7 @@ function findFormat(fileName: string, formats: AcceptedFormat[]): AcceptedFormat
 }
 
 export type FileValidationResult =
-  | { ok: true; format: AcceptedFormat }
-  | { ok: false; error: string }
+  { ok: true; format: AcceptedFormat } | { ok: false; error: string }
 
 export interface ValidateFileOptions {
   formats?: AcceptedFormat[]
@@ -93,11 +90,7 @@ export function validateResumeFile(
   file: File | null | undefined,
   options: ValidateFileOptions = {}
 ): FileValidationResult {
-  const {
-    formats = RESUME_FORMATS,
-    maxSizeBytes = MAX_RESUME_SIZE_BYTES,
-    label = 'file',
-  } = options
+  const { formats = RESUME_FORMATS, maxSizeBytes = MAX_RESUME_SIZE_BYTES, label = 'file' } = options
 
   if (!file) {
     return { ok: false, error: `Please choose a ${label} to upload.` }

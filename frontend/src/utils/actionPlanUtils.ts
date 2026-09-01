@@ -26,36 +26,36 @@ export interface ActionPlanParams {
 }
 
 const SKILL_LEARNING_RESOURCES: Record<string, string> = {
-  react: "https://react.dev/learn",
-  javascript: "https://developer.mozilla.org/en-US/docs/Web/JavaScript",
-  typescript: "https://www.typescriptlang.org/docs/",
-  html: "https://developer.mozilla.org/en-US/docs/Learn/HTML",
-  css: "https://developer.mozilla.org/en-US/docs/Learn/CSS",
-  node: "https://nodejs.org/en/learn",
-  express: "https://expressjs.com/",
-  python: "https://www.learnpython.org/",
-  django: "https://docs.djangoproject.com/en/stable/intro/tutorial01/",
-  flask: "https://flask.palletsprojects.com/en/stable/tutorial/",
-  java: "https://dev.java/learn/",
-  spring: "https://spring.io/guides",
-  c: "https://www.programiz.com/c-programming",
-  cpp: "https://www.learncpp.com/",
-  csharp: "https://learn.microsoft.com/dotnet/csharp/",
-  sql: "https://www.w3schools.com/sql/",
-  mysql: "https://dev.mysql.com/doc/",
-  mongodb: "https://www.mongodb.com/docs/",
-  postgresql: "https://www.postgresql.org/docs/",
-  docker: "https://docs.docker.com/get-started/",
-  kubernetes: "https://kubernetes.io/docs/tutorials/",
-  git: "https://git-scm.com/doc",
-  github: "https://docs.github.com/",
-  aws: "https://skillbuilder.aws/",
-  azure: "https://learn.microsoft.com/training/azure/",
-  firebase: "https://firebase.google.com/docs",
-  nextjs: "https://nextjs.org/learn",
-  tailwind: "https://tailwindcss.com/docs",
-  bootstrap: "https://getbootstrap.com/docs/",
-  redux: "https://redux.js.org/tutorials/essentials/part-1-overview-concepts"
+  react: 'https://react.dev/learn',
+  javascript: 'https://developer.mozilla.org/en-US/docs/Web/JavaScript',
+  typescript: 'https://www.typescriptlang.org/docs/',
+  html: 'https://developer.mozilla.org/en-US/docs/Learn/HTML',
+  css: 'https://developer.mozilla.org/en-US/docs/Learn/CSS',
+  node: 'https://nodejs.org/en/learn',
+  express: 'https://expressjs.com/',
+  python: 'https://www.learnpython.org/',
+  django: 'https://docs.djangoproject.com/en/stable/intro/tutorial01/',
+  flask: 'https://flask.palletsprojects.com/en/stable/tutorial/',
+  java: 'https://dev.java/learn/',
+  spring: 'https://spring.io/guides',
+  c: 'https://www.programiz.com/c-programming',
+  cpp: 'https://www.learncpp.com/',
+  csharp: 'https://learn.microsoft.com/dotnet/csharp/',
+  sql: 'https://www.w3schools.com/sql/',
+  mysql: 'https://dev.mysql.com/doc/',
+  mongodb: 'https://www.mongodb.com/docs/',
+  postgresql: 'https://www.postgresql.org/docs/',
+  docker: 'https://docs.docker.com/get-started/',
+  kubernetes: 'https://kubernetes.io/docs/tutorials/',
+  git: 'https://git-scm.com/doc',
+  github: 'https://docs.github.com/',
+  aws: 'https://skillbuilder.aws/',
+  azure: 'https://learn.microsoft.com/training/azure/',
+  firebase: 'https://firebase.google.com/docs',
+  nextjs: 'https://nextjs.org/learn',
+  tailwind: 'https://tailwindcss.com/docs',
+  bootstrap: 'https://getbootstrap.com/docs/',
+  redux: 'https://redux.js.org/tutorials/essentials/part-1-overview-concepts',
 }
 
 export interface ActionPlanData {
@@ -136,9 +136,7 @@ export function generateActionPlan(params: ActionPlanParams): ActionPlanData {
   // 3. Additional generic suggestions not covered by missing skills
   suggestions.forEach((sug) => {
     // Avoid duplicate skill suggestions
-    const isSkillSug = missingSkills.some(
-      (m) => sug.toLowerCase().includes(m.toLowerCase())
-    )
+    const isSkillSug = missingSkills.some((m) => sug.toLowerCase().includes(m.toLowerCase()))
     if (!isSkillSug) {
       items.push({
         id: `ap-${idCounter++}`,

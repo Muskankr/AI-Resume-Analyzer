@@ -21,12 +21,13 @@ def populate_role_skills(apps, schema_editor):
             "scikit-learn", "jupyter",
         ],
     }
-    
+
     for role_name, skills_list in ROLE_SKILLS.items():
         role, _ = Role.objects.get_or_create(name=role_name)
         for skill_name in skills_list:
             skill, _ = Skill.objects.get_or_create(name=skill_name)
             role.skills.add(skill)
+
 
 class Migration(migrations.Migration):
 

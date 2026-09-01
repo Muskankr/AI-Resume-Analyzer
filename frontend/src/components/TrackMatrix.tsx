@@ -5,6 +5,7 @@ import './TrackMatrix.css'
 export type TrackComparison = {
   score: number
   matched_skills: string[]
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   partial_skills?: any[]
   missing_skills: string[]
   suggestions: string[]

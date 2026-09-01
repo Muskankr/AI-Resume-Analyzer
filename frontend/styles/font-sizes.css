@@ -1,0 +1,581 @@
+/**
+ * Font Size Control CSS
+ * Comprehensive styles for in-app font size control
+ */
+
+/* ============================================
+   CSS Variables
+   ============================================ */
+
+:root {
+  --font-size-xs: 0.75;
+  --font-size-sm: 0.875;
+  --font-size-md: 1.0;
+  --font-size-lg: 1.125;
+  --font-size-xl: 1.25;
+  --font-size-xxl: 1.5;
+  --font-size-scale: 1.0;
+  --font-size-base: 16px;
+  --font-size-heading-scale: 1.0;
+}
+
+/* ============================================
+   Font Size Classes
+   ============================================ */
+
+/* Extra Small */
+.font-size-xs {
+  --font-size-scale: 0.75;
+  font-size: 12px;
+}
+
+.font-size-xs body,
+.font-size-xs p,
+.font-size-xs span,
+.font-size-xs div,
+.font-size-xs li {
+  font-size: 12px;
+}
+
+.font-size-xs h1 {
+  font-size: 1.8rem;
+}
+.font-size-xs h2 {
+  font-size: 1.5rem;
+}
+.font-size-xs h3 {
+  font-size: 1.25rem;
+}
+.font-size-xs h4 {
+  font-size: 1.1rem;
+}
+.font-size-xs h5 {
+  font-size: 0.95rem;
+}
+.font-size-xs h6 {
+  font-size: 0.85rem;
+}
+
+/* Small */
+.font-size-sm {
+  --font-size-scale: 0.875;
+  font-size: 14px;
+}
+
+.font-size-sm body,
+.font-size-sm p,
+.font-size-sm span,
+.font-size-sm div,
+.font-size-sm li {
+  font-size: 14px;
+}
+
+.font-size-sm h1 {
+  font-size: 2.1rem;
+}
+.font-size-sm h2 {
+  font-size: 1.75rem;
+}
+.font-size-sm h3 {
+  font-size: 1.45rem;
+}
+.font-size-sm h4 {
+  font-size: 1.3rem;
+}
+.font-size-sm h5 {
+  font-size: 1.1rem;
+}
+.font-size-sm h6 {
+  font-size: 0.95rem;
+}
+
+/* Medium (Default) */
+.font-size-md {
+  --font-size-scale: 1.0;
+  font-size: 16px;
+}
+
+.font-size-md body,
+.font-size-md p,
+.font-size-md span,
+.font-size-md div,
+.font-size-md li {
+  font-size: 16px;
+}
+
+.font-size-md h1 {
+  font-size: 2.5rem;
+}
+.font-size-md h2 {
+  font-size: 2rem;
+}
+.font-size-md h3 {
+  font-size: 1.75rem;
+}
+.font-size-md h4 {
+  font-size: 1.5rem;
+}
+.font-size-md h5 {
+  font-size: 1.25rem;
+}
+.font-size-md h6 {
+  font-size: 1rem;
+}
+
+/* Large */
+.font-size-lg {
+  --font-size-scale: 1.125;
+  font-size: 18px;
+}
+
+.font-size-lg body,
+.font-size-lg p,
+.font-size-lg span,
+.font-size-lg div,
+.font-size-lg li {
+  font-size: 18px;
+}
+
+.font-size-lg h1 {
+  font-size: 2.8rem;
+}
+.font-size-lg h2 {
+  font-size: 2.25rem;
+}
+.font-size-lg h3 {
+  font-size: 2rem;
+}
+.font-size-lg h4 {
+  font-size: 1.7rem;
+}
+.font-size-lg h5 {
+  font-size: 1.4rem;
+}
+.font-size-lg h6 {
+  font-size: 1.15rem;
+}
+
+/* Extra Large */
+.font-size-xl {
+  --font-size-scale: 1.25;
+  font-size: 20px;
+}
+
+.font-size-xl body,
+.font-size-xl p,
+.font-size-xl span,
+.font-size-xl div,
+.font-size-xl li {
+  font-size: 20px;
+}
+
+.font-size-xl h1 {
+  font-size: 3.2rem;
+}
+.font-size-xl h2 {
+  font-size: 2.6rem;
+}
+.font-size-xl h3 {
+  font-size: 2.2rem;
+}
+.font-size-xl h4 {
+  font-size: 1.9rem;
+}
+.font-size-xl h5 {
+  font-size: 1.6rem;
+}
+.font-size-xl h6 {
+  font-size: 1.3rem;
+}
+
+/* XX Large */
+.font-size-xxl {
+  --font-size-scale: 1.5;
+  font-size: 24px;
+}
+
+.font-size-xxl body,
+.font-size-xxl p,
+.font-size-xxl span,
+.font-size-xxl div,
+.font-size-xxl li {
+  font-size: 24px;
+}
+
+.font-size-xxl h1 {
+  font-size: 3.8rem;
+}
+.font-size-xxl h2 {
+  font-size: 3rem;
+}
+.font-size-xxl h3 {
+  font-size: 2.6rem;
+}
+.font-size-xxl h4 {
+  font-size: 2.2rem;
+}
+.font-size-xxl h5 {
+  font-size: 1.8rem;
+}
+.font-size-xxl h6 {
+  font-size: 1.5rem;
+}
+
+/* ============================================
+   Responsive Adjustments
+   ============================================ */
+
+@media (max-width: 768px) {
+  .font-size-xs {
+    font-size: 11px;
+  }
+  .font-size-sm {
+    font-size: 13px;
+  }
+  .font-size-md {
+    font-size: 15px;
+  }
+  .font-size-lg {
+    font-size: 17px;
+  }
+  .font-size-xl {
+    font-size: 19px;
+  }
+  .font-size-xxl {
+    font-size: 22px;
+  }
+
+  .font-size-xs h1 {
+    font-size: 1.6rem;
+  }
+  .font-size-sm h1 {
+    font-size: 1.9rem;
+  }
+  .font-size-md h1 {
+    font-size: 2.2rem;
+  }
+  .font-size-lg h1 {
+    font-size: 2.5rem;
+  }
+  .font-size-xl h1 {
+    font-size: 2.8rem;
+  }
+  .font-size-xxl h1 {
+    font-size: 3.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .font-size-xs {
+    font-size: 10px;
+  }
+  .font-size-sm {
+    font-size: 12px;
+  }
+  .font-size-md {
+    font-size: 14px;
+  }
+  .font-size-lg {
+    font-size: 16px;
+  }
+  .font-size-xl {
+    font-size: 18px;
+  }
+  .font-size-xxl {
+    font-size: 20px;
+  }
+
+  .font-size-xs h1 {
+    font-size: 1.4rem;
+  }
+  .font-size-sm h1 {
+    font-size: 1.7rem;
+  }
+  .font-size-md h1 {
+    font-size: 2rem;
+  }
+  .font-size-lg h1 {
+    font-size: 2.3rem;
+  }
+  .font-size-xl h1 {
+    font-size: 2.6rem;
+  }
+  .font-size-xxl h1 {
+    font-size: 3rem;
+  }
+}
+
+/* ============================================
+   Dyslexia Font + Font Size Combinations
+   ============================================ */
+
+.font-opendyslexic.font-size-lg,
+.font-opendyslexic.font-size-xl,
+.font-opendyslexic.font-size-xxl,
+.font-atkinson.font-size-lg,
+.font-atkinson.font-size-xl,
+.font-atkinson.font-size-xxl,
+.font-lexend.font-size-lg,
+.font-lexend.font-size-xl,
+.font-lexend.font-size-xxl {
+  line-height: 1.8;
+  letter-spacing: 0.04em;
+}
+
+.font-opendyslexic.font-size-xs,
+.font-opendyslexic.font-size-sm,
+.font-atkinson.font-size-xs,
+.font-atkinson.font-size-sm,
+.font-lexend.font-size-xs,
+.font-lexend.font-size-sm {
+  line-height: 1.5;
+  letter-spacing: 0.02em;
+}
+
+/* ============================================
+   Utility Classes
+   ============================================ */
+
+/* Force font size on specific elements */
+.text-xs {
+  font-size: 0.75rem !important;
+}
+.text-sm {
+  font-size: 0.875rem !important;
+}
+.text-md {
+  font-size: 1rem !important;
+}
+.text-lg {
+  font-size: 1.125rem !important;
+}
+.text-xl {
+  font-size: 1.25rem !important;
+}
+.text-xxl {
+  font-size: 1.5rem !important;
+}
+
+/* Responsive text sizes */
+.text-responsive {
+  font-size: clamp(0.875rem, 2vw, 1.25rem);
+}
+
+.text-responsive-sm {
+  font-size: clamp(0.75rem, 1.5vw, 1rem);
+}
+
+.text-responsive-lg {
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+/* Heading responsive */
+.heading-responsive {
+  font-size: clamp(1.5rem, 4vw, 3rem);
+}
+
+.heading-responsive-sm {
+  font-size: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.heading-responsive-lg {
+  font-size: clamp(2rem, 5vw, 4rem);
+}
+
+/* ============================================
+   Print Styles
+   ============================================ */
+
+@media print {
+  .font-size-xs body {
+    font-size: 10pt !important;
+  }
+  .font-size-sm body {
+    font-size: 11pt !important;
+  }
+  .font-size-md body {
+    font-size: 12pt !important;
+  }
+  .font-size-lg body {
+    font-size: 13pt !important;
+  }
+  .font-size-xl body {
+    font-size: 14pt !important;
+  }
+  .font-size-xxl body {
+    font-size: 16pt !important;
+  }
+
+  .font-size-xs h1 {
+    font-size: 16pt !important;
+  }
+  .font-size-sm h1 {
+    font-size: 18pt !important;
+  }
+  .font-size-md h1 {
+    font-size: 20pt !important;
+  }
+  .font-size-lg h1 {
+    font-size: 22pt !important;
+  }
+  .font-size-xl h1 {
+    font-size: 24pt !important;
+  }
+  .font-size-xxl h1 {
+    font-size: 28pt !important;
+  }
+}
+
+/* ============================================
+   Accessibility Indicator
+   ============================================ */
+
+.font-size-indicator {
+  display: none;
+  background: #4f46e5;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 4px;
+}
+
+.font-size-xs .font-size-indicator,
+.font-size-sm .font-size-indicator,
+.font-size-lg .font-size-indicator,
+.font-size-xl .font-size-indicator,
+.font-size-xxl .font-size-indicator {
+  display: inline-block;
+}
+
+/* ============================================
+   Smooth Transitions
+   ============================================ */
+
+.font-size-xs,
+.font-size-sm,
+.font-size-md,
+.font-size-lg,
+.font-size-xl,
+.font-size-xxl {
+  transition: font-size 0.3s ease;
+}
+
+.font-size-xs *,
+.font-size-sm *,
+.font-size-md *,
+.font-size-lg *,
+.font-size-xl *,
+.font-size-xxl * {
+  transition: font-size 0.3s ease, line-height 0.3s ease;
+}
+
+/* ============================================
+   Dark Mode Support
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  /* Maintain contrast in dark mode */
+  .font-size-xs,
+  .font-size-sm,
+  .font-size-md,
+  .font-size-lg,
+  .font-size-xl,
+  .font-size-xxl {
+    color: #e2e8f0;
+  }
+
+  .font-size-xs h1,
+  .font-size-xs h2,
+  .font-size-xs h3,
+  .font-size-xs h4,
+  .font-size-xs h5,
+  .font-size-xs h6,
+  .font-size-sm h1,
+  .font-size-sm h2,
+  .font-size-sm h3,
+  .font-size-sm h4,
+  .font-size-sm h5,
+  .font-size-sm h6,
+  .font-size-md h1,
+  .font-size-md h2,
+  .font-size-md h3,
+  .font-size-md h4,
+  .font-size-md h5,
+  .font-size-md h6,
+  .font-size-lg h1,
+  .font-size-lg h2,
+  .font-size-lg h3,
+  .font-size-lg h4,
+  .font-size-lg h5,
+  .font-size-lg h6,
+  .font-size-xl h1,
+  .font-size-xl h2,
+  .font-size-xl h3,
+  .font-size-xl h4,
+  .font-size-xl h5,
+  .font-size-xl h6,
+  .font-size-xxl h1,
+  .font-size-xxl h2,
+  .font-size-xxl h3,
+  .font-size-xxl h4,
+  .font-size-xxl h5,
+  .font-size-xxl h6 {
+    color: #f8fafc;
+  }
+}
+
+/* ============================================
+   High Contrast + Font Size
+   ============================================ */
+
+.high-contrast.font-size-xs,
+.high-contrast.font-size-sm,
+.high-contrast.font-size-md,
+.high-contrast.font-size-lg,
+.high-contrast.font-size-xl,
+.high-contrast.font-size-xxl {
+  font-weight: 500;
+}
+
+.high-contrast.font-size-xs h1,
+.high-contrast.font-size-xs h2,
+.high-contrast.font-size-xs h3,
+.high-contrast.font-size-xs h4,
+.high-contrast.font-size-xs h5,
+.high-contrast.font-size-xs h6,
+.high-contrast.font-size-sm h1,
+.high-contrast.font-size-sm h2,
+.high-contrast.font-size-sm h3,
+.high-contrast.font-size-sm h4,
+.high-contrast.font-size-sm h5,
+.high-contrast.font-size-sm h6,
+.high-contrast.font-size-md h1,
+.high-contrast.font-size-md h2,
+.high-contrast.font-size-md h3,
+.high-contrast.font-size-md h4,
+.high-contrast.font-size-md h5,
+.high-contrast.font-size-md h6,
+.high-contrast.font-size-lg h1,
+.high-contrast.font-size-lg h2,
+.high-contrast.font-size-lg h3,
+.high-contrast.font-size-lg h4,
+.high-contrast.font-size-lg h5,
+.high-contrast.font-size-lg h6,
+.high-contrast.font-size-xl h1,
+.high-contrast.font-size-xl h2,
+.high-contrast.font-size-xl h3,
+.high-contrast.font-size-xl h4,
+.high-contrast.font-size-xl h5,
+.high-contrast.font-size-xl h6,
+.high-contrast.font-size-xxl h1,
+.high-contrast.font-size-xxl h2,
+.high-contrast.font-size-xxl h3,
+.high-contrast.font-size-xxl h4,
+.high-contrast.font-size-xxl h5,
+.high-contrast.font-size-xxl h6 {
+  font-weight: 700;
+}

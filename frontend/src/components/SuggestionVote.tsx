@@ -18,7 +18,12 @@ interface SuggestionVoteProps {
  * Clicking the vote you already gave withdraws it, so a mis-click is
  * recoverable without a separate "clear" affordance.
  */
-export function SuggestionVote({ vote = null, onVote, suggestion, disabled = false }: SuggestionVoteProps) {
+export function SuggestionVote({
+  vote = null,
+  onVote,
+  suggestion,
+  disabled = false,
+}: SuggestionVoteProps) {
   const label = suggestion.length > 60 ? `${suggestion.slice(0, 60)}…` : suggestion
 
   const cast = (value: VoteValue) => {
@@ -26,7 +31,11 @@ export function SuggestionVote({ vote = null, onVote, suggestion, disabled = fal
   }
 
   return (
-    <span className="suggestion-vote" role="group" aria-label={`Was this suggestion helpful? ${label}`}>
+    <span
+      className="suggestion-vote"
+      role="group"
+      aria-label={`Was this suggestion helpful? ${label}`}
+    >
       <button
         type="button"
         className={`suggestion-vote__btn${vote === 'up' ? ' is-active' : ''}`}

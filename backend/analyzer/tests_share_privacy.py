@@ -59,7 +59,8 @@ def make_analysis(user, **overrides):
         experience_level="Senior",
         resume_text=PRIVATE_RESUME_TEXT,
         cover_letter_text="Dear hiring team, reach me on jane.doe@example.com.",
-        cover_letter_feedback={"word_count": 9, "note": "Call +1 415 555 0134"},
+        cover_letter_feedback={"word_count": 9,
+                               "note": "Call +1 415 555 0134"},
         interview_questions=["Explain the GIL."],
     )
     defaults.update(overrides)
@@ -71,7 +72,8 @@ class SharePayloadTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username="jane", password="password123")
+        self.user = User.objects.create_user(
+            username="jane", password="password123")
         self.analysis = make_analysis(self.user)
         self.analysis.enable_sharing(lifetime_days=DEFAULT_SHARE_LIFETIME_DAYS)
         self.url = f"/api/shared/{self.analysis.share_id}/"
@@ -138,7 +140,8 @@ class SharePayloadTests(TestCase):
 
         response = self.client.get(self.url)
 
-        self.assertEqual(response.data["suggestions"], [f"Email {REDACTION_MARKER} to follow up"])
+        self.assertEqual(response.data["suggestions"], [
+                         f"Email {REDACTION_MARKER} to follow up"])
 
     def test_a_view_is_counted(self):
         self.client.get(self.url)
@@ -153,7 +156,8 @@ class ShareLifecycleTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username="owner", password="password123")
+        self.user = User.objects.create_user(
+            username="owner", password="password123")
         self.analysis = make_analysis(self.user)
         self.public_url = f"/api/shared/{self.analysis.share_id}/"
         self.manage_url = f"/api/history/{self.analysis.pk}/share/"
@@ -161,7 +165,8 @@ class ShareLifecycleTests(TestCase):
     def test_a_new_analysis_is_not_shared(self):
         """Sharing used to be implicit from the moment a row existed."""
         self.assertFalse(self.analysis.share_enabled)
-        self.assertEqual(self.client.get(self.public_url).status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.get(
+            self.public_url).status_code, status.HTTP_404_NOT_FOUND)
 
     def test_owner_can_enable_sharing(self):
         self.client.force_authenticate(user=self.user)
@@ -171,7 +176,8 @@ class ShareLifecycleTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data["is_live"])
         self.assertIsNotNone(response.data["share_url"])
-        self.assertEqual(self.client.get(self.public_url).status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.get(
+            self.public_url).status_code, status.HTTP_200_OK)
 
     def test_default_lifetime_is_applied(self):
         self.client.force_authenticate(user=self.user)
@@ -202,21 +208,25 @@ class ShareLifecycleTests(TestCase):
         """Silently disagreeing with a request answered 200 is the failure here."""
         self.client.force_authenticate(user=self.user)
 
-        response = self.client.post(self.manage_url, {"lifetime_days": 99999}, format="json")
+        response = self.client.post(
+            self.manage_url, {"lifetime_days": 99999}, format="json")
 
-        self.assertEqual(response.data["lifetime_clamped_to_days"], MAX_SHARE_LIFETIME_DAYS)
+        self.assertEqual(
+            response.data["lifetime_clamped_to_days"], MAX_SHARE_LIFETIME_DAYS)
 
     def test_revoking_kills_the_link(self):
         self.client.force_authenticate(user=self.user)
         self.client.post(self.manage_url, {}, format="json")
-        self.assertEqual(self.client.get(self.public_url).status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.get(
+            self.public_url).status_code, status.HTTP_200_OK)
 
         response = self.client.delete(self.manage_url)
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data["is_live"])
         self.assertIsNone(response.data["share_url"])
-        self.assertEqual(self.client.get(self.public_url).status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.get(
+            self.public_url).status_code, status.HTTP_404_NOT_FOUND)
 
     def test_revoking_keeps_the_id_so_re_enabling_does_not_force_a_resend(self):
         self.client.force_authenticate(user=self.user)
@@ -239,8 +249,10 @@ class ShareLifecycleTests(TestCase):
         self.analysis.refresh_from_db()
         new_url = f"/api/shared/{self.analysis.share_id}/"
         self.assertNotEqual(old_url, new_url)
-        self.assertEqual(self.client.get(old_url).status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(self.client.get(new_url).status_code, status.HTTP_200_OK)
+        self.assertEqual(self.client.get(old_url).status_code,
+                         status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.get(
+            new_url).status_code, status.HTTP_200_OK)
 
     def test_rotating_resets_the_view_counter(self):
         """The count answers "views of the link I sent", not an all-time total."""
@@ -259,7 +271,8 @@ class ShareLifecycleTests(TestCase):
         self.analysis.share_expires_at = timezone.now() - timedelta(minutes=1)
         self.analysis.save(update_fields=["share_expires_at"])
 
-        self.assertEqual(self.client.get(self.public_url).status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.get(
+            self.public_url).status_code, status.HTTP_404_NOT_FOUND)
 
     def test_enabled_with_no_expiry_is_treated_as_not_live(self):
         """Belt and braces: the failure mode of trusting it is an immortal link."""
@@ -268,7 +281,8 @@ class ShareLifecycleTests(TestCase):
         self.analysis.save(update_fields=["share_enabled", "share_expires_at"])
 
         self.assertFalse(self.analysis.is_share_live())
-        self.assertEqual(self.client.get(self.public_url).status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(self.client.get(
+            self.public_url).status_code, status.HTTP_404_NOT_FOUND)
 
 
 class ShareResponseLeakTests(TestCase):
@@ -276,8 +290,10 @@ class ShareResponseLeakTests(TestCase):
 
     def setUp(self):
         self.client = APIClient()
-        self.user = User.objects.create_user(username="alice", password="password123")
-        self.other = User.objects.create_user(username="bob", password="password123")
+        self.user = User.objects.create_user(
+            username="alice", password="password123")
+        self.other = User.objects.create_user(
+            username="bob", password="password123")
         self.analysis = make_analysis(self.user)
 
     def test_revoked_and_invented_ids_answer_identically(self):
@@ -300,7 +316,8 @@ class ShareResponseLeakTests(TestCase):
     def test_another_user_cannot_enable_sharing_on_your_analysis(self):
         self.client.force_authenticate(user=self.other)
 
-        response = self.client.post(f"/api/history/{self.analysis.pk}/share/", {}, format="json")
+        response = self.client.post(
+            f"/api/history/{self.analysis.pk}/share/", {}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.analysis.refresh_from_db()
@@ -318,7 +335,8 @@ class ShareResponseLeakTests(TestCase):
     def test_share_url_has_no_double_slash(self):
         self.client.force_authenticate(user=self.user)
 
-        response = self.client.post(f"/api/history/{self.analysis.pk}/share/", {}, format="json")
+        response = self.client.post(
+            f"/api/history/{self.analysis.pk}/share/", {}, format="json")
 
         self.assertEqual(
             response.data["share_url"],
@@ -331,7 +349,8 @@ class RedactionTests(TestCase):
 
     def test_email_is_redacted(self):
         self.assertEqual(
-            redact_contact_details("Write to jane.doe+jobs@example.co.uk today"),
+            redact_contact_details(
+                "Write to jane.doe+jobs@example.co.uk today"),
             f"Write to {REDACTION_MARKER} today",
         )
 
@@ -348,7 +367,8 @@ class RedactionTests(TestCase):
         )
 
     def test_profile_urls_are_redacted(self):
-        redacted = redact_contact_details("Portfolio: github.com/janedoe and www.jane.dev")
+        redacted = redact_contact_details(
+            "Portfolio: github.com/janedoe and www.jane.dev")
 
         self.assertNotIn("janedoe", redacted)
         self.assertNotIn("jane.dev", redacted)
@@ -376,7 +396,8 @@ class RedactionTests(TestCase):
                 self.assertEqual(redact_contact_details(text), text)
 
     def test_short_digit_runs_survive(self):
-        self.assertEqual(redact_contact_details("Team of 8-10 engineers"), "Team of 8-10 engineers")
+        self.assertEqual(redact_contact_details(
+            "Team of 8-10 engineers"), "Team of 8-10 engineers")
 
     def test_non_strings_pass_through_untouched(self):
         self.assertEqual(redact_contact_details(None), None)
@@ -391,7 +412,8 @@ class RedactionTests(TestCase):
 
         redacted = redact_structure(payload)
 
-        self.assertEqual(redacted["suggestions"][0], f"Mail {REDACTION_MARKER}")
+        self.assertEqual(redacted["suggestions"][0],
+                         f"Mail {REDACTION_MARKER}")
         self.assertEqual(redacted["suggestions"][1], "Add React")
         self.assertEqual(redacted["partial_skills"][0]["skill"], "react")
         self.assertEqual(redacted["score"], 72)
@@ -404,11 +426,14 @@ class RedactionTests(TestCase):
 
 class ClampLifetimeTests(TestCase):
     def test_default_when_absent(self):
-        self.assertEqual(clamp_lifetime_days(None), (DEFAULT_SHARE_LIFETIME_DAYS, False))
+        self.assertEqual(clamp_lifetime_days(
+            None), (DEFAULT_SHARE_LIFETIME_DAYS, False))
 
     def test_default_when_junk(self):
-        self.assertEqual(clamp_lifetime_days("not a number"), (DEFAULT_SHARE_LIFETIME_DAYS, False))
-        self.assertEqual(clamp_lifetime_days({"days": 3}), (DEFAULT_SHARE_LIFETIME_DAYS, False))
+        self.assertEqual(clamp_lifetime_days("not a number"),
+                         (DEFAULT_SHARE_LIFETIME_DAYS, False))
+        self.assertEqual(clamp_lifetime_days(
+            {"days": 3}), (DEFAULT_SHARE_LIFETIME_DAYS, False))
 
     def test_a_valid_value_passes_through(self):
         self.assertEqual(clamp_lifetime_days(7), (7, False))
@@ -417,13 +442,17 @@ class ClampLifetimeTests(TestCase):
         self.assertEqual(clamp_lifetime_days("7"), (7, False))
 
     def test_zero_and_negatives_are_raised_to_the_floor(self):
-        self.assertEqual(clamp_lifetime_days(0), (MIN_SHARE_LIFETIME_DAYS, True))
-        self.assertEqual(clamp_lifetime_days(-5), (MIN_SHARE_LIFETIME_DAYS, True))
+        self.assertEqual(clamp_lifetime_days(
+            0), (MIN_SHARE_LIFETIME_DAYS, True))
+        self.assertEqual(clamp_lifetime_days(-5),
+                         (MIN_SHARE_LIFETIME_DAYS, True))
 
     def test_over_long_is_lowered_to_the_ceiling(self):
-        self.assertEqual(clamp_lifetime_days(10_000), (MAX_SHARE_LIFETIME_DAYS, True))
+        self.assertEqual(clamp_lifetime_days(10_000),
+                         (MAX_SHARE_LIFETIME_DAYS, True))
 
     def test_booleans_are_not_treated_as_integers(self):
         """``True`` is an ``int`` in Python; a one-day link from `{"lifetime_days": true}`
         would be a surprising reading of that request."""
-        self.assertEqual(clamp_lifetime_days(True), (DEFAULT_SHARE_LIFETIME_DAYS, False))
+        self.assertEqual(clamp_lifetime_days(
+            True), (DEFAULT_SHARE_LIFETIME_DAYS, False))

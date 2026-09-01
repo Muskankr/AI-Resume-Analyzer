@@ -1,3 +1,4 @@
+from django.core.cache import cache
 import os
 import pdfplumber
 import docx
@@ -14,7 +15,6 @@ from resume_analyzer.quantify_checker import flag_unquantified_bullets
 
 User = get_user_model()
 
-from django.core.cache import cache
 
 EXPERIENCE_LEVEL_SKILLS = {
     "Junior": {
@@ -56,6 +56,7 @@ EXPERIENCE_LEVEL_SKILLS = {
     },
 }
 
+
 def get_role_skills():
     role_skills = cache.get("role_skills_dict")
     if role_skills is None:
@@ -68,9 +69,11 @@ def get_role_skills():
             # so an unstable order makes two runs of one resume read
             # differently for no reason. Sorted in Python rather than with
             # order_by(), which would defeat the prefetch above.
-            role_skills[role.name] = sorted(skill.name for skill in role.skills.all())
+            role_skills[role.name] = sorted(
+                skill.name for skill in role.skills.all())
         cache.set("role_skills_dict", role_skills, timeout=60*60*24)
     return role_skills
+
 
 def resolve_role_skills(target_role, experience_level="Mid-Level"):
     """Resolve a role's required skills, database first.
@@ -118,21 +121,28 @@ def generate_level_tailored_suggestions(missing_skills, experience_level="Mid-Le
     if norm_level == "Senior":
         for skill in missing_skills:
             if skill in ["leadership", "mentoring", "management"]:
-                suggestions.append("Highlight engineering mentorship, cross-team alignment, and technical leadership initiatives.")
+                suggestions.append(
+                    "Highlight engineering mentorship, cross-team alignment, and technical leadership initiatives.")
             elif skill in ["system design", "microservices", "distributed systems", "ci/cd"]:
-                suggestions.append(f"Demonstrate scalable system design and architecture governance with {skill.title()}.")
+                suggestions.append(
+                    f"Demonstrate scalable system design and architecture governance with {skill.title()}.")
             else:
-                suggestions.append(f"Demonstrate senior-level production mastery, architectural decisions, and performance scaling with {skill.title()}.")
+                suggestions.append(
+                    f"Demonstrate senior-level production mastery, architectural decisions, and performance scaling with {skill.title()}.")
         if not any("leadership" in s.lower() or "mentorship" in s.lower() or "architectural" in s.lower() for s in suggestions):
-            suggestions.append("Demonstrate senior technical leadership, architectural decision records (ADRs), and developer mentorship.")
+            suggestions.append(
+                "Demonstrate senior technical leadership, architectural decision records (ADRs), and developer mentorship.")
     elif norm_level == "Junior":
         for skill in missing_skills:
-            suggestions.append(f"Build foundational portfolio projects and highlight coursework or hands-on practice with {skill.title()}.")
+            suggestions.append(
+                f"Build foundational portfolio projects and highlight coursework or hands-on practice with {skill.title()}.")
     else:
         for skill in missing_skills:
-            suggestions.append(f"Add projects or experience with {skill.title()}")
+            suggestions.append(
+                f"Add projects or experience with {skill.title()}")
 
     return suggestions
+
 
 PIPELINE_STAGES = [
     {"stage": "extracting", "label": "Extracting text from document", "percent": 25},
@@ -140,6 +150,7 @@ PIPELINE_STAGES = [
     {"stage": "scoring", "label": "Generating ATS score & recommendations", "percent": 90},
     {"stage": "done", "label": "Analysis complete", "percent": 100},
 ]
+
 
 def calculate_readability(text):
     score = textstat.flesch_reading_ease(text)
@@ -149,7 +160,8 @@ def calculate_readability(text):
         label = "moderate"
     else:
         label = "dense"
-    return round(score , 1), label
+    return round(score, 1), label
+
 
 def extract_text_from_file(file_path, file_name):
     text = ""
@@ -204,7 +216,7 @@ def extract_text_from_file(file_path, file_name):
 
 def analyze_cover_letter(text, target_role="", job_description=""):
     word_count = len(text.split())
-    
+
     # 1. Length Feedback
     if word_count < 150:
         length_status = "Too short"
@@ -215,74 +227,82 @@ def analyze_cover_letter(text, target_role="", job_description=""):
     else:
         length_status = "Good"
         length_feedback = f"Excellent length ({word_count} words). Your cover letter is concise and well-proportioned."
-        
+
     # 2. Tone Feedback
     action_verbs = [
-        "designed", "led", "managed", "implemented", "solved", "created", "analyzed", 
+        "designed", "led", "managed", "implemented", "solved", "created", "analyzed",
         "spearheaded", "collaborated", "executed", "developed", "built", "engineered",
         "optimized", "improved", "delivered", "facilitated", "increased", "reduced"
     ]
-    weak_words = ["just", "hope", "try", "think", "believe", "maybe", "sort of", "hoping", "might"]
-    
+    weak_words = ["just", "hope", "try", "think",
+                  "believe", "maybe", "sort of", "hoping", "might"]
+
     words_lower = text.lower()
     found_action = [v for v in action_verbs if v in words_lower]
     found_weak = [w for w in weak_words if w in words_lower]
-    
+
     tone_suggestions = []
     tone_categories = []
-    
+
     if any(word in words_lower for word in ["excited", "thrilled", "passionate", "eager", "enthusiastic"]):
         tone_categories.append("Enthusiastic")
     if any(word in words_lower for word in ["expert", "specialist", "analytical", "background", "results", "performance"]):
         tone_categories.append("Analytical")
-    
+
     if len(found_action) >= 4:
         tone_categories.append("Confident")
     elif len(found_action) < 2:
-        tone_suggestions.append("Incorporate more active action verbs (e.g. 'spearheaded', 'implemented', 'optimized') to make your achievements sound more impactful.")
-        
+        tone_suggestions.append(
+            "Incorporate more active action verbs (e.g. 'spearheaded', 'implemented', 'optimized') to make your achievements sound more impactful.")
+
     if len(found_weak) > 2:
-        tone_suggestions.append("Limit filler/weak words (like 'hope', 'just', 'believe') to sound more authoritative and confident in your capabilities.")
-        
-    tone_label = " & ".join(tone_categories) if tone_categories else "Professional"
-    
+        tone_suggestions.append(
+            "Limit filler/weak words (like 'hope', 'just', 'believe') to sound more authoritative and confident in your capabilities.")
+
+    tone_label = " & ".join(
+        tone_categories) if tone_categories else "Professional"
+
     tone_feedback = f"Your cover letter has a {tone_label.lower()} tone. "
     if found_action:
         tone_feedback += f"It effectively uses active language (found action verbs: {', '.join(found_action[:3])})."
     else:
         tone_feedback += "Consider using stronger action verbs to describe your achievements."
-        
+
     # 3. Relevance Feedback
     relevance_suggestions = []
     references_role = False
     references_company = False
-    
+
     if target_role:
         role_words = target_role.lower().split()
         if target_role.lower() in words_lower or all(w in words_lower for w in role_words):
             references_role = True
         else:
-            relevance_suggestions.append(f"Explicitly mention your target role '{target_role}' early in the letter to establish clear intent.")
-            
-    company_keywords = ["company", "firm", "organization", "team", "your team", "your organization", "enterprise", "agency", "institution"]
+            relevance_suggestions.append(
+                f"Explicitly mention your target role '{target_role}' early in the letter to establish clear intent.")
+
+    company_keywords = ["company", "firm", "organization", "team",
+                        "your team", "your organization", "enterprise", "agency", "institution"]
     if any(ck in words_lower for ck in company_keywords) or ("dear hiring" in words_lower or "dear team" in words_lower or "recruiting team" in words_lower):
         references_company = True
     else:
-        relevance_suggestions.append("Mention the target company name or refer to their team to show that the letter is personalized.")
-        
+        relevance_suggestions.append(
+            "Mention the target company name or refer to their team to show that the letter is personalized.")
+
     if job_description:
         req_skills = get_role_skills().get(target_role, [])
         cover_letter_skills = [s for s in req_skills if s in words_lower]
-        
+
         if cover_letter_skills:
             relevance_feedback = f"Great alignment! Your cover letter references several key skills required for the role, including: {', '.join([s.title() for s in cover_letter_skills[:4]])}."
         else:
             relevance_feedback = "Your cover letter does not reference the key technical skills from the target career track."
             if req_skills:
-                relevance_suggestions.append(f"Weave in mentions of core role competencies like {', '.join([s.title() for s in req_skills[:3]])} to demonstrate your alignment.")
+                relevance_suggestions.append(
+                    f"Weave in mentions of core role competencies like {', '.join([s.title() for s in req_skills[:3]])} to demonstrate your alignment.")
     else:
         relevance_feedback = "Please provide a job description alongside your cover letter to get specific relevance and alignment feedback."
-        
+
     return {
         "word_count": word_count,
         "length": {
@@ -300,6 +320,8 @@ def analyze_cover_letter(text, target_role="", job_description=""):
             "feedback": relevance_feedback,
         }
     }
+
+
 SKILL_QUESTIONS = {
     "html": [
         "What is semantic HTML, and how does it improve SEO and accessibility for assistive technologies?",
@@ -410,13 +432,14 @@ BEHAVIORAL_QUESTIONS = [
     "Describe a project where you had a tight deadline and limited requirements. How did you prioritize tasks to deliver value on time?"
 ]
 
+
 def generate_interview_questions(skills, target_role):
     import random
     questions = []
-    
+
     skills_shuffled = list(skills)
     random.shuffle(skills_shuffled)
-    
+
     for skill in skills_shuffled:
         skill_lower = skill.lower()
         if skill_lower in SKILL_QUESTIONS:
@@ -425,7 +448,7 @@ def generate_interview_questions(skills, target_role):
                 questions.append(q)
             if len(questions) >= 4:
                 break
-                
+
     role_pool = ROLE_QUESTIONS.get(target_role, [])
     if role_pool:
         role_shuffled = list(role_pool)
@@ -435,7 +458,7 @@ def generate_interview_questions(skills, target_role):
                 questions.append(q)
             if len(questions) >= 6:
                 break
-                
+
     behavioral_shuffled = list(BEHAVIORAL_QUESTIONS)
     random.shuffle(behavioral_shuffled)
     for q in behavioral_shuffled:
@@ -443,14 +466,14 @@ def generate_interview_questions(skills, target_role):
             break
         if q not in questions:
             questions.append(q)
-            
+
     if len(questions) < 5:
         for q in behavioral_shuffled:
             if q not in questions:
                 questions.append(q)
             if len(questions) >= 5:
                 break
-                
+
     return questions[:8]
 
 
@@ -479,7 +502,8 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
         role_skill_set = resolve_role_skills(target_role, experience_level)
         required = role_skill_set.skills
 
-    matched, partial, missing = match_skills_with_partial(required, raw_text, detected)
+    matched, partial, missing = match_skills_with_partial(
+        required, raw_text, detected)
 
     score_credit = len(matched) + (0.5 * len(partial))
     score = (
@@ -490,17 +514,21 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
 
     suggestions = []
     for item in partial:
-        suggestions.append(f"Near match: Your resume mentions '{item['matched_variant']}' which is a partial match for target skill '{item['skill']}'. Clarify or explicitly list '{item['skill']}' for full credit.")
+        suggestions.append(
+            f"Near match: Your resume mentions '{item['matched_variant']}' which is a partial match for target skill '{item['skill']}'. Clarify or explicitly list '{item['skill']}' for full credit.")
 
-    suggestions.extend(generate_level_tailored_suggestions(missing, experience_level, target_role))
+    suggestions.extend(generate_level_tailored_suggestions(
+        missing, experience_level, target_role))
 
     # Process optional cover letter if provided
     cover_letter_text = ""
     cover_letter_feedback = None
     if cover_letter_path:
         try:
-            cover_letter_text = extract_text_from_file(cover_letter_path, cover_letter_name)
-            cover_letter_feedback = analyze_cover_letter(cover_letter_text, target_role, job_description)
+            cover_letter_text = extract_text_from_file(
+                cover_letter_path, cover_letter_name)
+            cover_letter_feedback = analyze_cover_letter(
+                cover_letter_text, target_role, job_description)
         finally:
             if os.path.exists(cover_letter_path):
                 os.remove(cover_letter_path)
@@ -551,14 +579,16 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
     for role in get_known_roles():
         role_set = resolve_role_skills(role, experience_level)
         role_req_skills = role_set.skills
-        role_matched, role_partial, role_missing = match_skills_with_partial(role_req_skills, raw_text, detected)
+        role_matched, role_partial, role_missing = match_skills_with_partial(
+            role_req_skills, raw_text, detected)
         role_credit = len(role_matched) + (0.5 * len(role_partial))
         role_score = (
             int(role_credit / len(role_req_skills) * 100)
             if role_req_skills
             else min(len(detected) * 10, 100)
         )
-        role_suggestions = generate_level_tailored_suggestions(role_missing, experience_level, role)
+        role_suggestions = generate_level_tailored_suggestions(
+            role_missing, experience_level, role)
 
         track_comparisons[role] = {
             "score": role_score,
@@ -581,14 +611,16 @@ def analyze_resume(file_path, target_role, file_name="resume.pdf", user_id=None,
     # Structural formatting & ATS-friendliness checks (#80)
     formatting_checks = check_resume_formatting(
         text=raw_text,
-        file_type=file_name.split('.')[-1].lower() if '.' in file_name else "pdf",
+        file_type=file_name.split(
+            '.')[-1].lower() if '.' in file_name else "pdf",
     )
 
     # Employment timeline. Deliberately kept out of `score` for the same reason
     # `score_breakdown` is: that number is persisted on ResumeAnalysis and read
     # by the leaderboard, version comparison and the digest, so changing what it
     # means would change every historical row. See #709.
-    resume_timeline = analyse_timeline(raw_text, experience_level=experience_level)
+    resume_timeline = analyse_timeline(
+        raw_text, experience_level=experience_level)
 
     # Multi-factor view of the same resume. `score` above stays the keyword
     # ratio — it is persisted on ResumeAnalysis and read by the leaderboard,
