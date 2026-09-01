@@ -65,7 +65,11 @@ from .accessibility_views import AccessibilityCheckView
 from .cliche_views import ClicheDetectorView
 from .linkedin_views import LinkedInOptimizationView, LinkedInConsistencyView
 from .sanitizer_views import FileMetadataView, SanitizeResumeView
-from .ats_simulator_views import list_ats_profiles, simulate_ats
+from .ats_simulator_views import (
+    list_ats_profiles,
+    simulate_ats,
+    ats_compatibility_check,
+)
 from .cover_letter_views import generate_cover_letter_view
 from .job_board_views import suggest_roles
 from .contributor_views import ContributorCertificateView
@@ -110,6 +114,7 @@ urlpatterns = [
 
     path("ats-simulator/profiles/", list_ats_profiles, name="list_ats_profiles"),
     path("history/<int:analysis_id>/ats-simulate/", simulate_ats, name="simulate_ats"),
+    path("ats-compatibility/", ats_compatibility_check, name="ats_compatibility"),
     path("generate-cover-letter/", generate_cover_letter_view, name="generate_cover_letter"),
 
     path("webhooks/", manage_webhooks, name="manage_webhooks"),

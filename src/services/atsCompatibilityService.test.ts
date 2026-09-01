@@ -1,47 +1,104 @@
-import { analyzeAtsCompatibility } from './atsCompatibilityService';
+import { analyzeAtsCompatibility, estimateAtsPassRate } from './atsCompatibilityService'
 
-describe('AtsCompatibilityService', () => {
-  const sampleResumeText = `
-    Jane Doe
-    Email: jane.doe@example.com | Phone: (555) 123-4567
-    LinkedIn: linkedin.com/in/janedoe | GitHub: github.com/janedoe
+const STRONG_RESUME = `Jordan Lee
+jordan.lee@example.com  (555) 123-4567  linkedin.com/in/jordanlee  Austin, TX
 
-    Work Experience
-    Senior Full Stack Engineer at Tech Corp
-    Architected React and Node.js web applications.
+Summary
+Backend engineer with six years building payment and data platforms.
 
-    Education
-    B.S. Computer Science
+Work Experience
+Senior Software Engineer, PayGrid
+Mar 2021 - Present
+- Led the billing service migration, cutting p95 latency by 40 percent and spend by 30000 dollars per year.
+- Built an ingestion pipeline processing 2000000 events per day.
+- Mentored 4 engineers and shipped 18 releases with zero rollbacks.
+- Designed and documented 25 REST endpoints used by every internal team.
 
-    Skills
-    React, TypeScript, Node.js, PostgreSQL, Docker, AWS
+Software Engineer, DataForge
+Jun 2018 - Feb 2021
+- Improved dashboard load time from 9 seconds to under 2 seconds for 15000 users.
+- Automated releases, reducing deploy time from 3 hours to 20 minutes.
+- Implemented structured logging that reduced mean time to detection by 55 percent.
+- Migrated 120 database tables to a partitioned schema with zero downtime.
 
-    Projects
-    AI Resume Analyzer
+Education
+B.S. in Computer Science, University of Texas at Austin, 2018
 
-    Certifications
-    AWS Certified Solutions Architect
-  `;
+Skills
+Python, Django, Flask, PostgreSQL, Redis, Kafka, Docker, Kubernetes, AWS,
+Terraform, REST, GraphQL, Grafana, Prometheus, Git, Linux, pytest`
 
-  it('analyzes ATS compatibility and contact info correctly', () => {
-    const result = analyzeAtsCompatibility('cand-ats-101', sampleResumeText);
+const WEAK_RESUME =
+  'SEEKING AN OPPORTUNITY WHERE I CAN GROW AND CONTRIBUTE MY BEST WORK. ' +
+  'I AM A HARD WORKING TEAM PLAYER WITH A PASSION FOR EXCELLENCE. '.repeat(6)
 
-    expect(result.candidateId).toBe('cand-ats-101');
-    expect(result.atsCompatibilityScore).toBeGreaterThanOrEqual(85);
-    expect(result.isAtsFriendlyFormat).toBe(true);
-    expect(result.hasContactEmail).toBe(true);
-    expect(result.hasPhone).toBe(true);
-    expect(result.hasLinkedInUrl).toBe(true);
-    expect(result.hasGitHubUrl).toBe(true);
-    expect(result.detectedSectionHeaders.length).toBe(5);
-    expect(result.missingStandardHeaders.length).toBe(0);
-  });
+describe('analyzeAtsCompatibility', () => {
+  it('returns ten fully-explained criteria that sum to the overall score', () => {
+    const r = analyzeAtsCompatibility(STRONG_RESUME)
+    expect(r.criteria).toHaveLength(10)
+    expect(r.overallScore).toBe(r.criteria.reduce((s, c) => s + c.earned, 0))
+    for (const c of r.criteria) {
+      expect(c.max).toBe(10)
+      expect(c.earned).toBeGreaterThanOrEqual(0)
+      expect(c.earned).toBeLessThanOrEqual(10)
+      expect(c.whyItMatters).toBeTruthy()
+      expect(c.evidence.length).toBeGreaterThan(0)
+      expect(['pass', 'warn', 'fail']).toContain(c.status)
+    }
+  })
 
-  it('detects missing contact details and missing sections', () => {
-    const result = analyzeAtsCompatibility('cand-ats-empty', '');
+  it('scores an ATS-friendly resume highly', () => {
+    const r = analyzeAtsCompatibility(STRONG_RESUME)
+    expect(r.overallScore).toBeGreaterThanOrEqual(85)
+    expect(['A', 'B']).toContain(r.grade)
+    expect(r.estimatedAtsPassRate).toBeGreaterThanOrEqual(70)
+  })
 
-    expect(result.atsCompatibilityScore).toBe(0);
-    expect(result.isAtsFriendlyFormat).toBe(false);
-    expect(result.formattingWarnings).toContain('Resume text content is empty.');
-  });
-});
+  it('fails a weak resume and caps its pass rate', () => {
+    const r = analyzeAtsCompatibility(WEAK_RESUME)
+    expect(r.overallScore).toBeLessThan(45)
+    expect(r.grade).toBe('F')
+    // no email + no Experience heading -> both caps apply
+    expect(r.estimatedAtsPassRate).toBeLessThanOrEqual(35)
+    expect(r.prioritizedFixes.length).toBeGreaterThan(0)
+  })
+
+  it('treats an empty resume as unparseable', () => {
+    const r = analyzeAtsCompatibility('')
+    expect(r.estimatedAtsPassRate).toBe(0)
+    expect(r.grade).toBe('F')
+    const purity = r.criteria.find((c) => c.id === 'text_purity')!
+    expect(purity.earned).toBe(0)
+  })
+
+  it('lowers the keyword score when the job description mentions unrelated tools', () => {
+    const jd = 'Backend engineer in Rust, gRPC, ClickHouse, Elasticsearch on Google Cloud with Bazel.'
+    const withJd = analyzeAtsCompatibility(STRONG_RESUME, { jobDescription: jd })
+    const withoutJd = analyzeAtsCompatibility(STRONG_RESUME)
+    const kwWith = withJd.criteria.find((c) => c.id === 'keywords')!
+    const kwWithout = withoutJd.criteria.find((c) => c.id === 'keywords')!
+    expect(kwWith.earned).toBeLessThan(kwWithout.earned)
+  })
+
+  it('flags a table/column layout', () => {
+    const flagged = analyzeAtsCompatibility(STRONG_RESUME, { hasTables: true })
+    const tbl = flagged.criteria.find((c) => c.id === 'tables_columns')!
+    expect(tbl.status).toBe('fail')
+  })
+
+  it('orders prioritized fixes: high severity first, then by points', () => {
+    const fixes = analyzeAtsCompatibility(WEAK_RESUME).prioritizedFixes
+    const highs = fixes.filter((f) => f.severity === 'high')
+    expect(fixes.slice(0, highs.length)).toEqual(highs)
+    expect(highs.map((f) => f.points)).toEqual([...highs.map((f) => f.points)].sort((a, b) => b - a))
+  })
+})
+
+describe('estimateAtsPassRate', () => {
+  it('is monotonic and bounded', () => {
+    const rates = [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(estimateAtsPassRate)
+    expect(rates).toEqual([...rates].sort((a, b) => a - b))
+    expect(estimateAtsPassRate(0)).toBe(3)
+    expect(estimateAtsPassRate(100)).toBeGreaterThanOrEqual(95)
+  })
+})
