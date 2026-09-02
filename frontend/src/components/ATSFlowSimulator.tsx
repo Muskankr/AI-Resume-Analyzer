@@ -139,7 +139,7 @@ const ATSFlowSimulator: React.FC = () => {
                                 </div>
                                 <div className="legend-item">
                                     <span className="legend-color dead-zone"></span>
-                                    <span>Potential Dead Zone (>500 chars without breaks)</span>
+                                    <span>Potential Dead Zone (&gt;500 chars without breaks)</span>
                                 </div>
                             </div>
                         </div>
