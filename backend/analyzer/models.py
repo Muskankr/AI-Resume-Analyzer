@@ -168,15 +168,14 @@ class ResumeAnalysis(models.Model):
         )
 
 
-class BatchUpload(models.Model):
+class BatchJob(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE,
-                             related_name="batch_uploads", null=True, blank=True)
+                             related_name="batch_jobs", null=True, blank=True)
     status = models.CharField(max_length=50, default="Pending")
     uploaded_at = models.DateTimeField(auto_now_add=True)
     total_files = models.IntegerField(default=0)
     processed_files = models.IntegerField(default=0)
-    results = models.JSONField(default=list, blank=True)
     error_message = models.TextField(blank=True, null=True)
 
     class Meta:
@@ -184,6 +183,20 @@ class BatchUpload(models.Model):
 
     def __str__(self):
         return f"Batch {self.id} ({self.status})"
+
+
+class ResumeTask(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    batch_job = models.ForeignKey(BatchJob, on_delete=models.CASCADE, related_name="tasks")
+    file_name = models.CharField(max_length=255)
+    status = models.CharField(max_length=50, default="Pending")
+    analysis = models.ForeignKey('ResumeAnalysis', on_delete=models.SET_NULL, null=True, blank=True)
+    error_trace = models.TextField(blank=True, null=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"Task {self.id} for {self.file_name} ({self.status})"
 
 
 class UserProfile(models.Model):
@@ -446,3 +459,38 @@ def delete_resume_analysis_file(sender, instance, **kwargs):
         Resume.objects.filter(file__contains=instance.file_name).delete()
     except Exception:
         pass
+
+
+class SignupAbuseEvent(models.Model):
+    ip_address = models.GenericIPAddressField(db_index=True)
+    timestamp = models.DateTimeField(auto_now_add=True, db_index=True)
+    signup_count = models.IntegerField(help_text='Number of signups in the time window')
+    window_minutes = models.IntegerField(help_text='The time window in minutes')
+    user_agent = models.TextField(blank=True, help_text='The user agent of the last request')
+    status = models.CharField(choices=[('flagged', 'Flagged'), ('throttled', 'Throttled'), ('reviewed', 'Reviewed')], default='flagged', max_length=20)
+    notes = models.TextField(blank=True, help_text='Maintainer notes')
+
+    class Meta:
+        ordering = ['-timestamp']
+
+
+class ApplicationLog(models.Model):
+    STATUS_CHOICES = [
+        ('applied', 'Applied'),
+        ('screening', 'Screening'),
+        ('interviewed', 'Interviewed'),
+        ('rejected', 'Rejected'),
+        ('offered', 'Offered'),
+    ]
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='application_logs')
+    company_name = models.CharField(max_length=255)
+    job_title = models.CharField(max_length=255)
+    status = models.CharField(choices=STATUS_CHOICES, default='applied', max_length=20)
+    applied_date = models.DateField(auto_now_add=True)
+    notes = models.TextField(blank=True, null=True)
+    resume_analysis = models.ForeignKey('ResumeAnalysis', on_delete=models.SET_NULL, null=True, related_name='application_logs')
+
+    class Meta:
+        verbose_name = 'Application Log'
+        verbose_name_plural = 'Application Logs'
+        ordering = ['-applied_date']

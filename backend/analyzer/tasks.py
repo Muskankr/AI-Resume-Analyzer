@@ -81,66 +81,142 @@ def deliver_webhook_task(self, webhook_id, event, data):
 
 
 @shared_task
-def process_batch_upload(batch_id, zip_file_path, target_role="General", experience_level="Mid-Level", job_description=None):
-    from .models import BatchUpload
+def analyze_single_resume_task(resume_task_id, target_role, experience_level, job_description):
+    from .models import ResumeTask, BatchJob
+    from asgiref.sync import async_to_sync
+    import channels.layers
+    import traceback
+
     try:
-        batch = BatchUpload.objects.get(id=batch_id)
-    except BatchUpload.DoesNotExist:
-        logger.error(f"BatchUpload {batch_id} not found.")
+        resume_task = ResumeTask.objects.get(id=resume_task_id)
+    except ResumeTask.DoesNotExist:
+        return {"error": "ResumeTask not found"}
+
+    resume_task.status = "Processing"
+    resume_task.save(update_fields=["status"])
+
+    batch_job = resume_task.batch_job
+
+    try:
+        analysis_result = analyze_resume(
+            file_path=resume_task.file_name,
+            target_role=target_role,
+            file_name=os.path.basename(resume_task.file_name),
+            user_id=batch_job.user_id,
+            job_description=job_description,
+            experience_level=experience_level,
+        )
+
+        from .models import ResumeAnalysis
+        analysis = ResumeAnalysis.objects.get(id=analysis_result["id"])
+        resume_task.analysis = analysis
+        resume_task.status = "Completed"
+        resume_task.save(update_fields=["analysis", "status"])
+        
+    except Exception as e:
+        logger.exception(f"Failed to analyze {resume_task.file_name}")
+        resume_task.status = "Failed"
+        resume_task.error_trace = traceback.format_exc()
+        resume_task.save(update_fields=["status", "error_trace"])
+
+    # Update processed files
+    from django.db.models import F
+    BatchJob.objects.filter(id=batch_job.id).update(processed_files=F('processed_files') + 1)
+    batch_job.refresh_from_db()
+
+    # Broadcast progress
+    channel_layer = channels.layers.get_channel_layer()
+    if channel_layer:
+        async_to_sync(channel_layer.group_send)(
+            f"batch_{batch_job.id}",
+            {
+                "type": "batch_progress",
+                "processed_files": batch_job.processed_files,
+                "total_files": batch_job.total_files,
+                "status": batch_job.status
+            }
+        )
+
+    return resume_task.id
+
+
+@shared_task
+def batch_upload_complete(results, batch_id):
+    from .models import BatchJob
+    import channels.layers
+    from asgiref.sync import async_to_sync
+
+    try:
+        batch = BatchJob.objects.get(id=batch_id)
+        batch.status = "Completed"
+        batch.save(update_fields=["status"])
+        
+        channel_layer = channels.layers.get_channel_layer()
+        if channel_layer:
+            async_to_sync(channel_layer.group_send)(
+                f"batch_{batch_id}",
+                {
+                    "type": "batch_progress",
+                    "processed_files": batch.processed_files,
+                    "total_files": batch.total_files,
+                    "status": batch.status
+                }
+            )
+    except BatchJob.DoesNotExist:
+        pass
+
+
+@shared_task
+def process_batch_upload(batch_id, zip_file_path, target_role="General", experience_level="Mid-Level", job_description=None):
+    from .models import BatchJob, ResumeTask
+    from celery import chord
+    import shutil
+
+    try:
+        batch = BatchJob.objects.get(id=batch_id)
+    except BatchJob.DoesNotExist:
+        logger.error(f"BatchJob {batch_id} not found.")
         return
 
     batch.status = "Processing"
     batch.save(update_fields=["status"])
 
-    results = []
-
     try:
-        with tempfile.TemporaryDirectory() as temp_dir:
-            with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
-                zip_ref.extractall(temp_dir)
+        # Create a permanent extraction directory (tempfile context manager is deleted when function ends)
+        extract_dir = os.path.join(os.path.dirname(zip_file_path), str(batch_id))
+        os.makedirs(extract_dir, exist_ok=True)
 
-            pdf_files = []
-            for root, dirs, files in os.walk(temp_dir):
-                for file in files:
-                    if file.lower().endswith('.pdf'):
-                        pdf_files.append(os.path.join(root, file))
+        with zipfile.ZipFile(zip_file_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_dir)
 
-            batch.total_files = len(pdf_files)
-            batch.save(update_fields=["total_files"])
+        pdf_files = []
+        for root, dirs, files in os.walk(extract_dir):
+            for file in files:
+                if file.lower().endswith('.pdf'):
+                    pdf_files.append(os.path.join(root, file))
 
-            for i, pdf_path in enumerate(pdf_files):
-                file_name = os.path.basename(pdf_path)
+        batch.total_files = len(pdf_files)
+        batch.save(update_fields=["total_files"])
 
-                try:
-                    analysis_result = analyze_resume(
-                        file_path=pdf_path,
-                        target_role=target_role,
-                        file_name=file_name,
-                        user_id=batch.user_id,
-                        job_description=job_description,
-                        experience_level=experience_level,
-                    )
+        if not pdf_files:
+            batch.status = "Completed"
+            batch.save(update_fields=["status"])
+            return
 
-                    results.append({
-                        "file_name": file_name,
-                        "score": analysis_result.get("score"),
-                        "skills_found": analysis_result.get("skills_found", []),
-                        "analysis_id": analysis_result.get("id"),
-                    })
-                except Exception as e:
-                    logger.exception(
-                        f"Failed to analyze {file_name} in batch {batch_id}")
-                    results.append({
-                        "file_name": file_name,
-                        "error": str(e)
-                    })
+        tasks_to_run = []
+        for pdf_path in pdf_files:
+            resume_task = ResumeTask.objects.create(
+                batch_job=batch,
+                file_name=pdf_path,
+                status="Pending"
+            )
+            tasks_to_run.append(
+                analyze_single_resume_task.s(
+                    resume_task.id, target_role, experience_level, job_description
+                )
+            )
 
-                batch.processed_files = i + 1
-                batch.save(update_fields=["processed_files"])
-
-        batch.status = "Completed"
-        batch.results = results
-        batch.save(update_fields=["status", "results"])
+        chord(tasks_to_run)(batch_upload_complete.s(batch_id))
 
     except Exception as e:
         logger.exception(f"Batch processing failed for {batch_id}")
