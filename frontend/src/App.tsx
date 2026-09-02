@@ -256,33 +256,6 @@ function App() {
     }
   }, [user])
 
-  // const saveJobBookmark = () => {
-  //   if (!jobDescription.trim()) return
-  //   const name = prompt('Enter a name for this job bookmark:', `${targetRole} - ${new Date().toLocaleDateString()}`)
-  //   if (!name) return
-
-  //   const newBookmark: JobBookmark = {
-  //     id: Math.random().toString(36).substring(2, 9),
-  //     name: name.trim(),
-  //     role: targetRole,
-  //     experienceLevel: experienceLevel,
-  //     jobDescription: jobDescription.trim(),
-  //     timestamp: Date.now()
-  //   }
-
-  //   setBookmarks((prev) => {
-  //     const updated = [newBookmark, ...prev]
-  //     const storageKey = user ? `bookmarks_${user.username}` : 'bookmarks_anon'
-  //     try {
-  //       localStorage.setItem(storageKey, JSON.stringify(updated))
-  //     } catch (e) {
-  //       console.error('Failed to save bookmarks', e)
-  //     }
-  //     return updated
-  //   })
-  //   alert('Job bookmark saved successfully!')
-  // }
-
   const deleteJobBookmark = (id: string) => {
     setBookmarks((prev) => {
       const updated = prev.filter((b) => b.id !== id)
@@ -354,65 +327,7 @@ function App() {
     }
   }, [historyNextUrl, setEntries, user])
 
-  // const handleUploadSuccess = async (taskId: string, fileToAnalyze: File) => {
-  //   try {
-  //     let result = null
-  //     while (true) {
-  //       const statusRes = await api.get(`/api/status/${taskId}/`)
-  //       if (statusRes.data.state === 'SUCCESS') {
-  //         result = statusRes.data.result
-  //         break
-  //       } else if (statusRes.data.state === 'FAILURE') {
-  //         throw new Error(statusRes.data.error || 'Analysis failed')
-  //       }
-  //       await new Promise(r => setTimeout(r, 1000))
-  //     }
-
-  //     setScore(result.score)
-  //     setScoreBreakdown(result.score_breakdown || null)
-  //     setSkills(result.skills_found || [])
-  //     setSuggestions(result.suggestions || [])
-  //     setMatchedSkills(result.matched_skills || [])
-  //     setPartialSkills(result.partial_skills || [])
-  //     setMissingSkills(result.missing_skills || [])
-  //     setResumeText(result.resume_text || '')
-  //     setInterviewQuestions(result.interview_questions || [])
-  //     setAnalysisId(typeof result.id === 'number' ? result.id : null)
-  //     setSuggestionVotes({})
-  //     setActiveFileName(fileToAnalyze.name)
-
-  //     setLoading(false)
-
-  //     // Reset retry state on success
-  //     setRetryCount(0)
-  //     setCooldownRemaining(0)
-
-  //     if (user) {
-  //       await fetchDbHistory()
-  //     }
-  //   } catch (error: unknown) {
-  //     console.error(error)
-
-  //     let errorMsg = 'Unknown error'
-
-  //     if (axios.isAxiosError(error)) {
-  //       errorMsg = error.response?.data?.error ?? error.message
-  //     } else if (error instanceof Error) {
-  //       errorMsg = error.message
-  //     }
-
-  //     alert(
-  //       `Upload failed: ${errorMsg}`
-  //     )
-
-  //     setLoading(false)
-
-  //     // Increment retry count and set cooldown
-  //     const newRetryCount = retryCount + 1
-  //     setRetryCount(newRetryCount)
-  //     setCooldownRemaining(getRetryDelay(newRetryCount))
-  //   }
-  // }
+  
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -484,19 +399,6 @@ function App() {
       // than the query string so it does not follow the id into those logs.
       // See #706.
       const analysisHeaders = analysisTokenHeaders(res.data.analysis_token)
- feature/readiness-composite-score-758
-      let result = null
-      while (true) {
-        const statusRes = await api.get(`/api/status/${taskId}/`, { headers: analysisHeaders })
-        if (statusRes.data.state === 'SUCCESS') {
-          result = statusRes.data.result
-          break
-        } else if (statusRes.data.state === 'FAILURE') {
-          throw new Error(statusRes.data.error || 'Analysis failed')
-        }
-        await new Promise((r) => setTimeout(r, 1000))
-      }
-
 
       // Any previous run is abandoned before this one starts, so two
       // analyses cannot race to write the result state.
@@ -521,7 +423,7 @@ function App() {
         },
         { signal: pollController.signal }
       )) as AnalysisResult
- main
+
 
       setScore(result.score)
       setJobMatchScore(result.job_match_score || null)
@@ -952,10 +854,8 @@ function App() {
               display: 'flex',
               flexDirection: 'column',
               gap: '20px',
-              textAlign: 'left',
-
-
- feature/readiness-composite-score-758
+              textAlign: 'left'
+            }}>
 
 
           {/* Role and Experience Level Selectors */}
@@ -999,9 +899,6 @@ function App() {
             </div>
           </div>
 
- main
- main
-
           {/* Step 1: Configuration */}
           <div
             className="step-card mb-4"
@@ -1010,14 +907,12 @@ function App() {
               border: '1px solid var(--surface-border, rgba(255, 255, 255, 0.1))',
               borderRadius: 'var(--radius-lg, 12px)',
               padding: '20px',
- main
             }}
           >
             {/* Step 1: Configuration */}
             <div
               className="step-card"
               style={{
- feature/auto-detect-experience-759
                 background: 'var(--surface-soft-bg, rgba(255, 255, 255, 0.03))',
                 border: '1px solid var(--surface-border, rgba(255, 255, 255, 0.1))',
                 borderRadius: 'var(--radius-lg, 12px)',
@@ -1436,12 +1331,7 @@ function App() {
             </div>
           </div>{/* Loading spinner — shown while the resume is being analyzed */}
 
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                marginBottom: '14px',
-              }}
-            >
+          
               <span
                 style={{
                   display: 'inline-flex',
@@ -1467,35 +1357,38 @@ function App() {
                 }}
               >
                 💼 Target Job Description <span style={{ fontSize: '0.8rem', fontWeight: 'normal', color: 'var(--muted-text, #94a3b8)' }}>(Optional)</span>
-              </label>
+              </h3>
               {isDraftSaved && (
-                <span
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    width: '24px',
-                    height: '24px',
-                    borderRadius: '50%',
-                    background: 'var(--color-primary, #6366f1)',
-                    color: '#fff',
-                    fontWeight: '700',
-                    fontSize: '0.8rem',
-                  }}
-                >
-                  1
-                </span>
-                <h3
-                  style={{
-                    margin: 0,
-                    fontSize: '1.05rem',
-                    fontWeight: '600',
-                    color: 'var(--heading-text, #fff)',
-                  }}
-                >
-                  Set Career Track &amp; Experience
-                </h3>
-              </div>
+  <>
+    <span
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '24px',
+        height: '24px',
+        borderRadius: '50%',
+        background: 'var(--color-primary, #6366f1)',
+        color: '#fff',
+        fontWeight: '700',
+        fontSize: '0.8rem',
+      }}
+    >
+      1
+    </span>
+
+    <h3
+      style={{
+        margin: 0,
+        fontSize: '1.05rem',
+        fontWeight: '600',
+        color: 'var(--heading-text, #fff)',
+      }}
+    >
+      Set Career Track &amp; Experience
+    </h3>
+  </>
+)}
 
               {/* Role and Experience Level Selectors */}
               <div
@@ -1668,10 +1561,7 @@ function App() {
                   }}
                 >
                   💾 Draft auto-saved
-                </span>
-              )}
-                Set Career Track &amp; Experience
-              </h3>
+                </div>
             </div>
 
             {/* Role and Experience Level Selectors */}
@@ -1681,7 +1571,6 @@ function App() {
                 gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
                 gap: '14px',
               }}
- feature/readiness-composite-score-758
             />
             {(() => {
               const wordCount = jobDescription.trim() ? jobDescription.trim().split(/\s+/).length : 0;
@@ -1744,7 +1633,7 @@ function App() {
             </div>
           </div>
 
-            >
+            
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label
                   htmlFor="roleSelect"
@@ -1848,7 +1737,7 @@ function App() {
           </div>
 
           {/* Step 2: Upload Document */}
- main
+ 
           <div
             className="step-card"
             style={{
@@ -2526,11 +2415,9 @@ function App() {
               <JobBoardSuggestions skills={skills} track={targetRole} />
               <InterviewQuestionsPanel questions={interviewQuestions} />
             </>
-          )}{' '}
-          {/* closes the conditional block */}
-        </div>{' '}
-        {/* closes .main-card */}
-      </div>{' '}
+          )}
+      
+  
       <Footer
         onOpenWhatsNew={() => {
           window.history.pushState({}, '', '/release-notes')
@@ -2541,8 +2428,6 @@ function App() {
     </>
   )
 }
-{
-  /* closes App function */
-}
+
 
 export default App
