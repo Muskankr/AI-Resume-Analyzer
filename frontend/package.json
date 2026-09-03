@@ -30,7 +30,7 @@
     "react-icons": "^5.7.0",
     "react-router-dom": "^7.18.2",
     "recharts": "^3.10.1",
-    "swagger-ui-react": "^5.32.13"
+    "swagger-ui-react": "^5.32.14"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
