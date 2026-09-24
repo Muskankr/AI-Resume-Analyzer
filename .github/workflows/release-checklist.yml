@@ -9,7 +9,7 @@ on:
 
 jobs:
   validate-release:
-  name: Validate Version and Changelog Sync
+    name: Validate Version and Changelog Sync
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
