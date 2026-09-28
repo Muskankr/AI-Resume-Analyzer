@@ -60,6 +60,7 @@
 
 ---
 
+
 ## 🌐 Browser Compatibility
 
 ### Supported Browsers
