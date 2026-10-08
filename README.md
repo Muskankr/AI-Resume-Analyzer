@@ -12,6 +12,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge&color=38bdf8)](https://github.com/Muskankr/AI-Resume-Analyzer/pulls)
 [![ECSoC'26](https://img.shields.io/badge/Program-ECSoC'26-orange?style=for-the-badge)](https://github.com/Muskankr/AI-Resume-Analyzer)
 
+
 # AI Resume Analyzer
 
 ## *An enterprise-grade automated platform to parse resumes, evaluate ATS scores, extract technical skills, and generate contextual recommendations.*
